@@ -1,0 +1,26 @@
+prefix chemgene: <http://chem2bio2rdf.org/ctd/resource/ctd_chem_gene/>
+prefix mesh:     <http://bio2rdf.org/mesh:>
+prefix ctd:      <http://chem2bio2rdf.org/ctd/resource/>
+prefix kegg:     <http://chem2bio2rdf.org/kegg/resource/>
+prefix pharmgkb: <http://chem2bio2rdf.org/pharmgkb/resource/>
+
+select ?chemical ?gene ?kegg_pathway ?pathway_name ?pathway_id where {
+
+   values ( ?chemical ) {
+      $chemicals
+   }
+
+   ?chemgene      ctd:chemicalid       ?chemical ;
+                  ctd:interaction      ?interaction ;
+                  ctd:interactiontypes ?interaction_types;
+                  ctd:gene             ?gene .
+ 
+   ?pharmgkb_gene pharmgkb:Symbol      ?gene ;
+                  pharmgkb:UniProt_Id  ?uniprotid .
+   
+   ?kegg_pathway  kegg:protein         ?uniprotid ;
+                  kegg:Pathway_name    ?pathway_name ;
+                  kegg:description     ?pathway_descr ;
+                  kegg:pathwayid       ?pathway_id ;
+                  kegg:ID              ?pathway_nid .
+}

@@ -1,0 +1,32 @@
+prefix kegg:      <http://chem2bio2rdf.org/kegg/resource/>
+prefix pharmgkb:  <http://chem2bio2rdf.org/pharmgkb/resource/>
+prefix drugbank:  <http://chem2bio2rdf.org/drugbank/resource/>
+prefix pubchem:   <http://chem2bio2rdf.org/pubchem/resource/>
+prefix ctd:       <http://chem2bio2rdf.org/ctd/resource/>
+prefix omim:      <http://chem2bio2rdf.org/omim/resource/>
+prefix mesh:      <http://bio2rdf.org/mesh:>
+
+select ?diseaseID ?drugGenericName ?swissProtID ?uniprotGeneID ?geneBankID ?pathwayName ?keggPath where {
+
+    ?keggPath    kegg:protein                ?swissProtID ;
+                 kegg:Pathway_name           ?pathwayName .
+    ?keggInter   kegg:cid                    ?pubchemCID .
+
+    ?dbInter     drugbank:GeneBank_ID        ?geneBankID ;
+                 drugbank:SwissProt_ID       ?swissProtID ;
+                 drugbank:gene               ?uniprotGeneID ;
+                 drugbank:Name               ?name ;
+                 drugbank:DBID               ?drugID .
+  
+    ?drugID      drugbank:CID                ?pubchemCID ;
+                 drugbank:Generic_Name       ?drugGenericName .
+
+    ?ctd_disease ctd:diseaseid               ?diseaseID ;
+                 ctd:cid                     ?pubchemCID .
+ 
+    values ( ?diseaseID ) {
+        ${diseaseMeshIDList}
+#            ( mesh:d001249 ) ( mesh:d003371 ) ( mesh:d001249 )
+    }
+}
+ORDER BY ?diseaseName

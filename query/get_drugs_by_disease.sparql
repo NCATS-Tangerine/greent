@@ -1,0 +1,14 @@
+prefix drugbank: <http://chem2bio2rdf.org/drugbank/resource/>
+prefix mesh:     <http://bio2rdf.org/mesh:>
+prefix ctd:      <http://chem2bio2rdf.org/ctd/resource/>
+select distinct ?condition ?generic_name ?drug where {
+   values ( ?condition ) {
+      $conditions
+   }
+  
+   ?drug        drugbank:Generic_Name ?generic_name ;
+                drugbank:CID          ?CID .
+  
+   ?chemdisease ctd:cid               ?CID ;
+                ctd:diseaseid         ?condition .
+}

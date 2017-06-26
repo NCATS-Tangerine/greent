@@ -1,0 +1,38 @@
+prefix kegg:           <http://chem2bio2rdf.org/kegg/resource/>
+prefix kegg_path:      <http://chem2bio2rdf.org/kegg/resource/kegg_pathway/>
+prefix pharmgkb:       <http://chem2bio2rdf.org/pharmgkb/resource/>
+prefix pharmgkb_genes: <http://chem2bio2rdf.org/pharmgkb/resource/pharmgkb_genes/>
+prefix db_resource:    <http://chem2bio2rdf.org/drugbank/resource/>
+prefix db_drug:        <http://chem2bio2rdf.org/drugbank/resource/drugbank_drug/>
+prefix db_inter:       <http://chem2bio2rdf.org/drugbank/resource/drugbank_interaction/>
+prefix pc_compound:    <http://chem2bio2rdf.org/pubchem/resource/pubchem_compound/>
+prefix pc_resource:    <http://chem2bio2rdf.org/pubchem/resource/>
+prefix ctd:            <http://chem2bio2rdf.org/ctd/resource/>
+prefix GenBank:        <http://www.ncbi.nlm.nih.gov/nuccore/>
+prefix ncbi_gene:      <http://www.ncbi.nlm.nih.gov/gene/>
+prefix omim:           <http://chem2bio2rdf.org/omim/resource/>
+select ?diseaseName ?drugGenericName ?pathwayName ?keggPath where {
+
+    ?keggPath    kegg:protein                   ?swissProtID ;
+                 kegg:Pathway_name              ?pathwayName .
+    ?keggInter   kegg:cid                       ?pubChemCID .
+
+    ?dbInter     db_resource:GeneBank_ID        ?geneBankID ;
+                 db_resource:SwissProt_ID       ?swissProtID ;
+	         db_resource:gene               ?uniprotGeneID ;
+	         db_resource:Name               ?name ;
+	         db_resource:DBID               ?drugID .
+  
+    ?drugID      db_resource:CID                ?pubChemCID ;
+  	         db_resource:Generic_Name       ?drugGenericName .
+
+    ?pubChemCID  pc_resource:openeye_iso_smiles ?isoSmiles ;
+	             pc_resource:pubmed             ?pubMedID ;
+	             pc_resource:synonyms           ?synonyms .
+
+    ?disease_rec omim:drug                      ?drugID ;
+                 omim:Name                      ?diseaseName .
+
+    filter regex(lcase(str(?diseaseName)), "asthma|croup|diabetes")
+}
+ORDER BY ?diseaseName
