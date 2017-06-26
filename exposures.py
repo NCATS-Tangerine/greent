@@ -9,12 +9,12 @@ from bravado.requests_client import RequestsClient
 
 class Exposures(object):
 
-    def __init__(self):
+    def __init__(self, swagger_endpoint_url="https://exposures.renci.org/v1/swagger.json"):
         http_client = RequestsClient ()
         # TODO: fix ssl certificate.
         http_client.session.verify = False
         self.client = SwaggerClient.from_url(
-            "https://exposures.renci.org/v1/swagger.json",
+            swagger_endpoint_url,
             http_client=http_client)
 
     def inspect (self):
