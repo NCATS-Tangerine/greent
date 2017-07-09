@@ -4,6 +4,7 @@ import graphene
 import pprint
 import unittest
 from exposures import Exposures
+from clinical import Clinical
 from SPARQLWrapper import SPARQLWrapper2, JSON
 from string import Template
 from triplestore import TripleStore
@@ -74,6 +75,7 @@ class GreenT (object):
             blaze_uri = 'http://stars-blazegraph.renci.org/bigdata/sparql'
         self.blazegraph = TripleStore (blaze_uri)
         self.chembio_ks = ChemBioKS (self.blazegraph)
+        self.clinical = Clinical ()
 
     def get_exposure_query (self, query_tag, exposure_type, start_date, end_date, exposure_point):
         query = Template ("""{
@@ -127,52 +129,9 @@ class GreenT (object):
     def get_genes_pathways_by_disease (self, diseases):
         return self.chembio_ks.get_genes_pathways_by_disease (diseases)
 
-class TestGreenT(unittest.TestCase):
 
-    greenT = GreenT ()
+    # Clinical:
 
-    def test_exposures (self):
-        exposure_type = "pm25"
-        start_date = "2010-1-1",
-        end_date = "2010-1-7",
-        lat = "35.9131996"
-        lon = "-79.0558445"
-        exposure_point = ",".join ([ lat, lon ]) #"35.9131996,-79.0558445"
-        
-        results = self.greenT.get_exposure_scores (exposure_type, start_date, end_date, exposure_point)
-        for r in results.data ['exposureScores']:
-            this_lat = str(r['latitude'])
-            #print ("-------- ({}) ({})".format (this_lat, lat))
-            self.assertTrue (this_lat == lat)
-
-        #self.greenT.print_exposure_results (results, key='exposureScores')
-        
-        results = self.greenT.get_exposure_values (exposure_type, start_date, end_date, exposure_point)
-        for r in results.data ['exposureValues']:
-            this_lat = str(r['latitude'])
-            #print ("-------- ({}) ({})".format (this_lat, lat))
-            self.assertTrue (this_lat == lat)
-
-        #self.greenT.print_exposure_results (results, key='exposureValues')
-
-    def test_chembio (self):
-        chemicals = [ 'D052638' ]
-        conditions = self.greenT.get_exposure_conditions (chemicals)
-        t = False
-        for c in conditions:
-            if c["gene"] == "http://chem2bio2rdf.org/uniprot/resource/gene/IL6":
-                t = True
-                break
-        self.assertTrue (t)
-        # print (json.dumps (conditions, indent=2))
-        drugs = self.greenT.get_drugs_by_condition (conditions=[ "d001249" ])
-        # print (json.dumps (drugs, indent=2))
-        for d in [ "Paricalcitol", "NIMESULIDE", "Ramipril" ]:
-            self.assertTrue (d in drugs)
-
-        #paths = self.greenT.get_genes_pathways_by_disease (diseases)
-        #print (paths)
-
-if __name__ == '__main__':
-    unittest.main()
+    def get_patients (self, age=None, sex=None, race=None, location=None):
+        return self.clinical.get_patients (age, sex, race, location)
 
