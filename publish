@@ -4,14 +4,16 @@ set -e
 
 version=$1
 
+#    package_dir={ 'greent' : 'greent' },
+
+
 cat <<EOF > setup.py
 from distutils.core import setup 
 setup(
     name = 'greent',
     packages = [ 'greent' ], # this must be the same as the name above
-#    package_dir={ 'greent' : 'greent' },
     package_data={ 'greent' : [
-        'query'
+        'query/*.sparql'
     ]},
     version = '0.001',
     description = 'Green Team BioMedical Data Translator',
