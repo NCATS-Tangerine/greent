@@ -45,6 +45,8 @@ publish () {
     echo $version
     
     if [ -z "$( git tag | grep $version )" ]; then
+	echo $version > flag
+	
 	git commit -am "api version $version"
 	git push origin master
 	
