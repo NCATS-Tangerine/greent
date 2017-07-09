@@ -1,0 +1,63 @@
+#!/bin/bash
+
+set -e
+
+version=$1
+
+cat <<EOF > setup.py
+from distutils.core import setup 
+setup(
+    name = 'greent',
+    packages = [ 'greent' ], # this must be the same as the name above
+    package_dir={ 'greent' : 'greent' },
+    package_data={ 'greent' : [
+        'query'
+    ]},
+    version = '0.001',
+    description = 'Green Team BioMedical Data Translator',
+    author = 'Steve Cox',
+    author_email = 'scox@renci.org',
+    install_requires = [
+        'requests==2.13.0',
+        'SPARQLWrapper==1.8.0',
+        'bravado==9.0.7',
+        'graphene==1.4.1'
+    ],
+    include_package_data=True,
+    url = 'https://github.com/NCATS-Tangerine/greent.git',
+    download_url = 'http://github.com/NCATS-Tangerine/greent/archive/0.1.tar.gz',
+    keywords = [ 'biomedical', 'environmental', 'exposure', 'clinical' ],
+    classifiers = [ ],
+)
+EOF
+
+if [ -z "$version" ]; then
+    echo version parameter is required
+    exit 0
+fi
+
+publish () {
+
+    #python testgreent.py
+    set -x
+    
+    if [ -z "$( git tag | grep $version )" ]; then
+	git commit -am "api version $version"
+	git push origin master
+	
+	git tag $version -m "publishing version $version"
+	git push --tags origin master
+	
+	python setup.py register -r pypitest
+	python setup.py sdist upload -r pypitest
+	python setup.py register -r pypi
+	python setup.py sdist upload -r pypi
+    fi
+    if [ "$( pip freeze | grep 'greent=' | grep -c greent )" -gt 0 ]; then
+	python -m pip --no-cache-dir uninstall -y greent
+    fi
+    python -m pip --no-cache-dir install greent==$version
+}
+
+
+publish $*
