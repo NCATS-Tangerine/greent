@@ -40,6 +40,9 @@ publish () {
 
     #python testgreent.py
     set -x
+
+    git tag
+    echo $version
     
     if [ -z "$( git tag | grep $version )" ]; then
 	git commit -am "api version $version"
