@@ -9,7 +9,7 @@ from distutils.core import setup
 setup(
     name = 'greent',
     packages = [ 'greent' ], # this must be the same as the name above
-    package_dir={ 'greent' : 'greent' },
+#    package_dir={ 'greent' : 'greent' },
     package_data={ 'greent' : [
         'query'
     ]},
