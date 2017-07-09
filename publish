@@ -15,7 +15,7 @@ setup(
     package_data={ 'greent' : [
         'query/*.sparql'
     ]},
-    version = '0.001',
+    version = '${version}',
     description = 'Green Team BioMedical Data Translator',
     author = 'Steve Cox',
     author_email = 'scox@renci.org',
@@ -47,6 +47,14 @@ publish () {
     echo $version
     
     if [ -z "$( git tag | grep $version )" ]; then
+
+	cd ..
+	cp greent/setup.py .
+	python greent/setup.py sdist
+	twine upload dist/greent-${version}.tar.gz
+	cd greent
+	
+	f () {
 	echo $version > flag
 	
 	git commit -am "api version $version"
@@ -59,6 +67,7 @@ publish () {
 	python setup.py sdist upload -r pypitest
 	python setup.py register -r pypi
 	python setup.py sdist upload -r pypi
+	}
     fi
     if [ "$( pip freeze | grep 'greent=' | grep -c greent )" -gt 0 ]; then
 	python -m pip --no-cache-dir uninstall -y greent
