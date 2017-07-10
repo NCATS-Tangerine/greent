@@ -11,7 +11,7 @@ cat <<EOF > setup.py
 from distutils.core import setup 
 setup(
     name = 'greent',
-    packages = [ 'greent' ], # this must be the same as the name above
+    packages = [ 'greent', 'greent.test' ], # this must be the same as the name above
     package_data={ 'greent' : [
         'query/*.sparql'
     ]},
@@ -48,11 +48,9 @@ publish () {
     
     if [ -z "$( git tag | grep $version )" ]; then
 
-	cd ..
-	cp greent/setup.py .
-	python greent/setup.py sdist
+	python setup.py sdist
+	tar tf dist/greent-${version}.tar.gz
 	twine upload dist/greent-${version}.tar.gz
-	cd greent
 	
 	f () {
 	echo $version > flag
@@ -73,6 +71,11 @@ publish () {
 	python -m pip --no-cache-dir uninstall -y greent
     fi
     python -m pip --no-cache-dir install greent==$version
+
+    cur=$PWD
+    cd $(dirname $(which python))/../lib/pyth*/site-packages/
+    python greent/test/testgreent.py
+    cd $cur
 }
 
 
