@@ -1,0 +1,56 @@
+
+
+p () {
+    curl \
+	-X POST \
+	-H "Content-Type: application/json" \
+	-d '{
+              "query" : "query helloWho($who: String){ test(who: $who) }"
+            }' \
+	http://localhost:5000/graphql
+}
+
+q () {
+    curl \
+	-XPOST \
+	-H "Content-Type: application/json" \
+	-d '{
+              "query" : "query { test } "
+            }' \
+	http://localhost:5000/graphql
+}
+
+r () {
+    curl \
+	-XPOST \
+	-H "Content-Type: application/json" \
+	-d '{
+              "query" : "query newThing($t : String) { exposureScore(type: $t) } "
+            }' \
+	http://localhost:5000/graphql | jq
+    curl \
+	-XPOST \
+	-H "Content-Type: application/json" \
+	-d '{
+              "query" : "query newThing($t : String) { exposureValue(type: $t) } "
+            }' \
+	http://localhost:5000/graphql | jq
+    curl \
+	-XPOST \
+	-H "Content-Type: application/json" \
+	-d '{
+              "query" : "query newT($age : String, $sex : String, $race : String) { patients(age: $age, sex: $sex, race: $race) } ",
+              "variables" : {
+                 "age" : "8",
+                 "sex" : "male",
+                 "race" : "black"
+              }
+            }' \
+	http://localhost:5000/graphql | jq
+}
+
+echo
+p 
+echo
+r
+echo

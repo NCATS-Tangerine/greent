@@ -76,6 +76,7 @@ class GreenT (object):
         self.blazegraph = TripleStore (blaze_uri)
         self.chembio_ks = ChemBioKS (self.blazegraph)
         self.clinical = Clinical ()
+        self.exposures = Exposures ()
 
     def get_exposure_query (self, query_tag, exposure_type, start_date, end_date, exposure_point):
         query = Template ("""{

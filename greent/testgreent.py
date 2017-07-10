@@ -1,7 +1,7 @@
 import logging
 import unittest
 
-from greent.core import GreenT
+from core import GreenT
 
 class LoggingUtil(object):
     """ Logging utility controlling format and setting initial logging level """

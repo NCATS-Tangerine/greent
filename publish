@@ -74,7 +74,7 @@ publish () {
 
     cur=$PWD
     cd $(dirname $(which python))/../lib/pyth*/site-packages/
-    python greent/test/testgreent.py
+    python greent/testgreent.py
     cd $cur
 }
 
