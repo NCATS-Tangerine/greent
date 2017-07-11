@@ -28,6 +28,21 @@ class Exposures(object):
                 if (n.endswith ('_get') or n.endswith ('_post')):
                     print ("-- INVOKE: method-> {0} obj: {1}".format (n, o))
 
+    def serialize (self, exposures):
+        result = []
+        for e in exposures:
+            obj = {
+                "exposure_type" : e.exposure_type,
+                "latitude"      : e.latitude,
+                "longitude"     : e.longitude,
+                "start_time"    : e.start_time.strftime ("%Y-%m-%d"),
+                "end_time"      : e.end_time.strftime ("%Y-%m-%d"),
+                "value"         : e.value,
+                "units"         : e.units
+            }
+            result.append (obj)
+        return json.dumps (result, indent=2)
+            
     def get_coordinates (self, exposure_type, latitude, longitude, radius):
         return self.client.default.controllers_default_controller_exposures_exposure_type_coordinates_get (
             exposure_type=exposure_type,
@@ -36,18 +51,18 @@ class Exposures(object):
             radius=radius).result ()
 
     def get_scores (self, exposure_type, start_date, end_date, exposure_point):
-        return self.client.default.controllers_default_controller_exposures_exposure_type_scores_get (
+        return self.serialize (self.client.default.controllers_default_controller_exposures_exposure_type_scores_get (
             exposure_type=exposure_type,
             start_date=start_date,
             end_date=end_date,
-            exposure_point=exposure_point).result ()
+            exposure_point=exposure_point).result ())
 
     def get_values (self, exposure_type, start_date, end_date, exposure_point):
-        return self.client.default.controllers_default_controller_exposures_exposure_type_values_get (
+        return self.serialize (self.client.default.controllers_default_controller_exposures_exposure_type_values_get (
             exposure_type=exposure_type,
             start_date=start_date,
             end_date=end_date,
-            exposure_point=exposure_point).result ()
+            exposure_point=exposure_point).result ())
             
 class TestExposures(unittest.TestCase):
 
