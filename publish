@@ -70,7 +70,7 @@ publish () {
     if [ "$( pip freeze | grep 'greent=' | grep -c greent )" -gt 0 ]; then
 	python -m pip --no-cache-dir uninstall -y greent
     fi
-    python -m pip --no-cache-dir install greent==$version
+    python -m pip --no-cache-dir install greent==$versioggn
 
     cur=$PWD
     cd $(dirname $(which python))/../lib/pyth*/site-packages/

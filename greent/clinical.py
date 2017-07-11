@@ -30,8 +30,6 @@ class SwaggerEndpoint(object):
 class Clinical (SwaggerEndpoint):
 
     def __init__(self, swagger_endpoint_url=""):
-        #super (Clinical, self).__init__(swagger_endpoint_url)
-        #self.inspect ()
         pass
 
 
@@ -66,15 +64,6 @@ class Clinical (SwaggerEndpoint):
             print (e)
         return result
                                             
-    '''
-    def get_coordinates (self, exposure_type, latitude, longitude, radius):
-        return self.client.default.controllers_default_controller_exposures_exposure_type_coordinates_get (
-            exposure_type=exposure_type,
-            latitude=latitude,
-            longitude=longitude,
-            radius=radius).result ()
-    '''
-    
             
 class TestClinical(unittest.TestCase):
 

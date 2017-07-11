@@ -4,6 +4,10 @@ import traceback
 import unittest
 from datetime import date
 from datetime import datetime, timedelta
+
+from datetime import datetime, timedelta
+from dateutil.parser import parse as parse_date
+
 from bravado.client import SwaggerClient
 from bravado.requests_client import RequestsClient
 

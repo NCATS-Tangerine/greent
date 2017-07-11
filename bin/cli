@@ -21,7 +21,7 @@ q () {
 }
 
 r () {
-    curl \
+    curl -v \
 	-XPOST \
 	-H "Content-Type: application/json" \
 	-d '{
@@ -35,6 +35,8 @@ r () {
               "query" : "query newThing($t : String) { exposureValue(type: $t) } "
             }' \
 	http://localhost:5000/graphql | jq
+
+       f () {
     curl \
 	-XPOST \
 	-H "Content-Type: application/json" \
@@ -47,10 +49,9 @@ r () {
               }
             }' \
 	http://localhost:5000/graphql | jq
+       }
 }
 
-echo
-p 
-echo
+
 r
 echo
