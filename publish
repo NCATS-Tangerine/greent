@@ -52,7 +52,8 @@ publish () {
 	python setup.py sdist
 	tar tf dist/greent-${version}.tar.gz
 	twine upload --skip-existing dist/greent-${version}.tar.gz
-	
+
+	touch publish
 	git commit -am "api version $version"
 	git push origin master
 	
