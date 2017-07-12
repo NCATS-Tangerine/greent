@@ -41,7 +41,7 @@ class Exposures(object):
                 "units"         : e.units
             }
             result.append (obj)
-        return json.dumps (result, indent=2)
+        return json.dumps (result)
             
     def get_coordinates (self, exposure_type, latitude, longitude, radius):
         return self.client.default.controllers_default_controller_exposures_exposure_type_coordinates_get (

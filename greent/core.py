@@ -56,11 +56,20 @@ class GreenT (object):
 
     # ChemBio API
 
+    def get_exposure_conditions_json (self, chemicals):
+        return json.dumps (self.get_exposure_conditions (chemicals))
+
     def get_exposure_conditions (self, chemicals):
         return self.chembio_ks.get_exposure_conditions (chemicals)
 
+    def get_drugs_by_condition_json (self, conditions):
+        return json.dumps (self.get_drugs_by_condition (conditions))
+
     def get_drugs_by_condition (self, conditions):
         return self.chembio_ks.get_drugs_by_condition (conditions)
+
+    def get_genes_pathways_by_disease_json (self, diseases):
+        return json.dumps (self.get_genes_pathways_by_disease (diseases))
 
     def get_genes_pathways_by_disease (self, diseases):
         return self.chembio_ks.get_genes_pathways_by_disease (diseases)

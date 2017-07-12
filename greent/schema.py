@@ -1,7 +1,7 @@
+import json
 from graphql.type.definition import GraphQLArgument, GraphQLField, GraphQLNonNull, GraphQLObjectType
 from graphql.type.scalars import GraphQLString
 from graphql.type.schema import GraphQLSchema
-
 from datetime import datetime, timedelta
 from dateutil.parser import parse as parse_date
 
@@ -34,13 +34,16 @@ def get_patients (obj, args, context, info):
         location = args.get ("location"))
 
 def get_exposure_conditions (obj, args, context, info):
-    return greenT.get_exposure_conditions (chemicals = args.get ("chemicals"))
+    obj = json.loads (args.get ("chemicals"))
+    return greenT.get_exposure_conditions_json (chemicals = obj)
 
 def get_drugs_by_condition (obj, args, context, info):
-    return greenT.get_drugs_by_condition (conditions = args.get ("conditions"))
+    obj = json.loads (args.get ("conditions"))
+    return greenT.get_drugs_by_condition_json (conditions = obj)
 
 def get_genes_pathways_by_disease (obj, args, context, info):
-    return greenT.get_genes_pathways_by_condition (conditions = args.get ("diseases"))
+    obj = json.loads (args.get ("diseases"))
+    return greenT.get_genes_pathways_by_disease_json (diseases = obj)
 
 QueryRootType = GraphQLObjectType(
     name='QueryRoot',
@@ -83,9 +86,9 @@ QueryRootType = GraphQLObjectType(
         'exposureValue' : GraphQLField (
             type=GraphQLString,
             args = {
-                'type' : GraphQLArgument (GraphQLString),
-                'startDate' : GraphQLArgument (GraphQLString),
-                'endDate' : GraphQLArgument (GraphQLString),
+                'type'          : GraphQLArgument (GraphQLString),
+                'startDate'     : GraphQLArgument (GraphQLString),
+                'endDate'       : GraphQLArgument (GraphQLString),
                 'exposurePoint' : GraphQLArgument (GraphQLString)
            },
             resolver = get_exposure_values
@@ -110,7 +113,7 @@ QueryRootType = GraphQLObjectType(
         'genesPathwaysByDisease' : GraphQLField (
             type = GraphQLString,
             args = {
-                'diseases' : GraphQLArgument (GraphQLString)                 
+                'diseases' : GraphQLArgument (GraphQLString)
             },
             resolver = get_genes_pathways_by_disease
         )
