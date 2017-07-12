@@ -51,6 +51,7 @@ class Exposures(object):
             radius=radius).result ()
 
     def get_scores (self, exposure_type, start_date, end_date, exposure_point):
+        #print ("exposures .............> {}".format (start_date))
         return self.serialize (self.client.default.controllers_default_controller_exposures_exposure_type_scores_get (
             exposure_type=exposure_type,
             start_date=start_date,

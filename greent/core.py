@@ -41,6 +41,7 @@ class GreenT (object):
     # Exposure API
 
     def get_exposure_scores (self, exposure_type, start_date, end_date, exposure_point):
+        #print ("core -------------> {}".format (start_date))
         return self.exposures.get_scores (
             exposure_type = exposure_type,
             start_date = start_date,

@@ -13,6 +13,7 @@ def resolve_raises(*_):
 greenT = GreenT ()
 
 def get_exposure_scores (obj, args, context, info):
+    #print ("-____________>>> {}".format (args.get ("startDate")))
     return greenT.get_exposure_scores (
         exposure_type  = args.get ("exposureType"),
         start_date     = args.get ("startDate"),
