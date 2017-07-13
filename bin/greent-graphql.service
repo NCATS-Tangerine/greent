@@ -1,5 +1,5 @@
 [Unit]
-Description=The nginx HTTP and reverse proxy server
+Description=The GreenT GraphQL service.
 After=network.target remote-fs.target nss-lookup.target
 
 [Service]
