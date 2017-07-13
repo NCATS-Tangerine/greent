@@ -1,5 +1,6 @@
 import logging
 import unittest
+import json
 
 from core import GreenT
 
@@ -25,16 +26,16 @@ class TestGreenT(unittest.TestCase):
         lon = "-79.0558445"
         exposure_point = ",".join ([ lat, lon ]) #"35.9131996,-79.0558445"
         
-        results = self.greenT.get_exposure_scores (exposure_type, start_date, end_date, exposure_point)
-        for r in results.data ['exposureScores']:
+        results = json.loads (self.greenT.get_exposure_scores (exposure_type, start_date, end_date, exposure_point))
+        for r in results: #.data ['exposureScores']:
             this_lat = str(r['latitude'])
             #print ("-------- ({}) ({})".format (this_lat, lat))
             self.assertTrue (this_lat == lat)
 
         #self.greenT.print_exposure_results (results, key='exposureScores')
         
-        results = self.greenT.get_exposure_values (exposure_type, start_date, end_date, exposure_point)
-        for r in results.data ['exposureValues']:
+        results = json.loads (self.greenT.get_exposure_values (exposure_type, start_date, end_date, exposure_point))
+        for r in results: #.data ['exposureValues']:
             this_lat = str(r['latitude'])
             #print ("-------- ({}) ({})".format (this_lat, lat))
             self.assertTrue (this_lat == lat)
