@@ -1,11 +1,12 @@
+import datetime
 import logging
 import json
 import pprint
 import unittest
-from .triplestore import TripleStore
-from .chembio import ChemBioKS
-from .exposures import Exposures
-from .clinical import Clinical
+from greent.triplestore import TripleStore
+from greent.chembio import ChemBioKS
+from greent.exposures import Exposures
+from greent.clinical import Clinical
 
 class LoggingUtil(object):
     """ Logging utility controlling format and setting initial logging level """
@@ -40,17 +41,21 @@ class GreenT (object):
 
     def get_exposure_scores (self, exposure_type, start_date, end_date, exposure_point):
         #print ("core -------------> {}".format (start_date))
+        start_date_obj = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
+        end_date_obj = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
         return self.exposures.get_scores (
             exposure_type = exposure_type,
-            start_date = start_date,
-            end_date = end_date,
+            start_date = start_date_obj,
+            end_date = end_date_obj,
             exposure_point = exposure_point)
 
     def get_exposure_values (self, exposure_type, start_date, end_date, exposure_point):
+        start_date_obj = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
+        end_date_obj = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
         return self.exposures.get_values (
             exposure_type  = exposure_type,
-            start_date     = start_date,
-            end_date       = end_date,
+            start_date     = start_date_obj,
+            end_date       = end_date_obj,
             exposure_point = exposure_point)
 
     # ChemBio API

@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_graphql import GraphQLView
-from .schema import Schema
+from greent.schema import Schema
 
 def create_app(path='/graphql', **kwargs):
     app = Flask(__name__)
@@ -10,7 +10,7 @@ def create_app(path='/graphql', **kwargs):
 
 def main ():
     app = create_app(graphiql=True)
-    app.run()
+    app.run(host="0.0.0.0")
 
 if __name__ == '__main__':
     main ()
