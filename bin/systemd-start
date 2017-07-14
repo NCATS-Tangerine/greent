@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -x
+set -e
+
+source /projects/stars/venv3/bin/activate
+
+python $(dirname $(which python))/../lib/py*/site-packages/greent/app.py &
+
+exit 0
