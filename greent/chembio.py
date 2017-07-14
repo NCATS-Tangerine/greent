@@ -1,7 +1,7 @@
 from string import Template
 import os
 import logging
-from triplestore import TripleStore
+from .triplestore import TripleStore
 
 class LoggingUtil(object):
     """ Logging utility controlling format and setting initial logging level """

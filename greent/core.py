@@ -2,12 +2,10 @@ import logging
 import json
 import pprint
 import unittest
-from exposures import Exposures
-from clinical import Clinical
-from SPARQLWrapper import SPARQLWrapper2, JSON
-from string import Template
-from triplestore import TripleStore
-from chembio import ChemBioKS
+from .triplestore import TripleStore
+from .chembio import ChemBioKS
+from .exposures import Exposures
+from .clinical import Clinical
 
 class LoggingUtil(object):
     """ Logging utility controlling format and setting initial logging level """

@@ -5,7 +5,7 @@ from graphql.type.schema import GraphQLSchema
 from datetime import datetime, timedelta
 from dateutil.parser import parse as parse_date
 
-from core import GreenT
+from .core import GreenT
 
 def resolve_raises(*_):
     raise Exception("Throws!")
