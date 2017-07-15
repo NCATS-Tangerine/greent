@@ -1,0 +1,17 @@
+[Unit]
+Description=The Green NCATS BioMedical Translator API.
+After=network.target remote-fs.target nss-lookup.target
+
+[Service]
+User=evryscope
+ExecStart=/bin/sh -c "/home/evryscope/dev/greent/bin/service start"
+ExecStop=/bin/sh -c "/home/evryscope/dev/greent/bin/service stop"
+KillMode=process
+Restart=always
+RestartSec=20
+LimitNOFILE=16384
+CPUAccounting=true
+MemoryAccounting=true
+
+[Install]
+WantedBy=multi-user.target
