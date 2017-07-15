@@ -1,0 +1,28 @@
+#!/bin/bash
+
+app=/home/evryscope/dev/greent
+
+source /projects/stars/venv3/bin/activate
+
+start() {
+    python -m greent.app
+}
+
+stop() {
+    ps -ef | grep greent.app | grep -v grep | awk '{ print $2 }' | xargs sudo kill -9 
+}
+
+status () {
+    if [ "$(ps -ef | grep greent.app | egrep -v grep | grep -c greent.app )" -eq 0 ]; then
+	echo stopped
+    else
+	echo running
+    fi
+}
+
+case $1 in
+  start|stop|status) "$1" ;;
+esac
+
+
+exit 0
