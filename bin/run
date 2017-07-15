@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -x
+set -e
+
+PYTHONPATH=$PWD python -m greent.app
+
+exit 0
