@@ -5,8 +5,9 @@ import unittest
 from datetime import date
 from datetime import datetime, timedelta
 
-from datetime import datetime, timedelta
-from dateutil.parser import parse as parse_date
+#from datetime import datetime, timedelta
+#from dateutil.parser import parse as parse_date
+import datetime
 
 from bravado.client import SwaggerClient
 from bravado.requests_client import RequestsClient
@@ -52,7 +53,7 @@ class Exposures(object):
 
     def get_scores (self, exposure_type, start_date, end_date, exposure_point):
         #print ("exposures .............> {}".format (start_date))
-        return self.serialize (self.client.default.controllers_default_controller_exposures_exposure_type_scores_get (
+         return self.serialize (self.client.default.controllers_default_controller_exposures_exposure_type_scores_get (
             exposure_type=exposure_type,
             start_date=start_date,
             end_date=end_date,
