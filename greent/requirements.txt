@@ -1,0 +1,8 @@
+requests==2.18.1
+graphql_core==1.1
+Flask==0.12
+bravado==9.0.2
+Flask_GraphQL==1.4.1
+SPARQLWrapper==1.8.0
+python_dateutil==2.6.1
+

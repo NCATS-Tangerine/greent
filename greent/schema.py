@@ -49,19 +49,6 @@ def get_genes_pathways_by_disease (obj, args, context, info):
 QueryRootType = GraphQLObjectType(
     name='QueryRoot',
     fields={
-        'thrower': GraphQLField(GraphQLNonNull(GraphQLString), resolver=resolve_raises),
-        'request': GraphQLField(GraphQLNonNull(GraphQLString),
-                                resolver=lambda obj, args, context, info: context.args.get('q')),
-        'context': GraphQLField(GraphQLNonNull(GraphQLString),
-                                resolver=lambda obj, args, context, info: context),
-        'test': GraphQLField(
-            type=GraphQLString,
-            args={
-                'who': GraphQLArgument(GraphQLString)
-            },
-            resolver=lambda obj, args, context, info: 'Hello %s' % (args.get('who') or 'World')
-        ),
-        
         'patients' : GraphQLField (
             type=GraphQLString,
             args = {

@@ -24,7 +24,8 @@ class GraphQL (object):
 
     ''' GraphQL client for the Green Translator. '''
 
-    def __init__(self, url="http://localhost:5000/graphql"):
+#    def __init__(self, url="http://localhost:5000/graphql"):
+    def __init__(self, url="http://stars.renci.org/graphql"):
         self.url = url
 
     def query (self, query):
@@ -106,15 +107,17 @@ class GraphQL (object):
                 }
             """,
             "variables" : {
-                "age"  : "8",
-                "sex"  : "male",
-                "race" : "black"
+                "age"  : age,
+                "sex"  : sex,
+                "race" : race
             }
         })
 
 class TestGraphQLClient (unittest.TestCase):
  
-    client = GraphQL ()
+    client = GraphQL ("http://localhost:5000/graphql"")
+
+    '''    '''
 
     def test_get_exposure_scores (self):
         lat = "35.9131996"
@@ -164,8 +167,8 @@ class TestGraphQLClient (unittest.TestCase):
         result = sorted (result, key=lambda v : v['uniprotGene'])
         self.assertTrue (result[0]['uniprotGene'] == 'http://chem2bio2rdf.org/uniprot/resource/gene/ABCB1')
 
-#    def test_clinical (self):
-#        print (self.client.get_patients ())
+    def test_clinical (self):
+        print (self.client.get_patients ())
     
 if __name__ == '__main__':
     unittest.main()
