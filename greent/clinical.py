@@ -30,8 +30,7 @@ class SwaggerEndpoint(object):
 class Clinical (SwaggerEndpoint):
 
     def __init__(self, swagger_endpoint_url=""):
-        pass
-
+        self.url = swagger_endpoint_url
 
     '''
     http://tweetsie.med.unc.edu/CLINICAL_EXPOSURE/age/{age}/
@@ -43,20 +42,20 @@ class Clinical (SwaggerEndpoint):
         """ Call the clinical API the old fashioned way until the Swagger spec is fixed.
         """
         result = None
-
-        url = "http://tweetsie.med.unc.edu/CLINICAL_EXPOSURE/age/${age}"
-        
+        url = self.url
         if sex != None:
             url = "{0}/{1}".format (url, "sex/${sex}")
             if race != None:
                 url = "{0}/{1}".format (url, "race/${race}")
-                if location != None:
-                    url = "{0}/{1}".format (url, "location/${location}/")
+                if age != None:
+                    url = "{0}/{1}".format (ur, "age/${age}")
+                    if location != None:
+                        url = "{0}/{1}".format (url, "location/${location}/")
                     
         #url = Template ("http://tweetsie.med.unc.edu/CLINICAL_EXPOSURE/age/${age}/sex/${sex}/race/${race}/location/${location}/")
         query_string = Template (url).substitute (age = age, sex = sex, race = race, location = location)
         print ("query: {}".format (query_string))
-        try:
+        try:            
             r = requests.get (query_string)
             r.raise_for_status()
             result = r.json ()

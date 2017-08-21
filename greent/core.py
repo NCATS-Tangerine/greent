@@ -26,17 +26,23 @@ class GreenT (object):
     def __init__(self, config={}):
         self.config = config
         
-        blaze_uri = None
-        if 'blaze_uri' in config:
-            blaze_uri = self.config ['blaze_uri']
-        if not blaze_uri:
-            blaze_uri = 'http://stars-blazegraph.renci.org/bigdata/sparql'
+        blaze_uri = self.get_config ('blaze_uri', 'http://stars-blazegraph.renci.org/bigdata/sparql')
         self.blazegraph = TripleStore (blaze_uri)
-
         self.chembio_ks = ChemBioKS (self.blazegraph)
-        self.clinical = Clinical ()
+
+        clinical_url = self.get_config ('clinical_url', "http://tweetsie.med.unc.edu/CLINICAL_EXPOSURE")
+        self.clinical = Clinical (swagger_endpoint_url=clinical_url)
+
         self.exposures = Exposures ()
 
+    def get_config (self, key, default):
+        result = None
+        if key in self.config:
+            result = self.config[key]
+        if not result:
+            result = default
+        return result
+                                  
     # Exposure API
 
     def get_exposure_scores (self, exposure_type, start_date, end_date, exposure_point):

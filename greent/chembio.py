@@ -78,6 +78,6 @@ class ChemBioKS(object):
             "uniprotGene" : b['uniprotGeneID'].value,
             "keggPath"    : b['keggPath'].value,
             "pathName"    : b['pathwayName'].value,
-            "human  "     : '(human)' in b['pathwayName'].value
+            "human"       : '(human)' in b['pathwayName'].value
         },
         results.bindings))
