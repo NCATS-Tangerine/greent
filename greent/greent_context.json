@@ -1,0 +1,42 @@
+
+{
+  "@context": {
+
+    "drugbank": {
+      "@id": "http://identifiers.org/drugbank/",
+      "@type": "http://identifiers.org/drugbank/"
+    },
+    "bio2rdf" : {
+      "@id" : "http://bio2rdf.org/",
+      "@type" : "http://bio2rdf.org/"
+    },
+    "kegg" : {
+      "@id" : "http://chem2bio2rdf.org/kegg/",
+      "@type" : "http://chem2bio2rdf.org/kegg/"
+    },
+
+    
+    "exposureConditions": {
+      "@id": "http://identifiers.org/drugbank/exposureConditions/",
+      "@type" : "http://identifiers.org/drugbank/exposureConditions/"
+    },
+
+    "chemical": {
+      "@id": "http://bio2rdf.org/TODO",
+      "@type": "http://bio2rdf.org/TODO"
+    },
+    "gene": {
+      "@id": "http://chem2bio2rdf.org/uniprot/resource/gene/",
+      "@type": "http://chem2bio2rdf.org/uniprot/resource/gene/"
+    },
+    "pathway": {
+      "@id": "http://bio2rdf.org/pathway/TODO",
+      "@type": "http://bio2rdf.org/pathway/TODO"
+    },
+    "pathID": {
+      "@id": "http://bio2rdf.org/pathwayID/",
+      "@type": "http://bio2rdf.org/pathwayID/"
+    }
+
+  }
+}

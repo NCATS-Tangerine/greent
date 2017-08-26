@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 from dateutil.parser import parse as parse_date
 from .core import GreenT
 
+# http://graphql.org/learn/introspection/
+
 class ExposureInterface (graphene.Interface):
     start_time    = graphene.String ()
     end_time      = graphene.String ()
@@ -22,6 +24,9 @@ class ExposureValue (graphene.ObjectType):
         interfaces = (ExposureInterface, )
 
 class ExposureCondition (graphene.ObjectType):
+#    class Meta:
+#        filter_fields = ['name', 'ingredients']
+        
     chemical = graphene.String ()
     gene     = graphene.String ()
     pathway  = graphene.String ()
@@ -31,13 +36,12 @@ class ExposureCondition (graphene.ObjectType):
 
 class Drug(graphene.ObjectType):
     generic_name = graphene.String ()
-
+          
 class GenePath(graphene.ObjectType):
     uniprot_gene = graphene.String ()
     kegg_path    = graphene.String ()
     path_name    = graphene.String ()
     human        = graphene.String ()
-
 
 # No map type in GraphQL: https://github.com/facebook/graphql/issues/101
 
@@ -274,5 +278,18 @@ Schema = graphene.Schema(query=GreenQuery)
   }
 }
 
+
+{
+  __type(name: "Patient") {
+    name
+    fields {
+      name
+      type {
+        name
+        kind
+      }
+    }
+  }
+}
 
 '''
