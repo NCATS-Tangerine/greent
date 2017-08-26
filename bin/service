@@ -5,7 +5,7 @@ app=/home/evryscope/dev/greent
 source /projects/stars/venv3/bin/activate
 
 start() {
-    python -m greent.app
+    PYTHONPATH=$app python -m greent.app 2>&1 > /home/evryscope/dev/greent/log.txt
 }
 
 stop() {

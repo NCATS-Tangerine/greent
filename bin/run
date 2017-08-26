@@ -4,6 +4,7 @@ set -x
 set -e
 
 source /projects/stars/venv3/bin/activate
-PYTHONPATH=$PWD python -m greent.app
+APP_HOME=/projects/stars/app/greent
+PYTHONPATH=$APP_HOME python -m greent.app
 
 exit 0
