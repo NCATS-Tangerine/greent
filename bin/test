@@ -3,6 +3,7 @@
 set -x
 set -e
 
-PYTHONPATH=$PWD python -m greent.client
+echo $PWD
+PYTHONPATH=$PWD python3 -m greent.client
 
 exit 0

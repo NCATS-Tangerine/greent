@@ -58,6 +58,10 @@ class GreenT (object):
     def get_exposure_values (self, exposure_type, start_date, end_date, exposure_point):
         start_date_obj = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
         end_date_obj = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
+        print (" start_date_obj: ({})".format (start_date_obj))
+        print (" end_date_obj: ({})".format (end_date_obj))
+        print (" exposure_type: ({})".format (exposure_type))
+        print (" exposure_point: ({})".format (exposure_point))
         return self.exposures.get_values (
             exposure_type  = exposure_type,
             start_date     = start_date_obj,

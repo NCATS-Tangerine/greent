@@ -10,6 +10,7 @@ from pyld import jsonld
 import json
 
 class PatientStubView(View):
+    ''' Fake static patient data for dev test environment. '''
     def dispatch_request(self):
         return """
         [
@@ -39,30 +40,31 @@ class PatientStubView(View):
         """
 
 class JSONLDView (GraphQLView):
+    ''' Extend GraphQLView with ability to tag documents with JSON-LD context.
+    https://antoniogarrote.wordpress.com/2016/11/23/graphql-is-for-silos/ '''
     def get_jsonld_context (self, context_id):
         context = None
         with open (context_id, "r") as stream:
             context = json.loads (stream.read ())
         return context
-    
     def dispatch_request (self):
         response = super(JSONLDView, self).dispatch_request ()
         if isinstance (response, Response):
             context = self.get_jsonld_context ('greent/greent_context.json')
             doc = json.loads(response.get_data())
             expanded = jsonld.expand (doc['data'], { "expandContext" : context } )
-            if current_app.debug:
+            if True: #current_app.debug:
                 print ("context: {}".format (json.dumps (context, indent=2)))
                 print ("doc: {}".format (json.dumps (doc, indent=2)))
                 print ("expanded: {}".format (json.dumps (expanded, indent=2)))
-            response.set_data(json.dumps ({
-                'data'    : expanded,
-                '@context' : context['@context']
-            }))
-            print (json.loads (response.get_data ()))
-            
+                print (" context-> {}".format (type(context)))
+            print (" expanded-> {}".format (type(expanded)))
+            #expanded = expanded[0]
+            doc['data']['@context'] = context['@context']
+            response.set_data(json.dumps (doc)) #json.dumps (expanded))
+            #print (json.loads (response.get_data ()))            
         return response
-        
+
 def create_app(path='/graphql', **kwargs):
     app = Flask(__name__)
     app.debug = True
