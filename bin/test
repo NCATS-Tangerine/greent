@@ -1,9 +1,24 @@
 #!/bin/bash
 
-set -x
+#set -x
 set -e
 
-echo $PWD
-PYTHONPATH=$PWD python3 -m greent.client
+host=${1:-'localhost'}
+request=${2:-'bin/exposure-conditions.json'}
+
+call_service () {
+python3 -c "\
+import json, sys, requests; \
+#import json; \
+#import sys; \
+flag, host, file = sys.argv; \
+data=open(file).read().replace ('\n', ''); \
+j=requests.post ( \
+  url='http://{0}:5000/graphql'.format (host), data=data, \
+  headers={ 'Content-Type' : 'application/json' }).json (); \
+print(json.dumps(j, indent=2))" $1 $2
+}
+
+call_service $host $request
 
 exit 0
