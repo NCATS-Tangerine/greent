@@ -14,7 +14,7 @@ class SwaggerEndpoint(object):
     def __init__(self, swagger_endpoint_url):
         http_client = RequestsClient ()
         # TODO: fix ssl certificate.
-        http_client.session.verify = False
+#        http_client.session.verify = False
         self.client = SwaggerClient.from_url(
             swagger_endpoint_url,
             http_client=http_client)
