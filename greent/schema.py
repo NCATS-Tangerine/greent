@@ -24,9 +24,6 @@ class ExposureValue (graphene.ObjectType):
         interfaces = (ExposureInterface, )
 
 class ExposureCondition (graphene.ObjectType):
-#    class Meta:
-#        filter_fields = ['name', 'ingredients']
-        
     chemical = graphene.String ()
     gene     = graphene.String ()
     pathway  = graphene.String ()
@@ -69,6 +66,10 @@ class Patient(graphene.ObjectType):
     geo_code      = graphene.Field (Location)
     prescriptions = graphene.List (Prescription)
     diagnoses     = graphene.List (Diagnosis)
+
+class Thing(graphene.ObjectType):
+    type  = graphene.String ()
+    value = graphene.String ()
     
 greenT = GreenT ({
     "clinical_url" : "http://localhost:5000/patients"
@@ -101,6 +102,17 @@ class GreenQuery (graphene.ObjectType):
     
     gene_paths_by_disease = graphene.List (of_type=GenePath,
                                            diseases = graphene.List(graphene.String))
+
+    translate = graphene.List (of_type = Thing,
+                               thing   = graphene.String (),
+                               domainA = graphene.String (),
+                               domainB = graphene.String ())
+
+    def resolve_translate (obj, args, context, info):
+        return list (map (lambda v : Thing (type=args.get ("domainB"), value=v),
+                          greenT.translate (thing   = args.get ("thing"),
+                                            domainA = args.get ("domainA"),
+                                            domainB = args.get ("domainB"))))
     
     def resolve_exposure_score (obj, args, context, info):
         result = None
