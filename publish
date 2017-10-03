@@ -19,6 +19,7 @@ setup(
     packages = [ 'greent' ], # this must be the same as the name above
     package_data={ 'greent' : [
         'requirements.txt',
+        'jsonld/*',
         'query/*.sparql'
     ]},
     version = '${version}',
