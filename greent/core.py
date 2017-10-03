@@ -110,7 +110,7 @@ class GreenT (object):
         root_kind         = 'http://identifiers.org/doi/'
 
         # MESH
-        mesh_disease_name = 'http://identiiers.org/mesh/disease/name/'
+        mesh_disease_name = 'http://identifiers.org/mesh/disease/name/'
         mesh_drug_name    = 'http://identifiers.org/mesh/drug/name/'
         mesh_disease_id   = 'http://identifiers.org/mesh/disease/id'
         

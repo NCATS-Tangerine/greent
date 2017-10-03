@@ -41,7 +41,7 @@ class Chemotext(Neo4JREST):
         response = self.query (
             query="MATCH (d:Term {type:'Disease', name: '%s' })-[r1]-(a:Art)-[r2]-(t:Term {isDrug:true}) RETURN d, r1, a, r2, t LIMIT %s" %
             (disease, limit))
-        print (json.dumps (response, indent=2))
+        #print (json.dumps (response, indent=2))
         for r in response['results'][0]['data']:
             result.append (r['row'][4]['name'])
         return result
