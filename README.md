@@ -6,11 +6,14 @@ Developed at the University of North Carolina at Chapel Hill, the API provides a
 
 ## Installation
 
+```
 (virtualenv)$ pip install greent
+```
 
 ## Running the GraphQL Server:
-
+```
 (virtualenv)$ python -m greent.app
+```
 
 ## Usage Example
 
