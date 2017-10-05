@@ -11,6 +11,8 @@ from greent.clinical import Clinical
 from greent.chemotext import Chemotext
 from greent.disease_ont import DiseaseOntology
 from greent.cmaq import CMAQ
+from greent.pharos import Pharos
+from greent.oxo import OXO
 from collections import defaultdict
 
 class LoggingUtil(object):
@@ -47,6 +49,8 @@ class GreenT (object):
         self.exposures = CMAQ (exposures_uri)
         self.chemotext = Chemotext ()
         self.disease_ontology = DiseaseOntology ()
+        self.pharos = Pharos ()
+        self.oxo = OXO ()
         self.init_translator ()
         
     def get_config (self, key, default):
@@ -111,43 +115,30 @@ class GreenT (object):
         return self.clinical.get_patients (age, sex, race, location)
 
     # Translator
-
-    def drug_name_to_gene_symbol (self, drug_name):
-        return self.chembio_ks.query (
-            input_fields = { "drugName" : drug_name },
-            query_template="""
-prefix db_resource:    <http://chem2bio2rdf.org/drugbank/resource/>
-prefix ctd:            <http://chem2bio2rdf.org/ctd/resource/>
-prefix pubchem:        <http://chem2bio2rdf.org/pubchem/resource/>
-select ?uniprotSym where {
-    values ( ?drugName ) { ( "$drugName" ) }
-    ?ctdChemGene ctd:cid                        ?pubChemCID;
-                 ctd:gene                       ?uniprotSym.
-    ?ctdChemDis  ctd:cid                        ?pubChemCID;
-                 ctd:diseasename                ?diseaseName.
-    ?drugID      db_resource:CID                ?pubChemCID ;
-  	         db_resource:Generic_Name       ?drugGenericName .
-  filter regex(lcase(str(?drugGenericName)), lcase(?drugName))
-}
-LIMIT 200
-""")
     
     def init_translator (self):
-        root_kind         = 'http://identifiers.org/doi/'
+        root_kind         = 'http://identifiers.org/doi'
 
         # MESH
-        mesh_disease_name = 'http://identifiers.org/mesh/disease/name/'
-        mesh_drug_name    = 'http://identifiers.org/mesh/drug/name/'
+        mesh              = 'http://identifiers.org/mesh'
+        mesh_disease_name = 'http://identifiers.org/mesh/disease/name'
+        mesh_drug_name    = 'http://identifiers.org/mesh/drug/name'
         mesh_disease_id   = 'http://identifiers.org/mesh/disease/id'
         
-        # DOID
-        doid_curie        = "doid"
-        doid              = "http://identifiers.org/doid/"
-
+        # Disease
+        doid_curie          = "doid"
+        doid                = "http://identifiers.org/doid"
+        pharos_disease_name = "http://pharos.nih.gov/identifier/disease/name"
+        
         # DRUG
-        c2b2r_gene        = "http://chem2bio2rdf.org/uniprot/resource/gene"
         c2b2r_drug_name   = "http://chem2bio2rdf.org/drugbank/resource/Generic_Name"
 
+        # TARGET
+        c2b2r_gene        = "http://chem2bio2rdf.org/uniprot/resource/gene"
+
+        # PATHWAY
+        c2b2r_pathway     = "http://chem2bio2rdf.org/kegg/resource/kegg_pathway"
+        
         # Semantic equivalence
         
         self.equivalence = defaultdict(lambda: [])
@@ -162,8 +153,11 @@ LIMIT 200
         # Domain translation
         self.translator_router = defaultdict (lambda: defaultdict (lambda: NoTranslation ()))
         self.translator_router[mesh_disease_name][mesh_drug_name] = lambda disease: self.chemotext.disease_name_to_drug_name (disease)
-        self.translator_router[doid][mesh_disease_id] = lambda doid: self.disease_ontology.doid_to_mesh (doid.upper())
-        self.translator_router[c2b2r_drug_name][c2b2r_gene] = lambda drug_name: self.drug_name_to_gene_symbol (drug_name)
+        self.translator_router[doid][mesh_disease_id]             = lambda doid:    self.disease_ontology.doid_to_mesh (doid.upper())
+        self.translator_router[c2b2r_drug_name][c2b2r_gene]       = lambda drug:    self.chembio_ks.drug_name_to_gene_symbol (drug)
+        self.translator_router[c2b2r_gene][c2b2r_pathway]         = lambda gene:    self.chembio_ks.gene_symbol_to_pathway (gene)
+        self.translator_router[c2b2r_gene][pharos_disease_name]   = lambda gene:    self.pharos.target_to_disease (gene)
+        self.translator_router[mesh][root_kind]                   = lambda mesh_id: self.oxo.mesh_to_other (mesh_id)
         
     def resolve_id (self, an_id, domain):
         if not an_id in domain:

@@ -1,4 +1,5 @@
 from string import Template
+import json
 import os
 import logging
 from greent.triplestore import TripleStore
@@ -99,9 +100,61 @@ class ChemBioKS(object):
             "diseaseId"     : b['diseaseID'].value
         }, results.bindings))
 
-    def query (self, query_template, input_fields=[]):
+
+    def drug_name_to_gene_symbol (self, drug_name):
+        print ("-----------------------------------")
+        result = self.query (
+            input_fields = { "drugName" : drug_name },
+            output_fields = [ 'uniprotSym' ],
+            query_template="""
+prefix db_resource:    <http://chem2bio2rdf.org/drugbank/resource/>
+prefix ctd:            <http://chem2bio2rdf.org/ctd/resource/>
+prefix pubchem:        <http://chem2bio2rdf.org/pubchem/resource/>
+select ?uniprotSym where {
+    values ( ?drugName ) { ( "$drugName" ) }
+    ?ctdChemGene ctd:cid                        ?pubChemCID;
+                 ctd:gene                       ?uniprotSym.
+    ?ctdChemDis  ctd:cid                        ?pubChemCID;
+                 ctd:diseasename                ?diseaseName.
+    ?drugID      db_resource:CID                ?pubChemCID ;
+  	         db_resource:Generic_Name       ?drugGenericName .
+  filter regex(lcase(str(?drugGenericName)), lcase(?drugName))
+}
+LIMIT 200
+            """)
+        return result
+    
+    def gene_symbol_to_pathway (self, uniprot_symbol):
+        uniprot_iri = "http://chem2bio2rdf.org/uniprot/resource/gene"
+        if not uniprot_symbol.startswith (uniprot_iri):
+            uniprot_symbol = "{0}/{1}".format (uniprot_iri, uniprot_symbol)
+            print ("----------> {0}".format (uniprot_symbol))
+        return self.query (
+#    values ( ?ctdGene ) { ( <http://chem2bio2rdf.org/uniprot/resource/gene/$uniprotSymbol> ) }
+
+            input_fields = { "uniprotSymbol" : uniprot_symbol },
+            output_fields = [ "keggPath" ],
+            query_template="""
+prefix kegg:           <http://chem2bio2rdf.org/kegg/resource/> \n
+prefix pharmgkb:       <http://chem2bio2rdf.org/pharmgkb/resource/> \n
+prefix ctd:            <http://chem2bio2rdf.org/ctd/resource/> \n
+select ?ctdGene ?uniprotID ?pathwayName ?keggPath where { \n
+    values ( ?ctdGene ) { ( <$uniprotSymbol> ) } \n
+    ?keggPath    kegg:protein    ?uniprotID ; kegg:Pathway_name ?pathwayName . \n
+    ?pharmGene   pharmgkb:Symbol ?ctdGene ; pharmgkb:UniProt_Id ?uniprotID. \n
+    ?ctdChemGene ctd:gene        ?ctdGene. \n
+}
+""")
+    
+    def query (self, query_template, output_fields, input_fields=[]):
         query_template = Template(query_template)
         query_text = query_template.safe_substitute (**input_fields)
         query_results = self.triplestore.execute_query (query_text)
-        return { key : value.value for (key, value) in query_results.bindings }
+        #print (query_results.bindings)
+        result = set ()
+        for b in query_results.bindings:
+            for f in output_fields:
+                result.add (b[f].value)
+        return result
+#        return { key : value.value for (key, value) in query_results.bindings }
         

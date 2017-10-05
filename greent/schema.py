@@ -79,10 +79,14 @@ class DrugToDisease (graphene.ObjectType):
     drug_name = graphene.String ()
     target_name = graphene.String ()
     disease_name = graphene.String ()
+
+class Attribute(graphene.ObjectType):
+    key = graphene.String ()
+    value = graphene.String ()
     
 class Thing(graphene.ObjectType):
-    type  = graphene.String ()
-    value = graphene.String ()
+    value      = graphene.String ()
+    attributes = graphene.List (of_type=Attribute)
     
 greenT = GreenT ({
     "clinical_url" : "http://localhost:5000/patients"
@@ -125,8 +129,21 @@ class GreenQuery (graphene.ObjectType):
                                domainA = graphene.String (),
                                domainB = graphene.String ())
 
+
+    '''
+
+class Attribute(graphene.ObjectType):
+    key = graphene.String ()
+    value = graphene.String ()
+    
+class Thing(graphene.ObjectType):
+    value      = graphene.String ()
+    attributes = graphene.List (of_type=Attribute)
+
+    '''
+    
     def resolve_translate (obj, args, context, info):
-        return list (map (lambda v : Thing (type=args.get ("domainB"), value=v),
+        return list (map (lambda v : Thing (value=v),
                           greenT.translate (thing   = args.get ("thing"),
                                             domainA = args.get ("domainA"),
                                             domainB = args.get ("domainB"))))
