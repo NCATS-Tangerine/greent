@@ -10,6 +10,7 @@ from greent.exposures import Exposures
 from greent.clinical import Clinical
 from greent.chemotext import Chemotext
 from greent.disease_ont import DiseaseOntology
+from greent.cmaq import CMAQ
 from collections import defaultdict
 
 class LoggingUtil(object):
@@ -41,7 +42,9 @@ class GreenT (object):
         clinical_url = self.get_config ('clinical_url', "http://tweetsie.med.unc.edu/CLINICAL_EXPOSURE")
 
         self.clinical = Clinical (swagger_endpoint_url=clinical_url)
-        self.exposures = Exposures ()
+        exposures_uri = self.get_config ("exposures_uri",
+                                         "https://app.swaggerhub.com/apiproxy/schema/file/mjstealey/environmental_exposures_api/0.0.1/swagger.json")
+        self.exposures = CMAQ (exposures_uri)
         self.chemotext = Chemotext ()
         self.disease_ontology = DiseaseOntology ()
         self.init_translator ()
@@ -62,9 +65,9 @@ class GreenT (object):
         end_date_obj = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
         return self.exposures.get_scores (
             exposure_type = exposure_type,
-            start_date = start_date_obj,
-            end_date = end_date_obj,
-            exposure_point = exposure_point)
+            start_date    = start_date,
+            end_date      = end_date,
+            lat_lon       = exposure_point)
 
     def get_exposure_values (self, exposure_type, start_date, end_date, exposure_point):
         start_date_obj = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
@@ -75,9 +78,9 @@ class GreenT (object):
         print (" exposure_point: ({})".format (exposure_point))
         return self.exposures.get_values (
             exposure_type  = exposure_type,
-            start_date     = start_date_obj,
-            end_date       = end_date_obj,
-            exposure_point = exposure_point)
+            start_date     = start_date,
+            end_date       = end_date,
+            lat_lon        = exposure_point)
 
     # ChemBio API
 
@@ -99,13 +102,36 @@ class GreenT (object):
     def get_genes_pathways_by_disease (self, diseases):
         return self.chembio_ks.get_genes_pathways_by_disease (diseases)
 
+    def get_drug_gene_disease (self, disease_name, drug_name):
+        return self.chembio_ks.get_drug_gene_disease (disease_name, drug_name)
+    
     # Clinical API
 
     def get_patients (self, age=None, sex=None, race=None, location=None):
         return self.clinical.get_patients (age, sex, race, location)
 
-    # Chemotext
+    # Translator
 
+    def drug_name_to_gene_symbol (self, drug_name):
+        return self.chembio_ks.query (
+            input_fields = { "drugName" : drug_name },
+            query_template="""
+prefix db_resource:    <http://chem2bio2rdf.org/drugbank/resource/>
+prefix ctd:            <http://chem2bio2rdf.org/ctd/resource/>
+prefix pubchem:        <http://chem2bio2rdf.org/pubchem/resource/>
+select ?uniprotSym where {
+    values ( ?drugName ) { ( "$drugName" ) }
+    ?ctdChemGene ctd:cid                        ?pubChemCID;
+                 ctd:gene                       ?uniprotSym.
+    ?ctdChemDis  ctd:cid                        ?pubChemCID;
+                 ctd:diseasename                ?diseaseName.
+    ?drugID      db_resource:CID                ?pubChemCID ;
+  	         db_resource:Generic_Name       ?drugGenericName .
+  filter regex(lcase(str(?drugGenericName)), lcase(?drugName))
+}
+LIMIT 200
+""")
+    
     def init_translator (self):
         root_kind         = 'http://identifiers.org/doi/'
 
@@ -117,6 +143,10 @@ class GreenT (object):
         # DOID
         doid_curie        = "doid"
         doid              = "http://identifiers.org/doid/"
+
+        # DRUG
+        c2b2r_gene        = "http://chem2bio2rdf.org/uniprot/resource/gene"
+        c2b2r_drug_name   = "http://chem2bio2rdf.org/drugbank/resource/Generic_Name"
 
         # Semantic equivalence
         
@@ -132,8 +162,9 @@ class GreenT (object):
         # Domain translation
         self.translator_router = defaultdict (lambda: defaultdict (lambda: NoTranslation ()))
         self.translator_router[mesh_disease_name][mesh_drug_name] = lambda disease: self.chemotext.disease_name_to_drug_name (disease)
-        self.translator_router[doid][mesh_disease_id] = lambda doid: self.disease_ontology.doid_to_mesh (doid)
-
+        self.translator_router[doid][mesh_disease_id] = lambda doid: self.disease_ontology.doid_to_mesh (doid.upper())
+        self.translator_router[c2b2r_drug_name][c2b2r_gene] = lambda drug_name: self.drug_name_to_gene_symbol (drug_name)
+        
     def resolve_id (self, an_id, domain):
         if not an_id in domain:
             candidate = an_id

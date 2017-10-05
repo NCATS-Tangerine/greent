@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from bravado.client import SwaggerClient
 from bravado.requests_client import RequestsClient
 from string import Template
+from uuid import getnode as get_mac
 
 class SwaggerEndpoint(object):
 
@@ -48,22 +49,55 @@ class Clinical (SwaggerEndpoint):
             if race != None:
                 url = "{0}/{1}".format (url, "race/${race}")
                 if age != None:
-                    url = "{0}/{1}".format (ur, "age/${age}")
+                    url = "{0}/{1}".format (url, "age/${age}")
                     if location != None:
                         url = "{0}/{1}".format (url, "location/${location}/")
                     
         #url = Template ("http://tweetsie.med.unc.edu/CLINICAL_EXPOSURE/age/${age}/sex/${sex}/race/${race}/location/${location}/")
         query_string = Template (url).substitute (age = age, sex = sex, race = race, location = location)
-        print ("query: {}".format (query_string))
-        try:            
-            r = requests.get (query_string)
-            r.raise_for_status()
-            result = r.json ()
-        except requests.exceptions.RequestException as e:  # This is the correct syntax
-            print (e)
+
+        # The following test is about convenience for developers, not security. Security is enforced at lower levels with IP
+        # address filtering. This code only allows a sample record to be returned for testing purposes when we're not on the
+        # translator.ncats.io machine.
+        translator_ncats_io_mac_address = 2773026512788
+        mac_address = get_mac()
+        print ("Our mac address: {0}".format (mac_address))
+        live_api_enabled = mac_address == translator_ncats_io_mac_address
+        if live_api_enabled:
+            print ("query: {}".format (query_string))
+            try:            
+                r = requests.get (query_string)
+                r.raise_for_status()
+                result = r.json ()
+            except requests.exceptions.RequestException as e:  # This is the correct syntax
+                print (e)
+        else:
+            result = json.loads ("""[
+         {
+          "birth_date": "2006-08-02 00:00:00",
+          "diag": {"ICD10:B08.4": {"2016-07-08 00:00:00": "OUTPATIENT"},
+                   "ICD9:V19.2": {"2006-12-19 00:00:00": "OUTPATIENT"}},
+          "geoCode": {"GEO:LAT": "35.22056", "GEO:LONG": "-80.69664"},
+          "medList": {"MDCTN:10427": "2016-03-10 00:00:00",
+                      "MDCTN:9502": "2017-01-20 00:00:00"},
+          "patient_id": "32227752",
+          "race": "white",
+          "sex": "M"
+         },
+         {
+          "birth_date": "2006-08-02 00:00:00",
+          "diag": {"ICD10:B08.4": {"2016-07-08 00:00:00": "OUTPATIENT"},
+                   "ICD9:V19.2": {"2006-12-19 00:00:00": "OUTPATIENT"}},
+          "geoCode": {"GEO:LAT": "35.22056", "GEO:LONG": "-80.69664"},
+          "medList": {"MDCTN:10427": "2016-03-10 00:00:00",
+                      "MDCTN:9502": "2017-01-20 00:00:00"},
+          "patient_id": "32227753",
+          "race": "white",
+          "sex": "M"
+         }
+        ]""")
         return result
-                                            
-            
+
 class TestClinical(unittest.TestCase):
 
     pass

@@ -17,17 +17,18 @@ class DiseaseOntology (object):
         print ("Loading disease ontology")
         ont = pronto.Ontology (disease_ontology_data)
         ''' print (ont.json) '''
-        self.doid_to_mesh = defaultdict(lambda:[])
+        self.doid_to_mesh_map = defaultdict(lambda:[])
         for term in ont:
             xref = None
             if 'xref' in term.other:
                 for xref in term.other['xref']:
                     if xref.startswith ("MESH:"):
-                        self.doid_to_mesh[term.id.upper ()].append (xref)
+                        #print ("doid: {0} -> {1}".format (term.id.upper (), xref))
+                        self.doid_to_mesh_map[term.id.upper ()].append (xref)
 
     def doid_to_mesh (self, doid):
-        return self.doid_to_mesh [doid]
+        return self.doid_to_mesh_map [doid]
     
 
-do = DiseaseOntology ()
-print (do.doid_to_mesh ["DOID:2841"])
+#do = DiseaseOntology ()
+#print (do.doid_to_mesh_map ["DOID:2841"])

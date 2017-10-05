@@ -26,7 +26,7 @@ class GraphQL (object):
 
 #    http://localhost:5000/patients/
 
-    def __init__(self, url="http://stars.renci.org/graphql"):
+    def __init__(self, url="https://stars-app.renci.org/greent/graphql"):
         self.url = url
 
     def query (self, query):
@@ -43,12 +43,12 @@ class GraphQL (object):
         response = self.query ({
             "query" : """
 query getExposureScore($exposureType:String, $startDate:String, $endDate:String, $exposurePoint:String){
-  exposureScore(exposureType: $exposureType, 
-    		startDate: $startDate, 
-    		endDate: $endDate, 
-       	        exposurePoint: $exposurePoint) {
+  exposureScore(exposureType  : $exposureType, 
+    		startDate     : $startDate, 
+    		endDate       : $endDate, 
+    	        exposurePoint : $exposurePoint)
+  {
     value
-    units
     latitude
     longitude
   }
@@ -61,20 +61,18 @@ query getExposureScore($exposureType:String, $startDate:String, $endDate:String,
                 "exposurePoint" : exposure_point
             }
         })
-        return response['data']['exposureScore']
-
-        
+        return response['data']['exposureScore']['scores']
 
     def get_exposure_values (self, exposure_type, start_date, end_date, exposure_point):
         response = self.query ({
             "query" : """
 query getExposureValue($exposureType:String, $startDate:String, $endDate:String, $exposurePoint:String){
-  exposureValue(exposureType: $exposureType, 
-    		        startDate: $startDate, 
-    		        endDate: $endDate, 
-    	          exposurePoint: $exposurePoint) {
+  exposureValue(exposureType  : $exposureType, 
+    		startDate     : $startDate, 
+    		endDate       : $endDate , 
+    	        exposurePoint : $exposurePoint)
+  {
     value
-    units
     latitude
     longitude
   }

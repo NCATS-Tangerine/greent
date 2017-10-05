@@ -1,3 +1,4 @@
+import json
 import graphene
 from graphene import resolve_only_args
 from datetime import datetime, timedelta
@@ -6,6 +7,7 @@ from .core import GreenT
 
 # http://graphql.org/learn/introspection/
 
+'''
 class ExposureInterface (graphene.Interface):
     start_time    = graphene.String ()
     end_time      = graphene.String ()
@@ -14,7 +16,13 @@ class ExposureInterface (graphene.Interface):
     longitude     = graphene.String ()
     units         = graphene.String ()
     value         = graphene.String ()
-    
+'''
+class ExposureInterface (graphene.Interface):
+    date_time  = graphene.String ()
+    latitude   = graphene.String ()
+    longitude  = graphene.String ()
+    value      = graphene.String ()
+
 class ExposureScore (graphene.ObjectType):
     class Meta:
         interfaces = (ExposureInterface, )
@@ -67,6 +75,11 @@ class Patient(graphene.ObjectType):
     prescriptions = graphene.List (Prescription)
     diagnoses     = graphene.List (Diagnosis)
 
+class DrugToDisease (graphene.ObjectType):
+    drug_name = graphene.String ()
+    target_name = graphene.String ()
+    disease_name = graphene.String ()
+    
 class Thing(graphene.ObjectType):
     type  = graphene.String ()
     value = graphene.String ()
@@ -77,13 +90,13 @@ greenT = GreenT ({
 
 class GreenQuery (graphene.ObjectType):
 
-    exposure_score = graphene.Field (type=ExposureScore,
+    exposure_score = graphene.List (of_type=ExposureScore,
                                     exposureType  = graphene.String (),
                                     startDate     = graphene.String (),
                                     endDate       = graphene.String (),
                                     exposurePoint = graphene.String ())
     
-    exposure_value = graphene.Field (type=ExposureValue,
+    exposure_value = graphene.List (of_type=ExposureValue,
                                     exposureType  = graphene.String (),
                                     startDate     = graphene.String (),
                                     endDate       = graphene.String (),
@@ -103,6 +116,10 @@ class GreenQuery (graphene.ObjectType):
     gene_paths_by_disease = graphene.List (of_type=GenePath,
                                            diseases = graphene.List(graphene.String))
 
+    drug_gene_disease = graphene.List (of_type=DrugToDisease,
+                                       drug_name = graphene.String (),
+                                       disease_name = graphene.String ())
+    
     translate = graphene.List (of_type = Thing,
                                thing   = graphene.String (),
                                domainA = graphene.String (),
@@ -121,17 +138,14 @@ class GreenQuery (graphene.ObjectType):
             start_date     = args.get ("startDate"),
             end_date       = args.get ("endDate"),
             exposure_point = args.get ("exposurePoint"))
-        if result and len(result) == 1:
-            result = json.loads (result)
-            result = result[0]
-            result = ExposureScore (exposure_type = result['exposure_type'],
-                                    start_time    = result['start_time'],
-                                    end_time      = result['end_time'],
-                                    latitude      = result['latitude'],
-                                    longitude     = result['longitude'],
-                                    units         = result['units'],
-                                    value         = result['value'])
-        return result
+        out = []
+        for r in result['scores']:
+            latitude, longitude = r['latLon'].split (",")
+            out.append (ExposureValue (date_time  = datetime.strftime (r['dateTime'], "%Y-%m-%d"),
+                                       latitude   = latitude,
+                                       longitude  = longitude,
+                                       value      = r['score']))
+        return out
 
     def resolve_exposure_value (obj, args, context, info):
         result = None
@@ -140,17 +154,14 @@ class GreenQuery (graphene.ObjectType):
             start_date     = args.get ("startDate"),
             end_date       = args.get ("endDate"),
             exposure_point = args.get ("exposurePoint"))
-        if result and len(result) == 1:
-            result = json.loads (result)
-            result = result[0]
-            result = ExposureValue (exposure_type = result['exposure_type'],
-                                    start_time    = result['start_time'],
-                                    end_time      = result['end_time'],
-                                    latitude      = result['latitude'],
-                                    longitude     = result['longitude'],
-                                    units         = result['units'],
-                                    value         = result['value'])
-        return result
+        out = []
+        for r in result['values']:
+            latitude, longitude = r['latLon'].split (",")
+            out.append (ExposureValue (date_time  = datetime.strftime (r['dateTime'], "%Y-%m-%d"),
+                                       latitude   = latitude,
+                                       longitude  = longitude,
+                                       value      = r['value']))
+        return out
 
     def resolve_patients (obj, args, context, info):
         result = None
@@ -219,11 +230,50 @@ class GreenQuery (graphene.ObjectType):
             kegg_path    = g['keggPath'],
             path_name    = g['pathName'],
             human        = g['human']), gene_paths))
-    
+    def resolve_drug_gene_disease (obj, args, context, info):
+        drug_name = args.get ("drug_name")
+        disease_name = args.get ("disease_name")
+        paths = greenT.get_drug_gene_disease (disease_name=disease_name, drug_name=drug_name)
+        return list(map(lambda dd : DrugToDisease (
+            drug_name = drug_name,
+            target_name = dd['uniprotSymbol'],
+            disease_name = disease_name), paths))
+
 Schema = graphene.Schema(query=GreenQuery)
 
 
 '''
+{
+  translate (thing:"Imatinib",
+    domainA: "http://chem2bio2rdf.org/drugbank/resource/Generic_Name",
+  	domainB: "http://chem2bio2rdf.org/uniprot/resource/gene")
+  {
+    type
+    value
+  }
+}
+
+{
+  translate (thing:"DOID:2841",
+    domainA: "http://identifiers.org/doid/",
+  	domainB: "http://identifiers.org/mesh/disease/id")
+  {
+    type
+    value
+  }
+}
+
+
+{
+  translate (thing:"Asthma",
+					  domainA :	"http://identifiers.org/mesh/disease/name/",
+						domainB : "http://identifiers.org/mesh/drug/name/")
+  {
+  	type
+    value
+  }
+}
+
 
 {
   exposureValue(exposureType: "pm25", 

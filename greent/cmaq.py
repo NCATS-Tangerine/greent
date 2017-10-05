@@ -43,10 +43,10 @@ class CMAQ (SwaggerEndpoint):
 #        return self.client.default.controllers_default_controller_cmaq_get ().result ()
         return self.client.cmaq.get_cmaq ().result (timeout = 10)
     
-    def get_scores (self, start_date, end_date, lat_lon, exposureType='pm25', resolution='7day', aggregation='max', utcOffset='utc'):
+    def get_scores (self, start_date, end_date, lat_lon, exposure_type='pm25', resolution='7day', aggregation='max', utcOffset='utc'):
 #        return self.client.default.controllers_default_controller_cmaq_get_scores_get (
         return self.client.cmaq.get_cmaq_getScores (
-            exposureType = exposureType,
+            exposureType = exposure_type,
             startDate = datetime.datetime.strptime(start_date, "%Y-%m-%d").date (),
             endDate = datetime.datetime.strptime(end_date, "%Y-%m-%d").date (),
 	    latLon = lat_lon,
@@ -54,10 +54,10 @@ class CMAQ (SwaggerEndpoint):
             aggregation = aggregation,
             utcOffset = utcOffset).result (timeout = 10)
 
-    def get_values (self, start_date, end_date, lat_lon, exposureType='pm25', resolution='7day', aggregation='max', utcOffset='utc'):
+    def get_values (self, start_date, end_date, lat_lon, exposure_type='pm25', resolution='7day', aggregation='max', utcOffset='utc'):
 #        return self.client.default.controllers_default_controller_cmaq_get_values_get (
         return self.client.cmaq.get_cmaq_getValues (
-            exposureType = exposureType,
+            exposureType = exposure_type,
             startDate = datetime.datetime.strptime(start_date, "%Y-%m-%d").date (),
             endDate = datetime.datetime.strptime(end_date, "%Y-%m-%d").date (),
 	    latLon = lat_lon,
@@ -67,16 +67,18 @@ class CMAQ (SwaggerEndpoint):
 
 #c = CMAQ ("https://exposures.renci.org/v1/swagger.json")
 #c = CMAQ ("https://raw.githubusercontent.com/RENCI/nih-exposures-api/master/specification/swagger.yml")
-c = CMAQ ("https://app.swaggerhub.com/apiproxy/schema/file/mjstealey/environmental_exposures_api/0.0.1/swagger.json")
-c.inspect ()
 
-pprint (c.get_scores (start_date = "2011-01-01",
-                      end_date = "2011-12-31",
-                      lat_lon = "35.9131996,-79.0558445"))
 
-pprint (c.get_values (start_date = "2011-01-01",
-                      end_date = "2011-12-31",
-                      lat_lon = "35.9131996,-79.0558445"))
+#c = CMAQ ("https://app.swaggerhub.com/apiproxy/schema/file/mjstealey/environmental_exposures_api/0.0.1/swagger.json")
+#c.inspect ()
+
+#pprint (c.get_scores (start_date = "2011-01-01",
+#                      end_date = "2011-12-31",
+#                      lat_lon = "35.9131996,-79.0558445"))
+
+#pprint (c.get_values (start_date = "2011-01-01",
+#                      end_date = "2011-12-31",
+#                      lat_lon = "35.9131996,-79.0558445"))
 
 '''
 {

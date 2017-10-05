@@ -81,3 +81,27 @@ class ChemBioKS(object):
             "human"       : '(human)' in b['pathwayName'].value
         },
         results.bindings))
+
+    
+    def get_drug_gene_disease (self, disease_name, drug_name):
+        """ Identify targets and diseases assocaited with a drug name.
+        :param disease_name: MeSH name of a disease condition.
+        :type str: String
+        :param drug_name: Name of a drug.
+        :type str: String
+        """
+        text = self.get_template ("drug_gene_disease").safe_substitute (
+            diseaseName=disease_name,
+            drugName=drug_name)
+        results = self.triplestore.execute_query (text)
+        return list(map (lambda b : {
+            "uniprotSymbol" : b['uniprotSym'].value,
+            "diseaseId"     : b['diseaseID'].value
+        }, results.bindings))
+
+    def query (self, query_template, input_fields=[]):
+        query_template = Template(query_template)
+        query_text = query_template.safe_substitute (**input_fields)
+        query_results = self.triplestore.execute_query (query_text)
+        return { key : value.value for (key, value) in query_results.bindings }
+        
