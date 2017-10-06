@@ -144,9 +144,9 @@ class Thing(graphene.ObjectType):
     
     def resolve_translate (obj, args, context, info):
         return list (map (lambda v : Thing (value=v),
-                          greenT.translate (thing   = args.get ("thing"),
-                                            domainA = args.get ("domainA"),
-                                            domainB = args.get ("domainB"))))
+                          greenT.translator.translate (thing   = args.get ("thing"),
+                                                       domainA = args.get ("domainA"),
+                                                       domainB = args.get ("domainB"))))
     
     def resolve_exposure_score (obj, args, context, info):
         result = None
