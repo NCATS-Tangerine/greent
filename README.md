@@ -15,23 +15,14 @@ So all of the services described below are available via
 * A **GraphQL** REST API
 * The graphical GraphQL **query editor**
 
-### Primary
+GreenT currently presents some data from the following services:
 
-GreenT currently presents the following primary services:
-
-| **API**       | API Stack |   Description                                               |
-| --------------|-----------|-------------------------------------------------------------|
-| **ChemBio**   | SPARQL    | Chemical and biological data via [chem2bio2rdf](http://stars-blazegraph.renci.org/blazegraph/#query)               |
-| **Exposures** | OpenAPI   | Environmental exposures modeled by [CMAQ](https://exposures.renci.org/v1/ui/#/default)   |
-| **Clinical**  | OpenAPI   | De-identified clinical data                                 |
-| **Endotype**  | OpenAPI   | Data driven [disease classification machine learning model](https://endotypes.renci.org/v1/ui/)   |
-
-### Secondary
-
-GreenT aggregates some data via the following services. None is used to its full potential but we have a start.
-
-| **API**               |   API Stack   |   Description                                               |
+| **API**               | API Stack     |   Description                                               |
 | ----------------------|---------------|-------------------------------------------------------------|
+| **ChemBio**           | SPARQL        | Chemical and biological data via [chem2bio2rdf](http://stars-blazegraph.renci.org/blazegraph/#query)               |
+| **Exposures**         | OpenAPI       | Environmental exposures modeled by [CMAQ](https://exposures.renci.org/v1/ui/#/default)   |
+| **Clinical**          | OpenAPI       | De-identified clinical data                                 |
+| **Endotype**          | OpenAPI       | Data driven [disease classification machine learning model](https://endotypes.renci.org/v1/ui/)    |
 | **Chemotext**         |     Neo4J     | Chemical and biological data via [chem2bio2rdf](http://cheminfov.informatics.indiana.edu:8080/c2b2r/)   |
 | **Pharos**            |     OpenAPI   | Drug / Gene / Disease information from the [NIH](https://pharos.nih.gov/idg/api)  |
 | **OXO**               |     REST API  | Identifier [XRef service](https://www.ebi.ac.uk/spot/oxo/)  |
