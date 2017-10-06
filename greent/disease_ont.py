@@ -36,6 +36,6 @@ class DiseaseOntology (object):
             self.load ()
         return self.doid_to_mesh_map [doid]
     
-
-do = DiseaseOntology ()
-print (do.doid_to_mesh ("DOID:2841"))
+def test ():
+    do = DiseaseOntology ()
+    print (do.doid_to_mesh ("DOID:2841"))

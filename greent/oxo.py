@@ -17,7 +17,7 @@ class OXO(object):
                 "distance"      : "2"
             })
     def mesh_to_other (self, mesh_id):
-        print ("-----------> {}".format (mesh_id))
+        #print ("-----------> {}".format (mesh_id))
         result = []
         response = self.query (ids=[ mesh_id ])
         searchResults = response['_embedded']['searchResults']

@@ -21,7 +21,7 @@ class Pharos(object):
             #print (k['id'])
             if k['kind'] == "ix.idg.models.Disease":
                 for p in k['properties']:
-                    print (p)
+                    #print (p)
                     if p['label'] == 'IDG Disease':
                         result.append (p['term'])
         for r in result:
@@ -39,5 +39,3 @@ def test ():
     pharos = Pharos ()
     diseases = pharos.target_to_disease ("CACNA1A")
     print (diseases)
-    
-test ()

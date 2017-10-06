@@ -26,10 +26,6 @@ class LoggingUtil(object):
 
 logger = LoggingUtil.init_logging (__file__)
 
-class NoTranslation (Exception):
-    def __init__(self, message=None):
-        super(NoTranslation, self).__init__(message)
-
 class GreenT (object):
 
     ''' The Green Translator API - a single Python interface aggregating access mechanisms for 
