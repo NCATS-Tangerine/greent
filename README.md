@@ -18,8 +18,28 @@ Developed at the University of North Carolina at Chapel Hill, the API provides a
 ## Usage Example
 
 ```
-from greent.core import GreenT
-translator = GreenT ()
+from greent.client import GraphQL
+translator = GraphQL ()
+
+...
+
+
+  translator = GraphQL ("http://localhost:5000/graphql")    
+  Translation = namedtuple ('Translation', [ 'thing', 'domain_a', 'domain_b' ])
+  translations = [
+      Translation ("Imatinib",     "http://chem2bio2rdf.org/drugbank/resource/Generic_Name", "http://chem2bio2rdf.org/uniprot/resource/gene"),      
+      Translation ("CDC25A",       "http://chem2bio2rdf.org/uniprot/resource/gene",          "http://chem2bio2rdf.org/kegg/resource/kegg_pathway"), 
+      Translation ("CACNA1A",      "http://chem2bio2rdf.org/uniprot/resource/gene",          "http://pharos.nih.gov/identifier/disease/name"),      
+      Translation ("Asthma",       "http://identifiers.org/mesh/disease/name",               "http://identifiers.org/mesh/drug/name"),              
+      Translation ("DOID:2841",    "http://identifiers.org/doid",                            "http://identifiers.org/mesh/disease/id"),             
+      Translation ("MESH:D001249", "http://identifiers.org/mesh",                            "http://identifiers.org/doi")                          
+  ]
+  def test_translations (self):
+      for index, translation in enumerate (self.translations):
+          result = self.translator.translate (
+              thing=translation.thing,
+              domain_a=translation.domain_a,
+              domain_b=translation.domain_b)
 ```
 
 By default, the constructor above will use the public GraphQL API instance hosted at RENCI: 
