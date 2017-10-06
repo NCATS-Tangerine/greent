@@ -44,7 +44,9 @@ https://stars-app.renci.org/greent/graphql
 
 ## Services
 
-GreenT currently presents four main services. More information coming on these soon.
+GreenT currently presents four primary services:
+| **ChemBio**: Chemical-biological data via chem2bio2rdf
+More information coming on these soon.
 
 ### ChemBio
 
