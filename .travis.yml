@@ -5,4 +5,4 @@ python:
 # command to install dependencies
 install: "pip install -r greent/requirements.txt"
 # command to run tests
-script: "PYTHONPATH=./greent python greent/testgreent.py"
+script: "PYTHONPATH=./greent python greent/translator.py"
