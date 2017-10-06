@@ -10,23 +10,23 @@ GreenT is a library of interfaces to biomedical and environmental data services.
 
 GreenT currently presents the following primary services:
 
-| **API**       | Version |   Description                                               |
-| --------------|---------|-------------------------------------------------------------|
-| **ChemBio**   | 0.2     | Chemical and biological data via [chem2bio2rdf](http://stars-blazegraph.renci.org/blazegraph/#query)               |
-| **Exposures** | 0.2     | Environmental exposures modeled by [CMAQ](https://exposures.renci.org/v1/ui/#/default)   |
-| **Clinical**  | 0.2     | De-identified clinical data                                 |
-| **Endotype**  | 0.1     | Data driven [disease classification machine learning model](https://endotypes.renci.org/v1/ui/)   |
+| **API**       | API Stack |   Description                                               |
+| --------------|-----------|-------------------------------------------------------------|
+| **ChemBio**   | SPARQL    | Chemical and biological data via [chem2bio2rdf](http://stars-blazegraph.renci.org/blazegraph/#query)               |
+| **Exposures** | OpenAPI   | Environmental exposures modeled by [CMAQ](https://exposures.renci.org/v1/ui/#/default)   |
+| **Clinical**  | OpenAPI   | De-identified clinical data                                 |
+| **Endotype**  | OpenAPI   | Data driven [disease classification machine learning model](https://endotypes.renci.org/v1/ui/)   |
 
 ### Secondary
 
 GreenT aggregates some data via the following services. None of these is used to their full potential but we have a start.
 
-| **API**               | Version |   Description                                               |
-| ----------------------|---------|-------------------------------------------------------------|
-| **Chemotext**         | 0.1     | Chemical and biological data via [chem2bio2rdf](http://cheminfov.informatics.indiana.edu:8080/c2b2r/)   |
-| **Pharos**            | 0.1     | Drug / Gene / Disease information from the [NIH](https://pharos.nih.gov/idg/api)  |
-| **OXO**               | 0.1     | Identifier [XRef service](https://www.ebi.ac.uk/spot/oxo/)  |
-| **Disease Ontology**  | 0.1     | Ontology of [disease](http://disease-ontology.org/)         |
+| **API**               |   API Stack   |   Description                                               |
+| ----------------------|---------------|-------------------------------------------------------------|
+| **Chemotext**         |     Neo4J     | Chemical and biological data via [chem2bio2rdf](http://cheminfov.informatics.indiana.edu:8080/c2b2r/)   |
+| **Pharos**            |     OpenAPI   | Drug / Gene / Disease information from the [NIH](https://pharos.nih.gov/idg/api)  |
+| **OXO**               |     REST API  | Identifier [XRef service](https://www.ebi.ac.uk/spot/oxo/)  |
+| **Disease Ontology**  | OBO Ontology  | Ontology of [disease](http://disease-ontology.org/)         |
 
 Developed at the University of North Carolina at Chapel Hill, the API provides a Python package, Python interface, and a GraphQL service.
 
