@@ -44,23 +44,23 @@ https://stars-app.renci.org/greent/graphql
 
 ## Services
 
-GreenT currently presents four primary services:
-| **ChemBio**: Chemical-biological data via chem2bio2rdf
-More information coming on these soon.
+### Primary
 
-### ChemBio
+GreenT currently presents the following primary services:
 
-This is a set of endpoints relating to the Chem2Bio2RDF data set.
+| **API**       | Version |   Description                                               |
+| --------------|---------|-------------------------------------------------------------|
+| **ChemBio**   | 0.2     | Chemical and biological data via [chem2bio2rdf](http://stars-blazegraph.renci.org/blazegraph/#query)               |
+| **Exposures** | 0.2     | Environmental exposures modeled by [CMAQ](https://exposures.renci.org/v1/ui/#/default)   |
+| **Clinical**  | 0.2     | De-identified clinical data                                 |
+| **Endotype**  | 0.1     | Data driven [disease classification machine learning model](https://endotypes.renci.org/v1/ui/)   |
 
-### Clinical
+### Secondary
 
-A set of clinical derived data with no personally identifiable information.
+GreenT aggregates some data via the following services:
 
-### Environmental Exposures
-
-Data derived from the CMAQ model.
-
-### Chemotext
-
-Mention data for terms in PubMed's Medline meta data.
-
+| **API**       | Version |   Description                                               |
+| --------------|---------|-------------------------------------------------------------|
+| **Chemotext** | 0.1     | Chemical and biological data via chem2bio2rdf               |
+| **Pharos**    | 0.1     | Drug / Gene / Disease information from the [NIH](https://pharos.nih.gov/idg/api)  |
+| **OXO**       | 0.1     | Identifier [XRef service](https://www.ebi.ac.uk/spot/oxo/)  |
