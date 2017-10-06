@@ -4,16 +4,17 @@ import json
 import pprint
 import unittest
 import os
+from collections import defaultdict
 from greent.triplestore import TripleStore
 from greent.chembio import ChemBioKS
-from greent.exposures import Exposures
-from greent.clinical import Clinical
 from greent.chemotext import Chemotext
+#from greent.exposures import Exposures
+from greent.clinical import Clinical
 from greent.disease_ont import DiseaseOntology
 from greent.cmaq import CMAQ
 from greent.pharos import Pharos
 from greent.oxo import OXO
-from collections import defaultdict
+from greent.translator import Translator
 
 class LoggingUtil(object):
     """ Logging utility controlling format and setting initial logging level """
@@ -51,7 +52,8 @@ class GreenT (object):
         self.disease_ontology = DiseaseOntology ()
         self.pharos = Pharos ()
         self.oxo = OXO ()
-        self.init_translator ()
+        #self.init_translator ()
+        self.translator = Translator (core=self)
         
     def get_config (self, key, default):
         result = None
