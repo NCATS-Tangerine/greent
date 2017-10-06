@@ -9,14 +9,13 @@ cd $ROOT
 rm -rf greent-venv
 python3.6 -m venv greent-venv
 source greent-venv/bin/activate
-
 if [ -d greent ]; then
+   cd greent
    git pull
 else
    git clone git@github.com:NCATS-Tangerine/greent.git
+   cd greent
 fi
-cd greent
-
 pip install -r greent/requirements.txt
 PYTHONPATH=$PWD green
 ./publish
