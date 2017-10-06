@@ -67,5 +67,17 @@ By default, the constructor above will use the public GraphQL API instance hoste
 ```
 https://stars-app.renci.org/greent/graphql
 ```
+To use a development server instead, you can install the module and run:
+```
+python -m greent.app
+```
 
+Then use http://localhost:5000 as the URL for the GraphQL client.
+
+Also, note that you can send arbitrary GraphQL queries to the client with syntax like this:
+```
+translator.query ({
+   "query" : "<query_text>"
+   })
+```
 Constants for referring to vocabulary terms can be found in the [greent.translator.Vocab](https://github.com/NCATS-Tangerine/greent/blob/master/greent/translator.py#L13) module.
