@@ -6,6 +6,15 @@ GreenT is a library of interfaces to biomedical and environmental data services.
 
 ## Services
 
+The data sources GreenT provides access to are highly heterogeneous in terms of technologies and data types. We have multiple kinds of graph databases, tabuar data, spatio-temporal environmental data, and machine learning models. 
+
+At the same time, we value presenting a coherent, usable interface to users. 
+
+So all of the services described below are available via
+* A **Python** API
+* A **GraphQL** REST API
+* The graphical GraphQL **query editor**
+
 ### Primary
 
 GreenT currently presents the following primary services:
@@ -19,7 +28,7 @@ GreenT currently presents the following primary services:
 
 ### Secondary
 
-GreenT aggregates some data via the following services. None of these is used to their full potential but we have a start.
+GreenT aggregates some data via the following services. None is used to its full potential but we have a start.
 
 | **API**               |   API Stack   |   Description                                               |
 | ----------------------|---------------|-------------------------------------------------------------|
