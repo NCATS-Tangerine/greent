@@ -1,5 +1,7 @@
 # GreenT
 
+Travis Autobuild: ![Autobuild](https://travis-ci.org/NCATS-Tangerine/greent.svg?branch=master)
+
 GreenT is a library of interfaces to biomedical and environmental data services.
 
 Developed at the University of North Carolina at Chapel Hill, the API provides a Python package, Python interface, and a GraphQL service.
@@ -42,6 +44,8 @@ By default, the constructor above will use the public GraphQL API instance hoste
 https://stars-app.renci.org/greent/graphql
 ```
 
+Constants for referring to vocabulary terms can be found in the [greent.translator.Vocab](https://github.com/NCATS-Tangerine/greent/blob/master/greent/translator.py#L13) module.
+
 ## Services
 
 ### Primary
@@ -57,10 +61,11 @@ GreenT currently presents the following primary services:
 
 ### Secondary
 
-GreenT aggregates some data via the following services:
+GreenT aggregates some data via the following services. None of these is used to their full potential but we have a start.
 
-| **API**       | Version |   Description                                               |
-| --------------|---------|-------------------------------------------------------------|
-| **Chemotext** | 0.1     | Chemical and biological data via chem2bio2rdf               |
-| **Pharos**    | 0.1     | Drug / Gene / Disease information from the [NIH](https://pharos.nih.gov/idg/api)  |
-| **OXO**       | 0.1     | Identifier [XRef service](https://www.ebi.ac.uk/spot/oxo/)  |
+| **API**               | Version |   Description                                               |
+| ----------------------|---------|-------------------------------------------------------------|
+| **Chemotext**         | 0.1     | Chemical and biological data via chem2bio2rdf               |
+| **Pharos**            | 0.1     | Drug / Gene / Disease information from the [NIH](https://pharos.nih.gov/idg/api)  |
+| **OXO**               | 0.1     | Identifier [XRef service](https://www.ebi.ac.uk/spot/oxo/)  |
+| **Disease Ontology**  | 0.1     | Ontology of [disease](http://disease-ontology.org/)         |
