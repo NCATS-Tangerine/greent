@@ -59,21 +59,6 @@ class TestTranslator(LiveServerTestCase):
         print ("   -- Translate thing: {0} in domain {1} to domain {2}. {3}".format (
             translation.thing, translation.domain_a, translation.domain_b, translation.description))
         print (self.run_test (translation))
-    '''
-    def test_drug_to_target (self):
-        time.sleep (3)
-        self.run_by_name ("Drug->Target")
-    def test_target_to_pathway (self):
-        self.run_by_name ("Target->Pathway")
-    def test_target_to_disease (self):
-        self.run_by_name ("Target->Disease")
-    def test_disease_to_drug (self):
-        self.run_by_name ("Disease->Drug")
-    def test_doid_to_mesh (self):
-        self.run_by_name ("DOID->MeSH")
-    def test_mesh_to_other (self):
-        self.run_by_name ("MeSH->*")
-    '''
     
 if __name__ == '__main__':
     unittest.main ()
