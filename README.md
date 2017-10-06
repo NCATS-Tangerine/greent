@@ -17,16 +17,16 @@ So all of the services described below are available via
 
 GreenT currently presents some data from the following services:
 
-| **API**               | API Technology| Provider       |  Description                                                    |
-| ----------------------|---------------|----------------|-----------------------------------------------------------------|
-| **ChemBio**           | SPARQL        | UNC-RENCI      | Chemical and biological data via [chem2bio2rdf](http://stars-blazegraph.renci.org/blazegraph/#query)               |
-| **Exposures**         | OpenAPI       | UNC-IE-RENCI   | Environmental exposures modeled by [CMAQ](https://exposures.renci.org/v1/ui/#/default)   |
-| **Clinical**          | OpenAPI       | UNC-CDW        | De-identified clinical data                                 |
-| **Endotype**          | OpenAPI       | UNC-CDW-RENCI  | Data driven [disease classification machine learning model](https://endotypes.renci.org/v1/ui/)    |
-| **Chemotext**         |     Neo4J     | UNC-ESHELMAN   | Chemical and biological data via [chem2bio2rdf](http://cheminfov.informatics.indiana.edu:8080/c2b2r/)   |
-| **Pharos**            |     OpenAPI   | NIH            | Drug / Gene / Disease information from the [NIH](https://pharos.nih.gov/idg/api)  |
-| **OXO**               |     REST API  | EMBL-EBI       | Identifier [XRef service](https://www.ebi.ac.uk/spot/oxo/)  |
-| **Disease Ontology**  | OBO Ontology  | UofM / IGS     | Ontology of [disease](http://disease-ontology.org/)         |
+| **API**            | Technology | Provider     |  Description                                                    |
+| -------------------|------------|--------------|-----------------------------------------------------------------|
+| **ChemBio**        | SPARQL     | U-Indiana/RENCI| Chemical and biological [data](http://cheminfov.informatics.indiana.edu:8080/c2b2r/) via [chem2bio2rdf](http://stars-blazegraph.renci.org/blazegraph/#query)               |
+| **Exposures**      | OpenAPI    | UNC-IE-RENCI | Environmental exposures modeled by [CMAQ](https://exposures.renci.org/v1/ui/#/default)   |
+| **Clinical**       | OpenAPI    | UNC-CDW      | De-identified clinical data                                 |
+| **Endotype**       | OpenAPI    | UNC-CDW-RENCI| Data driven [disease classification / machine learning model](https://endotypes.renci.org/v1/ui/)    |
+| **Chemotext**      |  Neo4J     | UNC-ESHELMAN | Chemical and biological data via [chem2bio2rdf](http://cheminfov.informatics.indiana.edu:8080/c2b2r/)   |
+| **Pharos**         |  OpenAPI   | NIH          | Drug / Gene / Disease information from the [NIH](https://pharos.nih.gov/idg/api)  |
+| **OXO**            |  REST API  | EMBL-EBI     | Identifier [XRef service](https://www.ebi.ac.uk/spot/oxo/)  |
+| **DiseaseOntology**|OBO Ontology| UofM / IGS   | Ontology of [disease](http://disease-ontology.org/)         |
 
 Developed at the University of North Carolina at Chapel Hill, the API provides a Python package, Python interface, and a GraphQL service.
 
