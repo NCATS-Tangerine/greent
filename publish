@@ -1,12 +1,11 @@
 #!/bin/bash
  
 set -e
+set -x
 
-version=$1
-
-#    package_dir={ 'greent' : 'greent' },
 # http://peterdowns.com/posts/first-time-with-pypi.html
 
+write_setup_config () {
 cat <<EOF > setup.py
 from distutils.core import setup
 from pip.req import parse_requirements
@@ -34,53 +33,24 @@ setup(
     classifiers = [ ],
 )
 EOF
-
-if [ -z "$version" ]; then
-    echo version parameter is required
-    exit 0
-fi 
+}
 
 publish () {
-
-    #python testgreent.py
-    set -x
-
+    version=$(echo $(cat version) 0.01 | awk '{printf "%G", $1 + $2}' )
+    echo "Publishing version: $version"
+    write_setup_config
     git tag
-    echo $version
-    
     if [ -z "$( git tag | grep $version )" ]; then
-
 	python setup.py sdist
 	tar tf dist/greent-${version}.tar.gz
 	twine upload --skip-existing dist/greent-${version}.tar.gz
 
-	touch publish
+        echo $version > version
 	git commit -am "api version $version"
-	git push origin master
-	
+	git push origin master	
 	git tag $version -m "publishing version $version"
 	git push --tags origin master
-	
-
-
-	f () {
-	echo $version > flag
-	python setup.py register -r pypitest
-	python setup.py sdist upload -r pypitest
-	python setup.py register -r pypi
-	python setup.py sdist upload -r pypi
-	}
     fi
-    if [ "$( pip freeze | grep 'greent=' | grep -c greent )" -gt 0 ]; then
-	python -m pip --no-cache-dir uninstall -y greent
-    fi
-    python -m pip --no-cache-dir install greent==$version
-
-    cur=$PWD
-    cd $(dirname $(which python))/../lib/pyth*/site-packages/
-    python greent/testgreent.py
-    cd $cur
 }
-
 
 publish $*
