@@ -31,7 +31,7 @@ translations = [
 ]
 def test_translations (self):
   for index, translation in enumerate (self.translations):
-    result = self.translator.translate (
+    result = translator.translate (
       thing=translation.thing,
       domain_a=translation.domain_a,
       domain_b=translation.domain_b)
