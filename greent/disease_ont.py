@@ -16,7 +16,7 @@ class DiseaseOntology (object):
                 for chunk in r.iter_content(chunk_size=1024): 
                     if chunk: # filter out keep-alive new chunks
                         f.write(chunk)                
-        print ("Loading disease ontology")
+        #print ("Loading disease ontology")
         self.ont = pronto.Ontology (self.disease_ontology_data)
         ''' print (ont.json) '''
 

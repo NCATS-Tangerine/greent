@@ -1,7 +1,7 @@
 import logging
 import unittest
 import json
-
+from pprint import pprint, pformat
 from core import GreenT
 
 class LoggingUtil(object):
@@ -18,29 +18,33 @@ class TestGreenT(unittest.TestCase):
 
     greenT = GreenT ()
 
-    def test_exposures (self):
+    def test_exposure_scores (self):
         exposure_type = "pm25"
-        start_date = "2010-1-1",
-        end_date = "2010-1-7",
+        start_date = "2010-1-1"
+        end_date = "2010-1-7"
         lat = "35.9131996"
         lon = "-79.0558445"
-        exposure_point = ",".join ([ lat, lon ]) #"35.9131996,-79.0558445"
+        exposure_point = ",".join ([ lat, lon ])
+        results = self.greenT.get_exposure_scores (exposure_type, start_date, end_date, exposure_point)
+        for r in results['scores']:
+            this_lat, this_lon = r['latLon'].split (',')
+            print ("   -- lat: (out:{0}) (in:{1}) lon: (out:{2}) (in:{3}) score: {4}".format (
+                this_lat, lat, this_lon, lon, r['score']))
+            self.assertTrue (this_lat == lat and this_lon == lon)
         
-        results = json.loads (self.greenT.get_exposure_scores (exposure_type, start_date, end_date, exposure_point))
-        for r in results: #.data ['exposureScores']:
-            this_lat = str(r['latitude'])
-            #print ("-------- ({}) ({})".format (this_lat, lat))
-            self.assertTrue (this_lat == lat)
-
-        #self.greenT.print_exposure_results (results, key='exposureScores')
-        
-        results = json.loads (self.greenT.get_exposure_values (exposure_type, start_date, end_date, exposure_point))
-        for r in results: #.data ['exposureValues']:
-            this_lat = str(r['latitude'])
-            #print ("-------- ({}) ({})".format (this_lat, lat))
-            self.assertTrue (this_lat == lat)
-
-        #self.greenT.print_exposure_results (results, key='exposureValues')
+    def test_exposure_values (self):
+        exposure_type = "pm25"
+        start_date = "2010-1-1"
+        end_date = "2010-1-7"
+        lat = "35.9131996"
+        lon = "-79.0558445"
+        exposure_point = ",".join ([ lat, lon ])
+        results = self.greenT.get_exposure_values (exposure_type, start_date, end_date, exposure_point)
+        for r in results['values']:
+            this_lat, this_lon = r['latLon'].split (',')
+            print ("   -- lat: (out:{0}) (in:{1}) lon: (out:{2}) (in:{3}) value: {4}".format (
+                this_lat, lat, this_lon, lon, r['value']))
+            self.assertTrue (this_lat == lat and this_lon == lon)
 
     def test_chembio (self):
         chemicals = [ 'D052638' ]
@@ -51,14 +55,10 @@ class TestGreenT(unittest.TestCase):
                 t = True
                 break
         self.assertTrue (t)
-        # print (json.dumps (conditions, indent=2))
+        print (json.dumps (conditions[:2], indent=2))
         drugs = self.greenT.get_drugs_by_condition (conditions=[ "d001249" ])
-        # print (json.dumps (drugs, indent=2))
         for d in [ "Paricalcitol", "NIMESULIDE", "Ramipril" ]:
             self.assertTrue (d in drugs)
-
-        #paths = self.greenT.get_genes_pathways_by_disease (diseases)
-        #print (paths)
 
     def test_clinical (self):
         '''

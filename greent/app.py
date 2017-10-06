@@ -77,6 +77,5 @@ def main ():
     app = create_app(graphiql=True)
     app.run(host="0.0.0.0", threaded=True)
 
-
 if __name__ == '__main__':
     main ()

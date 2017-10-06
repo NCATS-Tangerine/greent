@@ -62,9 +62,6 @@ class GreenT (object):
     # Exposure API
 
     def get_exposure_scores (self, exposure_type, start_date, end_date, exposure_point):
-        #print ("core -------------> {}".format (start_date))
-        start_date_obj = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
-        end_date_obj = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
         return self.exposures.get_scores (
             exposure_type = exposure_type,
             start_date    = start_date,
@@ -72,12 +69,6 @@ class GreenT (object):
             lat_lon       = exposure_point)
 
     def get_exposure_values (self, exposure_type, start_date, end_date, exposure_point):
-        start_date_obj = datetime.datetime.strptime(start_date, "%Y-%m-%d").date()
-        end_date_obj = datetime.datetime.strptime(end_date, "%Y-%m-%d").date()
-        print (" start_date_obj: ({})".format (start_date_obj))
-        print (" end_date_obj: ({})".format (end_date_obj))
-        print (" exposure_type: ({})".format (exposure_type))
-        print (" exposure_point: ({})".format (exposure_point))
         return self.exposures.get_values (
             exposure_type  = exposure_type,
             start_date     = start_date,
@@ -113,7 +104,7 @@ class GreenT (object):
         return self.clinical.get_patients (age, sex, race, location)
 
     # Translator
-    
+    '''
     def init_translator (self):
         root_kind         = 'http://identifiers.org/doi'
 
@@ -179,5 +170,5 @@ class GreenT (object):
             if isinstance (result, NoTranslation):
                 raise NoTranslation ("No translation implemented from domain {0} to domain {1}".format (domainA, domainB))
         return result
-
+    '''
     

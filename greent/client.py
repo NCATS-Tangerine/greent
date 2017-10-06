@@ -163,11 +163,9 @@ query getGenesPathways($diseases : [String] ) {
     def translate (self, thing, domain_a, domain_b):
         query_text = Template ("""{ translate (thing:\"$thing\", domainA: \"$domain_a\", domainB: \"$domain_b\") { value } }""").\
            safe_substitute (thing=thing, domain_a=domain_a, domain_b=domain_b)
-        #print (query_text)
         result = self.query ({
             "query" : query_text
         })['data']['translate']
-        print (result)
         return result
     
 class TestGraphQLClient (unittest.TestCase):

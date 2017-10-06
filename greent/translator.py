@@ -95,9 +95,10 @@ class TestTranslator(LiveServerTestCase):
       from greent import app
       app = app.create_app(graphiql=True)
       app.config['TESTING'] = True
+      app.config['LIVESERVER_PORT'] = 5001
       return app 
 
-  translator = GraphQL ("http://localhost:5000/graphql")    
+  translator = GraphQL ("http://localhost:5001/graphql")    
   Translation = namedtuple ('Translation', [ 'thing', 'domain_a', 'domain_b' ])
   translations = [
       Translation ("Imatinib",     "http://chem2bio2rdf.org/drugbank/resource/Generic_Name", "http://chem2bio2rdf.org/uniprot/resource/gene"),      

@@ -6,6 +6,7 @@ bravado-core==4.9.1
 certifi==2017.7.27.1
 chardet==3.0.4
 click==6.7
+colorama==0.3.9
 decorator==4.1.2
 entrypoints==0.2.3
 Flask==0.12
@@ -15,7 +16,7 @@ gnureadline==6.3.3
 graphene==1.4.1
 graphql-core==1.1
 graphql-relay==0.4.5
-greent==0.40
+green==2.11.0
 hdijupyterutils==0.12.4
 html5lib==1.0b10
 idna==2.5
@@ -59,6 +60,7 @@ pykerberos==1.1.14
 PyLD==0.7.3
 pyparsing==2.2.0
 python-dateutil==2.6.1
+python-termstyle==0.1.10
 pytz==2017.2
 PyYAML==3.12
 pyzmq==16.0.2
@@ -82,6 +84,7 @@ tqdm==4.18.0
 traitlets==4.3.2
 twine==1.9.1
 typing==3.6.2
+Unidecode==0.4.21
 urllib3==1.21.1
 wcwidth==0.1.7
 webcolors==1.7
