@@ -1,0 +1,22 @@
+#!/bin/bash
+set -e
+set -x
+
+ROOT=~/dev
+mkdir -p $ROOT
+cd $ROOT
+
+rm -rf greent-venv
+python3.6 -m venv greent-venv
+source greent-venv/bin/activate
+
+git clone git@github.com:NCATS-Tangerine/greent.git
+cd greent
+
+pip install -r greent/requirements.txt
+PYTHONPATH=$PWD green
+./publish
+
+pip install --no-cache-dir greent
+
+
