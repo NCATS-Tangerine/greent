@@ -1,8 +1,32 @@
 # GreenT
 
-Travis Autobuild: ![Autobuild](https://travis-ci.org/NCATS-Tangerine/greent.svg?branch=master)
+![Autobuild](https://travis-ci.org/NCATS-Tangerine/greent.svg?branch=master)
 
 GreenT is a library of interfaces to biomedical and environmental data services.
+
+## Services
+
+### Primary
+
+GreenT currently presents the following primary services:
+
+| **API**       | Version |   Description                                               |
+| --------------|---------|-------------------------------------------------------------|
+| **ChemBio**   | 0.2     | Chemical and biological data via [chem2bio2rdf](http://stars-blazegraph.renci.org/blazegraph/#query)               |
+| **Exposures** | 0.2     | Environmental exposures modeled by [CMAQ](https://exposures.renci.org/v1/ui/#/default)   |
+| **Clinical**  | 0.2     | De-identified clinical data                                 |
+| **Endotype**  | 0.1     | Data driven [disease classification machine learning model](https://endotypes.renci.org/v1/ui/)   |
+
+### Secondary
+
+GreenT aggregates some data via the following services. None of these is used to their full potential but we have a start.
+
+| **API**               | Version |   Description                                               |
+| ----------------------|---------|-------------------------------------------------------------|
+| **Chemotext**         | 0.1     | Chemical and biological data via [chem2bio2rdf](http://cheminfov.informatics.indiana.edu:8080/c2b2r/)   |
+| **Pharos**            | 0.1     | Drug / Gene / Disease information from the [NIH](https://pharos.nih.gov/idg/api)  |
+| **OXO**               | 0.1     | Identifier [XRef service](https://www.ebi.ac.uk/spot/oxo/)  |
+| **Disease Ontology**  | 0.1     | Ontology of [disease](http://disease-ontology.org/)         |
 
 Developed at the University of North Carolina at Chapel Hill, the API provides a Python package, Python interface, and a GraphQL service.
 
@@ -45,27 +69,3 @@ https://stars-app.renci.org/greent/graphql
 ```
 
 Constants for referring to vocabulary terms can be found in the [greent.translator.Vocab](https://github.com/NCATS-Tangerine/greent/blob/master/greent/translator.py#L13) module.
-
-## Services
-
-### Primary
-
-GreenT currently presents the following primary services:
-
-| **API**       | Version |   Description                                               |
-| --------------|---------|-------------------------------------------------------------|
-| **ChemBio**   | 0.2     | Chemical and biological data via [chem2bio2rdf](http://stars-blazegraph.renci.org/blazegraph/#query)               |
-| **Exposures** | 0.2     | Environmental exposures modeled by [CMAQ](https://exposures.renci.org/v1/ui/#/default)   |
-| **Clinical**  | 0.2     | De-identified clinical data                                 |
-| **Endotype**  | 0.1     | Data driven [disease classification machine learning model](https://endotypes.renci.org/v1/ui/)   |
-
-### Secondary
-
-GreenT aggregates some data via the following services. None of these is used to their full potential but we have a start.
-
-| **API**               | Version |   Description                                               |
-| ----------------------|---------|-------------------------------------------------------------|
-| **Chemotext**         | 0.1     | Chemical and biological data via chem2bio2rdf               |
-| **Pharos**            | 0.1     | Drug / Gene / Disease information from the [NIH](https://pharos.nih.gov/idg/api)  |
-| **OXO**               | 0.1     | Identifier [XRef service](https://www.ebi.ac.uk/spot/oxo/)  |
-| **Disease Ontology**  | 0.1     | Ontology of [disease](http://disease-ontology.org/)         |
