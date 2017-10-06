@@ -88,35 +88,3 @@ class Translator(object):
             if isinstance (result, NoTranslation):
                 raise NoTranslation ("No translation implemented from domain {0} to domain {1}".format (domainA, domainB))
         return result
-
-class TestTranslator(LiveServerTestCase):
-
-  def create_app(self):
-      from greent import app
-      app = app.create_app(graphiql=True)
-      app.config['TESTING'] = True
-      app.config['LIVESERVER_PORT'] = 5001
-      return app 
-
-  translator = GraphQL ("http://localhost:5001/graphql")    
-  Translation = namedtuple ('Translation', [ 'thing', 'domain_a', 'domain_b' ])
-  translations = [
-      Translation ("Imatinib",     "http://chem2bio2rdf.org/drugbank/resource/Generic_Name", "http://chem2bio2rdf.org/uniprot/resource/gene"),      
-      Translation ("CDC25A",       "http://chem2bio2rdf.org/uniprot/resource/gene",          "http://chem2bio2rdf.org/kegg/resource/kegg_pathway"), 
-      Translation ("CACNA1A",      "http://chem2bio2rdf.org/uniprot/resource/gene",          "http://pharos.nih.gov/identifier/disease/name"),      
-      Translation ("Asthma",       "http://identifiers.org/mesh/disease/name",               "http://identifiers.org/mesh/drug/name"),              
-      Translation ("DOID:2841",    "http://identifiers.org/doid",                            "http://identifiers.org/mesh/disease/id"),             
-      Translation ("MESH:D001249", "http://identifiers.org/mesh",                            "http://identifiers.org/doi")                          
-  ]
-  def test_translations (self):
-      for index, translation in enumerate (self.translations):
-          with self.subTest(i=index):
-              result = self.translator.translate (
-                  thing=translation.thing,
-                  domain_a=translation.domain_a,
-                  domain_b=translation.domain_b)
-    #print ("{0} => {1}".format (translation.thing, result))
-
-if __name__ == '__main__':
-    unittest.main ()
-    sys.exit (0)
