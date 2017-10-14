@@ -1,56 +1,49 @@
 import datetime
-import logging
 import json
+import logging
+import os
 import pprint
 import unittest
-import os
 from collections import defaultdict
-from greent.triplestore import TripleStore
 from greent.chembio import ChemBioKS
 from greent.chemotext import Chemotext
-#from greent.exposures import Exposures
 from greent.clinical import Clinical
-from greent.disease_ont import DiseaseOntology
 from greent.cmaq import CMAQ
-from greent.pharos import Pharos
+from greent.disease_ont import DiseaseOntology
+from greent.endotype import Endotype
+from greent.hetio import HetIO
 from greent.oxo import OXO
+from greent.pharos import Pharos
 from greent.translator import Translator
-
-class LoggingUtil(object):
-    """ Logging utility controlling format and setting initial logging level """
-    @staticmethod
-    def init_logging (name):
-        FORMAT = '%(asctime)-15s %(filename)s %(funcName)s %(levelname)s: %(message)s'
-        logging.basicConfig(format=FORMAT, level=logging.INFO)
-        return logging.getLogger(name)
+from greent.triplestore import TripleStore
+from greent.util import Config
+from greent.util import LoggingUtil
+from pprint import pprint
 
 logger = LoggingUtil.init_logging (__file__)
 
-class GreenT (object):
+class GreenT:
 
     ''' The Green Translator API - a single Python interface aggregating access mechanisms for 
     all Green Translator services. '''
 
-    def __init__(self, config={}):
-        self.config = config
-        
-        blaze_uri = self.get_config ('blaze_uri', 'http://stars-blazegraph.renci.org/bigdata/sparql')
-        self.blazegraph = TripleStore (blaze_uri)
+    def __init__(self, config="greent.conf"):
+        self.config = Config (config)
 
+        self.blazegraph = TripleStore (self.get_url("chembio"))
         self.chembio_ks = ChemBioKS (self.blazegraph)
-        clinical_url = self.get_config ('clinical_url', "http://tweetsie.med.unc.edu/CLINICAL_EXPOSURE")
 
-        self.clinical = Clinical (swagger_endpoint_url=clinical_url)
-        exposures_uri = self.get_config ("exposures_uri",
-                                         "https://app.swaggerhub.com/apiproxy/schema/file/mjstealey/environmental_exposures_api/0.0.1/swagger.json")
-        self.exposures = CMAQ (exposures_uri)
-        self.chemotext = Chemotext ()
-        self.disease_ontology = DiseaseOntology ()
-        self.pharos = Pharos ()
-        self.oxo = OXO ()
-        #self.init_translator ()
+        self.clinical = Clinical (swagger_endpoint_url=self.get_url ("clinical"))
+        self.exposures = CMAQ (self.get_url("cmaq"))
+        self.chemotext = Chemotext (self.get_url("chemotext"))
+        self.disease_ontology = DiseaseOntology (obo_resource=self.get_url("diseaseontology"))
+        self.pharos = Pharos (self.get_url("pharos"))
+        self.oxo = OXO (self.get_url("oxo"))
+        self.hetio = HetIO (self.get_url("hetio"))
+        self.endotype = Endotype (self.get_url("endotype"))
         self.translator = Translator (core=self)
-        
+    def get_url (self, svc):
+        return self.config.get_service (svc)["url"]
     def get_config (self, key, default):
         result = None
         if key in self.config:
@@ -103,72 +96,18 @@ class GreenT (object):
     def get_patients (self, age=None, sex=None, race=None, location=None):
         return self.clinical.get_patients (age, sex, race, location)
 
-    # Translator
-    '''
-    def init_translator (self):
-        root_kind         = 'http://identifiers.org/doi'
+    def execute (self, request):
+        return self.translator.translate_chain (request)
 
-        # MESH
-        mesh              = 'http://identifiers.org/mesh'
-        mesh_disease_name = 'http://identifiers.org/mesh/disease/name'
-        mesh_drug_name    = 'http://identifiers.org/mesh/drug/name'
-        mesh_disease_id   = 'http://identifiers.org/mesh/disease/id'
-        
-        # Disease
-        doid_curie          = "doid"
-        doid                = "http://identifiers.org/doid"
-        pharos_disease_name = "http://pharos.nih.gov/identifier/disease/name"
-        
-        # DRUG
-        c2b2r_drug_name   = "http://chem2bio2rdf.org/drugbank/resource/Generic_Name"
+if __name__ == "__main__":    
+    g = GreenT ()
+    response = g.translator.translate_chain (request={
+        "iri"     : "mox://drug/gene/pathway/cell/anatomy/disease",
+        "drug"    : "Aspirin",
+        "disease" : "Asthma"
+    })
+    pprint (response)
 
-        # TARGET
-        c2b2r_gene        = "http://chem2bio2rdf.org/uniprot/resource/gene"
 
-        # PATHWAY
-        c2b2r_pathway     = "http://chem2bio2rdf.org/kegg/resource/kegg_pathway"
-        
-        # Semantic equivalence
-        
-        self.equivalence = defaultdict(lambda: [])
-        self.equivalence[doid_curie] = [ doid ]
+# http://purl.obolibrary.org/obo/mondo.obo
 
-        # https://github.com/prefixcommons/biocontext/blob/master/registry/uber_context.jsonld
-        uber_context_path = os.path.join(os.path.dirname(__file__), 'jsonld', 'uber_context.jsonld')
-        with open (uber_context_path, 'r') as stream:
-            self.equivalence = json.loads (stream.read ())["@context"]
-            self.equivalence["MESH"] = self.equivalence ["MESH.2013"]
-            
-        # Domain translation
-        self.translator_router = defaultdict (lambda: defaultdict (lambda: NoTranslation ()))
-        self.translator_router[mesh_disease_name][mesh_drug_name] = lambda disease: self.chemotext.disease_name_to_drug_name (disease)
-        self.translator_router[doid][mesh_disease_id]             = lambda doid:    self.disease_ontology.doid_to_mesh (doid.upper())
-        self.translator_router[c2b2r_drug_name][c2b2r_gene]       = lambda drug:    self.chembio_ks.drug_name_to_gene_symbol (drug)
-        self.translator_router[c2b2r_gene][c2b2r_pathway]         = lambda gene:    self.chembio_ks.gene_symbol_to_pathway (gene)
-        self.translator_router[c2b2r_gene][pharos_disease_name]   = lambda gene:    self.pharos.target_to_disease (gene)
-        self.translator_router[mesh][root_kind]                   = lambda mesh_id: self.oxo.mesh_to_other (mesh_id)
-        
-    def resolve_id (self, an_id, domain):
-        if not an_id in domain:
-            candidate = an_id
-            an_id = None
-            for alternative in self.equivalence[candidate]:
-                if alternative in domain:
-                    # Postpone the problem of synonymy
-                    an_id = alternative
-                    logger.debug ("Selected alternative id {0} for input {1}".format (an_id, candidate))
-                    break
-                # Also, if all candidates turn out not to be in the domain, we could recurse to try synonyms for them
-        return an_id
-    
-    def translate (self, thing, domainA, domainB):
-        result = None
-        resolvedA = self.resolve_id (domainA, self.translator_router)
-        resolvedB = self.resolve_id (domainB, self.translator_router[domainA])
-        if resolvedA and resolvedB:
-            result = self.translator_router[resolvedA][resolvedB] (thing)
-            if isinstance (result, NoTranslation):
-                raise NoTranslation ("No translation implemented from domain {0} to domain {1}".format (domainA, domainB))
-        return result
-    '''
-    

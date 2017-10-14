@@ -9,10 +9,8 @@ write_setup_config () {
 cat <<EOF > setup.py
 from distutils.core import setup
 from pip.req import parse_requirements
-
 install_reqs = parse_requirements("greent/requirements.txt", session="i")
 requirements = [str(r.req) for r in install_reqs]
-
 setup(
     name = 'greent',
     packages = [ 'greent' ], # this must be the same as the name above

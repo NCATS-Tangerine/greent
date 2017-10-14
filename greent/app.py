@@ -1,13 +1,16 @@
+import json
 from flask import Flask
 from flask_graphql import GraphQLView
 from greent.schema import Schema
 from flask.views import View
-
 from flask import request
 from flask import Response
 from flask import current_app
 from pyld import jsonld
-import json
+from util import LoggingUtil
+from pprint import pprint
+
+logger = LoggingUtil.init_logging (__file__)
 
 class PatientStubView(View):
     ''' Fake static patient data for dev test environment. '''
@@ -54,15 +57,15 @@ class JSONLDView (GraphQLView):
             doc = json.loads(response.get_data())
             expanded = jsonld.expand (doc['data'], { "expandContext" : context } )
             if True: #current_app.debug:
-                print ("context: {}".format (json.dumps (context, indent=2)))
-                print ("doc: {}".format (json.dumps (doc, indent=2)))
-                print ("expanded: {}".format (json.dumps (expanded, indent=2)))
-                print (" context-> {}".format (type(context)))
-            print (" expanded-> {}".format (type(expanded)))
+                logger.debug ("context: {}".format (json.dumps (context, indent=2)))
+                logger.debug ("doc: {}".format (json.dumps (doc, indent=2)))
+                logger.debug ("expanded: {}".format (json.dumps (expanded, indent=2)))
+                logger.deug (" context-> {}".format (type(context)))
+            logger.debug (" expanded-> {}".format (type(expanded)))
             #expanded = expanded[0]
             doc['data']['@context'] = context['@context']
             response.set_data(json.dumps (doc)) #json.dumps (expanded))
-            #print (json.loads (response.get_data ()))            
+            #logger.debug (json.loads (response.get_data ()))            
         return response
 
 def create_app(path='/graphql', **kwargs):

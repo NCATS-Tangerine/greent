@@ -8,28 +8,8 @@ from bravado.client import SwaggerClient
 from bravado.requests_client import RequestsClient
 from string import Template
 from pprint import pprint
+from greent.util import SwaggerEndpoint
 
-class SwaggerEndpoint(object):
-
-    def __init__(self, swagger_endpoint_url):
-        http_client = RequestsClient ()
-        # TODO: fix ssl certificate.
-        self.client = SwaggerClient.from_url(
-            swagger_endpoint_url,
-            http_client=http_client,
-            config={
-            #    "validate_requests" : False,
-            #    "validate_responses" : False
-                'use_models': False
-            })
-
-    def inspect (self):
-        for name, obj in inspect.getmembers (self.client):
-            print ("-- name: {0} obj: {1}".format (name, obj))
-            for n, o in inspect.getmembers (obj):
-                if (n.endswith ('_get') or n.endswith ('_post')):
-                    print ("-- INVOKE: method-> {0} obj: {1}".format (n, o))
-    
 class CMAQ (SwaggerEndpoint):
 
     def __init__(self, swagger_endpoint_url=""):

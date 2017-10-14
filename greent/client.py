@@ -8,15 +8,7 @@ import requests
 from string import Template
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-
-class LoggingUtil(object):
-    """ Logging utility controlling format and setting initial logging level """
-    @staticmethod
-    def init_logging (name):
-        level = logging.DEBUG
-        FORMAT = '%(asctime)-15s %(filename)s %(funcName)s %(levelname)s: %(message)s'
-        logging.basicConfig(format=FORMAT, level=level)
-        return logging.getLogger(name)
+from greent.util import LoggingUtil
 
 logger = LoggingUtil.init_logging (__file__)
 

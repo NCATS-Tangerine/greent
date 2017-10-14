@@ -22,7 +22,7 @@ class TestTranslator(LiveServerTestCase):
         Translation ("CACNA1A",      "http://chem2bio2rdf.org/uniprot/resource/gene",          "http://pharos.nih.gov/identifier/disease/name",      "Target->Disease"),     
         Translation ("Asthma",       "http://identifiers.org/mesh/disease/name",               "http://identifiers.org/mesh/drug/name",              "Disease->Drug"),              
         Translation ("DOID:2841",    "http://identifiers.org/doid",                            "http://identifiers.org/mesh/disease/id",             "DOID->MeSH"),             
-        Translation ("MESH:D001249", "http://identifiers.org/mesh",                            "http://identifiers.org/doi",                         "MeSH->*")                          
+        Translation ("MESH:D001249", "http://identifiers.org/mesh",                            "http://identifiers.org/doi",                         "MeSH->*")
     ]
 
     def create_app(self):
