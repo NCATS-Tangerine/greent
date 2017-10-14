@@ -6,27 +6,27 @@ GreenT is a library of interfaces to biomedical and environmental data services.
 
 ## Services
 
-### Primary
+The data sources GreenT provides access to are highly heterogeneous in terms of technologies and data types. We have multiple kinds of graph databases, tabuar data, spatio-temporal environmental data, and machine learning models. 
 
-GreenT currently presents the following primary services:
+At the same time, we value presenting a coherent, usable interface to users. 
 
-| **API**       | Version |   Description                                               |
-| --------------|---------|-------------------------------------------------------------|
-| **ChemBio**   | 0.2     | Chemical and biological data via [chem2bio2rdf](http://stars-blazegraph.renci.org/blazegraph/#query)               |
-| **Exposures** | 0.2     | Environmental exposures modeled by [CMAQ](https://exposures.renci.org/v1/ui/#/default)   |
-| **Clinical**  | 0.2     | De-identified clinical data                                 |
-| **Endotype**  | 0.1     | Data driven [disease classification machine learning model](https://endotypes.renci.org/v1/ui/)   |
+So all of the services described below are available via
+* A **Python** API
+* A **GraphQL** REST API
+* The graphical GraphQL **query editor**
 
-### Secondary
+GreenT currently presents some data from the following services:
 
-GreenT aggregates some data via the following services. None of these is used to their full potential but we have a start.
-
-| **API**               | Version |   Description                                               |
-| ----------------------|---------|-------------------------------------------------------------|
-| **Chemotext**         | 0.1     | Chemical and biological data via [chem2bio2rdf](http://cheminfov.informatics.indiana.edu:8080/c2b2r/)   |
-| **Pharos**            | 0.1     | Drug / Gene / Disease information from the [NIH](https://pharos.nih.gov/idg/api)  |
-| **OXO**               | 0.1     | Identifier [XRef service](https://www.ebi.ac.uk/spot/oxo/)  |
-| **Disease Ontology**  | 0.1     | Ontology of [disease](http://disease-ontology.org/)         |
+| **API**            | Technology | Provider     |  Description                                                    |
+| -------------------|------------|--------------|-----------------------------------------------------------------|
+| **ChemBio**        | SPARQL     | U-Indiana/RENCI| Chemical and biological [data](http://cheminfov.informatics.indiana.edu:8080/c2b2r/) via [chem2bio2rdf](http://stars-blazegraph.renci.org/blazegraph/#query)               |
+| **Exposures**      | OpenAPI    | UNC-IE-RENCI | Environmental exposures modeled by [CMAQ](https://exposures.renci.org/v1/ui/#/default)   |
+| **Clinical**       | OpenAPI    | UNC-CDW      | De-identified clinical data                                 |
+| **Endotype**       | OpenAPI    | UNC-CDW-RENCI| Data driven [disease classification / machine learning model](https://endotypes.renci.org/v1/ui/)    |
+| **Chemotext**      |  Neo4J     | UNC-ESHELMAN | Chemical and biological data via [chem2bio2rdf](http://cheminfov.informatics.indiana.edu:8080/c2b2r/)   |
+| **Pharos**         |  OpenAPI   | NIH          | Drug / Gene / Disease information from the [NIH](https://pharos.nih.gov/idg/api)  |
+| **OXO**            |  REST API  | EMBL-EBI     | Identifier [XRef service](https://www.ebi.ac.uk/spot/oxo/)  |
+| **DiseaseOntology**|OBO Ontology| UofM / IGS   | Ontology of [disease](http://disease-ontology.org/)         |
 
 Developed at the University of North Carolina at Chapel Hill, the API provides a Python package, Python interface, and a GraphQL service.
 
@@ -67,5 +67,17 @@ By default, the constructor above will use the public GraphQL API instance hoste
 ```
 https://stars-app.renci.org/greent/graphql
 ```
+To use a development server instead, you can install the module and run:
+```
+python -m greent.app
+```
 
+Then use http://localhost:5000 as the URL for the GraphQL client.
+
+Also, note that you can send arbitrary GraphQL queries to the client with syntax like this:
+```
+translator.query ({
+   "query" : "<query_text>"
+   })
+```
 Constants for referring to vocabulary terms can be found in the [greent.translator.Vocab](https://github.com/NCATS-Tangerine/greent/blob/master/greent/translator.py#L13) module.
