@@ -31,7 +31,7 @@ class GreenT:
         self.config = Config (config)
 
         self.blazegraph = TripleStore (self.get_url("chembio"))
-        self.chembio_ks = ChemBioKS (self.blazegraph)
+        self.chembio = ChemBioKS (self.blazegraph)
 
         self.clinical = Clinical (swagger_endpoint_url=self.get_url ("clinical"))
         self.exposures = CMAQ (self.get_url("cmaq"))
@@ -74,22 +74,22 @@ class GreenT:
         return json.dumps (self.get_exposure_conditions (chemicals))
 
     def get_exposure_conditions (self, chemicals):
-        return self.chembio_ks.get_exposure_conditions (chemicals)
+        return self.chembio.get_exposure_conditions (chemicals)
 
     def get_drugs_by_condition_json (self, conditions):
         return json.dumps (self.get_drugs_by_condition (conditions))
 
     def get_drugs_by_condition (self, conditions):
-        return self.chembio_ks.get_drugs_by_condition (conditions)
+        return self.chembio.get_drugs_by_condition (conditions)
 
     def get_genes_pathways_by_disease_json (self, diseases):
         return json.dumps (self.get_genes_pathways_by_disease (diseases))
 
     def get_genes_pathways_by_disease (self, diseases):
-        return self.chembio_ks.get_genes_pathways_by_disease (diseases)
+        return self.chembio.get_genes_pathways_by_disease (diseases)
 
     def get_drug_gene_disease (self, disease_name, drug_name):
-        return self.chembio_ks.get_drug_gene_disease (disease_name, drug_name)
+        return self.chembio.get_drug_gene_disease (disease_name, drug_name)
     
     # Clinical API
 

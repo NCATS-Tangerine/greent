@@ -1,8 +1,6 @@
 import json
 import os
 import sys
-import threading
-import unittest
 from collections import defaultdict
 from pprint import pformat
 from pprint import pprint
@@ -10,6 +8,8 @@ from greent.client import GraphQL
 from collections import namedtuple
 from flask_testing import LiveServerTestCase
 from greent.util import LoggingUtil
+import networkx as nx
+import networkx.algorithms as nxa
 
 logger = LoggingUtil.init_logging (__file__)
 
@@ -101,8 +101,8 @@ class Translator(object):
             Vocab.mesh_drug_name : lambda disease: self.core.chemotext.disease_name_to_drug_name (disease)
         }
         self.translator_router[Vocab.doid][Vocab.mesh_disease_id]             = lambda doid:    self.core.disease_ontology.doid_to_mesh (doid.upper())
-        self.translator_router[Vocab.c2b2r_drug_name][Vocab.c2b2r_gene]       = lambda drug:    self.core.chembio_ks.drug_name_to_gene_symbol (drug)
-        self.translator_router[Vocab.c2b2r_gene][Vocab.c2b2r_pathway]         = lambda gene:    self.core.chembio_ks.gene_symbol_to_pathway (gene)
+        self.translator_router[Vocab.c2b2r_drug_name][Vocab.c2b2r_gene]       = lambda drug:    self.core.chembio.drug_name_to_gene_symbol (drug)
+        self.translator_router[Vocab.c2b2r_gene][Vocab.c2b2r_pathway]         = lambda gene:    self.core.chembio.gene_symbol_to_pathway (gene)
         self.translator_router[Vocab.c2b2r_gene][Vocab.pharos_disease_name]   = lambda gene:    self.core.pharos.target_to_disease (gene)
         self.translator_router[Vocab.doid][Vocab.c2b2r_gene]                  = lambda gene:    self.core.pharos.disease_to_target (gene)
         self.translator_router[Vocab.mesh][Vocab.root_kind]                   = lambda mesh_id: self.core.oxo.mesh_to_other (mesh_id)
@@ -138,7 +138,7 @@ class Translator(object):
         result = None
         operator = self.get_translator_op (translation.type_a, translation.type_b)
         if operator != None and not isinstance (operator, NoTranslation):
-            logger.debug ("Translating: {0}".format (translation))
+            logger.info ("Translating: {0}".format (translation))
             translation.response = operator (translation.obj)
         return translation.response
     
@@ -266,4 +266,3 @@ class Translator(object):
             logger.debug("Built translation: {0}".format (translation))
             stack.append (translation)
         return stack
-

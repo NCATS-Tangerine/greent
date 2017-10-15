@@ -3,10 +3,13 @@ import json
 import traceback
 from greent.util import Munge
 from graph_components import KEdge, KNode
+from csv import DictReader
+from disease_ont import DiseaseOntology
 
 class Pharos(object):
     def __init__(self, url="https://pharos.nih.gov/idg/api/v1"):
         self.url = url
+        self.disease_ontology = DiseaseOntology ()
     def request (self, url):
         print ("pharos url: {}".format (url))
         response = None
@@ -53,47 +56,57 @@ class Pharos(object):
             for row in rows:
                 if row['DOID'] != '':
                     pmap[row['DOID']] = row['PharosID']
-        doid = subject_node.identifier
+        doid = subject_node.identifier if not type(subject_node) == str else subject_node
         return pmap[doid]
 
 
-    def get_target_hgnc(self, target_id):
+    def target_to_hgnc(self, target_id):
         """Convert a pharos target id into an HGNC ID.
         
         The call does not return the actual name for the gene, so we do not provide it.
         There are numerous other synonyms that we could also cache, but I don't see much benefit here"""
-        r = requests.get('https://pharos.nih.gov/idg/api/v1/targets(%d)/synonyms' % target_id)
-        result = r.json()
-        for synonym in result:
-            if synonym['label'] == 'HGNC':
-                return synonym['term']
-        return None
+        result = None
+        try:
+            r = requests.get('https://pharos.nih.gov/idg/api/v1/targets(%s)/synonyms' % target_id)
+            result = r.json()
+            for synonym in result:
+                if synonym['label'] == 'HGNC':
+                    result = synonym['term']
+        except:
+            pass
+        return result
 
     #TODO: assuming a DOID, not really valid
     #TODO: clean up, getting ugly
     def disease_to_target(self, subject):
         """Given a subject node (with a DOID as the identifier), return targets"""
-        pharosid = self.translate(subject)
-        r = requests.get('https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid)
-        result = r.json()
-        original_edge_nodes=[]
-        for link in result['links']:
-            if link['kind'] != 'ix.idg.models.Target':
-                logging.getLogger('application').info('Pharos disease returning new kind: %s' % link['kind'])
-            else:
-                pharos_target_id = int(link['refid'])
-                #link['properties'] is a list rather than a dict
-                pharos_edge = KEdge( 'pharos', 'queried', {'properties': link['properties']} )
-                original_edge_nodes.append( (pharos_edge, pharos_target_id) )
-        #Pharos returns target ids in its own numbering system. Collect other names for it.
         resolved_edge_nodes = []
-        for edge, pharos_target_id  in original_edge_nodes:
-            hgnc = self.get_target_hgnc(pharos_target_id)
-            if hgnc is not None:
-                hgnc_node = KNode(hgnc, 'G')
-                resolved_edge_nodes.append((edge,hgnc_node))
-            else:
-                logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
+        pharosid = self.disease_ontology.doid_to_pharos (subject) #self.translate(subject)
+        if pharosid == None:
+            return None
+        #print ("------------> {0} {1}".format (pharosid, 'https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid))
+        try:
+            r = requests.get('https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid)
+            result = r.json()
+            original_edge_nodes=[]
+            for link in result['links']:
+                if link['kind'] != 'ix.idg.models.Target':
+                    logging.getLogger('application').info('Pharos disease returning new kind: %s' % link['kind'])
+                else:
+                    pharos_target_id = int(link['refid'])
+                    #link['properties'] is a list rather than a dict
+                    pharos_edge = KEdge( 'pharos', 'queried', {'properties': link['properties']} )
+                    original_edge_nodes.append( (pharos_edge, pharos_target_id) )
+            #Pharos returns target ids in its own numbering system. Collect other names for it.
+            for edge, pharos_target_id  in original_edge_nodes:
+                hgnc = self.target_to_hgnc(pharos_target_id)
+                if hgnc is not None:
+                    hgnc_node = KNode(hgnc, 'G')
+                    resolved_edge_nodes.append((edge,hgnc_node))
+                else:
+                    logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
+        except:
+            traceback.print_exc ()
         return resolved_edge_nodes
 
 #Poking around on the website there are about 10800 ( a few less )

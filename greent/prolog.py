@@ -76,12 +76,12 @@ if __name__ == "__main__":
     is_a(tD,X), has_context(X,Types), findall(Q, (member(Y,Types), is_type(Y, Q)), Qs)
     is_a(tD,X), has_context(X,Types), findall(Q, (member(Y,Types), is_type(Y, Q)), Qs), findall(T, (member(S,Types), translates(S, D, T)), Ts)
     translates(cbr_drug_name, cbr_gene, C)
-    path_to(X,Y)
-    transitions(X,Y)
+    path_to(tD,Y)
+    transitions(X,Y,Ts)
     """
     
     notifier = Notifier ()
-    registerForeign (notifier.notify)
+ #   registerForeign (notifier.notify)
     
     t = Trans ()
     for q in query.split ("\n"):

@@ -48,11 +48,63 @@ class ChemBioKS(object):
         :param conditions: Conditions to find associated drugs for.
         :type conditions: List of MeSH IDs for conditions, eg.: D001249
         """
-        condition_list = ' '.join (list(map (lambda d : "( mesh:{0} )".format (d), conditions)))
+        #condition_list = ' '.join (list(map (lambda d : "( mesh:{0} )".format (d), conditions)))
+        conditions = list(map(lambda v : v.replace ("MESH:", "mesh:"), conditions))
+        prefix = "mesh:"
+        if any(map(lambda v : v.startswith(prefix), conditions)):
+            prefix = ""
+        condition_list = ' '.join (list(map (lambda d : "( {0}{1} )".format (prefix, d) , conditions)))
+
         text = self.triplestore.get_template ("get_drugs_by_disease").substitute (conditions=condition_list)
+        print (text)
         results = self.triplestore.execute_query (text)
         return list(map (lambda b : b['generic_name'].value, results.bindings))
 
+    '''
+prefix kegg:           <http://chem2bio2rdf.org/kegg/resource/>
+prefix kegg_path:      <http://chem2bio2rdf.org/kegg/resource/kegg_pathway/>
+prefix pharmgkb:       <http://chem2bio2rdf.org/pharmgkb/resource/>
+prefix pharmgkb_genes: <http://chem2bio2rdf.org/pharmgkb/resource/pharmgkb_genes/>
+prefix db_resource:    <http://chem2bio2rdf.org/drugbank/resource/>
+prefix db_drug:        <http://chem2bio2rdf.org/drugbank/resource/drugbank_drug/>
+prefix db_inter:       <http://chem2bio2rdf.org/drugbank/resource/drugbank_interaction/>
+prefix pc_compound:    <http://chem2bio2rdf.org/pubchem/resource/pubchem_compound/>
+prefix pc_resource:    <http://chem2bio2rdf.org/pubchem/resource/>
+prefix ctd:            <http://chem2bio2rdf.org/ctd/resource/>
+prefix GenBank:        <http://www.ncbi.nlm.nih.gov/nuccore/>
+prefix ncbi_gene:      <http://www.ncbi.nlm.nih.gov/gene/>
+prefix uniprot:        <http://chem2bio2rdf.org/uniprot/resource/>
+prefix omim:           <http://chem2bio2rdf.org/omim/resource/>
+prefix pubchem:        <http://chem2bio2rdf.org/pubchem/resource/>
+prefix mesh:           <http://bio2rdf.org/mesh:>                      
+select distinct ?drugGenericName ?pubChemCID ?pubChemPMID ?ctdChemGene ?chemGenePMIDs ?uniprotSym ?pathwayName ?keggPath ?diseaseID ?diseasePMIDs where {
+    values (?diseaseId) { ( mesh:d012497 ) }
+
+    ?ctdChemGene ctd:cid                        ?pubChemCID;
+                 ctd:gene                       ?uniprotSym;
+                 ctd:pubmedids                  ?chemGenePMIDs.
+  
+    ?ctdChemDis  ctd:cid                        ?pubChemCID;
+                 ctd:diseaseid                  ?diseaseID;
+                 ctd:pubmedids                  ?diseasePMIDs.
+                 
+    ?dbInter     db_resource:GeneBank_ID        ?geneBankID ;
+                 db_resource:SwissProt_ID       ?swissProtID ;
+	         	 db_resource:gene               ?uniprotSym ;
+	         	 db_resource:Name               ?name ;
+	         	 db_resource:DBID               ?drugID .
+    ?drugID      db_resource:CID                ?pubChemCID ;
+  	         	 db_resource:Generic_Name       ?drugGenericName .
+
+    ?pubChemCID  pc_resource:openeye_iso_smiles ?isoSmiles ;
+	             pc_resource:pubmed             ?pubChemPMID ;
+	             pc_resource:synonyms           ?synonyms .
+
+#  filter regex(lcase(str(?drugGenericName)), lcase("IMATINIB")) #&& regex(lcase(str(?diseaseName)), lcase("asthma")) )
+}
+    '''
+
+    
     def get_genes_pathways_by_disease (self, diseases):
         """ Get genes and pathways associated with specified conditions.
 

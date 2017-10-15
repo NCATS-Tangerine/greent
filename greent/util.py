@@ -19,9 +19,9 @@ class Config:
 class LoggingUtil(object):
     """ Logging utility controlling format and setting initial logging level """
     @staticmethod
-    def init_logging (name):
+    def init_logging (name, level=logging.INFO):
         FORMAT = '%(asctime)-15s %(filename)s %(funcName)s %(levelname)s: %(message)s'
-        logging.basicConfig (format=FORMAT, level=logging.INFO) #DEBUG)
+        logging.basicConfig (format=FORMAT, level=level) #DEBUG)
         return logging.getLogger (name)
 
 class Munge(object):

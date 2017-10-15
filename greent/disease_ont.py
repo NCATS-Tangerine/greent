@@ -50,7 +50,7 @@ class DiseaseOntology (object):
                 for row in rows:
                     if row['DOID'] != '':
                         self.pharos_map[row['DOID']] = row['PharosID']
-        return self.pharos_map[doid]
+        return self.pharos_map[doid] if doid in self.pharos_map else None
     
 if __name__ == "__main__":
     do = DiseaseOntology ()

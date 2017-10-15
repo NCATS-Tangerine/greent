@@ -1,8 +1,13 @@
+import logging
 import unittest
+import traceback
 import networkx as nx
 import networkx.algorithms as nxa
-from networkx.exception import NetworkXNoPath
 import operator
+from networkx.exception import NetworkXNoPath
+from greent.util import LoggingUtil
+
+logger = LoggingUtil.init_logging (__file__, logging.DEBUG)
 
 class Rosetta:
     def __init__(self, config):
@@ -16,62 +21,65 @@ class Rosetta:
         transitions = config["@transitions"]
         for L in transitions:
             for R in transitions[L]:
-                print ("  +edge: {0} {1} {2}".format (L, R, transitions[L][R]))
+                logger.debug ("  +edge: {0} {1} {2}".format (L, R, transitions[L][R]))
                 self.g.add_edge (L, R, data=transitions[L][R])
                 self.g.add_edge (self.vocab[L], self.vocab[R], data=transitions[L][R])
     def guess_type (self, thing, source):
-        if not source and ':' in thing:
+        if thing and not source and ':' in thing:
             curie = thing.upper ().split (':')[0]
             if curie in self.curie:
                 source = self.vocab[self.curie[curie]]
         return source
-    def translate (self, thing, source, target):
-        source = self.guess_type (thing, source)
-#        print ("source: {}".format (source))
-        transitions = self.get_transitions (source, target)
-        print ("transition> {0}".format (transitions))
-        last = thing
-        for transition in transitions:
-            try:
-                op = operator.attrgetter(transition)(self.core) 
-                print ("  -> calling {0}({1})".format (transition, last))
-                this = op (last)
-                print ("  -> calling {0}({1}) = {2}".format (transition, last, this))
-                last = this
-            except:
-                pass
-        return last
     def get_transitions (self, source, dest):
-        print ("get-transitions: {0} {1}".format (source, dest))
+        logger.debug ("get-transitions: {0} {1}".format (source, dest))
         transitions = []
         try:
             paths = nxa.all_shortest_paths (self.g, source=source, target=dest)
             for path in paths:
-                print ("  path: {0}".format (path))
+                logger.debug ("  path: {0}".format (path))
                 steps = list(zip(path, path[1:]))
-                print ("  steps: {}".format (steps))
+                logger.debug ("  steps: {}".format (steps))
                 for step in steps:
-                    print ("    step: {}".format (step))
+                    logger.debug ("    step: {}".format (step))
                     edges = self.g.edges (step, data=True)
                     for e in edges:
                         if step[1] == e[1]:
-                            print ("      trans: {0} {1}".format (e, e[2]['data']['op']))
+                            logger.debug ("      trans: {0} {1}".format (e, e[2]['data']['op']))
                             transition = e[2]['data']['op']
                             transitions.append (transition)
         except NetworkXNoPath:
             pass
         except KeyError:
             pass
-        print ("-------------------> {}".format (transitions))
         return transitions
+    def translate (self, thing, source, target):
+        if not thing:
+            return None
+        source = self.guess_type (thing, source)
+        transitions = self.get_transitions (source, target)
+        if len(transitions) > 0:
+            print ("transition> {0}".format (transitions))
+        last = thing
+        for transition in transitions:
+            try:
+                op = operator.attrgetter(transition)(self.core) 
+                this = op (last)
+                if this:
+                    print ("  -> calling {0}({1}) => {2}".format (transition, last, this[:min(1,len(this))]))
+                last = this
+            except:
+                traceback.print_exc ()
+        return last
 
 if __name__ == "__main__":
     translator = Rosetta (config = {
         "@curie" : {
-            "DOID" : "doid"
+            "DOID" : "doid",
+            "MESH" : "mesh"
         },
         "@vocab" : {
             "c2b2r_drug_name"     : "http://chem2bio2rdf.org/drugbank/resource/Generic_Name",
+            "c2b2r_drug_id"       : "http://chem2bio2rdf.org/drugbank/resource/drugbank_drug",
             "c2b2r_gene"          : "http://chem2bio2rdf.org/uniprot/resource/gene",
             "c2b2r_pathway"       : "http://chem2bio2rdf.org/kegg/resource/kegg_pathway",
             "doid"                : "http://identifiers.org/doid",
@@ -89,6 +97,9 @@ if __name__ == "__main__":
         "@transitions" : {
             "mesh_disease_name" : {
                 "mesh_drug_name"      : { "op" : "chemotext.disease_name_to_drug_name" }
+            },
+            "mesh_disease_id"   : {
+                "c2b2r_drug_id"       : { "op" : "chembio.get_drugs_by_condition" }
             },
             "doid"              : {
                 "mesh_disease_id"     : { "op" : "disease_ontology.doid_to_mesh"   },
@@ -113,7 +124,6 @@ if __name__ == "__main__":
         }
     })
 
-
     test = {
         "c2b2r_gene" : "pharos_disease_name",
         "c2b2r_gene" : "hetio_cell",
@@ -125,7 +135,20 @@ if __name__ == "__main__":
         
     things = [
         "DOID:0060728",
-        "DOID:0050777"
+        "DOID:0050777",
+        "DOID:2841"
     ]
     for t in things:
-        translator.translate (t, None, translator.vocab["hgnc_id"])
+#        hgnc = translator.translate (t, None, translator.vocab["hgnc_id"])
+        m    = translator.translate (t, None, translator.vocab["mesh_disease_id"])
+        print (m)
+
+        d    = translator.translate (m, translator.vocab["mesh_disease_id"], translator.vocab["c2b2r_drug_id"]) 
+        print (d)
+        '''
+        g    = translator.translate (t, None, translator.vocab["c2b2r_gene"])
+        print ("gene: {}".format (g))
+        p    = translator.translate (g, "c2b2r_gene", translator.vocab["hgnc_id"])
+        c    = translator.translate (g, "c2b2r_gene", translator.vocab["hetio_cell"])
+        a    = translator.translate (g, "c2b2r_gene", translator.vocab["hetio_anatomy"])
+        '''

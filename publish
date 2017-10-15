@@ -35,10 +35,11 @@ EOF
 
 publish () {
     version=$(echo $(cat version) 0.01 | awk '{printf "%G", $1 + $2}' )
+    
     echo "Publishing version: $version"
     write_setup_config
     git tag
-    if [ -z "$( git tag | grep $version )" ]; then
+    if [ -z "$( git tag --list $version )" ]; then
 	python setup.py sdist
 	tar tf dist/greent-${version}.tar.gz
 	twine upload --skip-existing dist/greent-${version}.tar.gz

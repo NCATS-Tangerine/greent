@@ -20,7 +20,7 @@ class TripleStore(object):
             '{0}.sparql'.format (query_name))
         with open (fn, 'r') as stream:
             query = stream.read ()
-            logger.debug ('query template: {0}', query)
+            #logger.debug ('query template: %s', query)
         return query
     def execute_query (self, query):
         """ Execute a SPARQL query.
@@ -40,6 +40,7 @@ class TripleStore(object):
             result = list(map(lambda b : [ b[val].value for val in outputs ], response.bindings ))
         else:
             result = list(map(lambda b : { val : b[val].value for val in outputs }, response.bindings ))
+        logger.debug ("query result: %s", result)
         return result
     def query_template (self, template_text, outputs, inputs=[]):
         return self.query (Template (template_text).safe_substitute (**inputs), outputs)
