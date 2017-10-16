@@ -5,6 +5,7 @@ import os
 import pprint
 import unittest
 from collections import defaultdict
+from greent.biolink import Biolink
 from greent.chembio import ChemBioKS
 from greent.chemotext import Chemotext
 from greent.clinical import Clinical
@@ -27,12 +28,10 @@ class GreenT:
     ''' The Green Translator API - a single Python interface aggregating access mechanisms for 
     all Green Translator services. '''
 
-    def __init__(self, config="greent.conf"):
-        self.config = Config (config)
-
+    def __init__(self, config=None):
+        self.config = Config (config if config else os.path.join (os.path.dirname (__file__), "greent.conf"))
         self.blazegraph = TripleStore (self.get_url("chembio"))
         self.chembio = ChemBioKS (self.blazegraph)
-
         self.clinical = Clinical (swagger_endpoint_url=self.get_url ("clinical"))
         self.exposures = CMAQ (self.get_url("cmaq"))
         self.chemotext = Chemotext (self.get_url("chemotext"))
@@ -41,6 +40,7 @@ class GreenT:
         self.oxo = OXO (self.get_url("oxo"))
         self.hetio = HetIO (self.get_url("hetio"))
         self.endotype = Endotype (self.get_url("endotype"))
+        self.biolink = Biolink (self.get_url("biolink"))
         self.translator = Translator (core=self)
     def get_url (self, svc):
         return self.config.get_service (svc)["url"]
@@ -53,7 +53,6 @@ class GreenT:
         return result
                                   
     # Exposure API
-
     def get_exposure_scores (self, exposure_type, start_date, end_date, exposure_point):
         return self.exposures.get_scores (
             exposure_type = exposure_type,
@@ -69,7 +68,6 @@ class GreenT:
             lat_lon        = exposure_point)
 
     # ChemBio API
-
     def get_exposure_conditions_json (self, chemicals):
         return json.dumps (self.get_exposure_conditions (chemicals))
 

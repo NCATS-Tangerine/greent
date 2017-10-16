@@ -5,6 +5,9 @@ from greent.util import LoggingUtil
 from pprint import pprint
 
 logger = LoggingUtil.init_logging (__file__)
+#import logging
+#logger = LoggingUtil.init_logging (__file__, logging.DEBUG)
+
 
 class TripleStore(object):
     """ Connect to a SPARQL endpoint and provide services for loading and executing queries."""

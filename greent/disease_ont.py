@@ -1,5 +1,6 @@
 from collections import defaultdict
 from csv import DictReader
+import logging
 import pronto
 import requests
 import os
@@ -38,8 +39,22 @@ class DiseaseOntology (object):
         if not self.initialized:
             self.load ()
         return self.doid_to_mesh_map [doid]
-
-    def doid_to_pharos(self, doid):
+    def doid_to_pharos(self,doid):
+        pmap = defaultdict(list)
+        with open(os.path.join(os.path.dirname(__file__), 'pharos.id.txt'),'r') as inf:     #'pharos.id.txt','r') as inf:
+            rows = DictReader(inf,dialect='excel-tab')
+            for row in rows:
+                if row['DOID'] != '':
+                    doidlist = row['DOID'].split(',')
+                    for d in doidlist:
+                        pmap[d].append(row['PharosID'])
+        pharos_list = pmap[doid.identifier]
+        if len(pharos_list) == 0:
+            logging.getLogger('application').warn('Unable to translate %s into Pharos ID' % doid)
+            return None
+        return pharos_list
+    
+    def doid_to_pharos0(self, doid):
         """Convert a subject with a DOID into a Pharos Disease ID"""
         #TODO: This relies on a pretty ridiculous caching of a map between pharos ids and doids.  
         #      As Pharos improves, this will not be required, but for the moment I don't know a better way.

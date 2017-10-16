@@ -1,6 +1,9 @@
 import os
 import operator
+import sys
 import traceback
+
+# pyswip
 from pyswip import Prolog
 from pyswip import registerForeign
 from pyswip import Functor
@@ -8,8 +11,47 @@ from pyswip import call
 from pyswip import newModule
 from pyswip import Variable
 from pyswip import Query
-
 from pyswip.easy import getList, registerForeign
+
+# problog
+from problog.program import PrologFile
+from problog.program import PrologString
+from problog.formula import LogicFormula
+from problog import get_evaluatable
+from problog.logic import Term
+from problog.logic import Var
+from problog.engine_stack import StackBasedEngine
+from problog.engine import DefaultEngine
+
+
+def test_problog():
+    model="translator_knowledgebase.prolog"
+    program = PrologFile(model)
+    formula = LogicFormula.create_from(program)
+    #db = StackBasedEngine (program)
+    
+    get_evaluatable().create_from(program).evaluate()
+    #q = PrologString ("query(path_to(doid, pharos_disease_id)).")
+    q = PrologString ("path_to(doid, pharos_disease_id).")
+    #get_evaluatable().create_from(q).evaluate ()
+
+    engine = DefaultEngine()
+    db = engine.prepare(program)
+    query1 = Var('query(path_to(doid,X)).', None)   # query for 'heads(_)'
+    results = engine.query(db=db, term=query1)
+    print (results)
+
+    query1 = Term('path_to(doid,Y).', 'Y')   # query for 'heads(_)'
+    results = engine.query(db=db, term=query1)
+    print (results)
+    
+    #print (db.query ("query(path_to(doid, pharos_disease_id)).", term=Term(None)))
+    sys.exit (0)
+
+
+
+
+
 
 class Reason:
     def __init__(self):
