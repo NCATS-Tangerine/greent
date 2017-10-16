@@ -117,8 +117,9 @@ class Pharos(object):
             if hgnc is not None:
                 #print ("making hgnc node {0}".format (hgnc))
                 hgnc_node = KNode(hgnc, 'G')
-                if index < 3:
+                if index < 10:
                     logger.debug ("            hgnc-node: %s", hgnc_node)
+                    #break
                 resolved_edge_nodes.append((edge,hgnc_node))
 #            else:
 #                logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
