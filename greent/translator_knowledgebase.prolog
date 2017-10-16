@@ -48,6 +48,6 @@ path_to(X,Y) :-
 
 path_to(X,Y) :-
     translates(X,Z),
-    translates(Z,Y).
+    path_to(Z,Y).
 
 query(path_to(X,Y)).
