@@ -49,6 +49,13 @@ type_matrix(ConceptA,SpecificA,TypesA,ConceptB,SpecificB,TypesB) :-
     reify(ConceptA,SpecificA,TypesA),
     reify(ConceptB,SpecificB,TypesB).
 
+abstract_to_transitions(ConceptA,SpecificA,TypesA,ConceptB,SpecificB,TypesB, []) :-
+    type_matrix(ConceptA,SpecificA,TypesA,ConceptB,SpecificB,TypesB,[]).
+abstract_to_transitions(ConceptA,SpecificA,TypesA,ConceptB,SpecificB,TypesB, [H|T]) :-
+    type_matrix(ConceptA,SpecificA,[H1|T1],ConceptB,SpecificB,[H2|T2],[XH|XT]),
+    path_to(H1,H2,XH),
+    abstract_to_transitions(ConceptA,SpecificA,T1,ConceptB,SpecificB,T2, XT).
+    
 path_to(X,Y,[M]) :-
     translates(X,Y,M).
 path_to(X,Y,[H|T]) :-
