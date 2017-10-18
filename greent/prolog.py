@@ -1,4 +1,5 @@
 import os
+import json
 import operator
 import sys
 import traceback
@@ -20,43 +21,71 @@ from problog.formula import LogicFormula
 from problog import get_evaluatable
 from problog.logic import Term
 from problog.logic import Var
+from problog.logic import Constant
 from problog.engine_stack import StackBasedEngine
 from problog.engine import DefaultEngine
 
-
 def test_problog():
-    model="translator_knowledgebase.prolog"
-    program = PrologFile(model)
-    formula = LogicFormula.create_from(program)
-    #db = StackBasedEngine (program)
-    
-    get_evaluatable().create_from(program).evaluate()
-    #q = PrologString ("query(path_to(doid, pharos_disease_id)).")
-    q = PrologString ("path_to(doid, pharos_disease_id).")
-    #get_evaluatable().create_from(q).evaluate ()
 
+    from problog.program import PrologString
+    from problog import get_evaluatable
+
+    text = open("translator_knowledgebase.prolog", 'r').read ()
+    pl_model = PrologString(text)
     engine = DefaultEngine()
-    db = engine.prepare(program)
-    query1 = Var('query(path_to(doid,X)).', None)   # query for 'heads(_)'
-    results = engine.query(db=db, term=query1)
-    print (results)
+    db = engine.prepare(pl_model)
 
-    query1 = Term('path_to(doid,Y).', 'Y')   # query for 'heads(_)'
-    results = engine.query(db=db, term=query1)
-    print (results)
+    cbr_gene = Term("cbr_gene")
+    doid = Term("doid")
+    hgnc_id = Term("hgnc_id")
+    hetio_cell = Term("hetio_cell")
+    translates = Term("translates")
+    path_to = Term("path_to")
+    query_term = path_to (cbr_gene, hetio_cell, None)
+
+    doid_to_hgnc = path_to (doid, hgnc_id, None)
+    res = engine.query (db, doid_to_hgnc)
+    print ('%s? %s' % (doid_to_hgnc, res))
     
-    #print (db.query ("query(path_to(doid, pharos_disease_id)).", term=Term(None)))
+    res = engine.query(db, query_term)
+    print ('%s? %s' % (query_term, res))
+    print ('%s? %s' % (query_term, bool(res)))
+
+    reify = Term("reify")
+    drug = Term("tS")
+    res = engine.query(db, reify (drug, None, None))
+    print ('%s? %s' % (reify, res))
+
+    reify = Term("type_matrix")
+    disease = Term("tD")
+    res = dict(engine.query(db, reify (drug, None, None, disease, None, None)))
+    print ('%s? %s' % (reify, res))
+    for r in res:
+        L = r[2]
+        R = r[5]
+        print (L)
+        print (str(L))
+
+        for anL in L:
+            for anR in R.value:
+                path = path_to (Term(anL), Term(anR), None)
+                res = engine.query (db, path)
+                print ('%s? %s' % (path, res))
+    
+                
+    
+    
     sys.exit (0)
 
 
-
+test_problog ()
 
 
 
 class Reason:
     def __init__(self):
         self.prolog = Prolog ()
-        self.execute (self.read_file (os.path.join (os.path.dirname (__file__), "translator_knowledgebase.prolog")))
+        self.execute (self.read_file (os.path.join (os.path.dirname (__file__), "translator_knowledgebase.swip.prolog")))
         self.prolog.consult (os.path.join (os.path.dirname (__file__), "translator_rules.prolog"))
     def read_file(self, f):
         result = None
@@ -123,7 +152,7 @@ if __name__ == "__main__":
     """
     
     notifier = Notifier ()
- #   registerForeign (notifier.notify)
+    registerForeign (notifier.notify)
     
     t = Trans ()
     for q in query.split ("\n"):

@@ -4,7 +4,7 @@ import os
 import logging
 from greent.triplestore import TripleStore
 from greent.util import LoggingUtil
-from reasoner.graph_components import KEdge, KNode, KGraph
+from reasoner.graph_components import KEdge, KNode
 from pprint import pprint
 
 logger = LoggingUtil.init_logging (__file__, logging.DEBUG)

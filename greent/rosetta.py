@@ -59,7 +59,6 @@ default_router_config = {
         },
         "doid"              : {
             "mesh_disease_id"     : { "op" : "disease_ontology.doid_to_mesh"   },
-#            "c2b2r_gene"          : { "op" : "pharos.disease_get_gene"        },
             "pharos_disease_id"   : { "op" : "disease_ontology.doid_to_pharos" },
             "hgnc_id"             : { "op" : "pharos.disease_get_gene"         }
         },
@@ -76,7 +75,7 @@ default_router_config = {
             "genetic_condition"   : { "op" : "biolink.gene_get_genetic_condition" }
         },
         "pharos_disease_id" : {
-            "hgnc_id"             : { "op" : "pharos.target_to_hgnc" }
+            "hgnc_id"             : { "op" : "pharos.disease_get_gene" }
         },
         "mesh"              : {
             "root_kind"           : { "op" : "oxo.mesh_to_other" }
@@ -115,7 +114,7 @@ class Rosetta:
             source = self.vocab[source] if source in self.vocab else None
         return source
     def get_transitions (self, source, dest):
-        logger.debug ("get-transitions: {0} {1}".format (source, dest))
+        #logger.debug ("get-transitions: {0} {1}".format (source, dest))
         transitions = []
         try:
             paths = nxa.all_shortest_paths (self.g, source=source, target=dest)
@@ -128,7 +127,7 @@ class Rosetta:
                     edges = self.g.edges (step, data=True)
                     for e in edges:
                         if step[1] == e[1]:
-                            logger.debug ("      trans: {0} {1}".format (e, e[2]['data']['op']))
+                            logger.debug ("      trans: {0}".format (e))
                             transition = e[2]['data']['op']
                             transitions.append (transition)
         except NetworkXNoPath:
@@ -136,33 +135,29 @@ class Rosetta:
         except KeyError:
             pass
         return transitions
-#    def map_translations (self, translations):
-#        results = []
-#        for t in translations:
-#            results.append (self.translate (thing=t.obj, source=t.type_a, target=t.type_b))
-#        return results
     def translate (self, thing, source, target):
         if not thing:
             return None
         source = self.guess_type (thing, source)
         target = self.guess_type (None, target)
         transitions = self.get_transitions (source, target)
-#        if len(transitions) > 0:
-#            print ("transition> {0}".format (transitions))
         last = thing
-        if len(transitions) == 0:
-            logger.debug ("   [transitions:{2}] {0}->{1}".format (source, target, len(transitions)))
-        else:
+        #if len(transitions) == 0:
+        #    logger.debug ("   [transitions:{2}] {0}->{1}".format (source, target, len(transitions)))
+        #else:
+        if len(transitions) > 0:
             logger.debug ("              [transitions:{3}] {0}->{1} {2}".format (source, target, transitions, len(transitions)))
         for transition in transitions:
             try:
-                op = operator.attrgetter(transition)(self.core) 
-                this = op (last)
-                logger.debug ("              invoke: {0}({1}) => {2}".format (transition, last, this))
+                data_op = operator.attrgetter(transition)(self.core) 
+                this = data_op (last)
+                result_text = this[:min(len(this),3)] if this else None if isinstance(this, list) else this
+                logger.debug ("              invoke: {0}({1}) => {2}".format (transition, last, result_text))
                 last = this
+                if last == None:
+                    break
             except:
                 traceback.print_exc ()
-#        print ("--------------> {}".format (last))
         return last if len(transitions) > 0 else None
 
 if __name__ == "__main__":
