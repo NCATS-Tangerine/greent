@@ -39,8 +39,10 @@ class Endotype(SwaggerEndpoint):
         }
     def get_endotype (self, request):
         print (json.dumps (request))
-        return self.client.endotypes.endotypes_post (input=request).result()
-
+        r = self.client.endotypes.endotypes_post (input=request).result()
+        print (r)
+        return r['output'] if 'output' in r else None
+    
 if __name__ == "__main__":
     conf = Config ('config.yaml')
     e = Endotype (conf.get_service("endotype")["url"])

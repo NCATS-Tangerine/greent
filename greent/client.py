@@ -9,6 +9,7 @@ from string import Template
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 from greent.util import LoggingUtil
+from greent.endotype import Endotype
 
 logger = LoggingUtil.init_logging (__file__)
 
@@ -155,15 +156,14 @@ query getGenesPathways($diseases : [String] ) {
     def get_endotypes (self, query):
         response = self.query ({
             "query" : """
-                query endotypes ($query : String) {
-                    endotypes (query: $query)
-                }
-            """,
+                  query get_endotype ( $query : String) {
+                      endotype (query:$query)
+            }""",
             "variables" : {
                 "query" : query
             }
         })
-        return response['data']['patients']
+        return response['data']
     
     def translate (self, thing, domain_a, domain_b):
         query_text = Template ("""{ translate (thing:\"$thing\", domainA: \"$domain_a\", domainB: \"$domain_b\") { value } }""").\
@@ -232,5 +232,21 @@ class TestGraphQLClient (unittest.TestCase):
         pass #print (self.client.get_patients ())
     
 if __name__ == '__main__':
-    unittest.main()
+#    unittest.main()
 
+    greent = GraphQL ("http://localhost:5000/graphql")
+    exposures = list(map(lambda exp : Endotype.create_exposure (**exp), [{
+        "exposure_type": "pm25",
+        "units"        : "",
+        "value"        : 2
+    }]))
+    visits = list(map(lambda v : Endotype.create_visit(**v), [{
+        "icd_codes"  : "ICD9:V12,ICD9:E002",
+        "lat"        : "20",
+        "lon"        : "20",
+        "time"       : "2017-10-12 21:12:29",
+        "visit_type" : "INPATIENT",
+        "exposures"  : exposures
+    }]))
+    request = Endotype.create_request (dob= "2017-10-04", model_type="M0", race="1", sex="M", visits = visits)
+    greent.get_endotypes (query = json.dumps (request))
