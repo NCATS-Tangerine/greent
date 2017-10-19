@@ -11,7 +11,8 @@ from greent.util import Config
 class Endotype(SwaggerEndpoint):
     def __init__(self, url):
         super(Endotype, self).__init__(url)
-    def create_request (self, dob, model_type, race, sex, visits):
+    @staticmethod
+    def create_request (dob, model_type, race, sex, visits):
         return {
             "date_of_birth": dob,
             "model_type": model_type,
@@ -19,13 +20,15 @@ class Endotype(SwaggerEndpoint):
             "sex": sex,
             "visits": visits
         }
-    def create_exposure (self, exposure_type, units, value):
+    @staticmethod
+    def create_exposure (exposure_type, units, value):
         return {
             "exposure_type": exposure_type,
             "units": units,
             "value": value
         }
-    def create_visit (self, icd_codes, lat, lon, time, visit_type, exposures):
+    @staticmethod
+    def create_visit (icd_codes, lat, lon, time, visit_type, exposures):
         return {
             "exposures"  : exposures,
             "icd_codes"  : icd_codes,
@@ -35,7 +38,7 @@ class Endotype(SwaggerEndpoint):
             "visit_type" : visit_type
         }
     def get_endotype (self, request):
-        print (request)
+        print (json.dumps (request))
         return self.client.endotypes.endotypes_post (input=request).result()
 
 if __name__ == "__main__":
