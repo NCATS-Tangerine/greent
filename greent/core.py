@@ -28,7 +28,7 @@ class GreenT:
     ''' The Green Translator API - a single Python interface aggregating access mechanisms for 
     all Green Translator services. '''
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, override={}):
         self.config = Config (config if config else os.path.join (os.path.dirname (__file__), "greent.conf"))
         self.blazegraph = TripleStore (self.get_url("chembio"))
         self.chembio = ChemBioKS (self.blazegraph)

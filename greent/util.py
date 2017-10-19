@@ -5,13 +5,16 @@ import requests
 import traceback
 import unittest
 import datetime
+import os
 import yaml
 from bravado.client import SwaggerClient
 from bravado.requests_client import RequestsClient
 
 class Config:
     def __init__(self, config):
-        with open(config) as f:
+        if not config.startswith (os.sep):
+            config = os.path.join (os.path.dirname (__file__), config)
+        with open(config, 'r') as f:
             self.conf = yaml.safe_load(f)
     def get_service (self, service):
         return self.conf['translator']['services'][service]

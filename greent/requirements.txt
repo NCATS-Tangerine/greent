@@ -94,3 +94,4 @@ widgetsnbextension==2.0.1
 pyswip-alt==0.2.3
 networkx==1.11
 reasoner
+ontobio

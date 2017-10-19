@@ -152,6 +152,19 @@ query getGenesPathways($diseases : [String] ) {
         })
         return response['data']['patients']
 
+    def get_endotypes (self, query):
+        response = self.query ({
+            "query" : """
+                query endotypes ($query : String) {
+                    endotypes (query: $query)
+                }
+            """,
+            "variables" : {
+                "query" : query
+            }
+        })
+        return response['data']['patients']
+    
     def translate (self, thing, domain_a, domain_b):
         query_text = Template ("""{ translate (thing:\"$thing\", domainA: \"$domain_a\", domainB: \"$domain_b\") { value } }""").\
            safe_substitute (thing=thing, domain_a=domain_a, domain_b=domain_b)

@@ -3,7 +3,8 @@ import graphene
 from graphene import resolve_only_args
 from datetime import datetime, timedelta
 from dateutil.parser import parse as parse_date
-from .core import GreenT
+from greent.core import GreenT
+from greent.translator import Translation
 
 # http://graphql.org/learn/introspection/
 
@@ -88,11 +89,14 @@ class Thing(graphene.ObjectType):
     value      = graphene.String ()
     attributes = graphene.List (of_type=Attribute)
     
-greenT = GreenT ({
+greenT = GreenT (config='greent.conf', override={
     "clinical_url" : "http://localhost:5000/patients"
 })
 
 class GreenQuery (graphene.ObjectType):
+
+    endotype = graphene.List(of_type=graphene.String,
+                             query=graphene.String ())
 
     exposure_score = graphene.List (of_type=ExposureScore,
                                     exposureType  = graphene.String (),
@@ -129,9 +133,7 @@ class GreenQuery (graphene.ObjectType):
                                domainA = graphene.String (),
                                domainB = graphene.String ())
 
-
     '''
-
 class Attribute(graphene.ObjectType):
     key = graphene.String ()
     value = graphene.String ()
@@ -141,12 +143,14 @@ class Thing(graphene.ObjectType):
     attributes = graphene.List (of_type=Attribute)
 
     '''
+    def resolve_endotype (obj, args, context, info):
+        return greenT.endotype.get_endotype (json.loads (args.get("query")))
     
     def resolve_translate (obj, args, context, info):
-        return list (map (lambda v : Thing (value=v),
-                          greenT.translator.translate (thing   = args.get ("thing"),
-                                                       domainA = args.get ("domainA"),
-                                                       domainB = args.get ("domainB"))))
+        translation = Translation (obj=args.get("thing"),
+                                   type_a=args.get("domainA"),
+                                   type_b=args.get("domainB"))
+        return list (map (lambda v : Thing (value=v), greenT.translator.translate (translation)))
     
     def resolve_exposure_score (obj, args, context, info):
         result = None

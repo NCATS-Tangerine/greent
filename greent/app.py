@@ -7,7 +7,7 @@ from flask import request
 from flask import Response
 from flask import current_app
 from pyld import jsonld
-from util import LoggingUtil
+from greent.util import LoggingUtil
 from pprint import pprint
 
 logger = LoggingUtil.init_logging (__file__)

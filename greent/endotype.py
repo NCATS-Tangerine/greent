@@ -35,6 +35,7 @@ class Endotype(SwaggerEndpoint):
             "visit_type" : visit_type
         }
     def get_endotype (self, request):
+        print (request)
         return self.client.endotypes.endotypes_post (input=request).result()
 
 if __name__ == "__main__":
