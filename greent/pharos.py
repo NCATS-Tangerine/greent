@@ -10,7 +10,7 @@ from csv import DictReader
 from greent.disease_ont import DiseaseOntology
 from greent.util import Munge
 from greent.util import LoggingUtil
-from greent.async import AsyncUtil
+#from greent.async import AsyncUtil
 from reasoner.graph_components import KEdge, KNode
 
 logger = LoggingUtil.init_logging (__name__, logging.DEBUG)
@@ -103,7 +103,7 @@ class Pharos(object):
 
     #TODO: assuming a DOID, not really valid
     #TODO: clean up, getting ugly
-    def disease_get_gene(self, subject):
+    def disease_get_gene0(self, subject):
         pharosids = self.translate (subject)
         print ("pharos ids: {}".format (pharosids))
         original_edge_nodes=[]
@@ -170,7 +170,7 @@ class Pharos(object):
         return resolved_edge_nodes
 
 
-    def disease_get_gene0(self, subject):
+    def disease_get_gene(self, subject):
         pharosids = self.translate (subject)
         print ("pharos ids: {}".format (pharosids))
         original_edge_nodes=[]
@@ -252,30 +252,8 @@ def test ():
     print (diseases)
 
 
-def test_async ():
-    async def amain():
-        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:            
-            loop = asyncio.get_event_loop()
-            futures = [
-                loop.run_in_executor(
-                    executor, 
-                    requests.get, 
-                    'http://example.org/'
-                )
-                for i in range(20)
-            ]
-            for response in await asyncio.gather(*futures):
-                print ("a {}".format (response.text))            
-                pass
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(amain())
-    #amain ()
-    sys.exit (0)    
         
 if __name__ == '__main__':
-    test_async ()
-
-
     test ()
     build_disease_translation ()
     

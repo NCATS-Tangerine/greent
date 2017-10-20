@@ -141,9 +141,25 @@ query getGenesPathways($diseases : [String] ) {
     def get_patients (self, age=None, sex=None, race=None, location=None):
         response = self.query ({
             "query" : """
-                query queryPatients ($age : String, $sex : String, $race : String) {
-                    patients (age: $age, sex: $sex, race: $race)
-                }
+query queryPatients ($age : Int, $sex : String, $race : String) {
+  patients (age: $age, sex: $sex, race: $race) {
+    birthDate
+    race
+    sex
+    patientId
+    diagnoses {
+      diagnosis
+    }
+    geoCode {
+      latitude
+      longitude
+    }
+    prescriptions {
+      medication
+      date
+    }
+  }
+} 
             """,
             "variables" : {
                 "age"  : age,
