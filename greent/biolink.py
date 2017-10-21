@@ -44,7 +44,7 @@ class Biolink:
             if is_genetic_condition:
                 obj.properties['mondo_identifiers'] = new_object_ids
                 relations.append( (relation,obj) )
-        print (" biolink relations %s" % relations)
+        #print (" biolink relations %s" % relations)
         return relations
 
 def test():

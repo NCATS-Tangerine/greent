@@ -49,7 +49,6 @@ class Mondo():
         #TODO: The return signature is funky, fix it.
         obj_id = obj.identifier
         obj_ids = self.get_mondo_id(obj_id)
-        print ("obj ids {}".format (obj_ids))
         return_objects=[]
         for obj_id in obj_ids:
             ancestors = self.ont.ancestors(obj_id)

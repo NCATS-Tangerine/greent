@@ -14,6 +14,7 @@ from greent.disease_ont import DiseaseOntology
 from greent.endotype import Endotype
 from greent.hetio import HetIO
 from greent.oxo import OXO
+from greent.pharos import AsyncPharos
 from greent.pharos import Pharos
 from greent.translator import Translator
 from greent.triplestore import TripleStore
@@ -36,7 +37,12 @@ class GreenT:
         self.exposures = CMAQ (self.get_url("cmaq"))
         self.chemotext = Chemotext (self.get_url("chemotext"))
         self.disease_ontology = DiseaseOntology (obo_resource=self.get_url("diseaseontology"))
-        self.pharos = Pharos (self.get_url("pharos"))
+        if 'async' in override and override['async'] == True:
+            print ("** Initializing async pharos")
+            self.pharos = AsyncPharos (self.get_url("pharos"))
+        else:
+            print ("** Initializing synchronous pharos")
+            self.pharos = Pharos (self.get_url ("pharos"))
         self.oxo = OXO (self.get_url("oxo"))
         self.hetio = HetIO (self.get_url("hetio"))
         self.endotype = Endotype (self.get_url("endotype"))

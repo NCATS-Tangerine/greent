@@ -4,6 +4,7 @@ import logging
 import pronto
 import requests
 import os
+from reasoner.graph_components import KNode,KEdge,elements_to_json
 
 class DiseaseOntology (object):
     def __init__(self, obo_resource="http://purl.obolibrary.org/obo/doid.obo"):
@@ -11,6 +12,7 @@ class DiseaseOntology (object):
         self.initialized = False
         self.obo_resource = obo_resource
         self.pharos_map = None
+        self.pmap = None
     def load (self):
         if not os.path.exists (self.disease_ontology_data):
             url = self.obo_resource
@@ -40,19 +42,20 @@ class DiseaseOntology (object):
             self.load ()
         return self.doid_to_mesh_map [doid]
     def doid_to_pharos(self,doid):
-        pmap = defaultdict(list)
-        with open(os.path.join(os.path.dirname(__file__), 'pharos.id.txt'),'r') as inf:     #'pharos.id.txt','r') as inf:
-            rows = DictReader(inf,dialect='excel-tab')
-            for row in rows:
-                if row['DOID'] != '':
-                    doidlist = row['DOID'].split(',')
-                    for d in doidlist:
-                        pmap[d].append(row['PharosID'])
-        pharos_list = pmap[doid.identifier]
+        if not self.pmap:
+            self.pmap = defaultdict(list)
+            with open(os.path.join(os.path.dirname(__file__), 'pharos.id.txt'),'r') as inf:     #'pharos.id.txt','r') as inf:
+                rows = DictReader(inf,dialect='excel-tab')
+                for row in rows:
+                    if row['DOID'] != '':
+                        doidlist = row['DOID'].split(',')
+                        for d in doidlist:
+                            self.pmap[d].append(row['PharosID'])
+        pharos_list = self.pmap[doid.identifier]
         if len(pharos_list) == 0:
             logging.getLogger('application').warn('Unable to translate %s into Pharos ID' % doid)
             return None
-        return pharos_list
+        return list(map(lambda v : ( KEdge('doid->pharos','D'), KNode(identifier=v, node_type='pharos_disease_id') ), pharos_list))
     
     def doid_to_pharos0(self, doid):
         """Convert a subject with a DOID into a Pharos Disease ID"""

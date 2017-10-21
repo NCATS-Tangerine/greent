@@ -6,12 +6,15 @@ import logging
 import sys
 import traceback
 from collections import defaultdict
+from collections import namedtuple
 from csv import DictReader
 from greent.disease_ont import DiseaseOntology
 from greent.util import Munge
 from greent.util import LoggingUtil
-#from greent.async import AsyncUtil
+from greent.async import AsyncUtil
+from greent.async import Operation
 from reasoner.graph_components import KEdge, KNode
+from simplejson.scanner import JSONDecodeError
 
 logger = LoggingUtil.init_logging (__name__, logging.DEBUG)
 
@@ -101,75 +104,6 @@ class Pharos(object):
             pass
         return result
 
-    #TODO: assuming a DOID, not really valid
-    #TODO: clean up, getting ugly
-    def disease_get_gene0(self, subject):
-        pharosids = self.translate (subject)
-        print ("pharos ids: {}".format (pharosids))
-        original_edge_nodes=[]
-        '''
-        async def parallel_requests (urls, process_response, degree=20):
-            with concurrent.futures.ThreadPoolExecutor(max_workers=degree) as executor:
-                loop = asyncio.get_event_loop()
-                futures = [
-                    loop.run_in_executor(
-                        executor, 
-                        requests.get, 
-                        url
-                    )
-                    for url in urls
-                ]
-                for response in await asyncio.gather(*futures):
-                    process_response (response)
-        '''
-        def process_pharos_response (r):
-            result = r.json()
-            for link in result['links']:
-                #logger.debug ("link %s", link)
-                if link['kind'] != 'ix.idg.models.Target':
-                    logger.info('Pharos disease returning new kind: %s' % link['kind'])
-                else:
-                    pharos_target_id = int(link['refid'])
-                    pharos_edge = KEdge( 'pharos', 'queried', {'properties': link['properties']} )
-                    original_edge_nodes.append( (pharos_edge, pharos_target_id) )
-
-        AsyncUtil.execute_parallel_requests (
-            urls=[ "https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full" % p for p in pharosids ],
-            response_processor=process_pharos_response,
-            chunk_size=30)
-        
-        '''
-        urls = []
-        chunks = 20
-        for pharosid in pharosids:
-            logger.debug ('pharos> https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid)
-            urls.append ('https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid)
-            if len(urls) % chunks == 0:
-                loop = asyncio.get_event_loop()
-                loop.run_until_complete(parallel_requests(urls, process_response=process_pharos_response))                
-        if len(urls) > 0:
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(parallel_requests(urls, process_response=process_pharos_response))
-        '''
-        #Pharos returns target ids in its own numbering system. Collect other names for it.
-        resolved_edge_nodes = []
-        index = 0
-        for edge, pharos_target_id  in original_edge_nodes:
-            #logger.debug ("edge: %s", edge)
-            hgnc = self.target_to_hgnc(pharos_target_id)
-            index = index + 1
-            if hgnc is not None:
-                #logger.debug ("making hgnc node {0}".format (hgnc))
-                hgnc_node = KNode(hgnc, 'G')
-                if index < 10:
-                    logger.debug ("            hgnc-node: %s", hgnc_node)
-                resolved_edge_nodes.append((edge,hgnc_node))
-            else:
-                logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
-
-        return resolved_edge_nodes
-
-
     def disease_get_gene(self, subject):
         pharosids = self.translate (subject)
         print ("pharos ids: {}".format (pharosids))
@@ -204,6 +138,65 @@ class Pharos(object):
 
         return resolved_edge_nodes
 
+class AsyncPharos(Pharos):
+
+    def __init__(self, url):
+        super (AsyncPharos, self).__init__(url)
+        
+    def disease_get_gene(self, subject):
+#        print ("***************sdfs>>>> {0} {1}".format (type(subject), subject))
+#        if not isinstance (subject,KNode):
+#            traceback.print_exc ()
+        pharosids = subject.identifier
+#        print ("pharos ids: {}".format (pharosids))
+        original_edge_nodes=[]
+        def process_pharos_response (r):
+            try:
+                result = r.json()
+                for link in result['links']:
+                    if link['kind'] != 'ix.idg.models.Target':
+                        logger.info('Pharos disease returning new kind: %s' % link['kind'])
+                    else:
+                        pharos_target_id = int(link['refid'])
+                        pharos_edge = KEdge( 'pharos', 'queried', {'properties': link['properties']} )
+                        original_edge_nodes.append( (pharos_edge, pharos_target_id) )
+            except JSONDecodeError as e:
+                pass #logger.error ("got exception %s", e)
+        AsyncUtil.execute_parallel_requests (
+            urls=[ "https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full" % p for p in pharosids ],
+            response_processor=process_pharos_response)
+
+        logger.debug ("           Getting hgnc ids for pharos id: {}".format (pharosids))
+        resolved_edge_nodes = []
+        HGNCRequest = namedtuple ('HGNCRequest', [ 'pharos_target_id', 'edge' ])
+        index = 0
+        def process_hgnc_request (request):
+            nonlocal index
+            index += 1
+            url = "https://pharos.nih.gov/idg/api/v1/targets(%s)/synonyms" % request.pharos_target_id
+            if index < 3:
+                logger.debug ("         hgn/url:  {0}".format (url))
+            return (requests.get (url).json (), request.edge)
+        def process_hgnc_response (response):
+            result = response[0]
+            edge = response[1]
+            hgnc = None
+            for synonym in result:
+                if synonym['label'] == 'HGNC':
+                    hgnc = synonym['term']
+            if hgnc is not None:
+                hgnc_node = KNode(hgnc, 'G')
+                resolved_edge_nodes.append((edge,hgnc_node))
+        AsyncUtil.execute_parallel_operations (
+            operations=[ Operation(process_hgnc_request, HGNCRequest(pharos_target_id, edge)) for edge, pharos_target_id in original_edge_nodes ], #[:2],
+            response_processor=process_hgnc_response)
+        
+        return resolved_edge_nodes
+
+
+
+
+    
 
 #Poking around on the website there are about 10800 ( a few less )
 def build_disease_translation():

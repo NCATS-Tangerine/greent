@@ -246,23 +246,25 @@ class TestGraphQLClient (unittest.TestCase):
 
     def test_clinical (self):
         pass #print (self.client.get_patients ())
-    
-if __name__ == '__main__':
-#    unittest.main()
 
-    greent = GraphQL ("http://localhost:5000/graphql")
-    exposures = list(map(lambda exp : Endotype.create_exposure (**exp), [{
-        "exposure_type": "pm25",
-        "units"        : "",
-        "value"        : 2
-    }]))
-    visits = list(map(lambda v : Endotype.create_visit(**v), [{
-        "icd_codes"  : "ICD9:V12,ICD9:E002",
-        "lat"        : "20",
-        "lon"        : "20",
-        "time"       : "2017-10-12 21:12:29",
-        "visit_type" : "INPATIENT",
-        "exposures"  : exposures
-    }]))
-    request = Endotype.create_request (dob= "2017-10-04", model_type="M0", race="1", sex="M", visits = visits)
-    greent.get_endotypes (query = json.dumps (request))
+    def test_endotype (self):
+        greent = GraphQL ("http://localhost:5000/graphql")
+        exposures = list(map(lambda exp : Endotype.create_exposure (**exp), [{
+            "exposure_type": "pm25",
+            "units"        : "",
+            "value"        : 2
+        }]))
+        visits = list(map(lambda v : Endotype.create_visit(**v), [{
+            "icd_codes"  : "ICD9:V12,ICD9:E002",
+            "lat"        : "20",
+            "lon"        : "20",
+            "time"       : "2017-10-12 21:12:29",
+            "visit_type" : "INPATIENT",
+            "exposures"  : exposures
+        }]))
+        request = Endotype.create_request (dob= "2017-10-04", model_type="M0", race="1", sex="M", visits = visits)
+        greent.get_endotypes (query = json.dumps (request))
+        
+if __name__ == '__main__':
+    unittest.main()
+
