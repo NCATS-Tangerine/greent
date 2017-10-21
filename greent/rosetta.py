@@ -31,9 +31,10 @@ class Translation (object):
 default_router_config = {
     "@concepts" : {
         "S"  : [ "c2b2r_drug_id" ],
-        "G"  : [ "c2b2r_gene", "hgnc_id" ],
-        "P"  : [ "c2b2r_pathway" ],
-        "A"  : [ "hetio_cell" ], # anatomy, tissue
+        "G"  : [ "UNIPROT", "c2b2r_gene", "hgnc_id" ],
+        "P"  : [ "c2b2r_pathway", "KEGG" ],
+        "A"  : [ "hetio_anatomy" ], # anatomy, tissue
+        "C"  : [ "hetio_cell" ],
         "PH" : [ ],
         "D"  : [ "mesh_disease_id", "mesh_disease_name", "pharos_disease_id", "doid" ],
         "GC" : [ "genetic_condition" ]
@@ -48,12 +49,14 @@ default_router_config = {
         "c2b2r_drug_name"     : "http://chem2bio2rdf.org/drugbank/resource/Generic_Name",
         "c2b2r_drug_id"       : "http://chem2bio2rdf.org/drugbank/resource/drugbank_drug",
         "c2b2r_gene"          : "http://chem2bio2rdf.org/uniprot/resource/gene",
-        "c2b2r_pathway"       : "http://chem2bio2rdf.org/kegg/resource/kegg_pathway",
+        "c2b2r_pathway"       : "http://identifiers.org/kegg/pathway",
+        "UNIPROT"             : "http://identifiers.org/uniprot",
+        "KEGG"                : "http://identifiers.org/kegg/pathway",
         "doid"                : "http://identifiers.org/doid",
         "genetic_condition"   : "http://identifiers.org/mondo/gentic_condition",
         "hetio_anatomy"       : "http://identifier.org/hetio/anatomy",
         "hetio_cell"          : "http://identifier.org/hetio/cellcomponent",
-        "hgnc_id"             : "http://identifier.org/hgnc/gene/id",
+        "hgnc_id"             : "http://identifiers.org/hgnc",
         "mesh"                : "http://identifiers.org/mesh",
         "mesh_disease_id"     : "http://identifiers.org/mesh/disease/id",
         "mesh_disease_name"   : "http://identifiers.org/mesh/disease/name",
@@ -67,19 +70,23 @@ default_router_config = {
             "mesh_drug_name"      : { "op" : "chemotext.disease_name_to_drug_name" }
         },
         "mesh_disease_id"   : {
-            "c2b2r_drug_id"       : { "op" : "chembio.get_drugs_by_condition_graph" }
+            "c2b2r_drug_id"       : { "op" : "chembio.get_drugs_by_condition_graph" },
+            "c2b2r_gene"          : { "op" : "chembio.graph_get_genes_by_disease" },
+            "c2b2r_pathway"       : { "op" : "chembio.graph_get_pathways_by_disease" }
         },
         "doid"              : {
-            "mesh_disease_id"     : { "op" : "disease_ontology.doid_to_mesh"   },
+            "mesh_disease_id"     : { "op" : "disease_ontology.graph_doid_to_mesh"   },
             "pharos_disease_id"   : { "op" : "disease_ontology.doid_to_pharos" }
-            #,            "hgnc_id"             : { "op" : "pharos.disease_get_gene"         }
         },
         "c2b2r_drug_name"   : {
             "c2b2r_gene"          : { "op" : "chembio.drug_name_to_gene_symbol" }            
         },
         "c2b2r_gene"        : {
-            "c2b2r_pathway"       : { "op" : "chembio.gene_symbol_to_pathway" },
             "pharos_disease_name" : { "op" : "pharos.target_to_disease" },
+            "hetio_anatomy"       : { "op" : "hetio.gene_to_anatomy" }
+        },
+        "UNIPROT"           : {
+            "KEGG"                : { "op" : "chembio.graph_get_pathways_by_gene" },
             "hetio_anatomy"       : { "op" : "hetio.gene_to_anatomy" },
             "hetio_cell"          : { "op" : "hetio.gene_to_cell" }
         },
@@ -124,7 +131,10 @@ class Rosetta:
                 logger.debug ("  +edge: {0} {1} {2}".format (L, R, transitions[L][R]))
                 self.g.add_edge (L, R, data=transitions[L][R])
                 self.g.add_edge (self.vocab[L], self.vocab[R], data=transitions[L][R])
-                
+                #self.g.add_edge (L, self.vocab[R], data=transitions[L][R])
+                print ("    --------> {0} {1}".format (self.vocab[L], R))
+                self.g.add_edge (self.vocab[L], R, data=transitions[L][R])
+
     def guess_type (self, thing, source=None):
         if thing and not source and ':' in thing:
             curie = thing.upper ().split (':')[0]
@@ -148,10 +158,12 @@ class Rosetta:
         3. Do this for thing a and thing b.
         4. We want to guess specifically via the curie if possible, to avoid a combinatoric explosion, as we cross product spurious types.
         """
-        x_type_a = self.map_concept_types (thing)
+        x_type_a = self.map_concept_types (thing, thing.node_type)
         x_type_b = self.map_concept_types (thing=None, object_type=object_type)
-        return [ Translation(thing, ta_i, tb_i) for ta_i in x_type_a for tb_i in x_type_b ] if x_type_a and x_type_b else []
-        
+        translations = [ Translation(thing, ta_i, tb_i) for ta_i in x_type_a for tb_i in x_type_b ] if x_type_a and x_type_b else []
+        print (translations)
+        return translations
+    
     def get_transitions (self, source, dest):
         #logger.debug ("get-transitions: {0} {1}".format (source, dest))
         transitions = []
@@ -185,47 +197,26 @@ class Rosetta:
         if len(transitions) > 0:
             logger.debug ("              [transitions:{3}] {0}->{1} {2}".format (source, target, transitions, len(transitions)))
         for transition in transitions:
-            #print ("STACK--: {}".format (stack))
             try:
                 data_op = operator.attrgetter(transition)(self.core)
                 last = stack[-1:][0] # top
-                if not isinstance(last[0], KEdge):
+                if not isinstance(last,list) or len(last)==0 or not isinstance(last[0], KEdge):
                     stack.pop ()
-                #print ("         --last {}".format (last))
                 for i in last:
-                    #print ("       -------i--> {}".format (i))
                     node = i[1]
                     logger.debug ("              invoke: {0}({1}) => ".format (transition, node)),
                     stack.append (data_op (node))
                     r = stack[-1:]
                     result_text = str(r)
-                    #r = stack[-1:]
-                    #result_text = r[:min(len(r),3)] if r else None if isinstance(r, list) else r
-                    logger.debug ("              invoke: {0}({1}) => {2}".format (transition, node, result_text))
+                    result_text = (result_text[:80] + '...') if len(result_text) > 80 else result_text
+                    logger.debug ("                response>: {0}".format (result_text))
             except:
                 traceback.print_exc ()
-        return [ pair for level in stack for pair in level if isinstance(pair,tuple) and isinstance(pair[0],KEdge) ]
+        response = [ pair for level in stack for pair in level if isinstance(pair,tuple) and isinstance(pair[0],KEdge) ]
+        text = str(response)
+        text = (text[:100] + '...') if len(text) > 100 else text
+        return response
     
 if __name__ == "__main__":
     translator = Rosetta ()
-    test = {
-        "c2b2r_gene" : "pharos_disease_name",
-        "c2b2r_gene" : "hetio_cell",
-        "mesh"       : "root_kind",
-        "doid"       : "hgnc_id"
-    }
-    things = [
-        "DOID:0060728",
-        "DOID:0050777",
-        "DOID:2841"
-    ]
-    quiet = [ "connectionpool", "requests" ]
-    for q in quiet:
-        logging.getLogger(q).setLevel(logging.WARNING)
-    for t in things:
 
-        logging.getLogger("chembio").setLevel (logging.DEBUG)
-        m = 'MESH:D001249'
-        d    = translator.translate (m, translator.vocab["mesh_disease_id"], translator.vocab["c2b2r_drug_id"])
-
-        print (d)

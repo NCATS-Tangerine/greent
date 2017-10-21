@@ -26,7 +26,6 @@ class DiseaseOntology (object):
         self.ont = pronto.Ontology (self.disease_ontology_data)
         ''' print (ont.json) '''
 
-
         self.doid_to_mesh_map = defaultdict(lambda:[])
         for term in self.ont:
             xref = None
@@ -34,6 +33,7 @@ class DiseaseOntology (object):
                 for xref in term.other['xref']:
                     if xref.startswith ("MESH:"):
                         #print ("doid: {0} -> {1}".format (term.id.upper (), xref))
+                        #print ("term: {}".format (term.id.upper ()))
                         self.doid_to_mesh_map[term.id.upper ()].append (xref)
         self.initialized = True
 
@@ -41,6 +41,11 @@ class DiseaseOntology (object):
         if not self.initialized:
             self.load ()
         return self.doid_to_mesh_map [doid]
+
+    def graph_doid_to_mesh (self, doid):
+        mesh_ids = self.doid_to_mesh (doid.identifier)
+        return [ ( KEdge('doid->mesh', 'queried'), KNode(identifier=i, node_type='D') ) for i in mesh_ids ]
+
     def doid_to_pharos(self,doid):
         if not self.pmap:
             self.pmap = defaultdict(list)
@@ -73,4 +78,3 @@ class DiseaseOntology (object):
 if __name__ == "__main__":
     do = DiseaseOntology ()
     print (do.doid_to_mesh ("DOID:2841"))
-    print (do.doid_to_pharos("DOID:2841"))

@@ -31,12 +31,14 @@ class TripleStore(object):
         :param query: A SPARQL query.
         :return: Returns a JSON formatted object.
         """
+        print (query)
         self.service.setQuery (query)
         self.service.setReturnFormat (JSON)
         return self.service.query().convert ()
     
     def query (self, query_text, outputs, flat=False):
         logger.debug (query_text)
+        print (query_text)
         response = self.execute_query (query_text)
         result = None
         if flat:

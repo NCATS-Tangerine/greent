@@ -7,7 +7,7 @@ from greent.util import LoggingUtil
 logger = LoggingUtil.init_logging (__name__)
 
 Operation = namedtuple ('Operation', [ 'operation', 'arguments' ])
-default_chunk_size = 10
+default_chunk_size = 30
 class AsyncUtil:
     
     @staticmethod

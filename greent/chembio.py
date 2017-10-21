@@ -88,17 +88,6 @@ select ?drugID ?drugGenericName ?diseasePMIDs ?ctdChemDis ?pubChemCID where {
 
     def get_drugs_by_condition_graph (self, conditions):
         drugs = self.get_drugs_by_condition (conditions)
-        '''
-        for e in edges:
-            print (e.to_json ())
-        for n in nodes:
-            print (n.to_json ())
-        '''
-        '''
-        return KGraph (nodes = [ KNode (r['drugID'].split('/')[-1:][0], "http://chem2bio2rdf.org/drugbank/resource/drugbank_drug", r['drugGenericName']) for r in drugs ],
-                       edges = [ KEdge ('chem2bio2rdf', 'conditionToDrug', { 'cid' : r['pubChemCID'], 'pmids' : r['diseasePMIDs'] }) for r in drugs ])
-        '''
-    
         results = []
         for r in drugs:
             edge = KEdge ('c2b2r', 'conditionToDrug',
@@ -109,7 +98,7 @@ select ?drugID ?drugGenericName ?diseasePMIDs ?ctdChemDis ?pubChemCID where {
             results.append ( (edge, node) )
         print ("chembio drugs by condition: {}".format (results))
         return results
-                
+
     def get_genes_pathways_by_disease (self, diseases):
         """ Get genes and pathways associated with specified conditions.
 
@@ -127,7 +116,6 @@ select ?drugID ?drugGenericName ?diseasePMIDs ?ctdChemDis ?pubChemCID where {
         },
         results.bindings))
 
-    
     def get_drug_gene_disease (self, disease_name, drug_name):
         """ Identify targets and diseases assocaited with a drug name.
         :param disease_name: MeSH name of a disease condition.
@@ -180,18 +168,46 @@ select ?ctdGene ?uniprotID ?pathwayName ?keggPath where {
 } LIMIT 500
 """)
 
-    '''
-    def query (self, query_template, output_fields, input_fields=[]):
-        query_template = Template(query_template)
-        query_text = query_template.safe_substitute (**input_fields)
-        logger.debug (query_text)
-        query_results = self.triplestore.execute_query (query_text)
-        logger.debug ("query bindings: {0}".format (query_results.bindings))
-        result = set ()
-        for b in query_results.bindings:
-            logger.debug (b)
-            for f in output_fields:
-                result.add (b[f].value)
-        return result
-#        return { key : value.value for (key, value) in query_results.bindings }
-    '''
+    
+    def graph_get_genes_by_disease (self, disease): #reasoner
+        disease = disease.identifier.split (':')[1].lower ()
+        response = self.get_genes_pathways_by_disease ([ disease ])
+        results = []
+        for r in response:
+            edge = KEdge ('c2b2r', 'diseaseToGene', { 'keggPath' : r['keggPath'] })
+            node = KNode ("UNIPROT:{0}".format (r['uniprotGene'].split('/')[-1:][0]),  "G")
+            results.append ( (edge, node) )
+        return results
+
+    def graph_get_pathways_by_gene (self, gene): #reasoner        
+        response = self.triplestore.query_template (
+            inputs = { "gene" : gene.identifier.split(':')[1].upper () },
+            outputs = [ 'keggPath' ],
+            template_text="""
+prefix kegg:      <http://chem2bio2rdf.org/kegg/resource/>
+prefix drugbank:  <http://chem2bio2rdf.org/drugbank/resource/>
+prefix uniprot:   <http://chem2bio2rdf.org/uniprot/resource/gene/>
+prefix ctd:       <http://chem2bio2rdf.org/ctd/resource/>
+prefix mesh:      <http://bio2rdf.org/mesh:>
+select ?drugGenericName ?uniprotGeneID ?pathwayName ?keggPath where {
+    ?keggPath    kegg:protein                ?swissProtID ;
+                 kegg:Pathway_name           ?pathwayName .
+    ?keggInter   kegg:cid                    ?pubchemCID .
+    ?dbInter     drugbank:GeneBank_ID        ?geneBankID ;
+                 drugbank:SwissProt_ID       ?swissProtID ;
+                 drugbank:gene               ?uniprotGeneID .
+    ?drugID      drugbank:CID                ?pubchemCID ;
+                 drugbank:Generic_Name       ?drugGenericName .
+    ?ctd_disease ctd:diseaseid               ?diseaseID ;
+                 ctd:cid                     ?pubchemCID .
+    values ( ?uniprotGeneID ) {
+        ( uniprot:$gene )
+    }
+} LIMIT 2000""")
+        results = []
+        for r in response:
+            edge = KEdge ('c2b2r', 'geneToPathway', {})
+            node = KNode ("KEGG.PATHWAY:{0}".format (r['keggPath'].split('/')[-1:][0]), "P")
+            results.append ( (edge, node) )
+        return results
+    

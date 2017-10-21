@@ -144,11 +144,7 @@ class AsyncPharos(Pharos):
         super (AsyncPharos, self).__init__(url)
         
     def disease_get_gene(self, subject):
-#        print ("***************sdfs>>>> {0} {1}".format (type(subject), subject))
-#        if not isinstance (subject,KNode):
-#            traceback.print_exc ()
         pharosids = subject.identifier
-#        print ("pharos ids: {}".format (pharosids))
         original_edge_nodes=[]
         def process_pharos_response (r):
             try:
@@ -166,7 +162,7 @@ class AsyncPharos(Pharos):
             urls=[ "https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full" % p for p in pharosids ],
             response_processor=process_pharos_response)
 
-        logger.debug ("           Getting hgnc ids for pharos id: {}".format (pharosids))
+        logger.debug ("          Getting hgnc ids for pharos id: {}".format (pharosids))
         resolved_edge_nodes = []
         HGNCRequest = namedtuple ('HGNCRequest', [ 'pharos_target_id', 'edge' ])
         index = 0
@@ -175,7 +171,7 @@ class AsyncPharos(Pharos):
             index += 1
             url = "https://pharos.nih.gov/idg/api/v1/targets(%s)/synonyms" % request.pharos_target_id
             if index < 3:
-                logger.debug ("         hgn/url:  {0}".format (url))
+                logger.debug ("        hgnc_url:  {0}".format (url))
             return (requests.get (url).json (), request.edge)
         def process_hgnc_response (response):
             result = response[0]
@@ -188,7 +184,7 @@ class AsyncPharos(Pharos):
                 hgnc_node = KNode(hgnc, 'G')
                 resolved_edge_nodes.append((edge,hgnc_node))
         AsyncUtil.execute_parallel_operations (
-            operations=[ Operation(process_hgnc_request, HGNCRequest(pharos_target_id, edge)) for edge, pharos_target_id in original_edge_nodes ], #[:2],
+            operations=[ Operation(process_hgnc_request, HGNCRequest(pharos_target_id, edge)) for edge, pharos_target_id in original_edge_nodes ][:1],
             response_processor=process_hgnc_response)
         
         return resolved_edge_nodes
