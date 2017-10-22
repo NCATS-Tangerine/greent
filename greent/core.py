@@ -18,6 +18,7 @@ from greent.pharos import AsyncPharos
 from greent.pharos import Pharos
 from greent.translator import Translator
 from greent.triplestore import TripleStore
+from greent.tkba import TranslatorKnowledgeBeaconAggregator
 from greent.util import Config
 from greent.util import LoggingUtil
 from pprint import pprint
@@ -47,6 +48,7 @@ class GreenT:
         self.hetio = HetIO (self.get_url("hetio"))
         self.endotype = Endotype (self.get_url("endotype"))
         self.biolink = Biolink (self.get_url("biolink"))
+        self.tkba = TranslatorKnowledgeBeaconAggregator(self.get_url("tkba"))
         self.translator = Translator (core=self)
     def get_url (self, svc):
         return self.config.get_service (svc)["url"]

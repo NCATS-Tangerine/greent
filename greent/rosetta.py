@@ -36,7 +36,7 @@ default_router_config = {
         "A"  : [ "hetio_anatomy" ], # anatomy, tissue
         "C"  : [ "hetio_cell" ],
         "PH" : [ ],
-        "D"  : [ "mesh_disease_id", "mesh_disease_name", "pharos_disease_id", "doid" ],
+        "D"  : [ "NAME", "mesh_disease_id", "mesh_disease_name", "pharos_disease_id", "DOID" ], #"doid" ],
         "GC" : [ "genetic_condition" ]
     },
     "@curie" : {
@@ -52,6 +52,7 @@ default_router_config = {
         "c2b2r_pathway"       : "http://identifiers.org/kegg/pathway",
         "UNIPROT"             : "http://identifiers.org/uniprot",
         "KEGG"                : "http://identifiers.org/kegg/pathway",
+        "NAME"                : "http://identifiers.org/string",
         "doid"                : "http://identifiers.org/doid",
         "genetic_condition"   : "http://identifiers.org/mondo/gentic_condition",
         "hetio_anatomy"       : "http://identifier.org/hetio/anatomy",
@@ -71,10 +72,13 @@ default_router_config = {
         },
         "mesh_disease_id"   : {
             "c2b2r_drug_id"       : { "op" : "chembio.get_drugs_by_condition_graph" },
-            "c2b2r_gene"          : { "op" : "chembio.graph_get_genes_by_disease" },
-            "c2b2r_pathway"       : { "op" : "chembio.graph_get_pathways_by_disease" }
+#            "c2b2r_gene"          : { "op" : "chembio.graph_get_genes_by_disease" },
+#            "c2b2r_pathway"       : { "op" : "chembio.graph_get_pathways_by_disease" }
+            "UNIPROT"              : { "op" : "chembio.graph_get_genes_by_disease" },
+            "KEGG"                 : { "op" : "chembio.graph_get_pathways_by_disease" }
         },
-        "doid"              : {
+#        "doid"              : {
+        "DOID"              : {
             "mesh_disease_id"     : { "op" : "disease_ontology.graph_doid_to_mesh"   },
             "pharos_disease_id"   : { "op" : "disease_ontology.doid_to_pharos" }
         },
@@ -84,6 +88,9 @@ default_router_config = {
         "c2b2r_gene"        : {
             "pharos_disease_name" : { "op" : "pharos.target_to_disease" },
             "hetio_anatomy"       : { "op" : "hetio.gene_to_anatomy" }
+        },
+        "NAME"              : {
+            "DOID"                : { "op" : "tkba.name_to_doid" }
         },
         "UNIPROT"           : {
             "KEGG"                : { "op" : "chembio.graph_get_pathways_by_gene" },
@@ -103,7 +110,7 @@ default_router_config = {
 }
 
 class Rosetta:
-    def __init__(self, greentConf, config=default_router_config, override={}):
+    def __init__(self, greentConf="greent.conf", config=default_router_config, override={}):
         from greent.core import GreenT
         self.core = GreenT (config=greentConf, override=override)
         self.g = nx.DiGraph ()
@@ -128,13 +135,13 @@ class Rosetta:
         transitions = config["@transitions"]
         for L in transitions:
             for R in transitions[L]:
-                logger.debug ("  +edge: {0} {1} {2}".format (L, R, transitions[L][R]))
-                self.g.add_edge (L, R, data=transitions[L][R])
-                self.g.add_edge (self.vocab[L], self.vocab[R], data=transitions[L][R])
+                self.add_edge (L, R, data=transitions[L][R])
+                self.add_edge (self.vocab[L], self.vocab[R], data=transitions[L][R])
+                self.add_edge (self.vocab[L], R, data=transitions[L][R])
                 #self.g.add_edge (L, self.vocab[R], data=transitions[L][R])
-                print ("    --------> {0} {1}".format (self.vocab[L], R))
-                self.g.add_edge (self.vocab[L], R, data=transitions[L][R])
-
+    def add_edge (self, L, R, data):
+        #logger.debug ("  +edge: {0} {1} {2}".format (L, R, data))
+        self.g.add_edge (L, R, data=data)
     def guess_type (self, thing, source=None):
         if thing and not source and ':' in thing:
             curie = thing.upper ().split (':')[0]
@@ -146,7 +153,7 @@ class Rosetta:
 
     def map_concept_types (self, thing, object_type=None):
         the_type = self.guess_type (thing.identifier) if thing and thing.identifier else None
-        return [ the_type ] if the_type else self.concepts[object_type] if object_type in self.concepts else None
+        return [ the_type ] if the_type else self.concepts[object_type] if object_type in self.concepts else [ object_type ] #None
 
     def get_translations (self, thing, object_type):
         """ 
@@ -160,8 +167,10 @@ class Rosetta:
         """
         x_type_a = self.map_concept_types (thing, thing.node_type)
         x_type_b = self.map_concept_types (thing=None, object_type=object_type)
+        logger.debug ("Mapped types: {0} : {1}".format (x_type_a, x_type_b))
         translations = [ Translation(thing, ta_i, tb_i) for ta_i in x_type_a for tb_i in x_type_b ] if x_type_a and x_type_b else []
-        print (translations)
+        for t in translations:
+            logger.debug ("%s", t)
         return translations
     
     def get_transitions (self, source, dest):
@@ -169,7 +178,9 @@ class Rosetta:
         transitions = []
         try:
             paths = nxa.all_shortest_paths (self.g, source=source, target=dest)
+            count = 0
             for path in paths:
+                count += 1
                 logger.debug ("  path: {0}".format (path))
                 steps = list(zip(path, path[1:]))
                 logger.debug ("  steps: {}".format (steps))
@@ -181,12 +192,22 @@ class Rosetta:
                             logger.debug ("      trans: {0}".format (e))
                             transition = e[2]['data']['op']
                             transitions.append (transition)
+            if count == 0:
+                logger.debug ("No paths found between {0} and {1}".format (source, dest))
         except NetworkXNoPath:
             pass
         except KeyError:
             pass
         return transitions
-    
+    def process_translations (self, subject_node, object_type):
+        result = [ ]
+        translations = self.get_translations (subject_node, object_type)
+        for translation in translations:
+            data = self.translate (thing=translation.obj,
+                                   source=translation.type_a,
+                                   target=translation.type_b)
+            result += data if isinstance(data,list) else []
+        return result
     def translate (self, thing, source, target):
         if not thing:
             return None
@@ -194,22 +215,28 @@ class Rosetta:
         target = self.guess_type (None, target)
         transitions = self.get_transitions (source, target)
         stack = [ [ ( None, thing ) ] ]
-        if len(transitions) > 0:
-            logger.debug ("              [transitions:{3}] {0}->{1} {2}".format (source, target, transitions, len(transitions)))
+        #if len(transitions) > 0:
+#        logger.debug ("       [transitions:{3}] {0}->{1} {2}".format (source, target, transitions, len(transitions)))
         for transition in transitions:
             try:
                 data_op = operator.attrgetter(transition)(self.core)
+                if len(stack) == 0:
+                    break
                 last = stack[-1:][0] # top
                 if not isinstance(last,list) or len(last)==0 or not isinstance(last[0], KEdge):
                     stack.pop ()
+                cycle = 0
                 for i in last:
+                    cycle += 1
                     node = i[1]
-                    logger.debug ("              invoke: {0}({1}) => ".format (transition, node)),
+                    if cycle < 3:
+                        logger.debug ("              invoke: {0}({1}) => ".format (transition, node)),
                     stack.append (data_op (node))
                     r = stack[-1:]
-                    result_text = str(r)
-                    result_text = (result_text[:80] + '...') if len(result_text) > 80 else result_text
-                    logger.debug ("                response>: {0}".format (result_text))
+                    if cycle < 3:
+                        result_text = str(r)
+                        result_text = (result_text[:80] + '...') if len(result_text) > 80 else result_text
+                        logger.debug ("                response>: {0}".format (result_text))
             except:
                 traceback.print_exc ()
         response = [ pair for level in stack for pair in level if isinstance(pair,tuple) and isinstance(pair[0],KEdge) ]
@@ -218,5 +245,11 @@ class Rosetta:
         return response
     
 if __name__ == "__main__":
-    translator = Rosetta ()
-
+    translator = Rosetta (override={ 'async' : True })
+    nx.write_yaml(translator.g, 'test.yaml')
+#    translator.process_translations (KNode("NAME:Asthma", "D"), "mesh_disease_id") #"UNIPROT") #"http://identifiers.org/uniprot")
+    translator.process_translations (KNode("NAME:diabetes", "D"), "C") #"http://identifier.org/hetio/cellcomponent")
+#    translator.process_translations (KNode("DOID:2841", "D"), "G")
+#    translator.process_translations (KNode("UNIPROT:AKR1B1", "G"), "P")
+#    translator.process_translations (KNode("UNIPROT:AKR1B1", "G"), "C")
+#    translator.process_translations (KNode("UNIPROT:AKR1B1", "G"), "A")
