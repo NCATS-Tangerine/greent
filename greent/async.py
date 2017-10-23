@@ -3,11 +3,13 @@ import concurrent.futures
 import requests
 from collections import namedtuple
 from greent.util import LoggingUtil
+import multiprocessing
 
 logger = LoggingUtil.init_logging (__name__)
 
 Operation = namedtuple ('Operation', [ 'operation', 'arguments' ])
-default_chunk_size = 30
+default_chunk_size = multiprocessing.cpu_count()
+
 class AsyncUtil:
     
     @staticmethod

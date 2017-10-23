@@ -44,23 +44,32 @@ Developed at the University of North Carolina at Chapel Hill, the API provides a
 ## Usage Example
 
 ```
-from greent.client import GraphQL
-translator = GraphQL ()    
-Translation = namedtuple ('Translation', [ 'thing', 'domain_a', 'domain_b' ])
-translations = [
-  Translation ("Imatinib",     "http://chem2bio2rdf.org/drugbank/resource/Generic_Name", "http://chem2bio2rdf.org/uniprot/resource/gene"),      
-  Translation ("CDC25A",       "http://chem2bio2rdf.org/uniprot/resource/gene",          "http://chem2bio2rdf.org/kegg/resource/kegg_pathway"), 
-  Translation ("CACNA1A",      "http://chem2bio2rdf.org/uniprot/resource/gene",          "http://pharos.nih.gov/identifier/disease/name"),      
-  Translation ("Asthma",       "http://identifiers.org/mesh/disease/name",               "http://identifiers.org/mesh/drug/name"),              
-  Translation ("DOID:2841",    "http://identifiers.org/doid",                            "http://identifiers.org/mesh/disease/id"),             
-  Translation ("MESH:D001249", "http://identifiers.org/mesh",                            "http://identifiers.org/doi")
-]
-def test_translations (self):
-  for index, translation in enumerate (self.translations):
-    result = translator.translate (
-      thing=translation.thing,
-      domain_a=translation.domain_a,
-      domain_b=translation.domain_b)
+$ PYTHONPATH=$PWD/.. python rosetta.py
+/Users/scox/dev/venv/trans/lib/python3.6/site-packages/cachier/mongo_core.py:24: UserWarning: Cachier warning: pymongo was not found. MongoDB cores will not work.
+  "Cachier warning: pymongo was not found. MongoDB cores will not work.")
+** Initializing async pharos
+2017-10-23 11:00:42,627 rosetta.py get_translations DEBUG: Mapped types: ['NAME', 'mesh_disease_id', 'mesh_disease_name', 'pharos_disease_id', 'DOID'] : ['hetio_anatomy']
+2017-10-23 11:00:42,627 rosetta.py get_translations DEBUG: Translation(obj: KNode(id=NAME:diabetes,type=D) type_a: NAME type_b: hetio_anatomy desc:  then:  response: '')
+2017-10-23 11:00:42,627 rosetta.py get_translations DEBUG: Translation(obj: KNode(id=NAME:diabetes,type=D) type_a: mesh_disease_id type_b: hetio_anatomy desc:  then:  response: '')
+2017-10-23 11:00:42,627 rosetta.py get_translations DEBUG: Translation(obj: KNode(id=NAME:diabetes,type=D) type_a: mesh_disease_name type_b: hetio_anatomy desc:  then:  response: '')
+2017-10-23 11:00:42,627 rosetta.py get_translations DEBUG: Translation(obj: KNode(id=NAME:diabetes,type=D) type_a: pharos_disease_id type_b: hetio_anatomy desc:  then:  response: '')
+2017-10-23 11:00:42,628 rosetta.py get_translations DEBUG: Translation(obj: KNode(id=NAME:diabetes,type=D) type_a: DOID type_b: hetio_anatomy desc:  then:  response: '')
+2017-10-23 11:00:42,628 rosetta.py get_transitions DEBUG:   path: ['http://identifiers.org/string', 'http://identifiers.org/doid', 'http://identifiers.org/mesh/disease/id', 'http://identifiers.org/uniprot', 'http://identifier.org/hetio/anatomy']
+2017-10-23 11:00:42,628 rosetta.py get_transitions DEBUG:   steps: [('http://identifiers.org/string', 'http://identifiers.org/doid'), ('http://identifiers.org/doid', 'http://identifiers.org/mesh/disease/id'), ('http://identifiers.org/mesh/disease/id', 'http://identifiers.org/uniprot'), ('http://identifiers.org/uniprot', 'http://identifier.org/hetio/anatomy')]
+2017-10-23 11:00:42,628 rosetta.py get_transitions DEBUG:     trans: ('http://identifiers.org/string', 'http://identifiers.org/doid', {'data': {'op': 'tkba.name_to_doid'}})
+2017-10-23 11:00:42,628 rosetta.py get_transitions DEBUG:     trans: ('http://identifiers.org/doid', 'http://identifiers.org/mesh/disease/id', {'data': {'op': 'disease_ontology.graph_doid_to_mesh'}})
+2017-10-23 11:00:42,628 rosetta.py get_transitions DEBUG:     trans: ('http://identifiers.org/mesh/disease/id', 'http://identifiers.org/uniprot', {'data': {'op': 'chembio.graph_get_genes_by_disease'}})
+2017-10-23 11:00:42,628 rosetta.py get_transitions DEBUG:     trans: ('http://identifiers.org/uniprot', 'http://identifier.org/hetio/anatomy', {'data': {'op': 'hetio.gene_to_anatomy'}})
+2017-10-23 11:00:42,628 rosetta.py translate DEBUG:             invoke(cyc:1): tkba.name_to_doid(KNode(id=NAME:diabetes,type=D)) => 
+2017-10-23 11:00:44,965 rosetta.py translate DEBUG:               response>: [(KEdge(edge_source=tkba,edge_type=queried), KNode(id=DOID:9744,type=D))]
+2017-10-23 11:00:44,965 rosetta.py translate DEBUG:             invoke(cyc:1): disease_ontology.graph_doid_to_mesh(KNode(id=DOID:9744,type=D)) => 
+2017-10-23 11:00:45,661 rosetta.py translate DEBUG:               response>: [(KEdge(edge_source=doid->mesh,edge_type=queried), KNode(id=MESH:D003922,type=D))]
+2017-10-23 11:00:45,661 rosetta.py translate DEBUG:             invoke(cyc:1): chembio.graph_get_genes_by_disease(KNode(id=MESH:D003922,type=D)) => 
+2017-10-23 11:00:46,846 rosetta.py translate DEBUG:               response>: [(KEdge(edge_source=c2b2r,edge_type=diseaseToGene), KNode(id=UNIPROT:AKR1B1,type=G)), (KEdge(edge_source=c2b2r...
+2017-10-23 11:00:46,847 rosetta.py translate DEBUG:             invoke(cyc:1): hetio.gene_to_anatomy(KNode(id=UNIPROT:AKR1B1,type=G)) => 
+2017-10-23 11:00:47,051 rosetta.py translate DEBUG:               response>: [(KEdge(edge_source=gene-anat,edge_type=queried), KNode(id=UBERON:0002390,type=A)), (KEdge(edge_source=gene-an...
+2017-10-23 11:00:47,051 rosetta.py translate DEBUG:             invoke(cyc:2): hetio.gene_to_anatomy(KNode(id=UNIPROT:GMDS,type=G)) => 
+2017-10-23 11:00:47,394 rosetta.py translate DEBUG:               response>: [(KEdge(edge_source=gene-anat,edge_type=queried), KNode(id=UBERON:0002048,type=A)), (KEdge(edge_source=gene-an...
 ```
 
 By default, the constructor above will use the public GraphQL API instance hosted at RENCI: 

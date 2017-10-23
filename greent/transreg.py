@@ -22,8 +22,6 @@ class TranslatorRegistry:
         for context in registry['APIs']:
             metadata = context['metadata']
             api_name = metadata.split (os.sep)[0]
-#            if api_name != 'biolink':
-#                continue
             logger.debug ("API: {}".format (api_name))
             api_url = "{0}/{1}".format (self.url, metadata)
             model = yaml.load (requests.get (api_url).text)
@@ -51,10 +49,7 @@ class TranslatorRegistry:
                                 out_type = r['valueType']
                                 #print ("out_type: {}".format (out_type))
                                 logger.debug ("  --api> {0} in: {1} out: {2}".format (api_name, in_type, out_type))
-                                self.op_map[api_name][in_type][out_type] = {
-                                    "get" : "{0}{1}".format (server, x_template),
-                                    "op"  : lambda v: self.get ("{0}{1}".format (server, x_template), v)
-                                }
+                                self.op_map[api_name][in_type][out_type] = { "get" : "{0}{1}".format (server, x_template) }
         #pprint (dict(self.op_map))
 
     def call (self, obj, in_type, out_type):
@@ -87,7 +82,8 @@ class TranslatorRegistry:
                         'HP'       : 'PH',
                         'OMIM'     : 'D',
                         'DOID'     : 'D',
-                        'UNIPROT:' : 'G'
+                        'UNIPROT:' : 'G',
+                        'NCBIGene' : 'G'
                     }
                     x_type = type_m[curie] if curie in type_m else '?'
                 result.append ( ( KEdge(api_name, 'queried', response), KNode(obj, x_type) ))

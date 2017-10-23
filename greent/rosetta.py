@@ -7,6 +7,7 @@ import operator
 import os
 import traceback
 import unittest
+from greent.async import AsyncUtil
 from greent.util import LoggingUtil
 from networkx.exception import NetworkXNoPath
 from pprint import pformat
@@ -16,7 +17,6 @@ logger = LoggingUtil.init_logging (__file__, logging.DEBUG)
 
 class Translation (object):
     def __init__(self, obj, type_a=None, type_b=None, description="", then=None):
-#        print ("Translation(obj:{0}, type_a: {1} type_b: {2})".format (obj, type_a, type_b))
         self.obj = obj
         self.type_a = type_a
         self.type_b = type_b
@@ -25,7 +25,7 @@ class Translation (object):
         self.response = None
     def __repr__(self):
         return "Translation(obj: {0} type_a: {1} type_b: {2} desc: {3} then: {4} response: {5})".format (
-            self.obj, self.type_a, self.type_b, self.desc, "", #self.then,
+            self.obj, self.type_a, self.type_b, self.desc, "",
             pformat (self.response [: min(len(self.response), 2)] if self.response else ""))
 
 default_router_config = {
@@ -33,10 +33,10 @@ default_router_config = {
         "S"  : [ "c2b2r_drug_id" ],
         "G"  : [ "UNIPROT", "c2b2r_gene", "hgnc_id" ],
         "P"  : [ "c2b2r_pathway", "KEGG" ],
-        "A"  : [ "hetio_anatomy" ], # anatomy, tissue
+        "A"  : [ "hetio_anatomy" ],
         "C"  : [ "hetio_cell" ],
         "PH" : [ ],
-        "D"  : [ "NAME", "mesh_disease_id", "mesh_disease_name", "pharos_disease_id", "DOID" ], #"doid" ],
+        "D"  : [ "NAME", "mesh_disease_id", "mesh_disease_name", "pharos_disease_id", "DOID" ],
         "GC" : [ "genetic_condition" ]
     },
     "@curie" : {
@@ -72,12 +72,9 @@ default_router_config = {
         },
         "mesh_disease_id"   : {
             "c2b2r_drug_id"       : { "op" : "chembio.get_drugs_by_condition_graph" },
-#            "c2b2r_gene"          : { "op" : "chembio.graph_get_genes_by_disease" },
-#            "c2b2r_pathway"       : { "op" : "chembio.graph_get_pathways_by_disease" }
             "UNIPROT"              : { "op" : "chembio.graph_get_genes_by_disease" },
             "KEGG"                 : { "op" : "chembio.graph_get_pathways_by_disease" }
         },
-#        "doid"              : {
         "DOID"              : {
             "mesh_disease_id"     : { "op" : "disease_ontology.graph_doid_to_mesh"   },
             "pharos_disease_id"   : { "op" : "disease_ontology.doid_to_pharos" }
@@ -173,11 +170,10 @@ class Rosetta:
             logger.debug ("%s", t)
         return translations
     
-    def get_transitions (self, source, dest):
-        #logger.debug ("get-transitions: {0} {1}".format (source, dest))
+    def get_transitions (self, source, target):
         transitions = []
         try:
-            paths = nxa.all_shortest_paths (self.g, source=source, target=dest)
+            paths = nxa.all_shortest_paths (self.g, source=source, target=target)
             count = 0
             for path in paths:
                 count += 1
@@ -185,15 +181,15 @@ class Rosetta:
                 steps = list(zip(path, path[1:]))
                 logger.debug ("  steps: {}".format (steps))
                 for step in steps:
-                    logger.debug ("    step: {}".format (step))
+                    #logger.debug ("    step: {}".format (step))
                     edges = self.g.edges (step, data=True)
                     for e in edges:
                         if step[1] == e[1]:
-                            logger.debug ("      trans: {0}".format (e))
+                            logger.debug ("    trans: {0}".format (e))
                             transition = e[2]['data']['op']
                             transitions.append (transition)
             if count == 0:
-                logger.debug ("No paths found between {0} and {1}".format (source, dest))
+                logger.debug ("No paths found between {0} and {1}".format (source, target))
         except NetworkXNoPath:
             pass
         except KeyError:
@@ -211,46 +207,40 @@ class Rosetta:
     def translate (self, thing, source, target):
         if not thing:
             return None
-        source = self.guess_type (thing, source)
-        target = self.guess_type (None, target)
-        transitions = self.get_transitions (source, target)
         stack = [ [ ( None, thing ) ] ]
-        #if len(transitions) > 0:
-#        logger.debug ("       [transitions:{3}] {0}->{1} {2}".format (source, target, transitions, len(transitions)))
+        transitions = self.get_transitions (
+            source=self.guess_type (thing, source),
+            target=self.guess_type (None, target))
         for transition in transitions:
             try:
-                data_op = operator.attrgetter(transition)(self.core)
                 if len(stack) == 0:
                     break
-                last = stack[-1:][0] # top
-                if not isinstance(last,list) or len(last)==0 or not isinstance(last[0], KEdge):
-                    stack.pop ()
+                data_op = operator.attrgetter(transition)(self.core)
+                top = stack[-1:][0] # stack[-1] is a slice of the stack list. stack[-1][0] is an alement of the stack list.
+                new_top = []
                 cycle = 0
-                for i in last:
+                for i in top:
                     cycle += 1
                     node = i[1]
                     if cycle < 3:
-                        logger.debug ("              invoke: {0}({1}) => ".format (transition, node)),
-                    stack.append (data_op (node))
-                    r = stack[-1:]
+                        logger.debug ("            invoke(cyc:{0}): {1}({2}) => ".format (cycle, transition, node)),
+                    result = [ m for m in data_op (node) ]
+                    new_top += result
                     if cycle < 3:
-                        result_text = str(r)
-                        result_text = (result_text[:80] + '...') if len(result_text) > 80 else result_text
-                        logger.debug ("                response>: {0}".format (result_text))
+                        r_text = str(result)
+                        logger.debug ("              response>: {0}".format (r_text[:min(len(r_text),110)] + ('...' if len(r_text)>110 else '')))
+                stack.append (new_top)
             except:
                 traceback.print_exc ()
-        response = [ pair for level in stack for pair in level if isinstance(pair,tuple) and isinstance(pair[0],KEdge) ]
+        response = [ pair for level in stack for pair in level if isinstance(pair,tuple) and isinstance(pair[0], KEdge) ]
         text = str(response)
         text = (text[:100] + '...') if len(text) > 100 else text
         return response
     
 if __name__ == "__main__":
     translator = Rosetta (override={ 'async' : True })
-    nx.write_yaml(translator.g, 'test.yaml')
-#    translator.process_translations (KNode("NAME:Asthma", "D"), "mesh_disease_id") #"UNIPROT") #"http://identifiers.org/uniprot")
-#    translator.process_translations (KNode("NAME:diabetes", "D"), "C") #"http://identifier.org/hetio/cellcomponent")
     translator.process_translations (KNode("NAME:diabetes", "D"), "A") #"http://identifier.org/hetio/cellcomponent")
+#    translator.process_translations (KNode("NAME:Asthma", "D"), "mesh_disease_id")
+#    translator.process_translations (KNode("NAME:diabetes", "D"), "C") #"http://identifier.org/hetio/cellcomponent")
 #    translator.process_translations (KNode("DOID:2841", "D"), "G")
 #    translator.process_translations (KNode("UNIPROT:AKR1B1", "G"), "P")
-#    translator.process_translations (KNode("UNIPROT:AKR1B1", "G"), "C")
-#    translator.process_translations (KNode("UNIPROT:AKR1B1", "G"), "A")
