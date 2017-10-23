@@ -29,92 +29,10 @@ class Translation (object):
         return "Translation(obj: {0} type_a: {1} type_b: {2} desc: {3} then: {4} response: {5})".format (
             self.obj, self.type_a, self.type_b, self.desc, "",
             pformat (self.response [: min(len(self.response), 2)] if self.response else ""))
-'''
-default_router_config = {
-    "@concepts" : {
-        "S"  : [ "c2b2r_drug_id" ],
-        "G"  : [ "UNIPROT", "c2b2r_gene", "hgnc_id" ],
-        "P"  : [ "c2b2r_pathway", "KEGG" ],
-        "A"  : [ "hetio_anatomy" ],
-        "C"  : [ "hetio_cell" ],
-        "PH" : [ ],
-        "D"  : [ "NAME", "mesh_disease_id", "mesh_disease_name", "pharos_disease_id", "DOID" ],
-        "GC" : [ "genetic_condition" ]
-    },
-    "@curie" : {
-        # these are "local" curies.
-        "DOID" : "doid",
-        "MESH" : "mesh"
-        # we supplement this with the uber jsonld context
-    },
-    "@vocab" : {
-        "c2b2r_drug_name"     : "http://chem2bio2rdf.org/drugbank/resource/Generic_Name",
-        "c2b2r_drug_id"       : "http://chem2bio2rdf.org/drugbank/resource/drugbank_drug",
-        "c2b2r_gene"          : "http://chem2bio2rdf.org/uniprot/resource/gene",
-        "c2b2r_pathway"       : "http://identifiers.org/kegg/pathway",
-        "UNIPROT"             : "http://identifiers.org/uniprot",
-        "KEGG"                : "http://identifiers.org/kegg/pathway",
-        "NAME"                : "http://identifiers.org/string",
-        "doid"                : "http://identifiers.org/doid",
-        "genetic_condition"   : "http://identifiers.org/mondo/gentic_condition",
-        "hetio_anatomy"       : "http://identifier.org/hetio/anatomy",
-        "hetio_cell"          : "http://identifier.org/hetio/cellcomponent",
-        "hgnc_id"             : "http://identifiers.org/hgnc",
-        "mesh"                : "http://identifiers.org/mesh",
-        "mesh_disease_id"     : "http://identifiers.org/mesh/disease/id",
-        "mesh_disease_name"   : "http://identifiers.org/mesh/disease/name",
-        "mesh_drug_name"      : "http://identifiers.org/mesh/drug/name",
-        "pharos_disease_id"   : "http://pharos.nih.gov/identifier/disease/id",
-        "pharos_disease_name" : "http://pharos.nih.gov/identifier/disease/name",
-        "root_kind"           : "http://identifiers.org/doi"
-    },
-    "@transitions" : {
-        "mesh_disease_name" : {
-            "mesh_drug_name"      : { "op" : "chemotext.disease_name_to_drug_name" }
-        },
-        "mesh_disease_id"   : {
-            "c2b2r_drug_id"       : { "op" : "chembio.get_drugs_by_condition_graph" },
-            "UNIPROT"              : { "op" : "chembio.graph_get_genes_by_disease" },
-            "KEGG"                 : { "op" : "chembio.graph_get_pathways_by_disease" }
-        },
-        "DOID"              : {
-            "mesh_disease_id"     : { "op" : "disease_ontology.graph_doid_to_mesh"   },
-            "pharos_disease_id"   : { "op" : "disease_ontology.doid_to_pharos" }
-        },
-        "c2b2r_drug_name"   : {
-            "c2b2r_gene"          : { "op" : "chembio.drug_name_to_gene_symbol" }            
-        },
-        "c2b2r_gene"        : {
-            "pharos_disease_name" : { "op" : "pharos.target_to_disease" },
-            "hetio_anatomy"       : { "op" : "hetio.gene_to_anatomy" }
-        },
-        "NAME"              : {
-            "DOID"                : { "op" : "tkba.name_to_doid" }
-        },
-        "UNIPROT"           : {
-            "KEGG"                : { "op" : "chembio.graph_get_pathways_by_gene" },
-            "hetio_anatomy"       : { "op" : "hetio.gene_to_anatomy" },
-            "hetio_cell"          : { "op" : "hetio.gene_to_cell" }
-        },
-        "hgnc_id"           : {
-            "genetic_condition"   : { "op" : "biolink.gene_get_genetic_condition" }
-        },
-        "pharos_disease_id" : {
-            "hgnc_id"             : { "op" : "pharos.disease_get_gene" }
-        },
-        "mesh"              : {
-            "root_kind"           : { "op" : "oxo.mesh_to_other" }
-        }
-    }
-}
-with open('rosetta.yml', 'w') as outfile:
-    yaml.dump(default_router_config, outfile, default_flow_style=False)
-print (open('rosetta.yml', 'r').read ())
-sys.exit (0)
-'''
 
 class Rosetta:
     def __init__(self, greentConf="greent.conf", config_file=os.path.join (os.path.dirname (__file__), "rosetta.yml"), override={}):
+        """ Load the config file and set up a DiGraph representing the types we know about and how to transition between them. """
         from greent.core import GreenT
         self.core = GreenT (config=greentConf, override=override)
         self.g = nx.DiGraph ()
@@ -149,11 +67,13 @@ class Rosetta:
                 self.add_edge (L, R, data=transitions[L][R])
                 self.add_edge (self.vocab[L], self.vocab[R], data=transitions[L][R])
                 self.add_edge (self.vocab[L], R, data=transitions[L][R])
-                #self.g.add_edge (L, self.vocab[R], data=transitions[L][R])
+
     def add_edge (self, L, R, data):
         #logger.debug ("  +edge: {0} {1} {2}".format (L, R, data))
         self.g.add_edge (L, R, data=data)
+        
     def guess_type (self, thing, source=None):
+        """ Look for a CURIE we know. If that doesn't work, try one of our locally made up vocab words. """
         if thing and not source and ':' in thing:
             curie = thing.upper ().split (':')[0]
             if curie in self.curie:
@@ -163,6 +83,7 @@ class Rosetta:
         return source
 
     def map_concept_types (self, thing, object_type=None):
+        """ Expand high level concepts into concrete types our data sources understand. """
         the_type = self.guess_type (thing.identifier) if thing and thing.identifier else None
         return [ the_type ] if the_type else self.concepts[object_type] if object_type in self.concepts else [ object_type ] #None
 
@@ -174,7 +95,7 @@ class Rosetta:
         1. One way to do that is by looking at curies. If it has one we know, use the associated IRI.
         2. If that doesn't work, map the concept to the known specific types associated with it,.
         3. Do this for thing a and thing b.
-        4. We want to guess specifically via the curie if possible, to avoid a combinatoric explosion, as we cross product spurious types.
+        4. We want to guess specifically via the curie if possible, to avoid a combinatoric explosion resulting from cross product-ing spurious types.
         """
         x_type_a = self.map_concept_types (thing, thing.node_type)
         x_type_b = self.map_concept_types (thing=None, object_type=object_type)
@@ -183,8 +104,10 @@ class Rosetta:
         for t in translations:
             logger.debug ("%s", t)
         return translations
-    
+
     def get_transitions (self, source, target):
+        """ Consulting the type graph, ask for paths between the source and destination types. 
+        Turn those paths into trasitions - operators to call to effect the speicifed conversions from source->target."""
         transitions = []
         try:
             paths = nxa.all_shortest_paths (self.g, source=source, target=target)
@@ -195,10 +118,9 @@ class Rosetta:
                 steps = list(zip(path, path[1:]))
                 logger.debug ("  steps: {}".format (steps))
                 for step in steps:
-                    #logger.debug ("    step: {}".format (step))
                     edges = self.g.edges (step, data=True)
                     for e in edges:
-                        if step[1] == e[1]:
+                        if step[1] == e[1]: # something feels hokey about this.
                             logger.debug ("    trans: {0}".format (e))
                             transition = e[2]['data']['op']
                             transitions.append (transition)
@@ -209,7 +131,10 @@ class Rosetta:
         except KeyError:
             pass
         return transitions
+    
     def process_translations (self, subject_node, object_type):
+        """ Given a subject node and object type, do whatever is involved in walking the graph from the subject
+        to the object type. Figure out types. Get transitions. Execute the transitions. Aggregate and return results."""
         result = [ ]
         translations = self.get_translations (subject_node, object_type)
         for translation in translations:
@@ -218,7 +143,13 @@ class Rosetta:
                                    target=translation.type_b)
             result += data if isinstance(data,list) else []
         return result
+    
     def translate (self, thing, source, target):
+        """ Given a set of translation requests (go from A->B), get transitions (actual operators to execute A->B).
+        Prime the response stack with the input node and a null edge - to be discarded before returning.
+        Get transitions based on guessed types.
+        For each transition, execute it against each node in the list at the top of the stack.
+        This builds a new list which we add to the top of the stack. """
         if not thing:
             return None
         stack = [ [ ( None, thing ) ] ]
