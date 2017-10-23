@@ -5,8 +5,10 @@ import networkx as nx
 import networkx.algorithms as nxa
 import operator
 import os
+import sys
 import traceback
 import unittest
+import yaml
 from greent.async import AsyncUtil
 from greent.util import LoggingUtil
 from networkx.exception import NetworkXNoPath
@@ -27,7 +29,7 @@ class Translation (object):
         return "Translation(obj: {0} type_a: {1} type_b: {2} desc: {3} then: {4} response: {5})".format (
             self.obj, self.type_a, self.type_b, self.desc, "",
             pformat (self.response [: min(len(self.response), 2)] if self.response else ""))
-
+'''
 default_router_config = {
     "@concepts" : {
         "S"  : [ "c2b2r_drug_id" ],
@@ -105,22 +107,33 @@ default_router_config = {
         }
     }
 }
+with open('rosetta.yml', 'w') as outfile:
+    yaml.dump(default_router_config, outfile, default_flow_style=False)
+print (open('rosetta.yml', 'r').read ())
+sys.exit (0)
+'''
 
 class Rosetta:
-    def __init__(self, greentConf="greent.conf", config=default_router_config, override={}):
+    def __init__(self, greentConf="greent.conf", config_file=os.path.join (os.path.dirname (__file__), "rosetta.yml"), override={}):
         from greent.core import GreenT
         self.core = GreenT (config=greentConf, override=override)
         self.g = nx.DiGraph ()
 
+        logger.debug ("Loading Rosetta config file: {0}".format (config_file))
+        with open (config_file, 'r') as stream:
+            self.config = yaml.load (stream)
+            
         # Prime the vocabulary
-        self.vocab = config["@vocab"]
+        logger.debug ("  -- Initializing Rosetta vocabulary")
+        self.vocab = self.config["@vocab"]
         for k in self.vocab:
             self.g.add_node (self.vocab[k])
 
         # Store the concept dictionary
-        self.concepts = config["@concepts"]
+        logger.debug ("  -- Initializing Rosetta concept dictionary")
+        self.concepts = self.config["@concepts"]
         # Build a curie map. import cmungall's uber context.
-        self.curie = config["@curie"]
+        self.curie = self.config["@curie"]
         with open(os.path.join (os.path.dirname (__file__), "jsonld", "uber_context.jsonld"), "r") as stream:
             uber = json.loads (stream.read ())
             context = uber['@context']
@@ -129,7 +142,8 @@ class Rosetta:
                 self.vocab[k] = context[k]
 
         # Build the transition graph.
-        transitions = config["@transitions"]
+        logger.debug ("  -- Initializing Rosetta transitions")
+        transitions = self.config["@transitions"]
         for L in transitions:
             for R in transitions[L]:
                 self.add_edge (L, R, data=transitions[L][R])

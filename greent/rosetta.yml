@@ -1,0 +1,89 @@
+'@concepts':
+  A:
+  - hetio_anatomy
+  C:
+  - hetio_cell
+  D:
+  - NAME
+  - mesh_disease_id
+  - mesh_disease_name
+  - pharos_disease_id
+  - DOID
+  G:
+  - UNIPROT
+  - c2b2r_gene
+  - hgnc_id
+  GC:
+  - genetic_condition
+  P:
+  - c2b2r_pathway
+  - KEGG
+  PH: []
+  S:
+  - c2b2r_drug_id
+'@curie':
+  DOID: doid
+  MESH: mesh
+'@transitions':
+  DOID:
+    mesh_disease_id:
+      op: disease_ontology.graph_doid_to_mesh
+    pharos_disease_id:
+      op: disease_ontology.doid_to_pharos
+  NAME:
+    DOID:
+      op: tkba.name_to_doid
+  UNIPROT:
+    KEGG:
+      op: chembio.graph_get_pathways_by_gene
+    hetio_anatomy:
+      op: hetio.gene_to_anatomy
+    hetio_cell:
+      op: hetio.gene_to_cell
+  c2b2r_drug_name:
+    c2b2r_gene:
+      op: chembio.drug_name_to_gene_symbol
+  c2b2r_gene:
+    hetio_anatomy:
+      op: hetio.gene_to_anatomy
+    pharos_disease_name:
+      op: pharos.target_to_disease
+  hgnc_id:
+    genetic_condition:
+      op: biolink.gene_get_genetic_condition
+  mesh:
+    root_kind:
+      op: oxo.mesh_to_other
+  mesh_disease_id:
+    KEGG:
+      op: chembio.graph_get_pathways_by_disease
+    UNIPROT:
+      op: chembio.graph_get_genes_by_disease
+    c2b2r_drug_id:
+      op: chembio.get_drugs_by_condition_graph
+  mesh_disease_name:
+    mesh_drug_name:
+      op: chemotext.disease_name_to_drug_name
+  pharos_disease_id:
+    hgnc_id:
+      op: pharos.disease_get_gene
+'@vocab':
+  KEGG: http://identifiers.org/kegg/pathway
+  NAME: http://identifiers.org/string
+  UNIPROT: http://identifiers.org/uniprot
+  c2b2r_drug_id: http://chem2bio2rdf.org/drugbank/resource/drugbank_drug
+  c2b2r_drug_name: http://chem2bio2rdf.org/drugbank/resource/Generic_Name
+  c2b2r_gene: http://chem2bio2rdf.org/uniprot/resource/gene
+  c2b2r_pathway: http://identifiers.org/kegg/pathway
+  doid: http://identifiers.org/doid
+  genetic_condition: http://identifiers.org/mondo/gentic_condition
+  hetio_anatomy: http://identifier.org/hetio/anatomy
+  hetio_cell: http://identifier.org/hetio/cellcomponent
+  hgnc_id: http://identifiers.org/hgnc
+  mesh: http://identifiers.org/mesh
+  mesh_disease_id: http://identifiers.org/mesh/disease/id
+  mesh_disease_name: http://identifiers.org/mesh/disease/name
+  mesh_drug_name: http://identifiers.org/mesh/drug/name
+  pharos_disease_id: http://pharos.nih.gov/identifier/disease/id
+  pharos_disease_name: http://pharos.nih.gov/identifier/disease/name
+  root_kind: http://identifiers.org/doi
