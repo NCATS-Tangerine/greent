@@ -243,7 +243,7 @@
       "rdfa" : "http://www.w3.org/ns/rdfa#",
       "HPA" : "http://identifiers.org/hpa",
       "KEGG.GENOME" : "http://identifiers.org/kegg.genome",
-      "DOID" : "http://identifiers.org/doid",
+      "DOID" : "http://identifiers.org/doid/",
       "BROAD" : "http://identifiers.org/broad",
       "BRENDA" : "http://identifiers.org/brenda",
       "LiPrO" : "http://purl.obolibrary.org/obo/LiPrO_",

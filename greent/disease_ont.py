@@ -60,7 +60,7 @@ class DiseaseOntology (object):
         if len(pharos_list) == 0:
             logging.getLogger('application').warn('Unable to translate %s into Pharos ID' % doid)
             return None
-        return list(map(lambda v : ( KEdge('doid->pharos','D'), KNode(identifier=v, node_type='pharos_disease_id') ), pharos_list))
+        return list(map(lambda v : ( KEdge('doid->pharos','D'), KNode(identifier=v, node_type='D') ), pharos_list))
     
     def doid_to_pharos0(self, doid):
         """Convert a subject with a DOID into a Pharos Disease ID"""

@@ -19,6 +19,7 @@ from greent.pharos import Pharos
 from greent.translator import Translator
 from greent.triplestore import TripleStore
 from greent.tkba import TranslatorKnowledgeBeaconAggregator
+from greent.transreg import TranslatorRegistry
 from greent.util import Config
 from greent.util import LoggingUtil
 from pprint import pprint
@@ -49,6 +50,7 @@ class GreenT:
         self.endotype = Endotype (self.get_url("endotype"))
         self.biolink = Biolink (self.get_url("biolink"))
         self.tkba = TranslatorKnowledgeBeaconAggregator(self.get_url("tkba"))
+        self.translator_registry = TranslatorRegistry (self.get_url("transreg"))
         self.translator = Translator (core=self)
     def get_url (self, svc):
         return self.config.get_service (svc)["url"]

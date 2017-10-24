@@ -15,7 +15,7 @@ from networkx.exception import NetworkXNoPath
 from pprint import pformat
 from reasoner.graph_components import KNode,KEdge,elements_to_json
 
-logger = LoggingUtil.init_logging (__file__, logging.DEBUG)
+logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG)
 
 class Translation (object):
     def __init__(self, obj, type_a=None, type_b=None, description="", then=None):
@@ -59,6 +59,10 @@ class Rosetta:
                 self.curie[k] = context[k]
                 self.vocab[k] = context[k]
 
+        for k, v in self.vocab.items ():
+            if isinstance(v, str) and not v.endswith ("/"):
+                self.vocab[k] = "{0}/".format (v)
+                
         # Build the transition graph.
         logger.debug ("  -- Initializing Rosetta transitions")
         transitions = self.config["@transitions"]
@@ -68,6 +72,13 @@ class Rosetta:
                 self.add_edge (self.vocab[L], self.vocab[R], data=transitions[L][R])
                 self.add_edge (self.vocab[L], R, data=transitions[L][R])
 
+        # Connect to Translator Registry
+        logger.debug ("  -- Connecting to translator registry.")
+        subscriptions = self.core.translator_registry.get_subscriptions ()
+        for s in subscriptions:
+            s[2]["op"] = "translator_registry.{0}".format (s[2]["op"])
+            self.add_edge (s[0], s[1], s[2])
+            
     def add_edge (self, L, R, data):
         #logger.debug ("  +edge: {0} {1} {2}".format (L, R, data))
         self.g.add_edge (L, R, data=data)
@@ -85,8 +96,17 @@ class Rosetta:
     def map_concept_types (self, thing, object_type=None):
         """ Expand high level concepts into concrete types our data sources understand. """
         the_type = self.guess_type (thing.identifier) if thing and thing.identifier else None
-        return [ the_type ] if the_type else self.concepts[object_type] if object_type in self.concepts else [ object_type ] #None
-
+        if thing and not the_type:
+            the_type = self.concepts.get (thing.node_type, None)
+            if the_type:
+                the_type = [ self.vocab.get(t,t) for t in the_type ]
+        if isinstance(the_type,str):
+            the_type = [ the_type ]
+        #print (self.concepts)
+        #print ("type {} objecte_type {}".format (the_type, object_type))
+        #return [ the_type ] if the_type else self.concepts.get (object_type, [ object_type ])
+        return the_type if the_type else self.concepts.get (object_type, [ object_type ])
+    
     def get_translations (self, thing, object_type):
         """ 
         A Thing is a node with an identifier and a concept. The identifier could really be a number, an IRI, a curie, a proper noun, etc.
@@ -120,10 +140,12 @@ class Rosetta:
                 for step in steps:
                     edges = self.g.edges (step, data=True)
                     for e in edges:
+                        if e[0] == e[1]:
+                            continue
                         if step[1] == e[1]: # something feels hokey about this.
                             logger.debug ("    trans: {0}".format (e))
                             transition = e[2]['data']['op']
-                            transitions.append (transition)
+                            transitions.append (( e[0], transition ))
             if count == 0:
                 logger.debug ("No paths found between {0} and {1}".format (source, target))
         except NetworkXNoPath:
@@ -160,14 +182,20 @@ class Rosetta:
             try:
                 if len(stack) == 0:
                     break
-                data_op = operator.attrgetter(transition)(self.core)
+                data_op = operator.attrgetter(transition[1])(self.core)
                 top = stack[-1:][0] # stack[-1] is a slice of the stack list. stack[-1][0] is an alement of the stack list.
                 new_top = []
                 cycle = 0
                 for i in top:
                     cycle += 1
                     node = i[1]
+                    concepts = self.map_concept_types (node)
+                    if len ( [ c for c in concepts if c == transition[0] ] ) == 0:
+                        #print ("is everything ok? {0} {1} {2}".format (transition[0], concepts, node))
+                        # this happens. so something's broken.
+                        continue
                     if cycle < 3:
+                        logger.debug ("            trans: {}".format (transition))
                         logger.debug ("            invoke(cyc:{0}): {1}({2}) => ".format (cycle, transition, node)),
                     result = [ m for m in data_op (node) ]
                     new_top += result
@@ -184,8 +212,9 @@ class Rosetta:
     
 if __name__ == "__main__":
     translator = Rosetta (override={ 'async' : True })
-    translator.process_translations (KNode("NAME:diabetes", "D"), "A") #"http://identifier.org/hetio/cellcomponent")
+#    translator.process_translations (KNode("NAME:diabetes", "D"), "A") #"http://identifier.org/hetio/cellcomponent")
 #    translator.process_translations (KNode("NAME:Asthma", "D"), "mesh_disease_id")
+#    translator.process_translations (KNode("DOID:Asthma", "D"), "http://identifiers.org/mesh/")
 #    translator.process_translations (KNode("NAME:diabetes", "D"), "C") #"http://identifier.org/hetio/cellcomponent")
-#    translator.process_translations (KNode("DOID:2841", "D"), "G")
+    translator.process_translations (KNode("DOID:2841", "D"), "G")
 #    translator.process_translations (KNode("UNIPROT:AKR1B1", "G"), "P")

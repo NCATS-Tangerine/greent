@@ -1,5 +1,8 @@
 import json
+import logging
 import requests
+import traceback
+import re
 import os
 import yaml
 from jinja2 import Template
@@ -7,13 +10,36 @@ from collections import defaultdict
 from greent.util import LoggingUtil
 from pprint import pprint
 from reasoner.graph_components import KNode,KEdge
+from jsonpath_rw import jsonpath, parse
 
-logger = LoggingUtil.init_logging (__name__)
+logger = LoggingUtil.init_logging (__name__, level=logging.DEBUG)
+
+def defaultdict_to_regular(d):
+    """ Recursively convert a defaultdict to a dict. """
+    if isinstance(d, defaultdict):
+        d = {k: defaultdict_to_regular(v) for k, v in d.items()}
+    return d
 
 class TranslatorRegistry:
-    
+    """ Interact with Translator services. """
     def __init__(self, url):
+        """ Read the Translator Registry root document. For each listed API, read its
+            metadata. Then consider each path, parameter, and output in detail, regisgtering
+            template strings used for invoking each service. Create a mapping to facilitate lookups
+            of invocation templates based on type pairs. Later, need semantics about what the 
+            meaning of the transitions is. Revenge of the semantic web and stuff."""
         self.url = url
+        self.punctuation = re.compile('[ \./:]+')
+
+        # Use cached model
+        registry_map = os.path.join (os.path.dirname (__file__), "transreg.yml")
+        if os.path.exists (registry_map):
+            with open (registry_map, "r") as stream:
+                logger.debug ("Loading cached copy of translator registry config")
+                self.op_map = yaml.load (stream.read ())
+                return
+
+        # Dynamically generate model
         self.op_map = defaultdict(lambda:defaultdict(lambda:defaultdict(None)))
         url = "{0}/API_LIST.yml".format (self.url)
         print (url)
@@ -21,11 +47,10 @@ class TranslatorRegistry:
         apis = {}
         for context in registry['APIs']:
             metadata = context['metadata']
-            api_name = metadata.split (os.sep)[0]
+            api_name = metadata.split (os.sep)[0].replace (" ","")
             logger.debug ("API: {}".format (api_name))
             api_url = "{0}/{1}".format (self.url, metadata)
             model = yaml.load (requests.get (api_url).text)
-            #pprint (model)
             servers = model.get('servers', [])
             server = None
             if isinstance(servers,list) and len(servers) > 0:
@@ -33,65 +58,211 @@ class TranslatorRegistry:
             paths = model.get('paths', {})
             for path in paths:
                 obj = paths[path]
-                #print ("path: {}".format (path))
+                logger.debug ("path: {}".format (path))
                 get = obj['get'] if 'get' in obj else {}
-                #print ("get: {}".format (get))
+                logger.debug ("get: {}".format (get))
                 for parameters in get.get('parameters',{}):
-                    #print ("param: {}".format (parameters))
+                    logger.debug ("param: {}".format (parameters))
                     if 'x-valueType' in parameters:
                         values_in = parameters.get('x-requestTemplate',{})
-                        #print ("x-valueType: {}".format (values_in))
+                        logger.debug ("x-valueType: {}".format (values_in))
                         for v in values_in:
                             in_type = v['valueType']
                             x_template = v['template']
-                            #print ("in_type: {}".format (in_type))
+                            logger.debug ("in_type: {}".format (in_type))
                             for r in get.get('responses',{}).get('200',{}).get('x-responseValueType',{}):
                                 out_type = r['valueType']
-                                #print ("out_type: {}".format (out_type))
+                                logger.debug ("out_type: {}".format (out_type))
                                 logger.debug ("  --api> {0} in: {1} out: {2}".format (api_name, in_type, out_type))
-                                self.op_map[api_name][in_type][out_type] = { "get" : "{0}{1}".format (server, x_template) }
-        #pprint (dict(self.op_map))
+                                self.op_map[api_name][in_type][out_type] = {
+                                    "op"  : path,
+                                    "get" : "{0}{1}".format (server, x_template)
+                                }
+        # Cache model
+        vanilla_op_map = defaultdict_to_regular (self.op_map)
+        with open (registry_map, "w") as stream:
+            logger.debug ("Cache copy of registry map")
+            yaml.dump (vanilla_op_map, stream, default_flow_style=False)
+
+    '''
+    def get_transitions (self, api, in_type, out_type):
+        """ Get transitions between the given types by API """
+        result = [ self.op_map.get(api,{}).get(in_type,{}).get(out_type,{}) for api in self.op_map ]
+        return [ r for r in result if r != None ]
 
     def call (self, obj, in_type, out_type):
+        """ Invoke operations transitioning between the specified types on the given object. """
         result = []
         for api in self.op_map:
-            logger.debug ("considering api: {}".format (api))
-            get = self.op_map.get(api,{}).get(in_type,{}).get(out_type,{}).get('get')
-            if get:
+            transitions = self.get_transitions (api, in_type, out_type)
+            for t in transitions:
+                template = t.get ("get")
+                operation = t.get ("op")
+                if template == None:
+                    continue
                 try:
-                    logger.debug ("   calling {0} {1} {2}".format (obj, in_type, out_type))
-                    result += self.get (api, get, obj)
-                except:
-                    pass
+                    print ("call: {0} {1} ({2}, {3}, {4}) {5})".format (api, operation, obj, in_type, out_type, template))
+                    result += self.get (api, template, obj)
+                except Exception as e:
+                    logger.debug ("  error: exception from API: {0}: {1}".format (api, operation))
+                    traceback.print_exc ()
+        logger.debug ("Unfiltered result length: {0}".format (len(result)))
+        results = list(set(result))
+        logger.debug ("Filtered result length: {0}".format (len(result)))
         return result
-    
-    def get (self, api_name, template, v):
-        if 'NCBIGene:' in template:
+    '''
+    def get (self, api_name, template, v, response_processor=None):
+        """ Invoke a GET requests on the specified API with the template and object. """        
+        if 'NCBIGene:' in template: # Need to better understand the intent and usage of this syntax.
             template = template.replace ('NCBIGene:','')
-        url = Template (template).render (input=v)
-        print ("url: %s" % url)
+        url = Template (template).render (input=v.identifier)
         result = []
         try:
+            logger.debug ("                   --get: {0}".format (url))
             response = requests.get (url).json ()
-            #logger.debug (print (json.dumps (response, indent=2)))
+            if response_processor:
+                vals = response_processor (response)
+                result += [ ( KEdge(api_name, 'queried', response), KNode(v, self.abstract(v)) ) for v in vals ]
             for obj in response.get('objects',{}):
-                x_type = '?'
-                if ':' in obj:
-                    curie = obj.split (':')[0]
-                    type_m = {
-                        'HP'       : 'PH',
-                        'OMIM'     : 'D',
-                        'DOID'     : 'D',
-                        'UNIPROT:' : 'G',
-                        'NCBIGene' : 'G'
-                    }
-                    x_type = type_m[curie] if curie in type_m else '?'
+                x_type = self.abstract (obj)
                 result.append ( ( KEdge(api_name, 'queried', response), KNode(obj, x_type) ))
         except:
             pass
         return result
     
+    def abstract(self, obj):
+        x_type = '?'
+        if ':' in obj:
+            curie = obj.split (':')[0]
+            type_m = {
+                'HP'       : 'PH',
+                'OMIM'     : 'D',
+                'DOID'     : 'D',
+                'UNIPROT:' : 'G',
+                'NCBIGene' : 'G'
+            }
+            x_type = type_m[curie] if curie in type_m else '?'
+            
+    def human_name (self, iri):
+        for prefix in [
+                "http://identifiers.org/",
+                "http://biothings.io/" ]:
+            iri = iri.replace (prefix, "")
+        return self.punctuation.sub ('', iri)
+
+    def get_method_name (self, api, in_type, out_type):
+        x_api = self.human_name (api)
+        x_in_type = self.human_name (in_type)
+        x_out_type = self.human_name (out_type)
+        return "{0}__{1}_to_{2}".format (x_api, x_in_type, x_out_type)
+
+    def diseaseontologyapi__doid_to_mesh_processor (self, response):
+        jsonpath_expr = parse('xrefs[*]')
+        r =  [ match.value for match in jsonpath_expr.find (response) if match.value.startswith ("MESH:") ]
+        return r
+    
+    def add_method (self, cls, api, template, in_type, out_type):
+        method_name = self.get_method_name (api, in_type, out_type)
+        def new_method(self, v):
+            result_processor = getattr(self, "{0}_processor".format (method_name), None)
+            return self.get (api, template, v, result_processor) if result_processor else []
+        new_method.__doc__ = "convert from {0} to {1}".format (in_type, out_type)
+        new_method.__name__ = method_name
+        logger.debug ("adding method: {0}".format (new_method.__name__))
+        setattr(cls, new_method.__name__, new_method)
+
+    def get_subscriptions (self):
+        transitions = []
+        subscriptions = []
+        for api in self.op_map:
+            for in_type, in_params in self.op_map[api].items ():
+                for out_type, out_vals in self.op_map[api][in_type].items ():
+                    template = out_vals.get ("get")
+                    operation = out_vals.get ("op")
+                    if template:
+                        self.add_method (TranslatorRegistry, api, template, in_type, out_type)
+                        subscriptions.append ((
+                            in_type,
+                            out_type,
+                            { "op" : self.get_method_name (api, in_type, out_type) }
+                        ))
+        return subscriptions
+    
 if __name__ == "__main__":
     treg = TranslatorRegistry ("https://raw.githubusercontent.com/NCATS-Tangerine/translator-api-registry/master")
-    r = treg.call ('HGNC:6871', 'http://identifiers.org/ncbigene/', 'http://identifiers.org/ncbigene/')
+    subscriptions = treg.generate_transition_methods ()
+    #r = treg.call ('HGNC:6871', 'http://identifiers.org/ncbigene/', 'http://identifiers.org/ncbigene/')
+    print (subscriptions)
+    r = treg.mygeneinfo__ncbigene_to_wikipathways ("NCBIGene:10015")
     print (r)
+
+
+'''
+{  
+   "definition":"\"A bronchial disease that is characterized by chronic inflammation and narrowing of the airways, which is caused by a combination of environmental and genetic factors. The disease has_symptom recurring periods of wheezing (a whistling sound while breathing), has_symptom chest tightness, has_symptom shortness of breath, has_symptom mucus production and has_symptom coughing. The symptoms appear due to a variety of triggers such as allergens, irritants, respiratory infections, weather changes, exercise, stress, reflux disease, medications, foods and emotional anxiety.\" [url:http\\://www.aaaai.org/patients/topicofthemonth/0107/, url:http\\://www.nhlbi.nih.gov/health/dci/Diseases/Asthma/Asthma_WhatIs.html]",
+   "xrefs":[  
+      "EFO:0000270",
+      "ICD10CM:J45",
+      "ICD10CM:J45.90",
+      "ICD10CM:J45.909",
+      "ICD9CM:493",
+      "ICD9CM:493.9",
+      "KEGG:05310",
+      "MESH:D001249",
+      "NCI:C28397",
+      "SNOMEDCT_US_2016_03_01:155574008",
+      "SNOMEDCT_US_2016_03_01:155579003",
+      "SNOMEDCT_US_2016_03_01:187687003",
+      "SNOMEDCT_US_2016_03_01:195967001",
+      "SNOMEDCT_US_2016_03_01:195979001",
+      "SNOMEDCT_US_2016_03_01:195983001",
+      "SNOMEDCT_US_2016_03_01:21341004",
+      "SNOMEDCT_US_2016_03_01:266365004",
+      "SNOMEDCT_US_2016_03_01:266398009",
+      "SNOMEDCT_US_2016_03_01:278517007",
+      "UMLS_CUI:C0004096"
+   ],
+   "alternateIds":[  
+      "DOID:12703",
+      "DOID:13829",
+      "DOID:13830",
+      "DOID:2840",
+      "DOID:5783"
+   ],
+   "name":"asthma",
+   "id":"DOID:2841",
+   "synonyms":[  
+      "bronchial hyperreactivity EXACT ",
+      "chronic obstructive asthma EXACT ",
+      "chronic obstructive asthma with acute exacerbation EXACT ",
+      "chronic obstructive asthma with status asthmaticus EXACT ",
+      "Exercise induced asthma EXACT SNOMEDCT_2005_07_31:195983001",
+      "exercise-induced asthma EXACT "
+   ],
+   "parents":[  
+      [  
+         "is_a",
+         "bronchial disease",
+         "DOID:1176"
+      ]
+   ],
+   "children":[  
+      [  
+         "intrinsic asthma",
+         "DOID:9360"
+      ],
+      [  
+         "status asthmaticus",
+         "DOID:9362"
+      ],
+      [  
+         "cough variant asthma",
+         "DOID:12323"
+      ],
+      [  
+         "allergic asthma",
+         "DOID:9415"
+      ]
+   ]
+}
+'''
