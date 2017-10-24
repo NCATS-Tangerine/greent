@@ -95,3 +95,4 @@ pyswip-alt==0.2.3
 networkx==1.11
 reasoner
 ontobio
+jsonpath-rw==1.4.0
