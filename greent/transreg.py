@@ -84,33 +84,6 @@ class TranslatorRegistry:
             logger.debug ("Cache copy of registry map")
             yaml.dump (vanilla_op_map, stream, default_flow_style=False)
 
-    '''
-    def get_transitions (self, api, in_type, out_type):
-        """ Get transitions between the given types by API """
-        result = [ self.op_map.get(api,{}).get(in_type,{}).get(out_type,{}) for api in self.op_map ]
-        return [ r for r in result if r != None ]
-
-    def call (self, obj, in_type, out_type):
-        """ Invoke operations transitioning between the specified types on the given object. """
-        result = []
-        for api in self.op_map:
-            transitions = self.get_transitions (api, in_type, out_type)
-            for t in transitions:
-                template = t.get ("get")
-                operation = t.get ("op")
-                if template == None:
-                    continue
-                try:
-                    print ("call: {0} {1} ({2}, {3}, {4}) {5})".format (api, operation, obj, in_type, out_type, template))
-                    result += self.get (api, template, obj)
-                except Exception as e:
-                    logger.debug ("  error: exception from API: {0}: {1}".format (api, operation))
-                    traceback.print_exc ()
-        logger.debug ("Unfiltered result length: {0}".format (len(result)))
-        results = list(set(result))
-        logger.debug ("Filtered result length: {0}".format (len(result)))
-        return result
-    '''
     def get (self, api_name, template, v, response_processor=None):
         """ Invoke a GET requests on the specified API with the template and object. """        
         if 'NCBIGene:' in template: # Need to better understand the intent and usage of this syntax.
