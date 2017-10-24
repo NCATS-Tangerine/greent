@@ -123,7 +123,7 @@ class TranslatorRegistry:
             if response_processor:
                 vals = response_processor (response)
                 result += [ ( KEdge(api_name, 'queried', response), KNode(v, self.abstract(v)) ) for v in vals ]
-            for obj in response.get('objects',{}):
+            for obj in response.get('objects',{}): # replace this, specific to biolink, with more general above approach.
                 x_type = self.abstract (obj)
                 result.append ( ( KEdge(api_name, 'queried', response), KNode(obj, x_type) ))
         except:
@@ -164,6 +164,7 @@ class TranslatorRegistry:
     def add_method (self, cls, api, template, in_type, out_type):
         method_name = self.get_method_name (api, in_type, out_type)
         def new_method(self, v):
+            """ A dynamically created method to perform a translation. If we can't find a response processor, for now, don't bother. """
             result_processor = getattr(self, "{0}_processor".format (method_name), None)
             return self.get (api, template, v, result_processor) if result_processor else []
         new_method.__doc__ = "convert from {0} to {1}".format (in_type, out_type)
@@ -196,73 +197,3 @@ if __name__ == "__main__":
     r = treg.mygeneinfo__ncbigene_to_wikipathways ("NCBIGene:10015")
     print (r)
 
-
-'''
-{  
-   "definition":"\"A bronchial disease that is characterized by chronic inflammation and narrowing of the airways, which is caused by a combination of environmental and genetic factors. The disease has_symptom recurring periods of wheezing (a whistling sound while breathing), has_symptom chest tightness, has_symptom shortness of breath, has_symptom mucus production and has_symptom coughing. The symptoms appear due to a variety of triggers such as allergens, irritants, respiratory infections, weather changes, exercise, stress, reflux disease, medications, foods and emotional anxiety.\" [url:http\\://www.aaaai.org/patients/topicofthemonth/0107/, url:http\\://www.nhlbi.nih.gov/health/dci/Diseases/Asthma/Asthma_WhatIs.html]",
-   "xrefs":[  
-      "EFO:0000270",
-      "ICD10CM:J45",
-      "ICD10CM:J45.90",
-      "ICD10CM:J45.909",
-      "ICD9CM:493",
-      "ICD9CM:493.9",
-      "KEGG:05310",
-      "MESH:D001249",
-      "NCI:C28397",
-      "SNOMEDCT_US_2016_03_01:155574008",
-      "SNOMEDCT_US_2016_03_01:155579003",
-      "SNOMEDCT_US_2016_03_01:187687003",
-      "SNOMEDCT_US_2016_03_01:195967001",
-      "SNOMEDCT_US_2016_03_01:195979001",
-      "SNOMEDCT_US_2016_03_01:195983001",
-      "SNOMEDCT_US_2016_03_01:21341004",
-      "SNOMEDCT_US_2016_03_01:266365004",
-      "SNOMEDCT_US_2016_03_01:266398009",
-      "SNOMEDCT_US_2016_03_01:278517007",
-      "UMLS_CUI:C0004096"
-   ],
-   "alternateIds":[  
-      "DOID:12703",
-      "DOID:13829",
-      "DOID:13830",
-      "DOID:2840",
-      "DOID:5783"
-   ],
-   "name":"asthma",
-   "id":"DOID:2841",
-   "synonyms":[  
-      "bronchial hyperreactivity EXACT ",
-      "chronic obstructive asthma EXACT ",
-      "chronic obstructive asthma with acute exacerbation EXACT ",
-      "chronic obstructive asthma with status asthmaticus EXACT ",
-      "Exercise induced asthma EXACT SNOMEDCT_2005_07_31:195983001",
-      "exercise-induced asthma EXACT "
-   ],
-   "parents":[  
-      [  
-         "is_a",
-         "bronchial disease",
-         "DOID:1176"
-      ]
-   ],
-   "children":[  
-      [  
-         "intrinsic asthma",
-         "DOID:9360"
-      ],
-      [  
-         "status asthmaticus",
-         "DOID:9362"
-      ],
-      [  
-         "cough variant asthma",
-         "DOID:12323"
-      ],
-      [  
-         "allergic asthma",
-         "DOID:9415"
-      ]
-   ]
-}
-'''
