@@ -60,9 +60,10 @@ class Mondo():
     def is_genetic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:630 as an ancestor"""
         for g_disease in GENETIC_DISEASE:
-            if self.has_ancestor(obj, g_disease):
-                return True
-        return False
+            has, objs = self.has_ancestor(obj, g_disease):
+            if has:
+                return True, objs
+        return False, []
     def is_monogenic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:0050177 as an ancestor"""
         return self.has_ancestor(obj, MONOGENIC_DISEASE)
