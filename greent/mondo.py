@@ -1,6 +1,8 @@
 from ontobio.ontol_factory import OntologyFactory
 
-GENETIC_DISEASE='DOID:630'
+#TODO: LOOKUP all the terms that map to this... or use an ancestor call that doesn't require such stuff (i.e. that handles this)
+GENETIC_DISEASE=['DOID:630','http://purl.obolibrary.org/obo/EFO_0000508']
+#GENETIC_DISEASE='EFO:0000508'
 MONOGENIC_DISEASE='DOID:0050177'
 
 class Mondo():
@@ -57,7 +59,21 @@ class Mondo():
         return len(return_objects) > 0, return_objects
     def is_genetic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:630 as an ancestor"""
-        return self.has_ancestor(obj, GENETIC_DISEASE)
+        for g_disease in GENETIC_DISEASE:
+            if self.has_ancestor(obj, g_disease):
+                return True
+        return False
     def is_monogenic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:0050177 as an ancestor"""
         return self.has_ancestor(obj, MONOGENIC_DISEASE)
+
+def test():
+    m = Mondo()
+    from reasoner.graph_components import KNode,KEdge
+    #alc_sens = KNode('OMIM:610251','D')
+    #print(m.is_genetic_disease(alc_sens))
+    huntingtons = KNode('DOID:12858','D')
+    print(m.is_genetic_disease(huntingtons))
+
+if __name__ == '__main__':
+    test()
