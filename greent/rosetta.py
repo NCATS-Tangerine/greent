@@ -508,5 +508,5 @@ if __name__ == "__main__":
         drug = translator.graph ([ ( None, KNode('NAME.DRUG:{0}'.format (args.drug), 'S') ) ], query=query)
 
     union = disease + drug
-    blackboard = [ t[1].identifier for t in union ]
+    blackboard = [ t[1].identifier for t in union if len(t) == 2 ]
     print (blackboard)
