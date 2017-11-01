@@ -4,13 +4,14 @@ import unittest
 import datetime
 from string import Template
 from pprint import pprint
-from greent.util import SwaggerEndpoint
+from greent.swagger import SwaggerEndpoint
+from greent.service import ServiceContext
 from greent.util import LoggingUtil
-from greent.util import Config
 
 class Endotype(SwaggerEndpoint):
-    def __init__(self, url):
-        super(Endotype, self).__init__(url)
+    def __init__(self, context):
+        super(Endotype, self).__init__("endotype", context)
+        
     @staticmethod
     def create_request (dob, model_type, race, sex, visits):
         return {
@@ -44,8 +45,7 @@ class Endotype(SwaggerEndpoint):
         return r['output'] if 'output' in r else None
     
 if __name__ == "__main__":
-    conf = Config ('config.yaml')
-    e = Endotype (conf.get_service("endotype")["url"])
+    e = Endotype (ServiceContext.create_context ())
     exposures = list(map(lambda exp : e.create_exposure (**exp), [{
         "exposure_type": "pm25",
         "units"        : "",

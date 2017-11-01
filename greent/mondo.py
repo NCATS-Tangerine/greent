@@ -1,15 +1,17 @@
 from ontobio.ontol_factory import OntologyFactory
+from greent.service import Service
 
 GENETIC_DISEASE='DOID:630'
 MONOGENIC_DISEASE='DOID:0050177'
 
-class Mondo():
-    """Class to hold/query the mondo ontology""" 
-    def __init__(self):
+class Mondo(Service):
+    
+    """ A pragmatic class to query the mondo ontology. Until better sources emerge, we roll our own. """ 
+    def __init__(self, context):
         ofactory = OntologyFactory()
         self.ont = ofactory.create('mondo')
-        #This seems to be required to make the ontology actually load:
         _ = self.ont.get_level(0)
+        
     def get_doid(self,identifier):
         """We have an identifier, and we are going to use MONDO to try to convert it to a DOID"""
         upper_id = identifier.upper()
@@ -28,6 +30,7 @@ class Mondo():
                 if xref_id.startswith('DOID:'):
                     doids.append( xref_id )
         return doids
+
     def get_mondo_id(self,obj_id):
         """Given an id, find the main key(s) that mondo uses for the id"""
         if self.ont.has_node(obj_id):
@@ -35,6 +38,7 @@ class Mondo():
         else:
             obj_ids = self.ont.xrefs(obj_id, bidirectional=True)
         return obj_ids
+
     def has_ancestor(self,obj, term):
         """Given an object and a term in MONDO, determine whether the term is an ancestor of the object.
         
@@ -55,9 +59,11 @@ class Mondo():
             if GENETIC_DISEASE in ancestors:
                 return_objects.append( obj_id )
         return len(return_objects) > 0, return_objects
+
     def is_genetic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:630 as an ancestor"""
         return self.has_ancestor(obj, GENETIC_DISEASE)
+
     def is_monogenic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:0050177 as an ancestor"""
         return self.has_ancestor(obj, MONOGENIC_DISEASE)

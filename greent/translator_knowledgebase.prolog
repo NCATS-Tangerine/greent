@@ -1,3 +1,6 @@
+
+:- use_module('problog_export.py').
+
 is_a(tS,  drug).
 is_a(tG,  gene).
 is_a(tP,  pathway).
@@ -41,6 +44,16 @@ translates(pharos_disease_id, hgnc_id,           "pharos.get_target_hgnc").
 translates(cbr_drug_name,     cbr_gene,          "chembio_ks.drug_name_to_gene_symbol").
 translates(pharos_disease_id, hgnc_gene,         "pharos.disease_to_target").
 
+sub_class_of(a, b).
+sub_class_of(b, c).
+
+instance_of(X,Y) :-
+    sub_class_of(X,Y).
+instance_of(X,Y) :-
+    sub_class_of(Z,Y),
+    call_service(Z,Y),
+    instance_of(X,Z).
+
 reify(Concept,Specific,Types) :-
     is_a(Concept,Specific),
     has_context(Specific,Types).
@@ -61,3 +74,6 @@ path_to(X,Y,[M]) :-
 path_to(X,Y,[H|T]) :-
     translates(X,Z,H),
     path_to(Z,Y,T).
+
+
+

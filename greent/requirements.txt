@@ -96,3 +96,5 @@ networkx==1.11
 reasoner
 ontobio
 jsonpath-rw==1.4.0
+requests-cache==0.4.13
+requests-cache==0.4.13

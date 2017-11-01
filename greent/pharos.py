@@ -8,8 +8,8 @@ import traceback
 from collections import defaultdict
 from collections import namedtuple
 from csv import DictReader
-from greent.disease_ont import DiseaseOntology
 from greent.util import Munge
+from greent.service import Service
 from greent.util import LoggingUtil
 from greent.async import AsyncUtil
 from greent.async import Operation
@@ -18,12 +18,10 @@ from simplejson.scanner import JSONDecodeError
 
 logger = LoggingUtil.init_logging (__name__, logging.DEBUG)
 
-class Pharos(object):
-    def __init__(self, url="https://pharos.nih.gov/idg/api/v1"):
-        self.url = url
-        self.disease_ontology = DiseaseOntology ()
+class Pharos(Service):
+    def __init__(self, context):
+        super(Pharos,  self).__init__("pharos", context)
     def request (self, url):
-        #print ("pharos url: {}".format (url))
         response = None
         try:
             response = requests.get (url).json ()
@@ -81,30 +79,27 @@ class Pharos(object):
         doid = subject_node.identifier
         pharos_list = pmap[doid]
         if len(pharos_list) == 0:
-            logging.getLogger('application').warn('Unable to translate %s into Pharos ID' % doid)
+            #logging.getLogger('application').warn('Unable to translate %s into Pharos ID' % doid)
             return None
         return pharos_list
 
     def target_to_hgnc(self, target_id):
         """Convert a pharos target id into an HGNC ID.
-        
         The call does not return the actual name for the gene, so we do not provide it.
-        There are numerous other synonyms that we could also cache, but I don't see much benefit here"""
+        There are numerous other synonyms that we could also cache, but I don't see much benefit here. """
         result = None
-        #node = self.make_doid_id (target_id)
         try:
-            #print ('https://pharos.nih.gov/idg/api/v1/targets(%s)/synonyms' % target_id)
             r = requests.get('https://pharos.nih.gov/idg/api/v1/targets(%s)/synonyms' % target_id)
             result = r.json()
             for synonym in result:
                 if synonym['label'] == 'HGNC':
                     result = synonym['term']
         except:
-            #traceback.print_exc ()
             pass
         return result
 
     def disease_get_gene(self, subject):
+        """ Get a gene from a pharos disease id. """
         pharosids = self.translate (subject)
         print ("pharos ids: {}".format (pharosids))
         original_edge_nodes=[]
@@ -139,9 +134,10 @@ class Pharos(object):
         return resolved_edge_nodes
 
 class AsyncPharos(Pharos):
-
-    def __init__(self, url):
-        super (AsyncPharos, self).__init__(url)
+    """ Prototype asynchronous requests. In general we plan to have asynchronous requests and
+    caching to accelerate query responses. """
+    def __init__(self, context):
+        super (AsyncPharos, self).__init__(context)
         
     def disease_get_gene(self, subject):
         pharosids = subject.identifier
@@ -162,7 +158,7 @@ class AsyncPharos(Pharos):
             urls=[ "https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full" % p for p in pharosids ],
             response_processor=process_pharos_response)
 
-        logger.debug ("          Getting hgnc ids for pharos id: {}".format (pharosids))
+        logger.debug ("        Getting hgnc ids for pharos id: {}".format (pharosids))
         resolved_edge_nodes = []
         HGNCRequest = namedtuple ('HGNCRequest', [ 'pharos_target_id', 'edge' ])
         index = 0
@@ -171,7 +167,7 @@ class AsyncPharos(Pharos):
             index += 1
             url = "https://pharos.nih.gov/idg/api/v1/targets(%s)/synonyms" % request.pharos_target_id
             if index < 3:
-                logger.debug ("        hgnc_url:  {0}".format (url))
+                logger.debug ("      hgnc_url:  {0}".format (url))
             return (requests.get (url).json (), request.edge)
         def process_hgnc_response (response):
             result = response[0]
@@ -184,16 +180,12 @@ class AsyncPharos(Pharos):
                 hgnc_node = KNode(hgnc, 'G')
                 resolved_edge_nodes.append((edge,hgnc_node))
         AsyncUtil.execute_parallel_operations (
-            operations=[ Operation(process_hgnc_request, HGNCRequest(pharos_target_id, edge)) for edge, pharos_target_id in original_edge_nodes ], #[:1],
+            operations=[ Operation(process_hgnc_request, HGNCRequest(pharos_target_id, edge)) for edge, pharos_target_id in original_edge_nodes ][:10], #[:1],
             response_processor=process_hgnc_response)
         
         return resolved_edge_nodes
 
-
-
-
     
-
 #Poking around on the website there are about 10800 ( a few less )
 def build_disease_translation():
     """Write to disk a table mapping Pharos disease ID to DOID (and other?) so we can reverse lookup"""
@@ -206,9 +198,7 @@ def build_disease_translation():
                 if synonym['label'] == 'DOID':
                     doids.append(synonym['term'])
             if len(doids) > 1:
-                #print(doids)
                 import json
-                #print( json.dumps(r,indent=4) )
                 exit()
             elif len(doids) == 0:
                 doids.append('')
@@ -231,18 +221,3 @@ def test_hgnc_for_output():
     import json
     with open('testpharos.txt','w') as outf:
         json.dump(result,outf,indent=4)
-    
-def test ():
-#    with open("pharos.txt", "r") as stream:
-#        obj = json.loads (stream.read ())
-#        print (json.dumps (obj, indent=2))        
-    pharos = Pharos ()
-    diseases = pharos.target_to_disease ("CACNA1A")
-    print (diseases)
-
-
-        
-if __name__ == '__main__':
-    test ()
-    build_disease_translation ()
-    

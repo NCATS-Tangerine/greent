@@ -9,26 +9,14 @@ from greent.util import LoggingUtil
 logger = LoggingUtil.init_logging (__file__)
 
 class Chemotext(Neo4JREST):
-    def __init__(self, url="http://chemotext.mml.unc.edu:7474"):
-        super (Chemotext, self).__init__(url)
+    def __init__(self, context): #url="http://chemotext.mml.unc.edu:7474"):
+        super (Chemotext, self).__init__("chemotext", context)
         self.mesh = MeSH ()
         
     def term_to_term (self, A, of_type=None, limit=100):
         response = self.query (
             query="MATCH (d:Term)-[r1]-(a:Art)-[r2]-(t:Term) WHERE d.name='%s' RETURN d, r1, a, r2, t LIMIT %s" % (A, limit))
-        response = self.filter_nodes (response, labels=['Term'], properties=['name', 'type'])        
-
-        ''' use chemotext types (coarse grained but fast)
-        if of_type != None and response != None:
-            new_response = []
-            for r in response:
-                for k, v in of_type.items ():
-                    print (" {0} {1} {2}".format (k, v, r))
-                    if k in r and r[k] == v:
-                        new_response.append (r)
-            response = r
-            #response = [ r for t in of_type for r in response if r['type'] == t ]
-        '''
+        response = self.filter_nodes (response, labels=['Term'], properties=['name', 'type'])
 
         # Use MeSH data - slow but richer
         if of_type != None and response != None:
@@ -55,14 +43,21 @@ class Chemotext(Neo4JREST):
         response = self.query (
             query="MATCH (d:Term {type:'Disease', name: '%s' })-[r1]-(a:Art)-[r2]-(t:Term {isDrug:true}) RETURN d, r1, a, r2, t LIMIT %s" %
             (disease, limit))
-        #print (json.dumps (response, indent=2))
         for r in response['results'][0]['data']:
             result.append (r['row'][4]['name'])
         return list(set(list(result)))
 
+    def graph_disease_name_to_drug_name (self, disease, limit=100):
+        result = []
+        drug_names = self.disease_name_to_drug_name (disease, limit)
+        for r in drug_names:
+            result.append ( ( self.get_edge (props=r), KNode("DRUGBANK.NAME:{0}".format (r['name']), 'D') ) )
+        return result
+    
+'''
 class TestChemotext(unittest.TestCase):
 
-    chemotext = Chemotext ()
+    chemotext = Chemotext (GreenT())
     
     def test_disease_to_drug (self):
         pprint ("Disease name to drug name:")
@@ -74,7 +69,7 @@ class TestChemotext(unittest.TestCase):
     def test_term_to_term_of_type (self):
         pprint ("term to term of type")
         pprint (self.chemotext.term_to_term ('Asthma', of_type={'name': 'Respiratory Hypersensitivity' }))
-
+'''
 if __name__ == '__main__':
     unittest.main ()
 

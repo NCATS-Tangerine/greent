@@ -16,9 +16,6 @@ logger = LoggingUtil.init_logging (__file__)
 class GraphQL (object):
 
     ''' GraphQL client for the Green Translator. '''
-
-#    http://localhost:5000/patients/
-
     def __init__(self, url="https://stars-app.renci.org/greent/graphql"):
         self.url = url
 
@@ -35,18 +32,16 @@ class GraphQL (object):
     def get_exposure_scores (self, exposure_type, start_date, end_date, exposure_point):
         response = self.query ({
             "query" : """
-query getExposureScore($exposureType:String, $startDate:String, $endDate:String, $exposurePoint:String){
-  exposureScore(exposureType  : $exposureType, 
-    		startDate     : $startDate, 
-    		endDate       : $endDate, 
-    	        exposurePoint : $exposurePoint)
-  {
-    value
-    latitude
-    longitude
-  }
-}
-""",
+            query getExposureScore($exposureType:String, $startDate:String, $endDate:String, $exposurePoint:String){
+              exposureScore(exposureType  : $exposureType, 
+    	        startDate     : $startDate, 
+    	        endDate       : $endDate, 
+    	        exposurePoint : $exposurePoint) {
+                  value
+                  latitude
+                  longitude
+                }
+              }""",
             "variables" : {
                 "exposureType"  : exposure_type,
                 "startDate"     : start_date,
@@ -59,18 +54,16 @@ query getExposureScore($exposureType:String, $startDate:String, $endDate:String,
     def get_exposure_values (self, exposure_type, start_date, end_date, exposure_point):
         response = self.query ({
             "query" : """
-query getExposureValue($exposureType:String, $startDate:String, $endDate:String, $exposurePoint:String){
-  exposureValue(exposureType  : $exposureType, 
-    		startDate     : $startDate, 
-    		endDate       : $endDate , 
-    	        exposurePoint : $exposurePoint)
-  {
-    value
-    latitude
-    longitude
-  }
-}
-""",
+            query getExposureValue($exposureType:String, $startDate:String, $endDate:String, $exposurePoint:String){
+              exposureValue(exposureType  : $exposureType, 
+    	        startDate     : $startDate, 
+    	        endDate       : $endDate , 
+    	        exposurePoint : $exposurePoint) {
+                  value
+                  latitude
+                  longitude
+                }
+              }""",
             "variables" : {
                 "exposureType"  : exposure_type,
                 "startDate"     : start_date,
@@ -85,17 +78,16 @@ query getExposureValue($exposureType:String, $startDate:String, $endDate:String,
     def get_exposure_conditions (self, chemicals):
         response = self.query ({
             "query" : """
-query getExposureConditions($chem : [String] ) {
-  exposureConditions(chemicals: $chem) {
-    chemical
-    gene
-    pathway
-    pathName
-    pathID
-    human
-  }
-}
-""",
+            query getExposureConditions($chem : [String] ) {
+              exposureConditions(chemicals: $chem) {
+                chemical
+                gene
+                pathway
+                pathName
+                pathID
+                human
+              }
+            }""",
             "variables" : {
                 "chem" : chemicals
             }
@@ -105,12 +97,11 @@ query getExposureConditions($chem : [String] ) {
     def get_drugs_by_condition (self, conditions):
         response = self.query ({
             "query" : """
-query getDrugsByCondition($cond : [String] ) {
-    drugsByCondition(conditions:$cond) {
-      genericName
-    }
-}
-            """,
+            query getDrugsByCondition($cond : [String] ) {
+              drugsByCondition(conditions:$cond) {
+                genericName
+              }
+            }""",
             "variables" : {
                 "cond" : conditions
             }
@@ -121,15 +112,14 @@ query getDrugsByCondition($cond : [String] ) {
     def get_genes_pathways_by_disease (self, diseases):
         response = self.query ({
             "query" : """
-query getGenesPathways($diseases : [String] ) {
-    genePathsByDisease(diseases:$diseases) {
-      uniprotGene
-      keggPath
-      pathName
-      human
-    }
-}
-""",
+            query getGenesPathways($diseases : [String] ) {
+              genePathsByDisease(diseases:$diseases) {
+                uniprotGene
+                keggPath
+                pathName
+                human
+              }
+            }""",
             "variables" : {
                 "diseases" : diseases
             }
@@ -141,26 +131,25 @@ query getGenesPathways($diseases : [String] ) {
     def get_patients (self, age=None, sex=None, race=None, location=None):
         response = self.query ({
             "query" : """
-query queryPatients ($age : Int, $sex : String, $race : String) {
-  patients (age: $age, sex: $sex, race: $race) {
-    birthDate
-    race
-    sex
-    patientId
-    diagnoses {
-      diagnosis
-    }
-    geoCode {
-      latitude
-      longitude
-    }
-    prescriptions {
-      medication
-      date
-    }
-  }
-} 
-            """,
+            query queryPatients ($age : Int, $sex : String, $race : String) {
+              patients (age: $age, sex: $sex, race: $race) {
+                birthDate
+                race
+                sex
+                patientId
+                diagnoses {
+                  diagnosis
+                }
+                geoCode {
+                  latitude
+                  longitude
+                }
+                prescriptions {
+                  medication
+                  date
+                }
+              }
+            }""",
             "variables" : {
                 "age"  : age,
                 "sex"  : sex,
@@ -172,9 +161,9 @@ query queryPatients ($age : Int, $sex : String, $race : String) {
     def get_endotypes (self, query):
         response = self.query ({
             "query" : """
-                  query get_endotype ( $query : String) {
-                      endotype (query:$query)
-            }""",
+               query get_endotype ( $query : String) {
+                 endotype (query:$query)
+               }""",
             "variables" : {
                 "query" : query
             }
@@ -201,12 +190,6 @@ class TestGraphQLClient (unittest.TestCase):
             start_date = "2010-01-01",
             end_date = "2010-01-07",
             exposure_point = ",".join ([ lat, lon ]))
-        #print ("-----------> {}".format (response))
-        #result = json.loads (text)
-        #print (json.dumps (result, indent=2))
-#        self.assertTrue (type (result[0]['latitude']) == float)
-#        self.assertTrue (type (result[0]['longitude']) == float)
-# until the new exposures service is up, this is not working
         self.assertTrue (result['latitude'] == None)
         self.assertTrue (result['longitude'] == None)
         print ("Verified exposure response structure")
@@ -219,19 +202,12 @@ class TestGraphQLClient (unittest.TestCase):
             start_date = "2010-01-01",
             end_date = "2010-01-07",
             exposure_point = ",".join ([ lat, lon ]))
-        #result = json.loads (text)
-        #print (json.dumps (result, indent=2))
-#        self.assertTrue (type (result[0]['latitude']) == float)
-#        self.assertTrue (type (result[0]['longitude']) == float)
-# until the new exposures service is up, this is not working
         self.assertTrue (result['latitude'] == None)
         self.assertTrue (result['longitude'] == None)
-
         print ("Verified exposure response structure")
 
     def test_get_exposure_conditions (self):
         result = self.client.get_exposure_conditions ([ "D052638" ])
-        #result = json.loads (result ['data']['exposureConditions'])
         result = sorted (result, key=lambda v : v['gene'])
         self.assertTrue (result[0]['gene'] == 'http://chem2bio2rdf.org/uniprot/resource/gene/COL1A1')
 

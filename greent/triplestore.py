@@ -1,8 +1,9 @@
-from SPARQLWrapper import SPARQLWrapper2, JSON
-from string import Template
 import os
+import traceback
 from greent.util import LoggingUtil
 from pprint import pprint
+from SPARQLWrapper import SPARQLWrapper2, JSON
+from string import Template
 
 logger = LoggingUtil.init_logging (__file__)
 #import logging
@@ -11,20 +12,23 @@ logger = LoggingUtil.init_logging (__file__)
 
 class TripleStore(object):
     """ Connect to a SPARQL endpoint and provide services for loading and executing queries."""
+
     def __init__(self, hostname):
         self.service =  SPARQLWrapper2 (hostname)
 
-    #@provenance()
     def get_template (self, query_name):
+        """ Load a template given a template name """
         return Template (self.get_template_text (query_name))
+
     def get_template_text (self, query_name):
+        """ Get the text of a template given its name """
         query = None
         fn = os.path.join(os.path.dirname(__file__), 'query',
             '{0}.sparql'.format (query_name))
         with open (fn, 'r') as stream:
             query = stream.read ()
-            #logger.debug ('query template: %s', query)
         return query
+    
     def execute_query (self, query):
         """ Execute a SPARQL query.
 
@@ -37,7 +41,7 @@ class TripleStore(object):
         return self.service.query().convert ()
     
     def query (self, query_text, outputs, flat=False):
-        logger.debug (query_text)
+        """ Execute a fully formed query and return results. """
         response = self.execute_query (query_text)
         result = None
         if flat:
@@ -46,7 +50,12 @@ class TripleStore(object):
             result = list(map(lambda b : { val : b[val].value for val in outputs }, response.bindings ))
         logger.debug ("query result: %s", result)
         return result
+
     def query_template (self, template_text, outputs, inputs=[]):
+        """ Given template text, inputs, and outputs, execute a query. """
         return self.query (Template (template_text).safe_substitute (**inputs), outputs)
+    
     def query_template_file (self, template_file, outputs, inputs=[]):
+        """ Given the name of a template file, inputs, and outputs, execute a query. """
         return self.query (self.get_template_text (template), inputs, outputs)
+

@@ -1,12 +1,14 @@
 import requests
 import urllib
+from greent.service import Service
 from greent.mondo import Mondo
 from reasoner.graph_components import KNode,KEdge
 import logging
 
-class Biolink:
-    def __init__(self, url="https://api.monarchinitiative.org/api"):
-        self.url = url
+class Biolink(Service):
+    def __init__(self, context): #url="https://api.monarchinitiative.org/api"):
+        super(Biolink, self).__init__("biolink", context)
+        #self.url = url
     def gene_get_disease(self, gene_node):
         """Given a gene specified as an HGNC curie, return associated diseases. """
         #TODO: we're assuming that gene_node.identifier is a valid curie for calling inti biolink - validate
@@ -49,7 +51,6 @@ class Biolink:
 
 def test():
     """What do we get back for HBB"""
-    print('hi')
     relations = gene_get_disease(('HGNC:4827',))
     checker = Mondo()
     for p, a in relations:

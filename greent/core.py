@@ -16,11 +16,12 @@ from greent.hetio import HetIO
 from greent.oxo import OXO
 from greent.pharos import AsyncPharos
 from greent.pharos import Pharos
+from greent.service import ServiceContext
 from greent.translator import Translator
 from greent.triplestore import TripleStore
 from greent.tkba import TranslatorKnowledgeBeaconAggregator
 from greent.transreg import TranslatorRegistry
-from greent.util import Config
+from greent.config import Config
 from greent.util import LoggingUtil
 from pprint import pprint
 
@@ -32,28 +33,32 @@ class GreenT:
     all Green Translator services. '''
 
     def __init__(self, config=None, override={}):
-        self.config = Config (config if config else os.path.join (os.path.dirname (__file__), "greent.conf"))
-        self.blazegraph = TripleStore (self.get_url("chembio"))
-        self.chembio = ChemBioKS (self.blazegraph)
-        self.clinical = Clinical (swagger_endpoint_url=self.get_url ("clinical"))
-        self.exposures = CMAQ (self.get_url("cmaq"))
-        self.chemotext = Chemotext (self.get_url("chemotext"))
-        self.disease_ontology = DiseaseOntology (obo_resource=self.get_url("diseaseontology"))
+        self.service_context = ServiceContext.create_context (config)
+        service_context = self.service_context
+        
+        self.clinical = Clinical (service_context)
+        self.exposures = CMAQ (service_context)
+        self.endotype = Endotype (service_context)
+
+        self.chembio = ChemBioKS (self.service_context)
+        self.chemotext = Chemotext (self.service_context)
+        self.disease_ontology = DiseaseOntology (self.service_context)
         if 'async' in override and override['async'] == True:
             print ("** Initializing async pharos")
-            self.pharos = AsyncPharos (self.get_url("pharos"))
+            self.pharos = AsyncPharos (self.service_context)
         else:
             print ("** Initializing synchronous pharos")
-            self.pharos = Pharos (self.get_url ("pharos"))
-        self.oxo = OXO (self.get_url("oxo"))
-        self.hetio = HetIO (self.get_url("hetio"))
-        self.endotype = Endotype (self.get_url("endotype"))
-        self.biolink = Biolink (self.get_url("biolink"))
-        self.tkba = TranslatorKnowledgeBeaconAggregator(self.get_url("tkba"))
-        self.translator_registry = TranslatorRegistry (self.get_url("transreg"))
+            self.pharos = Pharos (self.service_context)
+        self.oxo = OXO (self.service_context)
+        self.hetio = HetIO (self.service_context)
+        self.biolink = Biolink (self.service_context)
+        self.tkba = TranslatorKnowledgeBeaconAggregator (self.service_context)
+        self.translator_registry = TranslatorRegistry (self.service_context)
         self.translator = Translator (core=self)
+    '''
     def get_url (self, svc):
         return self.config.get_service (svc)["url"]
+
     def get_config (self, key, default):
         result = None
         if key in self.config:
@@ -61,7 +66,8 @@ class GreenT:
         if not result:
             result = default
         return result
-                                  
+     '''
+
     # Exposure API
     def get_exposure_scores (self, exposure_type, start_date, end_date, exposure_point):
         return self.exposures.get_scores (
@@ -100,7 +106,6 @@ class GreenT:
         return self.chembio.get_drug_gene_disease (disease_name, drug_name)
     
     # Clinical API
-
     def get_patients (self, age=None, sex=None, race=None, location=None):
         return self.clinical.get_patients (age, sex, race, location)
 

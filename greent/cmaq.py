@@ -8,13 +8,14 @@ from bravado.client import SwaggerClient
 from bravado.requests_client import RequestsClient
 from string import Template
 from pprint import pprint
-from greent.util import SwaggerEndpoint
+from greent.swagger import SwaggerEndpoint
+from greent.service import ServiceContext
 
 class CMAQ (SwaggerEndpoint):
 
-    def __init__(self, swagger_endpoint_url=""):
-        super (CMAQ, self).__init__(swagger_endpoint_url)
-        self.url = swagger_endpoint_url
+    def __init__(self, context):
+        super (CMAQ, self).__init__("cmaq", context)
+        self.url = self.url
     
     def get_meta (self):
         return self.client.cmaq.get_cmaq ().result (timeout = 10)

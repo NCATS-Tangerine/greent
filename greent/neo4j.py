@@ -1,18 +1,24 @@
 import requests
 import json
+from greent.service import Service
+from greent.service import ServiceContext
 
-class Neo4JREST(object):
-    def __init__(self, url):
-        self.url = url
+class Neo4JREST(Service):
+    """ Speak to Neo4J via REST. """
+    def __init__(self, name, context):
+        super(Neo4JREST, self).__init__(name, context)
+        self.cypher_uri = "{0}/db/data/cypher".format (self.url)
         self.query_endpoint = "{0}/db/data/transaction".format (self.url)
         self.schema_endpoint = "{0}/db/data/schema/".format (self.url)
 
     def request (self, url, obj):
-        return requests.post (url = self.query_endpoint,
+        """ Make a request and return response. """
+        return requests.post (url = url,
                              data = json.dumps (obj, indent=2),
                              headers={ "Content-Type" : "application/json" }).json ()
         
-    def query (self, query, labels=None, node_properties=None):
+    def query (self, query, labels=None, node_properties=None, kinds=[ 'node' ]):
+        """ Format a query. """
         response = self.request (
             url = self.query_endpoint,
             obj = {
@@ -27,21 +33,47 @@ class Neo4JREST(object):
                 }
                 ]
             })
-        if node_properties != None:
-            response = self.filter_nodes (response, labels, node_properties)
+        #print (json.dumps (response, indent=2))
+        if node_properties or labels:
+            response = self.filter_nodes (response, labels, node_properties, kinds)
         return response
-    
-    def filter_nodes (self, response, labels=None, properties=['identifier']):
+
+    def execute_cypher (self, statement):
+        response = requests.post (
+            url = self.cypher_uri,
+            data = json.dumps({
+                "statements" : [{
+                    "statement" : statement
+                }]
+            }),
+            headers = { "Content-Type" : "application/json" })
+
+    def filter_nodes (self, response, labels=None, properties=['identifier'], kinds=['node']):
         nodes = []
-        for r in response['results']:
-            for d in r['data']:
-                for n in d['graph']['nodes']:
-                    if labels != None:
-                        if any (map (lambda b : b in n['labels'], labels)):
-                            obj = {}
-                            for prop in properties:
-                                obj[prop] = n['properties'][prop]
-                            nodes.append (obj)
-                for s in d['graph']['relationships']:
-                    pass
+        relationships = []
+        for r in response.get('results',[]):
+            for d in r.get('data',[]):
+                print ("data---------{}".format (json.dumps (d, indent=2)))
+                print ("d2--------> {}".format (d.get('graph',{}).get('nodes',[])))
+                d2 = d.get('graph',{}).get('nodes',[])
+                print ("kinds: {}".format (kinds))
+                if kinds == None or 'node' in kinds:
+                    print ("--------> {}".format (d.get('graph',{}).get('nodes',[])))
+                    for n in d2: #d.get('graph',{}).get('nodes'):
+                        print("_______________GOT ONE")
+                        print (json.dumps (n, indent=2))
+                        if labels != None:
+                            if any (map (lambda b : b in n['labels'], labels)):
+                                print (labels)
+                                if properties:
+                                    obj = {}
+                                    for prop in properties:
+                                        obj[prop] = n['properties'][prop]
+                                    nodes.append (obj)
+                                else:
+                                    print ("-----------")
+                                    nodes.append (n['properties'])
+                if 'relationships' in kinds:
+                    for r in d['graph']['relationships']:
+                        relationships.append (r)
         return nodes

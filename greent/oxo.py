@@ -1,14 +1,19 @@
 import json
 import requests
+from service import Service
 
-class OXO(object):
-    def __init__(self, url="https://www.ebi.ac.uk/spot/oxo/api/search?size=500"):
-        self.url = url
+class OXO(Service):
+
+    """ Generic id translation service. Essentially a highly generic synonym finder. """
+    def __init__(self, context): #url="https://www.ebi.ac.uk/spot/oxo/api/search?size=500"):
+        super(OXO, self).__init__("oxo", context)
+        #self.url = url
+
     def request (self, url, obj):
         return requests.post (self.url,
                               data=json.dumps (obj, indent=2),
                               headers={ "Content-Type" : "application/json" }).json ()
-    def query (self, ids):
+    def query (self, ids):        
         return self.request (
             url = self.url,
             obj = {
@@ -16,8 +21,9 @@ class OXO(object):
                 "mappingTarget" : [],
                 "distance"      : "2"
             })
+    
     def mesh_to_other (self, mesh_id):
-        #print ("-----------> {}".format (mesh_id))
+        """ Find connections from a mesh id to other vocabulary domains. """
         result = []
         response = self.query (ids=[ mesh_id ])
         searchResults = response['_embedded']['searchResults']
@@ -26,12 +32,10 @@ class OXO(object):
             result = list(map(lambda v : v['curie'], others))
         return result
     
-#oxo = OXO()
-#print (oxo.mesh_to_other ("MESH:D001249"))
-
-
-
 '''
+
+Reference: a conversation with OXO:
+
 General:
 
 Request URL:http://www.ebi.ac.uk/spot/oxo/api/search?size=500
@@ -39,7 +43,6 @@ Request Method:POST
 Status Code:200 OK
 Remote Address:193.62.193.80:80
 Referrer Policy:no-referrer-when-downgrade
-
 
 Response Headers view source
 

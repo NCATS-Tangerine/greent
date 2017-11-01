@@ -1,89 +1,114 @@
+#
+# Define transitions between types.
+#
 '@concepts':
-  A:
-  - hetio_anatomy
-  C:
-  - hetio_cell
-  D:
-  - NAME
-  - mesh_disease_id
-  - mesh_disease_name
-  - pharos_disease_id
-  - DOID
-  G:
-  - UNIPROT
-  - c2b2r_gene
-  - hgnc_id
-  GC:
-  - genetic_condition
-  P:
-  - c2b2r_pathway
-  - KEGG
-  PH: []
-  S:
-  - c2b2r_drug_id
+  A:  [ "UBERON" ]
+  C:  [ "GO" ]
+  D:  [ "NAME", "NAME.DRUG", "NAME.DISEASE", "MESH.DISEASE", "PHAROS", "DOID" ]
+  G:  [ "UNIPROT", "HGNC.SYMBOL" ]
+  GC: [ "genetic_condition" ]
+  P:  [ "KEGG" ]
+  PH: [ "UBERON" ]
+  S:  [ "NAME", "DRUGBANK" ]
+'@concept' :
+  Anatomy   : [ 'UBERON' ]
+  Disease   : [ 'MESH.DISEASE', 'DOID', 'PHAROS', 'OMIM', 'MESH.DISEASE' ]
+  Substance : [ 'DRUGBANK', 'DRUG.INTERACTION', 'INCHI', 'INCHIKEY', 'PUBCHEM', 'CHEMBL', 'CHEBI', 'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' ]
+  Gene      : [ 'UNIPROT', 'HGNC', 'HGNC.SYMBOL', 'ENTREZ', 'NCBIGENE', 'ENSEMBL', 'ENSEMBL.TRANSCRIPT' ]
+  Phenotype : [ 'GO' ]
+  Pathway   : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY' ]
 '@curie':
   DOID: doid
-  MESH: mesh
+  MESH.DISEASE: mesh
+'@translator-semantics':
+  mygene.info:
+    http://identifiers.org/hgnc.symbol/:
+      http://identifiers.org/ncbigene/:
+        synonym
+  biolink:
+    http://identifiers.org/ncbigene/:
+      http://identifiers.org/doid/:
+        gene_to_disease
 '@transitions':
-  DOID:
-    mesh_disease_id:
-      op: disease_ontology.graph_doid_to_mesh
-    pharos_disease_id:
-      op: disease_ontology.doid_to_pharos
-  NAME:
+  NAME.DISEASE:
     DOID:
-      op: tkba.name_to_doid
-  UNIPROT:
-    KEGG:
-      op: chembio.graph_get_pathways_by_gene
-    hetio_anatomy:
-      op: hetio.gene_to_anatomy
-    hetio_cell:
-      op: hetio.gene_to_cell
-  c2b2r_drug_name:
-    c2b2r_gene:
-      op: chembio.drug_name_to_gene_symbol
-  c2b2r_gene:
-    hetio_anatomy:
-      op: hetio.gene_to_anatomy
-    pharos_disease_name:
-      op: pharos.target_to_disease
-  hgnc_id:
+      link: diseasename
+      op:   tkba.name_to_doid
+    MESH.DISEASE:
+      link: diseasename
+      op:   tkba.name_to_mesh_disease
+  NAME.DRUG:
+    DRUGBANK:
+      link: drugname
+      op:   tkba.name_to_drugbank
+  DOID:
+    MESH:
+      op: disease_ontology.graph_doid_to_mesh
+    PHAROS:
+      link: doid_to_pharos
+      op:   disease_ontology.doid_to_pharos
+    UBERON:
+      link: phenotype
+      op:   hetio.disease_to_phenotype
+  HGNC:
     genetic_condition:
       op: biolink.gene_get_genetic_condition
-  mesh:
-    root_kind:
-      op: oxo.mesh_to_other
-  mesh_disease_id:
-    KEGG:
-      op: chembio.graph_get_pathways_by_disease
+    UBERON:
+      link: anatomy
+      op:   hetio.gene_to_anatomy
+    GO:
+      link: cellcomponent
+      op:   hetio.gene_to_cell
+    DOID:
+      link: gene_to_disease
+      op: hetio.gene_to_disease
+  DRUGBANK:
     UNIPROT:
-      op: chembio.graph_get_genes_by_disease
-    c2b2r_drug_id:
+      link: targets
+      op:   chembio.graph_drugbank_to_uniprot
+  DRUGBANK.NAME:
+    UNIPROT:
+#      link: ____none____
+      op: chembio.graph_drugname_to_gene_symbol
+  MESH.DISEASE:
+    UNIPROT:
+      link: diseaseid_to_uniprot
+      op: chembio.graph_diseaseid_to_uniprot
+  MESH:
+    ROOT:
+      op: oxo.mesh_to_other
+    DRUGBANK:
       op: chembio.get_drugs_by_condition_graph
-  mesh_disease_name:
-    mesh_drug_name:
-      op: chemotext.disease_name_to_drug_name
-  pharos_disease_id:
-    hgnc_id:
-      op: pharos.disease_get_gene
+    DOID:
+      link: mesh_to_doid
+#      op:   kba.______________________________
+  PHAROS:
+    HGNC.SYMBOL:
+      link: disease_gene
+      op:   pharos.disease_get_gene
+  UNIPROT:
+    MESH:
+      link: gene_disease
+ #     op:   chembio.__________________________
+    HGNC.SYMBOL:
+      link: synonym
+      op:   chembio.graph_uniprot_to_hgnc
+    KEGG:
+      link: gene_pathway
+      op:   chembio.graph_get_pathways_by_gene
 '@vocab':
-  KEGG: http://identifiers.org/kegg/pathway
-  NAME: http://identifiers.org/string
-  UNIPROT: http://identifiers.org/uniprot
-  c2b2r_drug_id: http://chem2bio2rdf.org/drugbank/resource/drugbank_drug
-  c2b2r_drug_name: http://chem2bio2rdf.org/drugbank/resource/Generic_Name
-  c2b2r_gene: http://chem2bio2rdf.org/uniprot/resource/gene
-  c2b2r_pathway: http://identifiers.org/kegg/pathway
-  doid: http://identifiers.org/doid/
+  DRUGBANK.NAME:     http://identifiers.org/drugbank/name
+  KEGG:              http://identifiers.org/kegg/pathway
+  NAME:              http://identifiers.org/name
+  NAME.DRUG:         http://identifiers.org/name
+  NAME.DISEASE:      http://identifiers.org/name
+  UNIPROT:           http://identifiers.org/uniprot
+  DOID:              http://identifiers.org/doid/
   genetic_condition: http://identifiers.org/mondo/gentic_condition
-  hetio_anatomy: http://identifier.org/hetio/anatomy
-  hetio_cell: http://identifier.org/hetio/cellcomponent
-  hgnc_id: http://identifiers.org/hgnc
-  mesh: http://identifiers.org/mesh
-  mesh_disease_id: http://identifiers.org/mesh/
-  mesh_disease_name: http://identifiers.org/mesh/disease/name
-  mesh_drug_name: http://identifiers.org/mesh/drug/name
-  pharos_disease_id: http://pharos.nih.gov/identifier/disease/id
-  pharos_disease_name: http://pharos.nih.gov/identifier/disease/name
-  root_kind: http://identifiers.org/doi
+  UBERON:            http://identifier.org/uberon
+  GO:                http://identifier.org/go
+  MESH:              http://identifiers.org/mesh
+  MESH.NAME:         http://identifiers.org/mesh/drug/name
+  MESH.DISEASE:      http://identifiers.org/mesh/disease/name
+  PHAROS:            http://pharos.nih.gov/identifier/
+  ROOT:              http://identifiers.org/doi

@@ -69,6 +69,22 @@ def test_problog():
                 if len(res) > 0:
                     print ('   -- %s? => %s' % (path, res))
 
+    a = Term("A")
+    b = Term("B")
+    c = Term("concat_str")
+    query = Term("query")
+    q = c(a,b,None)
+    res = engine.query(db, q)
+    print ('%s? %s' % (q, res))
+
+
+    a = Term ("a")
+    instanceof = Term ("instance_of")
+    q = instanceof (a, None)
+    res = engine.query (db, q)
+    print ("%s %s" % (q, res))
+    
+                    
     sys.exit (0)
 
 

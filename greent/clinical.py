@@ -9,29 +9,16 @@ from bravado.client import SwaggerClient
 from bravado.requests_client import RequestsClient
 from string import Template
 from uuid import getnode as get_mac
+from greent.swagger import SwaggerEndpoint
+from greent.service import Service
+from greent.service import ServiceContext
 
-class SwaggerEndpoint(object):
+class Clinical (Service):
+    """ API for clinical data access. """
 
-    def __init__(self, swagger_endpoint_url):
-        http_client = RequestsClient ()
-        # TODO: fix ssl certificate.
-#        http_client.session.verify = False
-        self.client = SwaggerClient.from_url(
-            swagger_endpoint_url,
-            http_client=http_client)
-
-    def inspect (self):
-        for name, obj in inspect.getmembers (self.client):
-            print ("-- name: {0} obj: {1}".format (name, obj))
-            for n, o in inspect.getmembers (obj):
-                if (n.endswith ('_get') or n.endswith ('_post')):
-                    print ("-- INVOKE: method-> {0} obj: {1}".format (n, o))
-
-    
-class Clinical (SwaggerEndpoint):
-
-    def __init__(self, swagger_endpoint_url=""):
-        self.url = swagger_endpoint_url
+    def __init__(self, context):
+        """ Initialize as a GreenT service. """
+        super(Clinical, self).__init__("clinical", context)
 
     '''
     http://tweetsie.med.unc.edu/CLINICAL_EXPOSURE/age/{age}/

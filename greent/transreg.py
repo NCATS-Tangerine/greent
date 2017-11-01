@@ -4,13 +4,20 @@ import requests
 import traceback
 import re
 import os
+import sys
 import yaml
 from jinja2 import Template
 from collections import defaultdict
+from collections import namedtuple
+from greent.service import Service
+from greent.service import ServiceContext
 from greent.util import LoggingUtil
+from greent.util import Resource
+from greent.util import DataStructure
 from pprint import pprint
 from reasoner.graph_components import KNode,KEdge
 from jsonpath_rw import jsonpath, parse
+from greent.util import Text
 
 logger = LoggingUtil.init_logging (__name__, level=logging.DEBUG)
 
@@ -20,29 +27,35 @@ def defaultdict_to_regular(d):
         d = {k: defaultdict_to_regular(v) for k, v in d.items()}
     return d
 
-class TranslatorRegistry:
+class TranslatorRegistry(Service):
     """ Interact with Translator services. """
-    def __init__(self, url):
+    def __init__(self, context):
         """ Read the Translator Registry root document. For each listed API, read its
             metadata. Then consider each path, parameter, and output in detail, regisgtering
             template strings used for invoking each service. Create a mapping to facilitate lookups
             of invocation templates based on type pairs. Later, need semantics about what the 
             meaning of the transitions is. Revenge of the semantic web and stuff."""
-        self.url = url
+        super(TranslatorRegistry, self).__init__("transreg", context)
+        self.verbose = True #False
         self.punctuation = re.compile('[ \./:]+')
 
         # Use cached model
+        self.op_map = Resource.get_resource_obj ("transreg.yml", format='yaml')
+        if isinstance (self.op_map, dict):
+            logger.debug ("Loaded cached copy of translator registry config.")
+            return
+        '''
         registry_map = os.path.join (os.path.dirname (__file__), "transreg.yml")
         if os.path.exists (registry_map):
             with open (registry_map, "r") as stream:
                 logger.debug ("Loading cached copy of translator registry config")
                 self.op_map = yaml.load (stream.read ())
                 return
-
+        '''
+        
         # Dynamically generate model
         self.op_map = defaultdict(lambda:defaultdict(lambda:defaultdict(None)))
         url = "{0}/API_LIST.yml".format (self.url)
-        print (url)
         registry = yaml.load (requests.get (url).text)
         apis = {}
         for context in registry['APIs']:
@@ -70,13 +83,23 @@ class TranslatorRegistry:
                             in_type = v['valueType']
                             x_template = v['template']
                             logger.debug ("in_type: {}".format (in_type))
-                            for r in get.get('responses',{}).get('200',{}).get('x-responseValueType',{}):
-                                out_type = r['valueType']
+                            success_response = get.get('responses',{}).get('200',{})
+
+                            json_ld_url = success_response.get('x-JSONLDContext',None)
+                            json_ld = {}
+                            if json_ld_url:
+                                json_ld = requests.get(json_ld_url).json ()
+
+                            for response_value in success_response.get('x-responseValueType',{}):
+                                out_type = response_value['valueType']
                                 logger.debug ("out_type: {}".format (out_type))
                                 logger.debug ("  --api> {0} in: {1} out: {2}".format (api_name, in_type, out_type))
                                 self.op_map[api_name][in_type][out_type] = {
-                                    "op"  : path,
-                                    "get" : "{0}{1}".format (server, x_template)
+                                    "op"       : path,
+                                    "get_url"  : "{0}{1}".format (server, x_template),
+                                    "out_type" : response_value.get('valueType', None),
+                                    "obj_path" : response_value.get('path', None),
+                                    "jsonld"   : json_ld
                                 }
         # Cache model
         vanilla_op_map = defaultdict_to_regular (self.op_map)
@@ -84,26 +107,47 @@ class TranslatorRegistry:
             logger.debug ("Cache copy of registry map")
             yaml.dump (vanilla_op_map, stream, default_flow_style=False)
 
-    def get (self, api_name, template, v, response_processor=None):
-        """ Invoke a GET requests on the specified API with the template and object. """        
-        if 'NCBIGene:' in template: # Need to better understand the intent and usage of this syntax.
-            template = template.replace ('NCBIGene:','')
-        url = Template (template).render (input=v.identifier)
+    def path_to_method_name (self, path):
+        return path.replace ("{","").replace ("}","").replace ("?","/").replace ("=","_").replace ("/","_")
+    
+#    def to_named_tuple (self, type_name, d):
+#        return namedtuple(type_name, d.keys())(**d)
+    def get_service_metadata (self, api_name, in_type, out_type):
+        metadata = self.op_map.get(api_name,{}).get (in_type,{}).get (out_type,{})
+        return DataStructure.to_named_tuple ('ServiceMetadata', metadata) if len(metadata) > 0 else None #self.to_named_tuple ('ServiceMetadata', metadata) if len(metadata) > 0 else None
+    
+    def get (self, api_name, in_type, out_type, v, method_name):
+        """ Invoke a GET requests on the specified API with the template and object. """
         result = []
+        if not api_name in [ 'biolink' ]:
+            return result
         try:
-            logger.debug ("                   --get: {0}".format (url))
+            service_metadata = self.get_service_metadata (api_name, in_type, out_type)
+            logger.debug ("* Executing translator registry method: {0} in: {1} out: {2} template: {3} value: {4} ".format (
+                api_name, in_type, out_type, service_metadata.get_url, v.identifier))
+
+            """ Build and run the request. """
+            url = Template (service_metadata.get_url).render (input=v.identifier)
+            logger.debug ("                   translatR:get: {0}".format (url))
             response = requests.get (url).json ()
-            if response_processor:
-                vals = response_processor (response)
-                result += [ ( KEdge(api_name, 'queried', response), KNode(v, self.abstract(v)) ) for v in vals ]
-            for obj in response.get('objects',{}): # replace this, specific to biolink, with more general above approach.
-                x_type = self.abstract (obj)
-                result.append ( ( KEdge(api_name, 'queried', response), KNode(obj, x_type) ))
-        except:
-            pass
+            
+            """ Parse the response. """
+            path_components = service_metadata.obj_path.split ('.')
+            level = response
+            for component in path_components:
+                item = level.get (component, None)
+                level = item
+                print ("-------------------> item: {} {}".format (component, item))
+            predicate = "{0}.{1}/{2}".format (api_name, method_name, path_components)
+            result = [ ( self.get_edge(response, predicate=path_components), KNode(level, self.abstract(out_type)) ) ]
+        except Exception as e:
+            exc_type, exc_value, exc_tb = sys.exc_info()
+            exception_text = traceback.format_exception (exc_type, exc_value, exc_tb)
+            #logger.error (exception_text)
         return result
     
     def abstract(self, obj):
+        """ Given a very specific type, translate it "up" to a robokop type. """
         x_type = '?'
         if ':' in obj:
             curie = obj.split (':')[0]
@@ -117,6 +161,7 @@ class TranslatorRegistry:
             x_type = type_m[curie] if curie in type_m else '?'
             
     def human_name (self, iri):
+        """ Replace a few things to simplify the text. """
         for prefix in [
                 "http://identifiers.org/",
                 "http://biothings.io/" ]:
@@ -124,49 +169,60 @@ class TranslatorRegistry:
         return self.punctuation.sub ('', iri)
 
     def get_method_name (self, api, in_type, out_type):
+        """ Build a normalized name for the method based on its input and output IRIs """
         x_api = self.human_name (api)
         x_in_type = self.human_name (in_type)
         x_out_type = self.human_name (out_type)
         return "{0}__{1}_to_{2}".format (x_api, x_in_type, x_out_type)
 
-    def diseaseontologyapi__doid_to_mesh_processor (self, response):
-        jsonpath_expr = parse('xrefs[*]')
-        r =  [ match.value for match in jsonpath_expr.find (response) if match.value.startswith ("MESH:") ]
-        return r
-    
-    def add_method (self, cls, api, template, in_type, out_type):
+    def add_method (self, cls, api, in_type, out_type):
+        """ Dynamically create a method for this API to do a get.
+        For now, if there's no response processor configured, we just don't bother calling the API. """
+
+        # Construct an API name.
         method_name = self.get_method_name (api, in_type, out_type)
+
+        # Define the new method.
         def new_method(self, v):
             """ A dynamically created method to perform a translation. If we can't find a response processor, for now, don't bother. """
-            result_processor = getattr(self, "{0}_processor".format (method_name), None)
-            return self.get (api, template, v, result_processor) if result_processor else []
+            return self.get (api, in_type, out_type, v, method_name)
+
+        # Now add the method to this class. 
         new_method.__doc__ = "convert from {0} to {1}".format (in_type, out_type)
         new_method.__name__ = method_name
-        logger.debug ("adding method: {0}".format (new_method.__name__))
         setattr(cls, new_method.__name__, new_method)
+        return method_name
 
     def get_subscriptions (self):
-        transitions = []
+        """ Provide enough information to subscribe translator services as part of the Rosetta translation scheme.
+        This involves passing back source type, destination type, and the method executing the transition.
+        Rosetta only needs the name of the method since it will look up the actual method to dispatch to dynamically. """
+        rosetta_config = Resource.get_resource_obj ("rosetta.yml", format='yaml')
+        semantics = rosetta_config['@translator-semantics']
         subscriptions = []
         for api in self.op_map:
             for in_type, in_params in self.op_map[api].items ():
                 for out_type, out_vals in self.op_map[api][in_type].items ():
-                    template = out_vals.get ("get")
-                    operation = out_vals.get ("op")
-                    if template:
-                        self.add_method (TranslatorRegistry, api, template, in_type, out_type)
-                        subscriptions.append ((
-                            in_type,
-                            out_type,
-                            { "op" : self.get_method_name (api, in_type, out_type) }
-                        ))
+                    predicate = semantics.get (api,{}).get (in_type,{}).get (out_type,None)
+                    #if not predicate:
+                    #    predicate = '*-missing-*'
+                    subscriptions.append ((
+                        in_type,
+                        out_type,
+                        {
+                            "link" : predicate,
+                            "op"   : self.add_method (TranslatorRegistry, api, in_type, out_type)
+                        }
+                    ))
         return subscriptions
     
 if __name__ == "__main__":
-    treg = TranslatorRegistry ("https://raw.githubusercontent.com/NCATS-Tangerine/translator-api-registry/master")
-    subscriptions = treg.generate_transition_methods ()
-    #r = treg.call ('HGNC:6871', 'http://identifiers.org/ncbigene/', 'http://identifiers.org/ncbigene/')
-    print (subscriptions)
-    r = treg.mygeneinfo__ncbigene_to_wikipathways ("NCBIGene:10015")
-    print (r)
+    """ Load the registry """
+    treg = TranslatorRegistry (ServiceContext.create_context ())
+
+    """ Generate subscriptions """
+    subscriptions = treg.get_subscriptions ()
+
+    r = treg.myvariantinfo__uniprot_to_hgvs(KNode ('UNIPROT:AKT1','G'))
+    pprint (r)
 
