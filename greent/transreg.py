@@ -44,14 +44,6 @@ class TranslatorRegistry(Service):
         if isinstance (self.op_map, dict):
             logger.debug ("Loaded cached copy of translator registry config.")
             return
-        '''
-        registry_map = os.path.join (os.path.dirname (__file__), "transreg.yml")
-        if os.path.exists (registry_map):
-            with open (registry_map, "r") as stream:
-                logger.debug ("Loading cached copy of translator registry config")
-                self.op_map = yaml.load (stream.read ())
-                return
-        '''
         
         # Dynamically generate model
         self.op_map = defaultdict(lambda:defaultdict(lambda:defaultdict(None)))
@@ -102,6 +94,7 @@ class TranslatorRegistry(Service):
                                     "jsonld"   : json_ld
                                 }
         # Cache model
+        registry_map = os.path.join (os.path.dirname (__file__), "transreg.yml")
         vanilla_op_map = defaultdict_to_regular (self.op_map)
         with open (registry_map, "w") as stream:
             logger.debug ("Cache copy of registry map")
