@@ -2,7 +2,7 @@
 from bravado.client import SwaggerClient
 from reasoner.graph_components import KNode,KEdge,elements_to_json
 from bravado.requests_client import RequestsClient
-from service import Service
+from greent.service import Service
 
 class SwaggerEndpoint(Service):
 
