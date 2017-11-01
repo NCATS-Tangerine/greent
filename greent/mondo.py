@@ -1,7 +1,9 @@
 from ontobio.ontol_factory import OntologyFactory
 from greent.service import Service
 
-GENETIC_DISEASE='DOID:630'
+#TODO: LOOKUP all the terms that map to this... or use an ancestor call that doesn't require such stuff (i.e. that handles this)
+GENETIC_DISEASE=('DOID:630','http://purl.obolibrary.org/obo/EFO_0000508')
+#GENETIC_DISEASE='EFO:0000508'
 MONOGENIC_DISEASE='DOID:0050177'
 
 class Mondo(Service):
@@ -9,7 +11,11 @@ class Mondo(Service):
     """ A pragmatic class to query the mondo ontology. Until better sources emerge, we roll our own. """ 
     def __init__(self, context):
         ofactory = OntologyFactory()
+        #This gets the remote owl which would be better in general, but is apparently not fully up to date
+        # giving us a problem with Acute Alcohol Sensitivity which does not register as a genetic condition
         self.ont = ofactory.create('mondo')
+        #self.ont = ofactory.create('./mondo.owl')
+        #This seems to be required to make the ontology actually load:
         _ = self.ont.get_level(0)
         
     def get_doid(self,identifier):
@@ -38,8 +44,12 @@ class Mondo(Service):
         else:
             obj_ids = self.ont.xrefs(obj_id, bidirectional=True)
         return obj_ids
+<<<<<<< HEAD
 
     def has_ancestor(self,obj, term):
+=======
+    def has_ancestor(self,obj, terms):
+>>>>>>> c2d76709caf15f96971e34a27585d248320a48d2
         """Given an object and a term in MONDO, determine whether the term is an ancestor of the object.
         
         The object is a KNode representing a disease.
@@ -56,14 +66,31 @@ class Mondo(Service):
         return_objects=[]
         for obj_id in obj_ids:
             ancestors = self.ont.ancestors(obj_id)
-            if GENETIC_DISEASE in ancestors:
-                return_objects.append( obj_id )
+            for term in terms:
+                if term in ancestors:
+                    return_objects.append( obj_id )
         return len(return_objects) > 0, return_objects
 
     def is_genetic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:630 as an ancestor"""
+<<<<<<< HEAD
         return self.has_ancestor(obj, GENETIC_DISEASE)
 
+=======
+        return self.has_ancestor(obj,GENETIC_DISEASE)
+>>>>>>> c2d76709caf15f96971e34a27585d248320a48d2
     def is_monogenic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:0050177 as an ancestor"""
         return self.has_ancestor(obj, MONOGENIC_DISEASE)
+
+def test():
+    m = Mondo()
+    from reasoner.graph_components import KNode,KEdge
+    alc_sens = KNode('OMIM:610251','D')
+    print(m.is_genetic_disease(alc_sens))
+    print('------')
+    huntingtons = KNode('DOID:12858','D')
+    print(m.is_genetic_disease(huntingtons))
+
+if __name__ == '__main__':
+    test()
