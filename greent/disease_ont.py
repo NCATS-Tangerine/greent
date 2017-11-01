@@ -5,7 +5,7 @@ import pronto
 import requests
 import os
 from reasoner.graph_components import KNode,KEdge,elements_to_json
-from service import Service
+from greent.service import Service
 
 class DiseaseOntology (Service):
     """ We use the Translator Disease Ontology service for other purposes but here, we fill a few gaps
