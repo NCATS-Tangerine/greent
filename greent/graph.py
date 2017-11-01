@@ -25,12 +25,13 @@ class TypeGraph(Service):
         self.db = GraphDatabase(url)
         self.types = self.db.labels.create("Type")
         self.bio_type_metadata = {
-            'Disease'   : { 'color' : 'Red'    },
-            'Substance' : { 'color' : 'Yellow' },
-            'Gene'      : { 'color' : 'Blue'   },
-            'Pathway'   : { 'color' : 'Green'  },
-            'Anatomy'   : { 'color' : 'Pink'   },
-            'Phenotype' : { 'color' : 'Gray'   }
+            'Disease'          : { 'color' : 'Red'        },
+            'Substance'        : { 'color' : 'Yellow'     },
+            'Gene'             : { 'color' : 'Blue'       },
+            'Pathway'          : { 'color' : 'Green'      },
+            'Anatomy'          : { 'color' : 'Pink'       },
+            'Phenotype'        : { 'color' : 'Gray'       },
+            'GeneticCondition' : { 'color' : 'LightGreen' }
         }
         self.bio_types = {}
         logger.debug ("-- Initializing bio types.")
@@ -71,7 +72,8 @@ class TypeGraph(Service):
             if rel.properties.get ('op',None) == op:
                 exists = True
         if not exists:
-            a_node.relationships.create(rel_name, b_node, predicate=predicate, op=op)
+            enabled = predicate != "UNKNOWN"
+            a_node.relationships.create(rel_name, b_node, predicate=predicate, op=op, enabled=enabled)
     def get_shortest_paths (self, a, b):
         return self.db.query (
             "MATCH (a:Type { name: '%s' }),(b:Type { name : '%s' }), p = allShortestPaths((a)-[*]-(b)) RETURN p" % (a,b),

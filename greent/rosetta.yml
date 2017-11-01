@@ -1,6 +1,8 @@
 #
 # Define transitions between types.
 #
+
+# This section is deprecated - ignore after switch to neo4j completed.
 '@concepts':
   A:  [ "UBERON" ]
   C:  [ "GO" ]
@@ -10,16 +12,22 @@
   P:  [ "KEGG" ]
   PH: [ "UBERON" ]
   S:  [ "NAME", "DRUGBANK" ]
+
+# Use this section. Neo4J type graph is based on these mappings.
 '@concept' :
-  Anatomy   : [ 'UBERON' ]
-  Disease   : [ 'MESH.DISEASE', 'DOID', 'PHAROS', 'OMIM', 'MESH.DISEASE' ]
-  Substance : [ 'DRUGBANK', 'DRUG.INTERACTION', 'INCHI', 'INCHIKEY', 'PUBCHEM', 'CHEMBL', 'CHEBI', 'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' ]
-  Gene      : [ 'UNIPROT', 'HGNC', 'HGNC.SYMBOL', 'ENTREZ', 'NCBIGENE', 'ENSEMBL', 'ENSEMBL.TRANSCRIPT' ]
-  Phenotype : [ 'GO' ]
-  Pathway   : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY' ]
+  Anatomy            : [ 'UBERON' ]
+  Disease            : [ 'MESH.DISEASE', 'DOID', 'PHAROS', 'OMIM', 'MESH.DISEASE' ]
+  Substance          : [ 'DRUGBANK', 'DRUG.INTERACTION', 'INCHI', 'INCHIKEY', 'PUBCHEM', 'CHEMBL', 'CHEBI', 'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' ]
+  Gene               : [ 'UNIPROT', 'HGNC', 'HGNC.SYMBOL', 'ENTREZ', 'NCBIGENE', 'ENSEMBL', 'ENSEMBL.TRANSCRIPT' ]
+  Phenotype          : [ 'GO' ]
+  Pathway            : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY' ]
+  GeneticCondition   : [ 'GENETIC_CONDITION' ]
+
 '@curie':
   DOID: doid
   MESH.DISEASE: mesh
+
+# Only items decorated with semantic predicates will be considered.
 '@translator-semantics':
   mygene.info:
     http://identifiers.org/hgnc.symbol/:
@@ -29,6 +37,8 @@
     http://identifiers.org/ncbigene/:
       http://identifiers.org/doid/:
         gene_to_disease
+
+# Defines transitions from one vocabulary domain to another including a predicate.
 '@transitions':
   NAME.DISEASE:
     DOID:
@@ -50,8 +60,8 @@
     UBERON:
       link: phenotype
       op:   hetio.disease_to_phenotype
-  HGNC:
-    genetic_condition:
+  HGNC.SYMBOL:
+    GENETIC_CONDITION:
       op: biolink.gene_get_genetic_condition
     UBERON:
       link: anatomy
@@ -104,7 +114,7 @@
   NAME.DISEASE:      http://identifiers.org/name
   UNIPROT:           http://identifiers.org/uniprot
   DOID:              http://identifiers.org/doid/
-  genetic_condition: http://identifiers.org/mondo/gentic_condition
+  GENETIC_CONDITION: http://identifiers.org/mondo/gentic_condition
   UBERON:            http://identifier.org/uberon
   GO:                http://identifier.org/go
   MESH:              http://identifiers.org/mesh

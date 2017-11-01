@@ -44,12 +44,8 @@ class Mondo(Service):
         else:
             obj_ids = self.ont.xrefs(obj_id, bidirectional=True)
         return obj_ids
-<<<<<<< HEAD
 
-    def has_ancestor(self,obj, term):
-=======
     def has_ancestor(self,obj, terms):
->>>>>>> c2d76709caf15f96971e34a27585d248320a48d2
         """Given an object and a term in MONDO, determine whether the term is an ancestor of the object.
         
         The object is a KNode representing a disease.
@@ -73,12 +69,8 @@ class Mondo(Service):
 
     def is_genetic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:630 as an ancestor"""
-<<<<<<< HEAD
         return self.has_ancestor(obj, GENETIC_DISEASE)
 
-=======
-        return self.has_ancestor(obj,GENETIC_DISEASE)
->>>>>>> c2d76709caf15f96971e34a27585d248320a48d2
     def is_monogenic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:0050177 as an ancestor"""
         return self.has_ancestor(obj, MONOGENIC_DISEASE)
