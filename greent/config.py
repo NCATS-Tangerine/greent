@@ -1,6 +1,6 @@
 import os
 import yaml
-from util import Resource
+from greent.util import Resource
 
 class Config:
     def __init__(self, config):
