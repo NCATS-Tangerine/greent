@@ -16,6 +16,7 @@ setup(
     packages = [ 'greent' ], # this must be the same as the name above
     package_data={ 'greent' : [
         'greent.conf',
+        'greent-stars.conf',
         'rosetta.yml',
         'identifiers.org.json',
         'requirements.txt',
