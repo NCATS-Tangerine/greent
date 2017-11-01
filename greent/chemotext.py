@@ -3,8 +3,8 @@ import unittest
 from collections import defaultdict
 from greent.mesh import MeSH
 from greent.neo4j import Neo4JREST
-from pprint import pprint
 from greent.util import LoggingUtil
+from pprint import pprint
 
 logger = LoggingUtil.init_logging (__file__)
 

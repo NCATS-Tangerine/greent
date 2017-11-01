@@ -1,6 +1,6 @@
 import json
 import requests
-from service import Service
+from greent.service import Service
 
 class OXO(Service):
 
