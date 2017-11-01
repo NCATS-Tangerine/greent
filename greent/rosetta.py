@@ -442,7 +442,6 @@ class Rosetta:
             logger.debug ("--Executing level: {0}".format (level))
             operators = level['ops']
             collector = level['collector']
-            #logger.debug ("000000>-=-------------> {}".format (primed[index]['collector']))
             for edge_node in primed[index]['collector']:
                 for operator in operators:
                     op = self.get_ops (operator)
@@ -458,8 +457,6 @@ class Rosetta:
                                     logger.debug ("Operator {0} is wired to return type: {1} but returned node with id: {2}".format (
                                         operator, program[index+1]['node_type'], r[1].identifier))
                         collector += results
-#                        logger.debug ("--------> collector ---------- {}".format (collector))
-#                        logger.debug ("--------> collector ---------- {}".format (json.dumps (primed, indent=2)))
                     except Exception as e:
                         traceback.print_exc()
                         logger.error ("Error processing {0}".format (operator))
