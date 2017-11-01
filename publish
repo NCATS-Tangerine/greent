@@ -16,6 +16,8 @@ setup(
     packages = [ 'greent' ], # this must be the same as the name above
     package_data={ 'greent' : [
         'greent.conf',
+        'rosetta.yml',
+        'identifiers.org.json',
         'requirements.txt',
         'jsonld/*',
         'query/*.sparql'

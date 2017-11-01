@@ -495,8 +495,6 @@ if __name__ == "__main__":
     disease = []
     drug = []
     if args.disease:
-        #g = translator.graph ('diseasename_to_phenotype', [ ( None, KNode(disease_name, 'D') ) ])
-        #g = translator.graph ('name-to-anatomy', [ ( None, KNode(disease_name, 'D') ) ])
         query = \
                 """MATCH (a{name:"NAME.DISEASE"}),(b:Gene), p = allShortestPaths((a)-[*]->(b)) 
                 WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
