@@ -482,7 +482,7 @@ class Rosetta:
 
     @staticmethod
     def clinical_outcome_pathway_app (drug=None, disease=None, greent_conf='greent.conf'):
-        return Rosetta(greentConf=greent_conf).clinical_outcome_pathway (drug=args.drug, disease=args.disease)
+        return Rosetta(greentConf=greent_conf).clinical_outcome_pathway (drug=drug, disease=disease)
 
 if __name__ == "__main__":
     '''
