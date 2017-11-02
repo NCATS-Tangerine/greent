@@ -461,14 +461,32 @@ class Rosetta:
                         traceback.print_exc()
                         logger.error ("Error processing {0}".format (operator))
         return [ edge_node for level in program for result in level['collector'] for edge_node in result ]
-                    
+
+    def clinical_outcome_pathway (self, drug=None, disease=None):
+        blackboard = []
+        if disease:
+            blackboard += self.graph (
+                [ ( None, KNode('NAME.DISEASE:{0}'.format (disease), 'D') ) ],
+                query=\
+                """MATCH (a{name:"NAME.DISEASE"}),(b:Gene), p = allShortestPaths((a)-[*]->(b)) 
+                WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
+                RETURN p""")
+        if drug:
+            blackboard += self.graph (
+                [ ( None, KNode('NAME.DRUG:{0}'.format (drug), 'S') ) ],
+                query=\
+                """MATCH (a{name:"NAME.DRUG"}),(b:Pathway), p = allShortestPaths((a)-[*]->(b)) 
+                WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
+                RETURN p""")
+        return blackboard
+
+    @staticmethod
+    def clinical_outcome_pathway_app (drug=None, disease=None):
+        return Rosetta().clinical_outcome_pathway (drug=args.drug, disease=args.disease)
+
 if __name__ == "__main__":
-    #from neo4j.v1.api import GraphDatabase
     '''
-    from neo4j import *
-    for x in neo4j:
-        print (x)
-#    from neo4j import GraphDatabase
+    from neo4j.v1.api import GraphDatabase
     driver = GraphDatabase.driver("bolt://localhost:7687") #, auth=basic_auth("neo4j", "neo4j"))
     session = driver.session()    
     session.run("CREATE (a:Person {name: {name}, title: {title}})",
@@ -488,21 +506,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--drug', help='A drug to analyze.', default=None)
     args = parser.parse_args()
     
-    translator = Rosetta (override={ 'async' : True }, init_db=args.initialize_type_graph)
-    disease = []
-    drug = []
-    if args.disease:
-        query = \
-                """MATCH (a{name:"NAME.DISEASE"}),(b:Gene), p = allShortestPaths((a)-[*]->(b)) 
-                WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
-                RETURN p"""
-        disease = translator.graph ( [ ( None, KNode('NAME.DISEASE:{0}'.format (args.disease), 'D') ) ], query=query)
-    if args.drug:
-        query = \
-                """MATCH (a{name:"NAME.DRUG"}),(b:Pathway), p = allShortestPaths((a)-[*]->(b)) 
-                WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
-                RETURN p"""
-        drug = translator.graph ([ ( None, KNode('NAME.DRUG:{0}'.format (args.drug), 'S') ) ], query=query)
-
-    blackboard = drug + disease
+#    rosetta = Rosetta (init_db=args.initialize_type_graph)
+#    blackboard = rosetta.clinical_outcome_pathway (drug=args.drug, disease=args.disease)
+    blackboard = Rosetta.clinical_outcome_pathway_app (drug=args.drug, disease=args.disease)
     print (blackboard)

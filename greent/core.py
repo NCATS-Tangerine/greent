@@ -43,30 +43,13 @@ class GreenT:
         self.chembio = ChemBioKS (self.service_context)
         self.chemotext = Chemotext (self.service_context)
         self.disease_ontology = DiseaseOntology (self.service_context)
-        if 'async' in override and override['async'] == True:
-            print ("** Initializing async pharos")
-            self.pharos = AsyncPharos (self.service_context)
-        else:
-            print ("** Initializing synchronous pharos")
-            self.pharos = Pharos (self.service_context)
+        self.pharos = AsyncPharos (self.service_context)
         self.oxo = OXO (self.service_context)
         self.hetio = HetIO (self.service_context)
         self.biolink = Biolink (self.service_context)
         self.tkba = TranslatorKnowledgeBeaconAggregator (self.service_context)
         self.translator_registry = TranslatorRegistry (self.service_context)
         self.translator = Translator (core=self)
-    '''
-    def get_url (self, svc):
-        return self.config.get_service (svc)["url"]
-
-    def get_config (self, key, default):
-        result = None
-        if key in self.config:
-            result = self.config[key]
-        if not result:
-            result = default
-        return result
-     '''
 
     # Exposure API
     def get_exposure_scores (self, exposure_type, start_date, end_date, exposure_point):
@@ -120,7 +103,3 @@ if __name__ == "__main__":
         "disease" : "Asthma"
     })
     pprint (response)
-
-
-# http://purl.obolibrary.org/obo/mondo.obo
-

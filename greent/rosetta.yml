@@ -42,20 +42,21 @@
 '@transitions':
   NAME.DISEASE:
     DOID:
-      link: diseasename
+      link: name_to_id
       op:   tkba.name_to_doid
     MESH.DISEASE:
-      link: diseasename
+      link: name_to_id
       op:   tkba.name_to_mesh_disease
   NAME.DRUG:
     DRUGBANK:
-      link: drugname
+      link: name_to_id
       op:   tkba.name_to_drugbank
   DOID:
     MESH:
+      link: synonym
       op: disease_ontology.graph_doid_to_mesh
     PHAROS:
-      link: doid_to_pharos
+      link: synonym
       op:   disease_ontology.doid_to_pharos
     UBERON:
       link: phenotype
