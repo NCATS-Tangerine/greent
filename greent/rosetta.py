@@ -21,7 +21,7 @@ from greent.service import ServiceContext
 from greent.graph import TypeGraph
 from networkx.exception import NetworkXNoPath
 from networkx.exception import NetworkXError
-from pprint import pformat
+from pprint import pformat,pprint
 from reasoner.graph_components import KNode,KEdge,elements_to_json
 import requests
 import requests_cache
@@ -450,6 +450,7 @@ class Rosetta:
         if not program or len(program) == 0:
             return []
         primed = [ { 'collector' : next_nodes } ] + program
+        linked_result = []
         for index, level in enumerate (program):
             logger.debug ("--Executing level: {0}".format (level))
             operators = level['ops']
@@ -459,21 +460,26 @@ class Rosetta:
                     op = self.get_ops (operator)
                     try:
                         logger.debug ("--Invoking op {0}({1})".format (operator, edge_node[1].identifier))
-                        results = op (edge_node[1])
+                        source_node = edge_node[1]
+                        results = op (source_node)
+                        for r in results:
+                            edge = r[0]
+                            if isinstance(edge,KEdge):
+                                edge.source_node = source_node
+                                edge.target_node = r[1]
+                                linked_result.append (edge)
                         logger.debug ("  result> {0}".format (Text.short (results)))
                         for r in results:
                             if index < len(program) - 1:
                                 if not r[1].identifier.startswith (program[index+1]['node_type']):
-#                                    raise ValueError ("Operator {0} is wired to return type: {1} but returned node with id: {2}".format (
-#                                        operator, program[index+1]['node_type'], r[1].identifier))
                                     logger.debug ("Operator {0} is wired to return type: {1} but returned node with id: {2}".format (
                                         operator, program[index+1]['node_type'], r[1].identifier))
                         collector += results
                     except Exception as e:
                         traceback.print_exc()
-                        logger.error ("Error processing {0}".format (operator))
-        return [ edge_node for level in program for result in level['collector'] for edge_node in result ]
-
+                        logger.error ("Error processing {0}".format (operator))        
+        return linked_result
+            
     def clinical_outcome_pathway (self, drug=None, disease=None):
         blackboard = []
         if disease:

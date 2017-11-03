@@ -180,12 +180,11 @@ class AsyncPharos(Pharos):
                 hgnc_node = KNode(hgnc, 'G')
                 resolved_edge_nodes.append((edge,hgnc_node))
         AsyncUtil.execute_parallel_operations (
-            operations=[ Operation(process_hgnc_request, HGNCRequest(pharos_target_id, edge)) for edge, pharos_target_id in original_edge_nodes ][:10], #[:1],
+            operations=[ Operation(process_hgnc_request, HGNCRequest(pharos_target_id, edge)) for edge, pharos_target_id in original_edge_nodes ], #[:1],
             response_processor=process_hgnc_response)
         
         return resolved_edge_nodes
 
-    
 #Poking around on the website there are about 10800 ( a few less )
 def build_disease_translation():
     """Write to disk a table mapping Pharos disease ID to DOID (and other?) so we can reverse lookup"""
