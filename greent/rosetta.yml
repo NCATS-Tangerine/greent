@@ -120,7 +120,7 @@ GO.BIOLOGICAL_PROCESS:
   NAME:                   http://identifiers.org/name
   NAME.DRUG:              http://identifiers.org/name
   NAME.DISEASE:           http://identifiers.org/name
-  DOID.GENETIC_CONDITION: http://identifiers.org/mondo/gentic_condition
+  DOID.GENETIC_CONDITION: http://identifiers.org/mondo/genetic_condition
   GO.CELLULAR_COMPONENT:  http://identifier.org/go/cellcomponent
   GO.BIOLOGICAL_PROCESS:  http://identifier.org/go/biologicalprocess
   GO.MOLECULAR_FUNCTION:  http://identifier.org/go/molecularfunction
