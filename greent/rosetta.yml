@@ -6,6 +6,7 @@
 '@concepts' :
   Anatomy            : [ 'UBERON' ]
   BiologicalProcess  : [ 'GO.BIOLOGICAL_PROCESS' ]
+  Cell               : [ 'CL' ]
   CellularComponent  : [ 'GO.CELLULAR_COMPONENT' ]
   Disease            : [ 'MESH.DISEASE', 'DOID', 'PHAROS', 'OMIM', 'MESH.DISEASE' ]
   Gene               : [ 'UNIPROT', 'HGNC', 'HGNC.SYMBOL', 'ENTREZ', 'NCBIGENE', 'ENSEMBL', 'ENSEMBL.TRANSCRIPT', 'UNIPROTKB' ]
@@ -108,11 +109,11 @@
 UNIPROTKB:
   GO.MOLECULAR_FUNCTION:
     link: molecular_function
-    op: biolink.get_gene_function​
+    op: biolink.get_gene_function
 GO.BIOLOGICAL_PROCESS:
   CL:
     link: chris_whats_the_right_predicate_for_this
-    op: quickgo.go_term_xontology_relationships​
+    op: quickgo.go_term_xontology_relationships
 
 # Locally defined curies.
 '@vocab':
