@@ -335,16 +335,17 @@ class ChemBioKS(Service):
         return results
 
     def graph_diseaseid_to_uniprot (self, drugbank):
+        print( drugbank.identifier.lower() )
         response = self.triplestore.query_template (
-            inputs = { "diseaseID" : Text.un_curie (drugbank.identifier).lower () },
+            inputs = { "diseaseID" : drugbank.identifier.lower () },
             outputs = [ "uniprotGeneID" ],
             template_text = """
             prefix drugbank:      <http://chem2bio2rdf.org/drugbank/resource/>
             prefix drugbank_drug: <http://chem2bio2rdf.org/drugbank/resource/drugbank_drug/>
             prefix ctd:           <http://chem2bio2rdf.org/ctd/resource/>
-            prefix mesh:          <http://bio2rdf.org/mesh:> 
+            prefix mesh.disease:          <http://bio2rdf.org/mesh:> 
             select distinct ?uniprotGeneID where {
-               values ( ?diseaseID ) { ( "$diseaseID" ) }
+               values ( ?diseaseID ) { ( $diseaseID ) }
                ?dbInter     drugbank:gene               ?uniprotGeneID .
                ?drugID      drugbank:CID                ?pubchemCID.
                ?ctd_disease ctd:diseaseid               ?diseaseID ;
