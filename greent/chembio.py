@@ -178,7 +178,7 @@ class ChemBioKS(Service):
             """)
 
     def graph_uniprot_to_hgnc (self, uniprot_symbol):
-        result = uniprot_to_hgnc (uniprot_symbol)
+        result = self.uniprot_to_hgnc (uniprot_symbol)
         return [ ( self.get_edge (r, predicate='synonym'), KNode('HGNC:{0}'.format (r['hgncID'])) ) for r in result ]
 
     def graph_get_genes_by_disease (self, disease): #reasoner
