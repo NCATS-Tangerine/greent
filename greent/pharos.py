@@ -5,10 +5,13 @@ import json
 import logging
 import sys
 import traceback
+import datetime
+from cachier import cachier
 from collections import defaultdict
 from collections import namedtuple
 from csv import DictReader
 from greent.util import Munge
+from greent.util import Text
 from greent.service import Service
 from greent.util import LoggingUtil
 from greent.async import AsyncUtil
@@ -98,7 +101,7 @@ class Pharos(Service):
             pass
         return result
 
-    def disease_get_gene(self, subject):
+    def disease_get_gene0(self, subject):
         """ Get a gene from a pharos disease id. """
         pharosids = self.translate (subject)
         print ("pharos ids: {}".format (pharosids))
@@ -115,22 +118,31 @@ class Pharos(Service):
                     pharos_edge = KEdge( 'pharos', 'queried', {'properties': link['properties']} )
                     original_edge_nodes.append( (pharos_edge, pharos_target_id) )
 
-        #Pharos returns target ids in its own numbering system. Collect other names for it.
-        resolved_edge_nodes = []
-        index = 0
-        for edge, pharos_target_id  in original_edge_nodes:
-            #logger.debug ("edge: %s", edge)
-            hgnc = self.target_to_hgnc(pharos_target_id)
-            index = index + 1
-            if hgnc is not None:
-                #logger.debug ("making hgnc node {0}".format (hgnc))
-                hgnc_node = KNode(hgnc, 'G')
-                if index < 10:
-                    logger.debug ("            hgnc-node: %s", hgnc_node)
-                resolved_edge_nodes.append((edge,hgnc_node))
-            else:
-                logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
+#    @cachier(stale_after=datetime.timedelta(days=8))
+#    def get_request (self, url):
+#        return requests.get (url.json ())
 
+#    @cachier(stale_after=datetime.timedelta(days=8))
+    def disease_get_gene(self, subject):
+        """ Get a gene from a pharos disease id. """
+        pharosid = Text.un_curie (subject.identifier)
+        original_edge_nodes=[]
+        r = requests.get('https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid)
+        result = r.json()
+        resolved_edge_nodes = []
+        for link in result['links']:
+            if link['kind'] != 'ix.idg.models.Target':
+                logger.info('Pharos disease returning new kind: %s' % link['kind'])
+            else:
+                pharos_target_id = int(link['refid'])
+                pharos_edge = KEdge( 'pharos', 'queried', {'properties': link['properties']} )               
+                #Pharos returns target ids in its own numbering system. Collect other names for it.
+                hgnc = self.target_to_hgnc (pharos_target_id)
+                if hgnc is not None:
+                    hgnc_node = KNode (hgnc, 'G')
+                    resolved_edge_nodes.append( (pharos_edge, hgnc_node) )
+                else:
+                    logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
         return resolved_edge_nodes
 
 class AsyncPharos(Pharos):

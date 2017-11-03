@@ -44,7 +44,7 @@ class GreenT:
         self.chembio = ChemBioKS (self.service_context)
         self.chemotext = Chemotext (self.service_context)
         self.disease_ontology = DiseaseOntology (self.service_context)
-        self.pharos = AsyncPharos (self.service_context)
+        self.pharos = Pharos (self.service_context)
         self.oxo = OXO (self.service_context)
         self.hetio = HetIO (self.service_context)
         self.biolink = Biolink (self.service_context)

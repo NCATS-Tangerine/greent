@@ -28,7 +28,7 @@ import requests_cache
 from networkx.readwrite import json_graph
 from neo4jrestclient.client import GraphDatabase,Relationship,Node
 
-#requests_cache.install_cache('rosetta_cache')
+requests_cache.install_cache('rosetta_cache')
 logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG)
 
 class Translation (object):
@@ -459,7 +459,8 @@ class Rosetta:
                 for operator in operators:
                     op = self.get_ops (operator)
                     try:
-                        logger.debug ("--Invoking op {0}({1})".format (operator, edge_node[1].identifier))
+                        #logger.debug ("--Invoking op {0}({1})".format (operator, edge_node[1].identifier))
+                        log_text = "  --Invoking op {0}({1})".format (operator, edge_node[1].identifier)
                         source_node = edge_node[1]
                         results = op (source_node)
                         for r in results:
@@ -468,7 +469,8 @@ class Rosetta:
                                 edge.source_node = source_node
                                 edge.target_node = r[1]
                                 linked_result.append (edge)
-                        logger.debug ("  result> {0}".format (Text.short (results)))
+                        logger.debug ("{0} => {1}".format (log_text, Text.short (results)))
+                        #logger.debug ("  result> {0}".format (Text.short (results)))
                         for r in results:
                             if index < len(program) - 1:
                                 if not r[1].identifier.startswith (program[index+1]['node_type']):
@@ -477,7 +479,7 @@ class Rosetta:
                         collector += results
                     except Exception as e:
                         traceback.print_exc()
-                        logger.error ("Error processing {0}".format (operator))        
+                        logger.error ("Error invokign> {0}".format (log_text))        
         return linked_result
             
     def clinical_outcome_pathway (self, drug=None, disease=None):
