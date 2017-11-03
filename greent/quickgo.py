@@ -4,7 +4,7 @@ import pprint
 import urllib
 from greent.service import Service
 from greent.service import ServiceContext
-from util import Text
+from greent.util import Text
 from reasoner.graph_components import KNode,KEdge
 
 class QuickGo(Service):
