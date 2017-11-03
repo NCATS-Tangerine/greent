@@ -5,7 +5,7 @@
 # Use this section. Neo4J type graph is based on these mappings.
 '@concepts' :
   Anatomy            : [ 'UBERON' ]
-  BiologicalProcess  : [ 'GO.BIOLOIGCAL_PROCESS' ]
+  BiologicalProcess  : [ 'GO.BIOLOGICAL_PROCESS' ]
   CellularComponent  : [ 'GO.CELLULAR_COMPONENT' ]
   Disease            : [ 'MESH.DISEASE', 'DOID', 'PHAROS', 'OMIM', 'MESH.DISEASE' ]
   Gene               : [ 'UNIPROT', 'HGNC', 'HGNC.SYMBOL', 'ENTREZ', 'NCBIGENE', 'ENSEMBL', 'ENSEMBL.TRANSCRIPT', 'UNIPROTKB' ]
