@@ -1,27 +1,29 @@
-#
-# Define transitions between types.
-#
 
-# Use this section. Neo4J type graph is based on these mappings.
+#########################################################################
+##
+##  Define concepts, types, and transitions between types.
+##    * Concepts are connected to a list of instance types.
+##    * Link semantics augment the Translator Registry
+##    * Transitions between types with semantics are defined by curie.
+##
+#########################################################################
+
+# Rosetta will build a concept/type graph is based on these mappings.
 '@concepts' :
   Anatomy            : [ 'UBERON' ]
   BiologicalProcess  : [ 'GO.BIOLOGICAL_PROCESS' ]
   Cell               : [ 'CL' ]
   CellularComponent  : [ 'GO.CELLULAR_COMPONENT' ]
-  Disease            : [ 'MESH.DISEASE', 'DOID', 'PHAROS', 'OMIM', 'MESH.DISEASE' ]
+  Disease            : [ 'MESH.DISEASE', 'DOID', 'PHAROS', 'OMIM', 'MESH.DISEASE', 'ORPHANET' ]
   Gene               : [ 'UNIPROT', 'HGNC', 'HGNC.SYMBOL', 'ENTREZ', 'NCBIGENE', 'ENSEMBL', 'ENSEMBL.TRANSCRIPT', 'UNIPROTKB' ]
-  GeneticCondition   : [ 'DOID.GENETIC_CONDITION' ]
+  GeneticCondition   : [ 'DOID.GENETIC_CONDITION', 'ORPHANET.GENETIC_CONDITION' ]
   MolecularFunction  : [ 'GO.MOLECULAR_FUNCTION' ]
   Name               : [ 'NAME.DRUG', 'NAME.DISEASE', 'NAME.SYMPTOM', 'NAME.ANATOMY', 'DISEASE_NAME', 'MESH.NAME' ]
   Pathway            : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY', 'KEGG.PATHWAY' ]
   Phenotype          : [ 'HP' ]
   Substance          : [ 'DRUGBANK', 'DRUG.INTERACTION', 'INCHI', 'INCHIKEY', 'PUBCHEM', 'CHEMBL', 'CHEBI', 'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' ]
 
-'@curie':
-  DOID: doid
-  MESH.DISEASE: mesh
-
-# Only items decorated with semantic predicates will be considered.
+# Only operations specifying semantic predicates will be invoked.
 '@translator-semantics':
   mygene.info:
     http://identifiers.org/hgnc.symbol/:
@@ -55,14 +57,19 @@
     UBERON:
       link: phenotype
       op:   hetio.disease_to_phenotype
-  HGNC:
-    DOID:
-      link: gene_to_disease
-      op: biolink.gene_get_disease
-    DOID.GENETIC_CONDITION:
-      link: gene_to_genetic_condition
-      op: biolink.gene_get_genetic_condition
+    ORPHANET.GENETIC_CONDITION:
+      link: genetic_condition
+      op:   mondo.doid_get_genetic_condition
+#  HGNC:
+#    DOID:
+#      link: gene_to_disease
+#      op: biolink.gene_get_disease
+#    DOID.GENETIC_CONDITION:
+#      link: gene_to_genetic_condition
+#      op: biolink.gene_get_genetic_condition
   HGNC.SYMBOL:
+#    DOID.GENETIC_CONDITION:
+#      op: biolink.gene_get_genetic_condition
     UBERON:
       link: anatomy
       op:   hetio.gene_to_anatomy
@@ -106,27 +113,44 @@
     KEGG:
       link: gene_pathway
       op:   chembio.graph_get_pathways_by_gene
-UNIPROTKB:
-  GO.MOLECULAR_FUNCTION:
-    link: molecular_function
-    op: biolink.get_gene_function
-GO.BIOLOGICAL_PROCESS:
-  CL:
-    link: chris_whats_the_right_predicate_for_this
-    op: quickgo.go_term_xontology_relationships
+  UNIPROTKB:
+    GO.MOLECULAR_FUNCTION:
+      link: molecular_function
+      op: biolink.get_gene_function
+  GO.BIOLOGICAL_PROCESS:
+    CL:
+      link: chris_whats_the_right_predicate_for_this
+      op: quickgo.go_term_xontology_relationships
 
 # Locally defined curies.
 '@vocab':
-  DRUGBANK.NAME:          http://identifiers.org/drugbank/name
-  NAME:                   http://identifiers.org/name
-  NAME.DRUG:              http://identifiers.org/name
-  NAME.DISEASE:           http://identifiers.org/name
-  DOID.GENETIC_CONDITION: http://identifiers.org/mondo/genetic_condition
-  GO.CELLULAR_COMPONENT:  http://identifier.org/go/cellcomponent
-  GO.BIOLOGICAL_PROCESS:  http://identifier.org/go/biologicalprocess
-  GO.MOLECULAR_FUNCTION:  http://identifier.org/go/molecularfunction
-  MESH.NAME:              http://identifiers.org/mesh/drug/name
-  MESH.DISEASE:           http://identifiers.org/mesh/disease/name
-  MESH.DRUG:              http://identifiers.org/mesh/drug/name
-  PHAROS:                 http://pharos.nih.gov/identifier/
-  ROOT:                   http://identifiers.org/doi
+  DOID.GENETIC_CONDITION:     http://identifiers.org/doid/gentic_condition
+  DRUGBANK.NAME:              http://identifiers.org/drugbank/name
+  GO.CELLULAR_COMPONENT:      http://identifier.org/go/cellcomponent
+  GO.BIOLOGICAL_PROCESS:      http://identifier.org/go/biologicalprocess
+  GO.MOLECULAR_FUNCTION:      http://identifier.org/go/molecularfunction
+  MESH.DISEASE:               http://identifiers.org/mesh/disease/name
+  MESH.DRUG:                  http://identifiers.org/mesh/drug/name
+  NAME:                       http://identifiers.org/name
+  NAME.DISEASE:               http://identifiers.org/name/disease
+  NAME.DRUG:                  http://identifiers.org/name/drug
+  ORPHANET.GENETIC_CONDITION: http://identifiers.org/orphanet/gentic_condition
+  PHAROS:                     http://pharos.nih.gov/identifier/
+  ROOT:                       http://identifiers.org/doi
+  UNIPROTKB:                  http://identifiers.org/uniprotkb
+
+# delete after merge:
+#'@vocab':
+#  DRUGBANK.NAME:          http://identifiers.org/drugbank/name
+#  NAME:                   http://identifiers.org/name
+#  NAME.DRUG:              http://identifiers.org/name
+#  NAME.DISEASE:           http://identifiers.org/name
+#  DOID.GENETIC_CONDITION: http://identifiers.org/mondo/genetic_condition
+#  GO.CELLULAR_COMPONENT:  http://identifier.org/go/cellcomponent
+#  GO.BIOLOGICAL_PROCESS:  http://identifier.org/go/biologicalprocess
+#  GO.MOLECULAR_FUNCTION:  http://identifier.org/go/molecularfunction
+#  MESH.NAME:              http://identifiers.org/mesh/drug/name
+#  MESH.DISEASE:           http://identifiers.org/mesh/disease/name
+#  MESH.DRUG:              http://identifiers.org/mesh/drug/name
+#  PHAROS:                 http://pharos.nih.gov/identifier/
+#  ROOT:                   http://identifiers.org/doi

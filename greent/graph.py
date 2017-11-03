@@ -19,6 +19,16 @@ from neo4jrestclient.client import GraphDatabase,Relationship,Node
 logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG)
 
 class TypeGraph(Service):
+    """ A graph of 
+           * nomenclature systems
+           * conceptual domains in which they participate and
+           * executable transitions translating from one nomenclature system to another
+        Transitions specify semantics of operations used.
+        Each nomenclature system is referred to as a Type and recieves a label in the graph accordingly.
+        Each concept is created as a node. Each type node with an associated concept 
+           * Receives a label for the connected concept
+           * Is the source of an is_a link connecting to the concept node.
+    """
     def __init__(self, service_context):
         super (TypeGraph, self).__init__("rosetta-graph", service_context)
         url = "{0}/db/data/".format (self.url)        
@@ -165,6 +175,19 @@ class TypeGraph(Service):
         return result
     '''
     def _find_or_create_concept (self, concept):
+        style = {
+            'Anatomy'            : { 'color' : 'pink' },
+            'BiologicalProcess'  : { 'color' : 'lightgray' },
+            'CellularComponent'  : { 'color' : 'green' },
+            'Disease'            : { 'color' : 'red' },
+            'Gene'               : { 'color' : 'yellow' },
+            'GeneticCondition'   : { 'color' : 'gray' },
+            'MolecularFunction'  : { 'color' : 'darkgray' },
+            'Name'               : { 'color' : 'darkblue' },
+            'Pathway'            : { 'color' : 'lightgreen' },
+            'Phenotype'          : { 'color' : 'lightgreen' },
+            'Substance'          : { 'color' : 'purple' }
+        }
         concept_node = self.concepts[concept].get (name=concept)
         if len(concept_node) == 1:
             logger.debug ("-- Loaded existing concept: {0}".format (concept))
@@ -173,5 +196,6 @@ class TypeGraph(Service):
             raise ValueError ("Unexpected non-unique concept node: {}".format (concept))
         else:
             logger.debug ("-- Creating concept {0}".format (concept))
-            concept_node = self.concepts[concept].create (name=concept)
+            color = style.get (concept, {}).get ('color', '')
+            concept_node = self.concepts[concept].create (name=concept, color=color)
         return concept_node

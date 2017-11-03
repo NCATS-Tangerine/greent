@@ -72,4 +72,5 @@ def test_output():
 if __name__ == '__main__':
     #test_output()
     b = Biolink (ServiceContext.create_context ())
-    print (b.get_gene_function (KNode('UniProtKB:P10721', 'G')))
+#    print (b.get_gene_function (KNode('UniProtKB:P10721', 'G')))
+    print (b.gene_get_genetic_condition (KNode ('DOID:2841', 'D')))

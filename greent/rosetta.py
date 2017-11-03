@@ -74,7 +74,7 @@ class Rosetta:
             
         # Prime the vocabulary
         logger.debug ("-- Initializing vocabulary.")
-        self.curie = self.config["@curie"]
+        self.curie = {} #self.config["@curie"]
         self.to_curie_map = {}
         logger.debug ("-- Initializing Rosetta vocabulary")
         self.vocab = self.config["@vocab"]
@@ -159,6 +159,7 @@ class Rosetta:
                                               predicate=transition_obj.link.upper (),
                                               op=transition_obj.op)
         if errors > 0:
+            logger.error ("** Encountered {0} errors. exiting.".format (errors))
             sys.exit (errors)
             
         # Connect the Translator Registry
@@ -495,22 +496,20 @@ class Rosetta:
     def clinical_outcome_pathway_app (drug=None, disease=None, greent_conf='greent.conf'):
         return Rosetta(greentConf=greent_conf).clinical_outcome_pathway (drug=drug, disease=disease)
 
-if __name__ == "__main__":
-    '''
-    from neo4j.v1.api import GraphDatabase
-    driver = GraphDatabase.driver("bolt://localhost:7687") #, auth=basic_auth("neo4j", "neo4j"))
-    session = driver.session()    
-    session.run("CREATE (a:Person {name: {name}, title: {title}})",
-                {"name": "Arthur", "title": "King"})
-    result = session.run("MATCH (a:Person) WHERE a.name = {name} "
-                         "RETURN a.name AS name, a.title AS title",
-                         {"name": "Arthur"})
-    for record in result:
-        print("%s %s" % (record["title"], record["name"]))
-    session.close()
+    @staticmethod
+    def clinical_outcome_pathway_app_from_args (args, greent_conf='greent.conf'):        
+        result = []
+        if isinstance(args,list) and len(args) == 2 and \
+           isinstance(args[0],str) and isinstance(args[1],str):
+            result = (
+                args,
+                Rosetta.clinical_outcome_pathway_app (
+                    drug=args[0],
+                    disease=args[1],
+                    greent_conf=greent_conf) )
+        return result
 
-    sys.exit (0)
-    '''
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Rosetta.')
     parser.add_argument('--initialize-type-graph', help='Build the graph of types and semantic transitions between them.', action="store_true", default=False)
     parser.add_argument('-d', '--disease', help='A disease to analyze.', default=None)

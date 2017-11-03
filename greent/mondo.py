@@ -1,6 +1,8 @@
-from ontobio.ontol_factory import OntologyFactory
 from greent.service import Service
-
+from greent.service import ServiceContext
+from ontobio.ontol_factory import OntologyFactory
+from reasoner.graph_components import KNode, KEdge
+    
 #TODO: LOOKUP all the terms that map to this... or use an ancestor call that doesn't require such stuff (i.e. that handles this)
 GENETIC_DISEASE=('DOID:630','http://purl.obolibrary.org/obo/EFO_0000508')
 #GENETIC_DISEASE='EFO:0000508'
@@ -10,6 +12,7 @@ class Mondo(Service):
     
     """ A pragmatic class to query the mondo ontology. Until better sources emerge, we roll our own. """ 
     def __init__(self, context):
+        super(Mondo, self).__init__("mondo", context)
         ofactory = OntologyFactory()
         #This gets the remote owl which would be better in general, but is apparently not fully up to date
         # giving us a problem with Acute Alcohol Sensitivity which does not register as a genetic condition
@@ -75,14 +78,28 @@ class Mondo(Service):
         """Checks mondo to find whether the subject has DOID:0050177 as an ancestor"""
         return self.has_ancestor(obj, MONOGENIC_DISEASE)
 
+    def doid_get_genetic_condition (self, disease):
+        """Given a gene specified as an HGNC curie, return associated genetic conditions.
+        A genetic condition is specified as a disease that descends from a ndoe for genetic disease in MONDO."""
+        relations = []
+        is_genetic_condition, new_object_ids = self.is_genetic_disease (disease)
+        orphanet_prefix = "http://www.orpha.net/ORDO/Orphanet_"
+        if is_genetic_condition:
+            for new_object_id in new_object_ids:
+                if new_object_id.startswith (orphanet_prefix):
+                    new_object_id = new_object_id.replace (orphanet_prefix, 'ORPHANET.GENETIC_CONDITION:')
+                relations.append ( (self.get_edge ({}, 'is_genetic_condition'), KNode (new_object_id, 'GC') ))
+        return relations
+    
 def test():
-    m = Mondo()
-    from reasoner.graph_components import KNode,KEdge
+    m = Mondo (ServiceContext.create_context ())
     alc_sens = KNode('OMIM:610251','D')
     print(m.is_genetic_disease(alc_sens))
     print('------')
     huntingtons = KNode('DOID:12858','D')
     print(m.is_genetic_disease(huntingtons))
+    print (m.doid_get_genetic_condition (KNode ('DOID:12858', 'D')))
+    print (m.doid_get_genetic_condition (KNode ('DOID:0060599', 'D')))
 
 if __name__ == '__main__':
     test()
