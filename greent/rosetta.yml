@@ -74,10 +74,10 @@
     UNIPROT:
 #      link: ____none____
       op: chembio.graph_drugname_to_gene_symbol
-  MESH.DISEASE:
-    UNIPROT:
-      link: diseaseid_to_uniprot
-      op: chembio.graph_diseaseid_to_uniprot
+#  MESH.DISEASE:
+#    UNIPROT:
+#      link: diseaseid_to_uniprot
+#      op: chembio.graph_diseaseid_to_uniprot
   MESH:
     ROOT:
       op: oxo.mesh_to_other
@@ -87,7 +87,7 @@
       link: mesh_to_doid
 #      op:   kba.______________________________
   PHAROS:
-    HGNC.SYMBOL:
+    HGNC:
       link: disease_gene
       op:   pharos.disease_get_gene
   UNIPROT:
