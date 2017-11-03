@@ -54,9 +54,14 @@
     UBERON:
       link: phenotype
       op:   hetio.disease_to_phenotype
-  HGNC.SYMBOL:
+  HGNC:
+    DOID:
+      link: gene_to_disease
+      op: biolink.gene_get_disease
     DOID.GENETIC_CONDITION:
+      link: gene_to_genetic_condition
       op: biolink.gene_get_genetic_condition
+  HGNC.SYMBOL:
     UBERON:
       link: anatomy
       op:   hetio.gene_to_anatomy
