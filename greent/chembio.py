@@ -179,7 +179,7 @@ class ChemBioKS(Service):
 
     def graph_uniprot_to_hgnc (self, uniprot_symbol):
         result = self.uniprot_to_hgnc (uniprot_symbol)
-        return [ ( self.get_edge (r, predicate='synonym'), KNode('HGNC:{0}'.format (r['hgncID']), 'HGNC' )) for r in result ]
+        return [ ( self.get_edge (r, predicate='synonym'), KNode('HGNC:{0}'.format (r['hgncID'].split(':')[-1]), 'HGNC.SYMBOL' )) for r in result ]
 
     def graph_get_genes_by_disease (self, disease): #reasoner
         disease = disease.identifier.split (':')[1].lower ()
@@ -344,7 +344,7 @@ class ChemBioKS(Service):
             prefix ctd:           <http://chem2bio2rdf.org/ctd/resource/>
             prefix mesh:          <http://bio2rdf.org/mesh:> 
             select distinct ?uniprotGeneID where {
-               values ( ?diseaseID ) { ( mesh:d001249 ) }
+               values ( ?diseaseID ) { ( "$diseaseID" ) }
                ?dbInter     drugbank:gene               ?uniprotGeneID .
                ?drugID      drugbank:CID                ?pubchemCID.
                ?ctd_disease ctd:diseaseid               ?diseaseID ;
