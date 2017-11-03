@@ -15,7 +15,8 @@ class TranslatorKnowledgeBeaconAggregator(Service):
         super(TranslatorKnowledgeBeaconAggregator, self).__init__("tkba", context)
 
     def request_concept (self, concept):
-        url = "{0}/concepts?keywords={1}".format (self.url, Text.un_curie (concept.identifier))
+        #Without quotes around the keyword, this function treats space as a delimiter...
+        url = '{0}/concepts?keywords="{1}"'.format (self.url, Text.un_curie (concept.identifier))
         return requests.get (url).json ()
 
     def name_to_doid (self, name):
