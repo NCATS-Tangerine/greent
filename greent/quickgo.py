@@ -15,12 +15,14 @@ class QuickGo(Service):
     def go_term_xontology_relationships(self, node):
         url = "{0}/QuickGO/services/ontology/go/terms/{1}/xontologyrelations".format (self.url, node.identifier)
         response = requests.get(url).json ()
-        return [ ( self.get_edge (r, predicate=xrel['relation']),
-                   KNode(xrel['id'], '?') ) for r in response['results'] for xrel in r['xRelations'] ]
-
+        return [ (
+            self.get_edge (r, predicate=xrel['relation']),
+            KNode (xrel['id'], 'F')
+        ) for r in response['results'] for xrel in r['xRelations'] if xrel['id'].startswith ('CL:') ]
+    
 def test ():
     q = QuickGo (ServiceContext.create_context ())
-    r = q.go_term_xontology_relationships (KNode("GO:0032762", 'G'))
+    r = q.go_term_xontology_relationships (KNode("GO:0002551", 'G'))
     pprint.pprint (r)
 
 if __name__ == '__main__':

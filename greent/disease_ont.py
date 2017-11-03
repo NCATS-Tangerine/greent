@@ -48,7 +48,7 @@ class DiseaseOntology (Service):
         """ Convert a DOID to an equivalent MeSH term. """
         mesh_ids = self.doid_to_mesh (doid.identifier)
         return [ ( self.get_edge (predicate='synonym'),
-                   KNode(identifier=i, node_type='D') ) for i in mesh_ids ]
+                   KNode(identifier=i.replace ("MESH:", "MESH.DISEASE:"), node_type='D') ) for i in mesh_ids ]
 
     def doid_to_pharos(self,doid):
         """ Convert a doid to a pharos id. Perhaps there's a public service that does this but in the

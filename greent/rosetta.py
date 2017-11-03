@@ -62,7 +62,6 @@ class Rosetta:
         # Construct the GreenT core containing services.
         logger.debug ("-- Initialize GreenT core.")
         self.core = GreenT (config=greentConf, override=override)
-        self.type_graph = TypeGraph (self.core.service_context)
 
         '''
         # Create a digraph.
@@ -86,14 +85,16 @@ class Rosetta:
         # Store the concept dictionary
         logger.debug ("-- Initializing Rosetta concept dictionary")
         self.concepts = self.config["@concepts"]
-
+        self.type_graph = TypeGraph (self.core.service_context)
+        
         # Build a curie map. import cmungall's uber context.
         uber = Resource.get_resource_obj (os.path.join ("jsonld", "uber_context.jsonld")) #os.path.join (os.path.dirname (__file__), "jsonld", "uber_context.jsonld")
         context = uber['@context']
         self.terminate (context)
-        for k in context:
-            self.curie[k] = context[k]
-            self.vocab[k] = context[k]
+        for key, value in context.items ():
+            self.curie[k] = value
+            if isinstance (value, str):
+                self.vocab[k] = value
 
         """ Create curie map. Initialize based on the Identifiers.org web API."""
         logger.debug ("-- Initializing curie map incorporating Identifiers.org vocabulary.")
@@ -105,19 +106,18 @@ class Rosetta:
             self.to_curie_map[url] = curie
             self.vocab[curie] = url
 
-        type_concepts = self.config['@concept']
-        self.type_graph.set_concepts (type_concepts)
-        
         # Exit if we're not creating the data shema.
         if not init_db:
             return
 
-        """ Create graph nodes in our type graph. """
+        """ Create type concepts and create graph nodes for vocabulary domains. """
+        self.type_graph.set_concept_metadata (self.concepts)
         for k, v in self.vocab.items ():
             if isinstance (v, str):
                 self.type_graph.find_or_create (k, v)
-        for concept, terminologies in type_concepts.items ():
-            self.type_graph.find_or_create_concept (concept, terminologies)
+        
+        #for concept, terminologies in type_concepts.items ():
+        #    self.type_graph.find_or_create_concept (concept, terminologies)
         
         # Build the transition graph.
         logger.debug ("-- Initializing Rosetta transition graph.")
@@ -139,8 +139,17 @@ class Rosetta:
                 self.add_edge (self.vocab[L], R, data=transitions[L][R])
                 self.add_edge (L, self.vocab[R], data=transitions[L][R])
         '''
+        errors = 0
         for L in transitions:
             for R in transitions[L]:
+                if not L in self.vocab:
+                    errors += 1
+                    self.log_debug("{0} not in vocab.".format (L))
+                    continue
+                if not R in self.vocab:
+                    errors += 1
+                    self.log_debug ("{0} not in vocab.".format (R))
+                    continue
                 assert L in self.vocab and R in self.vocab
                 transition_dict = transitions[L][R]
                 transition_obj = DataStructure.to_named_tuple ('TransitionTuple', transitions[L][R])
@@ -149,7 +158,9 @@ class Rosetta:
                                               rel_name=transition_obj.link.upper (),
                                               predicate=transition_obj.link.upper (),
                                               op=transition_obj.op)
-
+        if errors > 0:
+            sys.exit (errors)
+            
         # Connect the Translator Registry
         logger.debug ("-- Connecting to translator registry.")
         subscriptions = self.core.translator_registry.get_subscriptions ()
@@ -506,7 +517,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--drug', help='A drug to analyze.', default=None)
     args = parser.parse_args()
     
-#    rosetta = Rosetta (init_db=args.initialize_type_graph)
+    rosetta = Rosetta (init_db=args.initialize_type_graph)
 #    blackboard = rosetta.clinical_outcome_pathway (drug=args.drug, disease=args.disease)
     blackboard = Rosetta.clinical_outcome_pathway_app (drug=args.drug, disease=args.disease)
     print (blackboard)

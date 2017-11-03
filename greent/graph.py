@@ -24,41 +24,37 @@ class TypeGraph(Service):
         url = "{0}/db/data/".format (self.url)        
         self.db = GraphDatabase(url)
         self.types = self.db.labels.create("Type")
-        self.bio_type_metadata = {
-            'Disease'          : { 'color' : 'Red'        },
-            'Substance'        : { 'color' : 'Yellow'     },
-            'Gene'             : { 'color' : 'Blue'       },
-            'Pathway'          : { 'color' : 'Green'      },
-            'Anatomy'          : { 'color' : 'Pink'       },
-            'Phenotype'        : { 'color' : 'Gray'       },
-            'GeneticCondition' : { 'color' : 'LightGreen' }
-        }
-        self.bio_types = {}
-        logger.debug ("-- Initializing bio types.")
-        for t in self.bio_type_metadata.keys ():
-            self.bio_types[t] = self.db.labels.create (t)
         self.concepts = {}
-    def set_concepts (self, concepts):
-        for concept, instances in concepts.items ():
+        self.type_to_concept = {}
+        self.concept_metadata = None
+    def set_concept_metadata (self, concept_metadata):
+        logger.debug ("-- Initializing bio types.")
+        self.concept_metadata = concept_metadata
+        for concept, instances in self.concept_metadata.items ():
+            self.concepts[concept] = self.db.labels.create (concept)
             for instance in instances:
-                self.concepts[instance] = concept
+                logger.debug ("Registering conept {} for instance {}".format (
+                    concept, instance))
+                self.type_to_concept [instance] = concept
     def get_concept (self, item):
-        return self.concepts.get (item)
+        return self.type_to_concept.get (item)
     def get_relationships (self, a, b):
         q = "MATCH (a:Type { name:'%s' })-[r]-(b:Type { name:'%s' }) return r".format (a, b)
         return self.db.query(q, returns=(client.Node, str, client.Relationship), data_contents=True)
     def find_or_create (self, name, iri=None):
-        n = self.types.get(name=name)
+        n = self.types.get (name=name)
         if len(n) == 1:
             n = n[0]
         elif len(n) > 1:
             raise ValueError ("Unexpected non-unique node: {}".format (name))
         else:
-            n =  self.db.nodes.create (name=name, iri=iri)
-            self.types.add (n)
-            concept = self.get_concept(name)
+            n = self.types.create (name=name, iri=iri)
+            concept = self.get_concept (name)
             if concept:
-                self.bio_types[concept].add (n)
+                logger.debug ("   adding node {} to concept {}".format (name, concept))
+                self.concepts[concept].add (n)
+                concept_node = self._find_or_create_concept (concept)
+                n.relationships.create ("is_a", concept_node)
         return n
     def set_node_property (self, node_name, key, value):
         node = self.db.node (name=node_name)
@@ -73,7 +69,9 @@ class TypeGraph(Service):
                 exists = True
         if not exists:
             enabled = predicate != "UNKNOWN"
-            a_node.relationships.create(rel_name, b_node, predicate=predicate, op=op, enabled=enabled)
+            synonym = predicate == "SYNONYM"
+            a_node.relationships.create (rel_name, b_node, predicate=predicate, op=op,
+                                         enabled=enabled, synonym=synonym)
     def get_shortest_paths (self, a, b):
         return self.db.query (
             "MATCH (a:Type { name: '%s' }),(b:Type { name : '%s' }), p = allShortestPaths((a)-[*]-(b)) RETURN p" % (a,b),
@@ -81,6 +79,7 @@ class TypeGraph(Service):
     def get (self, url):
         return requests.get(url).json ()
     def get_transitions_x (self, query):
+        '''
         self.narratives = {
             "diseasename_to_phenotype" : {
                 "cypher" :
@@ -112,6 +111,7 @@ class TypeGraph(Service):
                 """MATCH (a{name:"NAME"}),(b:Anatomy), p = allShortestPaths((a)-[*]->(b)) RETURN p"""
             }
         }
+        '''
         program = []
         result = self.db.query (query, data_contents=True)
         for row in result.rows[0]:
@@ -145,6 +145,7 @@ class TypeGraph(Service):
                             })
         print ("output program {}".format (program))
         return program
+    '''
     def get_transitions (self, a, b):
         result = []
         paths = self.get_shortest_paths (a, b)
@@ -162,19 +163,15 @@ class TypeGraph(Service):
                         result.append ( (start['data']['name'], rel_obj['data']['op'], end['data']['name'] ) )
         logger.debug (" **> T:{}".format (result))
         return result
-    def find_or_create_concept (self, concept, instances):
-        concept_node = self.bio_types[concept].get (name=concept)
+    '''
+    def _find_or_create_concept (self, concept):
+        concept_node = self.concepts[concept].get (name=concept)
         if len(concept_node) == 1:
             logger.debug ("-- Loaded existing concept: {0}".format (concept))
             concept_node = concept_node[0]
         elif len(concept_node) > 1:
             raise ValueError ("Unexpected non-unique concept node: {}".format (concept))
         else:
-            size = 32
-            bio_type = self.bio_type_metadata[concept]
-            logger.debug ("-- Creating concept {0} with instances {1}".format (concept, instances))
-            concept_node = self.bio_types[concept].create (name=concept, color=bio_type['color'], width=size, height=size)
-            for e in instances:
-                other = self.find_or_create (name=e)
-                concept_node.relationships.outgoing ('instance', other)
+            logger.debug ("-- Creating concept {0}".format (concept))
+            concept_node = self.concepts[concept].create (name=concept)
         return concept_node

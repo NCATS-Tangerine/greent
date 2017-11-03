@@ -2,26 +2,19 @@
 # Define transitions between types.
 #
 
-# This section is deprecated - ignore after switch to neo4j completed.
-'@concepts':
-  A:  [ "UBERON" ]
-  C:  [ "GO" ]
-  D:  [ "NAME", "NAME.DRUG", "NAME.DISEASE", "MESH.DISEASE", "PHAROS", "DOID" ]
-  G:  [ "UNIPROT", "HGNC.SYMBOL" ]
-  GC: [ "genetic_condition" ]
-  P:  [ "KEGG" ]
-  PH: [ "UBERON" ]
-  S:  [ "NAME", "DRUGBANK" ]
-
 # Use this section. Neo4J type graph is based on these mappings.
-'@concept' :
+'@concepts' :
   Anatomy            : [ 'UBERON' ]
+  BiologicalProcess  : [ 'GO.BIOLOIGCAL_PROCESS' ]
+  CellularComponent  : [ 'GO.CELLULAR_COMPONENT' ]
   Disease            : [ 'MESH.DISEASE', 'DOID', 'PHAROS', 'OMIM', 'MESH.DISEASE' ]
+  Gene               : [ 'UNIPROT', 'HGNC', 'HGNC.SYMBOL', 'ENTREZ', 'NCBIGENE', 'ENSEMBL', 'ENSEMBL.TRANSCRIPT', 'UNIPROTKB' ]
+  GeneticCondition   : [ 'DOID.GENETIC_CONDITION' ]
+  MolecularFunction  : [ 'GO.MOLECULAR_FUNCTION' ]
+  Name               : [ 'NAME.DRUG', 'NAME.DISEASE', 'NAME.SYMPTOM', 'NAME.ANATOMY', 'DISEASE_NAME', 'MESH.NAME' ]
+  Pathway            : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY', 'KEGG.PATHWAY' ]
+  Phenotype          : [ 'HP' ]
   Substance          : [ 'DRUGBANK', 'DRUG.INTERACTION', 'INCHI', 'INCHIKEY', 'PUBCHEM', 'CHEMBL', 'CHEBI', 'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' ]
-  Gene               : [ 'UNIPROT', 'HGNC', 'HGNC.SYMBOL', 'ENTREZ', 'NCBIGENE', 'ENSEMBL', 'ENSEMBL.TRANSCRIPT' ]
-  Phenotype          : [ 'GO' ]
-  Pathway            : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY' ]
-  GeneticCondition   : [ 'GENETIC_CONDITION' ]
 
 '@curie':
   DOID: doid
@@ -52,7 +45,7 @@
       link: name_to_id
       op:   tkba.name_to_drugbank
   DOID:
-    MESH:
+    MESH.DISEASE:
       link: synonym
       op: disease_ontology.graph_doid_to_mesh
     PHAROS:
@@ -62,12 +55,12 @@
       link: phenotype
       op:   hetio.disease_to_phenotype
   HGNC.SYMBOL:
-    GENETIC_CONDITION:
+    DOID.GENETIC_CONDITION:
       op: biolink.gene_get_genetic_condition
     UBERON:
       link: anatomy
       op:   hetio.gene_to_anatomy
-    GO:
+    GO.CELLULAR_COMPONENT:
       link: cellcomponent
       op:   hetio.gene_to_cell
     DOID:
@@ -107,19 +100,27 @@
     KEGG:
       link: gene_pathway
       op:   chembio.graph_get_pathways_by_gene
+UNIPROTKB:
+  GO.MOLECULAR_FUNCTION:
+    link: molecular_function
+    op: biolink.get_gene_function​
+GO.BIOLOGICAL_PROCESS:
+  CL:
+    link: chris_whats_the_right_predicate_for_this
+    op: quickgo.go_term_xontology_relationships​
+
+# Locally defined curies.
 '@vocab':
-  DRUGBANK.NAME:     http://identifiers.org/drugbank/name
-  KEGG:              http://identifiers.org/kegg/pathway
-  NAME:              http://identifiers.org/name
-  NAME.DRUG:         http://identifiers.org/name
-  NAME.DISEASE:      http://identifiers.org/name
-  UNIPROT:           http://identifiers.org/uniprot
-  DOID:              http://identifiers.org/doid/
-  GENETIC_CONDITION: http://identifiers.org/mondo/gentic_condition
-  UBERON:            http://identifier.org/uberon
-  GO:                http://identifier.org/go
-  MESH:              http://identifiers.org/mesh
-  MESH.NAME:         http://identifiers.org/mesh/drug/name
-  MESH.DISEASE:      http://identifiers.org/mesh/disease/name
-  PHAROS:            http://pharos.nih.gov/identifier/
-  ROOT:              http://identifiers.org/doi
+  DRUGBANK.NAME:          http://identifiers.org/drugbank/name
+  NAME:                   http://identifiers.org/name
+  NAME.DRUG:              http://identifiers.org/name
+  NAME.DISEASE:           http://identifiers.org/name
+  DOID.GENETIC_CONDITION: http://identifiers.org/mondo/gentic_condition
+  GO.CELLULAR_COMPONENT:  http://identifier.org/go/cellcomponent
+  GO.BIOLOGICAL_PROCESS:  http://identifier.org/go/biologicalprocess
+  GO.MOLECULAR_FUNCTION:  http://identifier.org/go/molecularfunction
+  MESH.NAME:              http://identifiers.org/mesh/drug/name
+  MESH.DISEASE:           http://identifiers.org/mesh/disease/name
+  MESH.DRUG:              http://identifiers.org/mesh/drug/name
+  PHAROS:                 http://pharos.nih.gov/identifier/
+  ROOT:                   http://identifiers.org/doi
