@@ -43,7 +43,7 @@ class Biolink(Service):
         """Given a gene specified as an HGNC curie, return associated genetic conditions.
         A genetic condition is specified as a disease that descends from a ndoe for genetic disease in MONDO."""
         disease_relations = self.gene_get_disease(gene)
-        checker = Mondo()
+        checker = Mondo(ServiceContext.create_context ())
         relations = []
         for relation, obj in disease_relations:
             is_genetic_condition, new_object_ids = checker.is_genetic_disease(obj)
@@ -56,7 +56,7 @@ class Biolink(Service):
 def test():
     """What do we get back for HBB"""
     relations = gene_get_disease(('HGNC:4827',))
-    checker = Mondo()
+    checker = Mondo(ServiceContext.create_context ())
     for p, a in relations:
         igc, nid = checker.is_genetic_disease(a)
         print(a['id'], igc, nid)
