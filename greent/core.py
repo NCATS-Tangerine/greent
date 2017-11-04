@@ -15,7 +15,7 @@ from greent.disease_ont import DiseaseOntology
 from greent.endotype import Endotype
 from greent.hetio import HetIO
 from greent.oxo import OXO
-from greent.pharos import AsyncPharos
+from greent.mondo import Mondo
 from greent.pharos import Pharos
 from greent.quickgo import QuickGo
 from greent.service import ServiceContext
@@ -48,6 +48,7 @@ class GreenT:
         self.oxo = OXO (self.service_context)
         self.hetio = HetIO (self.service_context)
         self.biolink = Biolink (self.service_context)
+        self.mondo = Mondo(self.service_context)
         self.tkba = TranslatorKnowledgeBeaconAggregator (self.service_context)
         self.translator_registry = TranslatorRegistry (self.service_context)
         self.quickgo = QuickGo (self.service_context)

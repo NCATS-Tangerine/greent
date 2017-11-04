@@ -9,6 +9,8 @@ import sys
 import traceback
 import unittest
 import yaml
+import requests
+import requests_cache
 from enum import Enum
 from greent.async import AsyncUtil
 from greent.util import LoggingUtil
@@ -23,12 +25,9 @@ from networkx.exception import NetworkXNoPath
 from networkx.exception import NetworkXError
 from pprint import pformat,pprint
 from reasoner.graph_components import KNode,KEdge,elements_to_json
-import requests
-import requests_cache
 from networkx.readwrite import json_graph
 from neo4jrestclient.client import GraphDatabase,Relationship,Node
 
-requests_cache.install_cache('rosetta_cache')
 logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG)
 
 class Translation (object):
@@ -58,6 +57,7 @@ class Rosetta:
         about and how to transition between them. """
         from greent.core import GreenT
         self.debug = False
+        self.cache_path = 'rosetta_cache'
 
         # Construct the GreenT core containing services.
         logger.debug ("-- Initialize GreenT core.")
@@ -141,6 +141,7 @@ class Rosetta:
         '''
         errors = 0
         for L in transitions:
+            print ("-------------------> L {}".format (L))
             for R in transitions[L]:
                 if not L in self.vocab:
                     errors += 1
@@ -398,12 +399,12 @@ class Rosetta:
                                     break
                                 result += (op (node))
                             except:
-                                logger.debug ("           Error invoking {0}".format (transition[1]))
+                                logger.debug ("           Error calling {0}".format (transition[1]))
                     else:
                         try:
                             result += data_op (node)
                         except:
-                            logger.error ("Error invoking {0}".format (transition[1]))
+                            logger.error ("Error calling {0}".format (transition[1]))
 
                     result = [ i for op in data_op for i in op(node) ] if isinstance(data_op, list) else data_op (node)
                     new_top += result if result is not None else []
@@ -444,8 +445,8 @@ class Rosetta:
             results += last
         return results
 
-    def graph (self, next_nodes, query):
-        program = self.type_graph.get_transitions_x (query)
+    def graph0 (self, next_nodes, query):
+        program = self.type_graph.get_transitions (query)
         print ("program: {}".format (program))
         if not program or len(program) == 0:
             return []
@@ -459,10 +460,11 @@ class Rosetta:
                 for operator in operators:
                     op = self.get_ops (operator)
                     try:
-                        #logger.debug ("--Invoking op {0}({1})".format (operator, edge_node[1].identifier))
-                        log_text = "  --Invoking op {0}({1})".format (operator, edge_node[1].identifier)
+                        results = None
+                        log_text = "  -- {0}({1})".format (operator, edge_node[1].identifier)
                         source_node = edge_node[1]
-                        results = op (source_node)
+                        with requests_cache.enabled("rosetta_cache"): #self.cache_path):
+                            results = op (source_node)
                         for r in results:
                             edge = r[0]
                             if isinstance(edge,KEdge):
@@ -481,6 +483,51 @@ class Rosetta:
                         traceback.print_exc()
                         logger.error ("Error invokign> {0}".format (log_text))        
         return linked_result
+
+    def graph (self, next_nodes, query):
+        programs = self.type_graph.get_transitions (query)
+        result = []
+        for program in programs:
+            result += self.graph_inner (next_nodes, program)
+        return result
+    
+    def graph_inner (self, next_nodes, program):
+        print ("program: {}".format (json.dumps (program, indent=2)))
+        if not program or len(program) == 0:
+            return []
+        primed = [ { 'collector' : next_nodes } ] + program
+        linked_result = []
+        for index, level in enumerate (program):
+            logger.debug ("--Executing level: {0}".format (level))
+            operators = level['ops']
+            collector = level['collector']
+            for edge_node in primed[index]['collector']:
+                for operator in operators:
+                    op = self.get_ops (operator['op'])
+                    try:
+                        results = None
+                        log_text = "  -- {0}({1})".format (operator['op'], edge_node[1].identifier)
+                        source_node = edge_node[1]
+                        with requests_cache.enabled("rosetta_cache"):
+                            results = op (source_node)
+                        for r in results:
+                            edge = r[0]
+                            if isinstance(edge,KEdge):
+                                edge.predicate = operator['link']
+                                edge.source_node = source_node
+                                edge.target_node = r[1]
+                                linked_result.append (edge)
+                        logger.debug ("{0} => {1}".format (log_text, Text.short (results)))
+                        for r in results:
+                            if index < len(program) - 1:
+                                if not r[1].identifier.startswith (program[index+1]['node_type']):
+                                    logger.debug ("Operator {0} is wired to return type: {1} but returned node with id: {2}".format (
+                                        operator, program[index+1]['node_type'], r[1].identifier))
+                        collector += results
+                    except Exception as e:
+                        traceback.print_exc()
+                        logger.error ("Error invoking> {0}".format (log_text))        
+        return linked_result
             
     def clinical_outcome_pathway (self, drug=None, disease=None):
         blackboard = []
@@ -488,9 +535,15 @@ class Rosetta:
             blackboard += self.graph (
                 [ ( None, KNode('NAME.DISEASE:{0}'.format (disease), 'D') ) ],
                 query=\
+                """MATCH (a{name:"NAME.DISEASE"}),(b:GeneticCondition), p = allShortestPaths((a)-[*]->(b)) 
+                WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
+                RETURN p""")
+
+            '''
                 """MATCH (a{name:"NAME.DISEASE"}),(b:Gene), p = allShortestPaths((a)-[*]->(b)) 
                 WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
                 RETURN p""")
+            '''
         if drug:
             blackboard += self.graph (
                 [ ( None, KNode('NAME.DRUG:{0}'.format (drug), 'S') ) ],
@@ -518,6 +571,21 @@ class Rosetta:
         return result
 
 if __name__ == "__main__":
+
+    '''
+    from neo4j.v1.api import GraphDatabase
+    driver = GraphDatabase.driver("bolt://localhost:7687") #, auth=basic_auth("neo4j", "neo4j"))
+    session = driver.session()    
+    session.run("CREATE (a:Person {name: {name}, title: {title}})",
+                {"name": "Arthur", "title": "King"})
+    result = session.run("MATCH (a:Person) WHERE a.name = {name} "
+                         "RETURN a.name AS name, a.title AS title",
+                         {"name": "Arthur"})
+    for record in result:
+        print("%s %s" % (record["title"], record["name"]))
+    session.close()
+    sys.exit (0)
+    '''
     parser = argparse.ArgumentParser(description='Rosetta.')
     parser.add_argument('--initialize-type-graph', help='Build the graph of types and semantic transitions between them.', action="store_true", default=False)
     parser.add_argument('-d', '--disease', help='A disease to analyze.', default=None)
@@ -525,6 +593,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     rosetta = Rosetta (init_db=args.initialize_type_graph)
-#    blackboard = rosetta.clinical_outcome_pathway (drug=args.drug, disease=args.disease)
     blackboard = Rosetta.clinical_outcome_pathway_app (drug=args.drug, disease=args.disease)
     print (blackboard)

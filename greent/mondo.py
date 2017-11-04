@@ -2,7 +2,9 @@ from greent.service import Service
 from greent.service import ServiceContext
 from ontobio.ontol_factory import OntologyFactory
 from reasoner.graph_components import KNode, KEdge
-    
+from cachier import cachier
+import datetime
+
 #TODO: LOOKUP all the terms that map to this... or use an ancestor call that doesn't require such stuff (i.e. that handles this)
 GENETIC_DISEASE=('DOID:630','http://purl.obolibrary.org/obo/EFO_0000508')
 #GENETIC_DISEASE='EFO:0000508'
@@ -78,6 +80,7 @@ class Mondo(Service):
         """Checks mondo to find whether the subject has DOID:0050177 as an ancestor"""
         return self.has_ancestor(obj, MONOGENIC_DISEASE)
 
+    #@cachier(stale_after=datetime.timedelta(days=20))
     def doid_get_genetic_condition (self, disease):
         """Given a gene specified as an HGNC curie, return associated genetic conditions.
         A genetic condition is specified as a disease that descends from a ndoe for genetic disease in MONDO."""
@@ -88,8 +91,18 @@ class Mondo(Service):
             for new_object_id in new_object_ids:
                 if new_object_id.startswith (orphanet_prefix):
                     new_object_id = new_object_id.replace (orphanet_prefix, 'ORPHANET.GENETIC_CONDITION:')
+                elif new_object_id.startswith ('DOID:'):
+                    new_object_id = new_object_id.replace ('DOID:', 'DOID.GENETIC_CONDITION:')
                 relations.append ( (self.get_edge ({}, 'is_genetic_condition'), KNode (new_object_id, 'GC') ))
         return relations
+
+    def doid_get_orphanet_genetic_condition (self, disease):
+        results = self.doid_get_genetic_condition (disease)
+        return [ r for r in results if r[1].identifier.startswith ('ORPHANET.GENETIC_CONDITION') ]
+    
+    def doid_get_doid_genetic_condition (self, disease):
+        results = self.doid_get_genetic_condition (disease)
+        return [ r for r in results if r[1].identifier.startswith ('DOID.GENETIC_CONDITION') ]
     
 def test():
     m = Mondo (ServiceContext.create_context ())
@@ -98,8 +111,10 @@ def test():
     print('------')
     huntingtons = KNode('DOID:12858','D')
     print(m.is_genetic_disease(huntingtons))
-    print (m.doid_get_genetic_condition (KNode ('DOID:12858', 'D')))
-    print (m.doid_get_genetic_condition (KNode ('DOID:0060599', 'D')))
-
+    tests = [ "DOID:8545", "OMIM:218550", "OMIM:234000", "DOID:0060334", "DOID:0050524", "DOID:0060599", "DOID:12858" ]
+    for t in tests:
+        print (m.doid_get_orphanet_genetic_condition (KNode (t, 'D')))
+        print (m.doid_get_doid_genetic_condition (KNode (t, 'D')))
+    
 if __name__ == '__main__':
     test()

@@ -59,7 +59,10 @@
       op:   hetio.disease_to_phenotype
     ORPHANET.GENETIC_CONDITION:
       link: genetic_condition
-      op:   mondo.doid_get_genetic_condition
+      op:   mondo.doid_get_orphanet_genetic_condition
+    DOID.GENETIC_CONDITION:
+      link: genetic_condition
+      op:   mondo.doid_get_doid_genetic_condition
 #  HGNC:
 #    DOID:
 #      link: gene_to_disease
@@ -68,8 +71,6 @@
 #      link: gene_to_genetic_condition
 #      op: biolink.gene_get_genetic_condition
   HGNC.SYMBOL:
-#    DOID.GENETIC_CONDITION:
-#      op: biolink.gene_get_genetic_condition
     UBERON:
       link: anatomy
       op:   hetio.gene_to_anatomy
@@ -78,35 +79,24 @@
       op:   hetio.gene_to_cell
     DOID:
       link: gene_to_disease
-      op: hetio.gene_to_disease
+      op:   hetio.gene_to_disease
   DRUGBANK:
     UNIPROT:
       link: targets
       op:   chembio.graph_drugbank_to_uniprot
-  DRUGBANK.NAME:
-    UNIPROT:
-#      link: ____none____
-      op: chembio.graph_drugname_to_gene_symbol
-#  MESH.DISEASE:
-#    UNIPROT:
-#      link: diseaseid_to_uniprot
-#      op: chembio.graph_diseaseid_to_uniprot
   MESH:
     ROOT:
       op: oxo.mesh_to_other
     DRUGBANK:
       op: chembio.get_drugs_by_condition_graph
-    DOID:
-      link: mesh_to_doid
-#      op:   kba.______________________________
   PHAROS:
     HGNC:
       link: disease_gene
       op:   pharos.disease_get_gene
+    HGNC.SYMBOL:
+      link: disease_gene
+      op:   pharos.disease_get_gene
   UNIPROT:
-    MESH:
-      link: gene_disease
- #     op:   chembio.__________________________
     HGNC.SYMBOL:
       link: synonym
       op:   chembio.graph_uniprot_to_hgnc
@@ -119,13 +109,13 @@
       op: biolink.get_gene_function
   GO.BIOLOGICAL_PROCESS:
     CL:
-      link: chris_whats_the_right_predicate_for_this
+      link: bio_process_cell_type
       op: quickgo.go_term_xontology_relationships
 
 # Locally defined curies.
 '@vocab':
   DOID.GENETIC_CONDITION:     http://identifiers.org/doid/gentic_condition
-  DRUGBANK.NAME:              http://identifiers.org/drugbank/name
+#  DRUGBANK.NAME:              http://identifiers.org/drugbank/name
   GO.CELLULAR_COMPONENT:      http://identifier.org/go/cellcomponent
   GO.BIOLOGICAL_PROCESS:      http://identifier.org/go/biologicalprocess
   GO.MOLECULAR_FUNCTION:      http://identifier.org/go/molecularfunction
@@ -138,19 +128,3 @@
   PHAROS:                     http://pharos.nih.gov/identifier/
   ROOT:                       http://identifiers.org/doi
   UNIPROTKB:                  http://identifiers.org/uniprotkb
-
-# delete after merge:
-#'@vocab':
-#  DRUGBANK.NAME:          http://identifiers.org/drugbank/name
-#  NAME:                   http://identifiers.org/name
-#  NAME.DRUG:              http://identifiers.org/name
-#  NAME.DISEASE:           http://identifiers.org/name
-#  DOID.GENETIC_CONDITION: http://identifiers.org/mondo/genetic_condition
-#  GO.CELLULAR_COMPONENT:  http://identifier.org/go/cellcomponent
-#  GO.BIOLOGICAL_PROCESS:  http://identifier.org/go/biologicalprocess
-#  GO.MOLECULAR_FUNCTION:  http://identifier.org/go/molecularfunction
-#  MESH.NAME:              http://identifiers.org/mesh/drug/name
-#  MESH.DISEASE:           http://identifiers.org/mesh/disease/name
-#  MESH.DRUG:              http://identifiers.org/mesh/drug/name
-#  PHAROS:                 http://pharos.nih.gov/identifier/
-#  ROOT:                   http://identifiers.org/doi
