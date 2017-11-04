@@ -30,7 +30,7 @@ class TranslatorKnowledgeBeaconAggregator(Service):
                 if a.startswith ("DOID:"):
                     if not a in seen:
                         logger.debug ("      -- appending a {}".format (a))
-                        result.append ( ( self.get_edge (r, predicate='synonym'), KNode(a, name.node_type) ) )
+                        result.append ( ( self.get_edge (r, predicate='name_to_doid'), KNode(a, 'D' ) ) )
                         seen[a] = a
         return result
 
@@ -42,7 +42,7 @@ class TranslatorKnowledgeBeaconAggregator(Service):
             for a in r['aliases']:
                 if a.startswith ("DRUGBANK:"):
                     if not a in seen:
-                        result.append ( ( self.get_edge (r, predicate='synonym'), KNode(a, name.node_type) ) )
+                        result.append ( ( self.get_edge (r, predicate='name_to_drugbank'), KNode(a, 'Drug') ) )
                         seen[a] = a
         return list(set(result))
         
@@ -54,7 +54,8 @@ class TranslatorKnowledgeBeaconAggregator(Service):
             for a in r['aliases']:
                 if a.startswith ("MESH:"):
                     if not a in seen:
-                        result.append ( ( self.get_edge (r, predicate='synonym'), KNode(a, name.node_type) ) )
+                        #TODO: not sure what node type should be here...
+                        result.append ( ( self.get_edge (r, predicate='name_to_mesh'), KNode(a, name.node_type) ) )
                         seen[a] = a
         return list(set(result))
     
@@ -74,7 +75,8 @@ class TranslatorKnowledgeBeaconAggregator(Service):
                     if a.startswith ("MESH:"):
                         if not a in seen:
                             a = a.replace ("MESH:", "MESH.DISEASE:")
-                            result.append ( ( self.get_edge (r, predicate='synonym'), KNode(a, name.node_type) ) )
+                            result.append ( ( self.get_edge (r, predicate='name_to_mesh_disease'), \
+                                KNode(a, "D") ) )
                             seen[a] = a
         return list(set(result))
 

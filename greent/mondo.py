@@ -13,7 +13,7 @@ MONOGENIC_DISEASE='DOID:0050177'
 class Mondo(Service):
     
     """ A pragmatic class to query the mondo ontology. Until better sources emerge, we roll our own. """ 
-    def __init__(self, context):
+    def __init__(self, context = None):
         super(Mondo, self).__init__("mondo", context)
         ofactory = OntologyFactory()
         #This gets the remote owl which would be better in general, but is apparently not fully up to date
