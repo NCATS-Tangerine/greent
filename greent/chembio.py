@@ -8,6 +8,8 @@ from greent.util import LoggingUtil
 from greent.util import Text
 from reasoner.graph_components import KEdge, KNode
 from pprint import pprint
+from cachier import cachier
+import datetime
 
 logger = LoggingUtil.init_logging (__file__)
 
@@ -191,6 +193,7 @@ class ChemBioKS(Service):
             results.append ( (edge, node) )
         return results
 
+    @cachier(stale_after=datetime.timedelta(days=20))
     def graph_get_pathways_by_gene (self, gene): #reasoner        
         response = self.triplestore.query_template (
             inputs = { "gene" : gene.identifier.split(':')[1].upper () },

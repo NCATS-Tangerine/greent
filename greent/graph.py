@@ -13,10 +13,10 @@ from greent.util import Text
 from greent.util import DataStructure
 from greent.service import Service
 from greent.service import ServiceContext
-from pprint import pformat
+from pprint import pformat, pprint
 from neo4jrestclient.client import GraphDatabase,Relationship,Node
 
-logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG)
+logger = LoggingUtil.init_logging (__file__)#, level=logging.DEBUG)
 
 class TypeGraph(Service):
     """ A graph of 
@@ -88,44 +88,11 @@ class TypeGraph(Service):
             data_contents=True)
     def get (self, url):
         return requests.get(url).json ()
-    def get_transitions_x (self, query):
-        '''
-        self.narratives = {
-            "diseasename_to_phenotype" : {
-                "cypher" :
-                """
-                MATCH (n{name:"NAME"})-[name_to_doid:DISEASENAME]->(d{name:"DOID"})-[doid_to_pharos:DOID_TO_PHAROS]->(pharos{name:"PHAROS"})-[pharos_to_hgnc:DISEASE_GENE]->(h{name:"HGNC"})-[hgnc_to_uberon:ANATOMY]->(a{name:"UBERON"})
-                MATCH (h)-[hgnc_to_go:CELLCOMPONENT]-(ph{name:"GO"})
-                RETURN n, "NAME", name_to_doid, d, "DOID", doid_to_pharos, pharos, "PHAROS", pharos_to_hgnc, h, "HGNC>0", hgnc_to_uberon, a, "HGNC>1", hgnc_to_go, ph"""
-            },
-            "drugname_to_pathway" : {
-                "cypher" :
-                """
-                MATCH (n)-[name_to_drugbank:DRUGNAME]->(s{name:"DRUGBANK"})-[drugbank_to_uniprot:TARGETS]->(g{name:"UNIPROT"})-[uniprot_to_kegg:GENE_PATHWAY]->(p{name:"KEGG"})
-                MATCH (g)-[synonym:SYNONYM]->(h{name:"HGNC"})
-                RETURN n, name_to_drugbank, s, drugbank_to_uniprot, g, uniprot_to_kegg, p, synonym, h"""
-            },
-            "test_1": {
-                "cypher" : """MATCH (n{name:"NAME"})-[*0..2]->(d:Disease)-[*0..2]->(g:Gene)-[*1..1]->(a:Anatomy) RETURN DISTINCT n,d,g,a"""
-            },
-            "test_2": {
-                "cypher" :
-                """MATCH (n:Type{name:'NAME'}), (d:Disease), p = (n)-[r*..2]-(d) RETURN p"""
-            },
-            "test_3" : {
-                "cypher" :
-                """MATCH (a:Type { name: 'NAME' }),(b:Gene), p = allShortestPaths((a)-[*]->(b)) WHERE ALL(x IN nodes(p)[1..-1] WHERE (x:Disease)) RETURN p"""
-            },
-            "name-to-anatomy" : {
-                "cypher" :
-                """MATCH (a{name:"NAME"}),(b:Anatomy), p = allShortestPaths((a)-[*]->(b)) RETURN p"""
-            }
-        }
-        '''
+    def get_transitions0 (self, query):
         program = []
         result = self.db.query (query, data_contents=True)
         for row in result.rows[0]:
-            print (json.dumps (row, indent=2))
+            print ("row: {}".format (json.dumps (row, indent=2)))
             node_type = None
             for col in row:
                 #print ("col-> {} {}".format (col, type(col)))
@@ -150,31 +117,58 @@ class TypeGraph(Service):
                             logger.debug ("  -- creating program component for node type {0}".format (node_type))
                             program.append ({
                                 'node_type' : node_type,
+                                #'ouput_type
                                 'ops'       : [ op ],
                                 'collector' : [] 
                             })
-        print ("output program {}".format (program))
         return program
-    '''
-    def get_transitions (self, a, b):
-        result = []
-        paths = self.get_shortest_paths (a, b)
-        for r in paths:
-            for p in r:
-                L = self.get (p['nodes'][0])
-                R = self.get (p['nodes'][1])
-                L = self.db.node[int(L['metadata']['id'])]
-                R = self.db.node[int(R['metadata']['id'])]
-                for rel in p['relationships']:
-                    rel_obj = self.get (rel)
-                    if rel_obj['type'] == 'transition':
-                        start = self.get (rel_obj['start'])
-                        end = self.get (rel_obj['end'])
-                        result.append ( (start['data']['name'], rel_obj['data']['op'], end['data']['name'] ) )
-        logger.debug (" **> T:{}".format (result))
-        return result
-    '''
+
+    def get_transitions (self, query):
+        programs = []
+        result = self.db.query (query, data_contents=True)
+        for row_set in result.rows:
+            program = []
+            for row in row_set:
+                node_type = None
+                for col in row:
+                    if isinstance (col, str):
+                        logger.debug ("graph transition builder: noting result type: {0}".format (col))
+                        node_type = col.split('>')[0] if '>' in col else col
+                    elif isinstance(col, dict):
+                        if 'name' in col:
+                            logger.debug ("graph transition builder: noting result type: {0}".format (col))
+                            node_type = col['name']
+                        if 'op' in col:
+                            logger.debug ("graph transition builder: is dict.")
+                            op = col['op']
+                            predicate = col['predicate']
+                            logger.debug ("  --and has op")
+                            is_new = True
+                            for level in program:
+                                if level['node_type'] == node_type:
+                                    logger.debug ("  -- adding op {0} to level".format (op))
+                                    level['ops'].append ({
+                                        'link' : predicate,
+                                        'op'   : op
+                                    })
+                                    is_new = False
+                            if is_new:
+                                logger.debug ("  -- creating component for node type {0}".format (node_type))
+                                program.append ({
+                                    'node_type' : node_type,
+                                    'ops'       : [
+                                        {
+                                            'link' : predicate,
+                                            'op'   : op
+                                        }
+                                    ],
+                                    'collector' : [] 
+                                })
+            programs.append (program)
+        return programs
+    
     def _find_or_create_concept (self, concept):
+        '''
         style = {
             'Anatomy'            : { 'color' : 'pink' },
             'BiologicalProcess'  : { 'color' : 'lightgray' },
@@ -188,6 +182,7 @@ class TypeGraph(Service):
             'Phenotype'          : { 'color' : 'lightgreen' },
             'Substance'          : { 'color' : 'purple' }
         }
+        '''
         concept_node = self.concepts[concept].get (name=concept)
         if len(concept_node) == 1:
             logger.debug ("-- Loaded existing concept: {0}".format (concept))
@@ -196,6 +191,7 @@ class TypeGraph(Service):
             raise ValueError ("Unexpected non-unique concept node: {}".format (concept))
         else:
             logger.debug ("-- Creating concept {0}".format (concept))
-            color = style.get (concept, {}).get ('color', '')
-            concept_node = self.concepts[concept].create (name=concept, color=color)
+#            color = style.get (concept, {}).get ('color', '')
+#            concept_node = self.concepts[concept].create (name=concept, color=color)
+            concept_node = self.concepts[concept].create (name=concept)
         return concept_node
