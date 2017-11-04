@@ -26,7 +26,7 @@ class Biolink(Service):
             obj = KNode(association['object']['id'], 'D', association['object']['label'] )
             rel = { 'typeid': association['relation']['id'], 'label':association['relation']['label'] }
             props = { 'publications': pubs, 'relation':rel }
-            edge = KEdge( 'biolink', 'queried', props )
+            edge = KEdge( 'biolink', 'gene_get_disease', props )
             edge_nodes.append( (edge , obj ) )
         return edge_nodes
     def get_gene_function (self, gene):

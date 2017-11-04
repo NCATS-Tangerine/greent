@@ -115,7 +115,7 @@ class Pharos(Service):
                     logger.info('Pharos disease returning new kind: %s' % link['kind'])
                 else:
                     pharos_target_id = int(link['refid'])
-                    pharos_edge = KEdge( 'pharos', 'queried', {'properties': link['properties']} )
+                    pharos_edge = KEdge( 'pharos', 'disease_get_gene', {'properties': link['properties']} )
                     original_edge_nodes.append( (pharos_edge, pharos_target_id) )
 
 #    @cachier(stale_after=datetime.timedelta(days=8))
@@ -135,7 +135,7 @@ class Pharos(Service):
                 logger.info('Pharos disease returning new kind: %s' % link['kind'])
             else:
                 pharos_target_id = int(link['refid'])
-                pharos_edge = KEdge( 'pharos', 'queried', {'properties': link['properties']} )               
+                pharos_edge = KEdge( 'pharos', 'disease_get_gene', {'properties': link['properties']} )               
                 #Pharos returns target ids in its own numbering system. Collect other names for it.
                 hgnc = self.target_to_hgnc (pharos_target_id)
                 if hgnc is not None:
@@ -162,7 +162,7 @@ class AsyncPharos(Pharos):
                         logger.info('Pharos disease returning new kind: %s' % link['kind'])
                     else:
                         pharos_target_id = int(link['refid'])
-                        pharos_edge = KEdge( 'pharos', 'queried', {'properties': link['properties']} )
+                        pharos_edge = KEdge( 'pharos', 'disease_get_gene', {'properties': link['properties']} )
                         original_edge_nodes.append( (pharos_edge, pharos_target_id) )
             except JSONDecodeError as e:
                 pass #logger.error ("got exception %s", e)

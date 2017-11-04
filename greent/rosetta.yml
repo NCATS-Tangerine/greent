@@ -60,13 +60,13 @@
     ORPHANET.GENETIC_CONDITION:
       link: genetic_condition
       op:   mondo.doid_get_genetic_condition
-#  HGNC:
-#    DOID:
-#      link: gene_to_disease
-#      op: biolink.gene_get_disease
-#    DOID.GENETIC_CONDITION:
-#      link: gene_to_genetic_condition
-#      op: biolink.gene_get_genetic_condition
+  HGNC:
+    DOID:
+      link: gene_to_disease
+      op: biolink.gene_get_disease
+    DOID.GENETIC_CONDITION:
+      link: gene_to_genetic_condition
+      op: biolink.gene_get_genetic_condition
   HGNC.SYMBOL:
 #    DOID.GENETIC_CONDITION:
 #      op: biolink.gene_get_genetic_condition

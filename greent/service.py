@@ -11,7 +11,7 @@ class ServiceContext:
         return ServiceContext (config)
     
 class Service:
-    """ Basic characteristics of srvices. """
+    """ Basic characteristics of services. """
 
     def __init__(self, name, context):
         """ Initialize the service given a name and an application context. """
@@ -38,4 +38,4 @@ class Service:
             'predicate' : predicate,
             'pmids'     : pmids
         }
-        return KEdge (self.name, predicate, props)
+        return KEdge (self.name, predicate, props, is_synonym = (predicate=='synonym'))

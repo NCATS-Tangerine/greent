@@ -67,7 +67,7 @@ class DiseaseOntology (Service):
             #logging.getLogger('application').warn('Unable to translate doid: %s into a Pharos ID' % doid)
             return []
         return list(map(lambda v : (
-            KEdge('doid->pharos','D', { "is_synonym" : True }),
+            KEdge('local','doid_to_pharos', is_synonym=True),
             KNode(identifier="PHAROS:{0}".format (v), node_type='D') ), pharos_list ))
     
 if __name__ == "__main__":
