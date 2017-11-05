@@ -34,7 +34,7 @@ class HumanPhenotypeOntology (Service):
     def mesh_to_phenotype (self, term):
         result = self.mesh_to_pheno.get (term.identifier.replace ('MESH:', 'MSH:'), []) \
                  if term.identifier.startswith ("MESH:") else []
-        return [ ( self.get_edge({ 'mesh_id' : r }), KNode(r, 'D') ) for r in result ]
+        return [ ( self.get_edge({ 'mesh_id' : r }), KNode(r, node_types.DISEASE) ) for r in result ]
                    
     def get_term (self, term_id):
         return self.ont[term_id]
@@ -53,5 +53,5 @@ def dump_term (t):
     for r in t.relations:
         print ("relation: {}".format (r))
         
-print (hpo.mesh_to_phenotype (KNode("DOID:2841", "")))
-print (hpo.mesh_to_phenotype (KNode("MESH:D001249", "")))
+print (hpo.mesh_to_phenotype (KNode("DOID:2841", node_types.DISEASE)))
+print (hpo.mesh_to_phenotype (KNode("MESH:D001249", node_types.DISEASE)))

@@ -17,6 +17,7 @@ from greent.util import LoggingUtil
 from greent.async import AsyncUtil
 from greent.async import Operation
 from reasoner.graph_components import KEdge, KNode
+from reasoner import node_types
 from simplejson.scanner import JSONDecodeError
 
 logger = LoggingUtil.init_logging (__name__, logging.DEBUG)
@@ -139,7 +140,7 @@ class Pharos(Service):
                 #Pharos returns target ids in its own numbering system. Collect other names for it.
                 hgnc = self.target_to_hgnc (pharos_target_id)
                 if hgnc is not None:
-                    hgnc_node = KNode (hgnc, 'G')
+                    hgnc_node = KNode (hgnc, node_types.GENE)
                     resolved_edge_nodes.append( (pharos_edge, hgnc_node) )
                 else:
                     logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
@@ -189,7 +190,7 @@ class AsyncPharos(Pharos):
                 if synonym['label'] == 'HGNC':
                     hgnc = synonym['term']
             if hgnc is not None:
-                hgnc_node = KNode(hgnc, 'G')
+                hgnc_node = KNode(hgnc, node_types.GENE)
                 resolved_edge_nodes.append((edge,hgnc_node))
         AsyncUtil.execute_parallel_operations (
             operations=[ Operation(process_hgnc_request, HGNCRequest(pharos_target_id, edge)) for edge, pharos_target_id in original_edge_nodes ], #[:1],

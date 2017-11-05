@@ -6,6 +6,7 @@ from greent.service import ServiceContext
 from greent.mondo import Mondo
 from greent.util import Text
 from reasoner.graph_components import KNode,KEdge
+from reasoner import node_types
 import logging
 
 class Biolink(Service):
@@ -24,7 +25,7 @@ class Biolink(Service):
                 pubs = [ {'id': pub['id']} for pub in association['publications'] ]
             else:
                 pubs = []
-            obj = KNode(association['object']['id'], 'D', association['object']['label'] )
+            obj = KNode(association['object']['id'], node_types.DISEASE, association['object']['label'] )
             rel = { 'typeid': association['relation']['id'], 'label':association['relation']['label'] }
             props = { 'publications': pubs, 'relation':rel }
             edge = KEdge( 'biolink', 'gene_get_disease', props )
@@ -36,7 +37,7 @@ class Biolink(Service):
         return [
             (
                 self.get_edge (response, 'molecular_function'),
-                KNode(obj.replace ('GO:','GO.MOLECULAR_FUNCTION:'), 'F')
+                KNode(obj.replace ('GO:','GO.MOLECULAR_FUNCTION:'), node_types.FUNCTION)
             ) for obj in response['objects']
         ]
 
@@ -50,6 +51,7 @@ class Biolink(Service):
             is_genetic_condition, new_object_ids = self.checker.is_genetic_disease(obj)
             if is_genetic_condition:
                 obj.properties['mondo_identifiers'] = new_object_ids
+                obj.node_type = node_types.GENETIC_CONDITION
                 relations.append( (relation,obj) )
         #print (" biolink relations %s" % relations)
         return relations
@@ -74,4 +76,4 @@ if __name__ == '__main__':
     #test_output()
     b = Biolink (ServiceContext.create_context ())
 #    print (b.get_gene_function (KNode('UniProtKB:P10721', 'G')))
-    print (b.gene_get_genetic_condition (KNode ('DOID:2841', 'D')))
+    print (b.gene_get_genetic_condition (KNode ('DOID:2841', node_types.DISEASE)))

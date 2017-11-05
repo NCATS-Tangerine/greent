@@ -5,6 +5,7 @@ from greent.service import ServiceContext
 from greent.util import LoggingUtil
 from greent.util import Text
 from reasoner.graph_components import KNode,KEdge
+from reasoner import node_types
 
 logger = LoggingUtil.init_logging (__name__)
 
@@ -30,7 +31,7 @@ class TranslatorKnowledgeBeaconAggregator(Service):
                 if a.startswith ("DOID:"):
                     if not a in seen:
                         logger.debug ("      -- appending a {}".format (a))
-                        result.append ( ( self.get_edge (r, predicate='name_to_doid'), KNode(a, 'D' ) ) )
+                        result.append ( ( self.get_edge (r, predicate='name_to_doid'), KNode(a, node_types.DISEASE ) ) )
                         seen[a] = a
         return result
 
@@ -42,7 +43,7 @@ class TranslatorKnowledgeBeaconAggregator(Service):
             for a in r['aliases']:
                 if a.startswith ("DRUGBANK:"):
                     if not a in seen:
-                        result.append ( ( self.get_edge (r, predicate='name_to_drugbank'), KNode(a, 'Drug') ) )
+                        result.append ( ( self.get_edge (r, predicate='name_to_drugbank'), KNode(a, node_types.DRUG) ) )
                         seen[a] = a
         return list(set(result))
         
@@ -76,11 +77,11 @@ class TranslatorKnowledgeBeaconAggregator(Service):
                         if not a in seen:
                             a = a.replace ("MESH:", "MESH.DISEASE:")
                             result.append ( ( self.get_edge (r, predicate='name_to_mesh_disease'), \
-                                KNode(a, "D") ) )
+                                KNode(a, node_types.DISEASE) ) )
                             seen[a] = a
         return list(set(result))
 
 if __name__ == "__main__":
     t = TranslatorKnowledgeBeaconAggregator (ServiceContext.create_context ())
-    print (t.name_to_mesh_disease (KNode("NAME.DISEASE:asthma", 'D')))
-    print (t.name_to_doid (KNode("NAME.DISEASE:asthma", 'D')))
+    print (t.name_to_mesh_disease (KNode("NAME.DISEASE:asthma", node_types.NAME_DISEASE)))
+    print (t.name_to_doid (KNode("NAME.DISEASE:asthma", node_types.DISEASE)))

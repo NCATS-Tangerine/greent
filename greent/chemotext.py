@@ -5,6 +5,8 @@ from greent.mesh import MeSH
 from greent.neo4j import Neo4JREST
 from greent.util import LoggingUtil
 from pprint import pprint
+from reasoner.graph_components import KNode, KEdge
+from reasoner import node_types
 
 logger = LoggingUtil.init_logging (__file__)
 
@@ -51,7 +53,7 @@ class Chemotext(Neo4JREST):
         result = []
         drug_names = self.disease_name_to_drug_name (disease, limit)
         for r in drug_names:
-            result.append ( ( self.get_edge (props=r), KNode("DRUGBANK.NAME:{0}".format (r['name']), 'D') ) )
+            result.append ( ( self.get_edge (props=r), KNode("DRUGBANK.NAME:{0}".format (r['name']), node_types.NAME_DRUG) ) )
         return result
     
 '''
