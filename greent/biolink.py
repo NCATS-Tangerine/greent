@@ -12,6 +12,7 @@ class Biolink(Service):
     """ Preliminary interface to Biolink. Will move to automated Translator Registry invocation over time. """
     def __init__(self, context):
         super(Biolink, self).__init__("biolink", context)
+        self.checker = Mondo(ServiceContext.create_context ())
     def gene_get_disease(self, gene_node):
         """Given a gene specified as an HGNC curie, return associated diseases. """
         ehgnc = urllib.parse.quote_plus(gene_node.identifier)
@@ -43,10 +44,10 @@ class Biolink(Service):
         """Given a gene specified as an HGNC curie, return associated genetic conditions.
         A genetic condition is specified as a disease that descends from a ndoe for genetic disease in MONDO."""
         disease_relations = self.gene_get_disease(gene)
-        checker = Mondo(ServiceContext.create_context ())
+        #checker = Mondo(ServiceContext.create_context ())
         relations = []
         for relation, obj in disease_relations:
-            is_genetic_condition, new_object_ids = checker.is_genetic_disease(obj)
+            is_genetic_condition, new_object_ids = self.checker.is_genetic_disease(obj)
             if is_genetic_condition:
                 obj.properties['mondo_identifiers'] = new_object_ids
                 relations.append( (relation,obj) )

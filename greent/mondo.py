@@ -16,9 +16,11 @@ class Mondo(Service):
     def __init__(self, context ):
         super(Mondo, self).__init__("mondo", context)
         ofactory = OntologyFactory()
-        #This gets the remote owl which would be better in general, but is apparently not fully up to date
-        # giving us a problem with Acute Alcohol Sensitivity which does not register as a genetic condition
-        self.ont = ofactory.create('mondo')
+        try:
+            #sometimes the ontology world is down :(
+            self.ont = ofactory.create('mondo')
+        except:
+            self.ont = ofactory.create('onto_cache/mondo.owl')
         #self.ont = ofactory.create('./mondo.owl')
         #This seems to be required to make the ontology actually load:
         _ = self.ont.get_level(0)
