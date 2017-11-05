@@ -537,9 +537,10 @@ class Rosetta:
             
     def clinical_outcome_pathway (self, drug=None, disease=None):
         blackboard = []
+        from reasoner import node_types
         if disease:
             blackboard += self.graph (
-                [ ( None, KNode('NAME.DISEASE:{0}'.format (disease), 'D') ) ],
+                [ ( None, KNode('NAME.DISEASE:{0}'.format (disease), node_types.NAME_DISEASE) ) ],
                 query=\
                 """MATCH (a{name:"NAME.DISEASE"}),(b:GeneticCondition), p = allShortestPaths((a)-[*]->(b)) 
                 WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
@@ -552,7 +553,7 @@ class Rosetta:
                 RETURN p""")
         if drug:
             blackboard += self.graph (
-                [ ( None, KNode('NAME.DRUG:{0}'.format (drug), 'S') ) ],
+                [ ( None, KNode('NAME.DRUG:{0}'.format (drug), node_types.NAME_DRUG) ) ],
                 query=\
                 """MATCH (a{name:"NAME.DRUG"}),(b:Pathway), p = allShortestPaths((a)-[*]->(b)) 
                 WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 

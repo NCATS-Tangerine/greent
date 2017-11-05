@@ -5,6 +5,7 @@ import pronto
 import requests
 import os
 from reasoner.graph_components import KNode,KEdge,elements_to_json
+from reasoner import node_types
 from greent.service import Service
 
 class DiseaseOntology (Service):
@@ -48,7 +49,7 @@ class DiseaseOntology (Service):
         """ Convert a DOID to an equivalent MeSH term. """
         mesh_ids = self.doid_to_mesh (doid.identifier)
         return [ ( self.get_edge (predicate='synonym'),
-                   KNode(identifier=i.replace ("MESH:", "MESH.DISEASE:"), node_type='D') ) for i in mesh_ids ]
+                   KNode(identifier=i.replace ("MESH:", "MESH.DISEASE:"), node_type=node_types.DISEASE) ) for i in mesh_ids ]
 
     def doid_to_pharos(self,doid):
         """ Convert a doid to a pharos id. Perhaps there's a public service that does this but in the
@@ -67,8 +68,8 @@ class DiseaseOntology (Service):
             #logging.getLogger('application').warn('Unable to translate doid: %s into a Pharos ID' % doid)
             return []
         return list(map(lambda v : (
-            KEdge('doid->pharos','D', { "is_synonym" : True }),
-            KNode(identifier="PHAROS:{0}".format (v), node_type='D') ), pharos_list ))
+            KEdge('local','doid_to_pharos', is_synonym=True),
+            KNode(identifier="PHAROS:{0}".format (v), node_type=node_types.DISEASE) ), pharos_list ))
     
 if __name__ == "__main__":
     do = DiseaseOntology ()

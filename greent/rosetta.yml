@@ -59,17 +59,14 @@
       op:   hetio.disease_to_phenotype
     ORPHANET.GENETIC_CONDITION:
       link: genetic_condition
-      op:   mondo.doid_get_orphanet_genetic_condition
+      op:   mondo.doid_get_genetic_condition
+  HGNC:
+    DOID:
+      link: gene_to_disease
+      op: biolink.gene_get_disease
     DOID.GENETIC_CONDITION:
-      link: genetic_condition
-      op:   mondo.doid_get_doid_genetic_condition
-#  HGNC:
-#    DOID:
-#      link: gene_to_disease
-#      op: biolink.gene_get_disease
-#    DOID.GENETIC_CONDITION:
-#      link: gene_to_genetic_condition
-#      op: biolink.gene_get_genetic_condition
+      link: gene_to_genetic_condition
+      op: biolink.gene_get_genetic_condition
   HGNC.SYMBOL:
     UBERON:
       link: anatomy

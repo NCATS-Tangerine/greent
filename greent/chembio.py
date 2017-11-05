@@ -7,6 +7,7 @@ from greent.triplestore import TripleStore
 from greent.util import LoggingUtil
 from greent.util import Text
 from reasoner.graph_components import KEdge, KNode
+from reasoner import node_types
 from pprint import pprint
 from cachier import cachier
 import datetime
@@ -87,7 +88,8 @@ class ChemBioKS(Service):
             edge = KEdge ('c2b2r', 'conditionToDrug',
                           { 'cid' : r['pubChemCID'], 'pmids' : r['diseasePMIDs'] })
             node = KNode (r['drugID'].split('/')[-1:][0],
-                          "http://chem2bio2rdf.org/drugbank/resource/drugbank_drug",
+                          #"http://chem2bio2rdf.org/drugbank/resource/drugbank_drug",
+                          node_types.DRUG,
                           r['drugGenericName'])
             results.append ( (edge, node) )
         #logger.debug ("chembio drugs by condition: {}".format (results))
@@ -181,7 +183,7 @@ class ChemBioKS(Service):
 
     def graph_uniprot_to_hgnc (self, uniprot_symbol):
         result = self.uniprot_to_hgnc (uniprot_symbol)
-        return [ ( self.get_edge (r, predicate='synonym'), KNode('HGNC:{0}'.format (r['hgncID'].split(':')[-1]), 'HGNC.SYMBOL' )) for r in result ]
+        return [ ( self.get_edge (r, predicate='synonym'), KNode('HGNC:{0}'.format (r['hgncID'].split(':')[-1]), node_types.GENE)) for r in result ]
 
     def graph_get_genes_by_disease (self, disease): #reasoner
         disease = disease.identifier.split (':')[1].lower ()
@@ -189,7 +191,7 @@ class ChemBioKS(Service):
         results = []
         for r in response:
             edge = KEdge ('c2b2r', 'diseaseToGene', { 'keggPath' : r['keggPath'] })
-            node = KNode ("UNIPROT:{0}".format (r['uniprotGene'].split('/')[-1:][0]),  "G")
+            node = KNode ("UNIPROT:{0}".format (r['uniprotGene'].split('/')[-1:][0]),  node_types.GENE)
             results.append ( (edge, node) )
         return results
 
@@ -222,7 +224,7 @@ class ChemBioKS(Service):
         results = []
         for r in response:
             edge = KEdge ('c2b2r', 'geneToPathway', {})
-            node = KNode ("KEGG:{0}".format (r['keggPath'].split('/')[-1:][0]), "P")
+            node = KNode ("KEGG:{0}".format (r['keggPath'].split('/')[-1:][0]), node_types.PATHWAY)
             results.append ( (edge, node) )
         return results
 
@@ -232,7 +234,7 @@ class ChemBioKS(Service):
         results = []
         for r in response:
             edge = self.get_edge (r, predicate="targets")
-            node = KNode ("UNIPROT:{0}".format (Text.path_last (r['uniprotSym'])), "G")
+            node = KNode ("UNIPROT:{0}".format (Text.path_last (r['uniprotSym'])), node_types.GENE)
             results.append ( (edge, node) )
         return results
     
@@ -242,7 +244,7 @@ class ChemBioKS(Service):
         results = []
         for r in response:
             edge = self.get_edge (r, predicate="drugname")
-            node = KNode ("DRUGBANK:{0}".format (Text.path_last (r['drugID'])), "S")
+            node = KNode ("DRUGBANK:{0}".format (Text.path_last (r['drugID'])), node_types.DRUG)
             results.append ( (edge, node) )
         return results
 
@@ -274,7 +276,7 @@ class ChemBioKS(Service):
         results = []
         for r in response:
             edge = KEdge ('c2b2r', 'geneToPathway', {})
-            node = KNode ("KEGG:{0}".format (r['keggPath'].split('/')[-1:][0]), "P")
+            node = KNode ("KEGG:{0}".format (r['keggPath'].split('/')[-1:][0]), node_types.PATHWAY)
             results.append ( (edge, node) )
         return results
 
@@ -296,7 +298,7 @@ class ChemBioKS(Service):
                             ctd:cid                     ?pubchemCID .
             }""")
         return [ ( self.get_edge (r, predicate='targets'),
-                   KNode ("UNIPROT:{0}".format (r['uniprotGeneID'].split('/')[-1:][0]), "G") ) for r in response ]
+                   KNode ("UNIPROT:{0}".format (r['uniprotGeneID'].split('/')[-1:][0]), node_types.GENE) ) for r in response ]
 
     def graph_diseasename_to_uniprot (self, disease):
         results = []
@@ -333,7 +335,7 @@ class ChemBioKS(Service):
                 disPmids = r['disPmids']
                 pmids = chemPmids + "|" + disPmids
                 edge = self.get_edge (r, predicate='caused_by', pmids=pmids),
-                node = KNode ("UNIPROT:{0}".format (r['uniprotSym'].split('/')[-1:][0]), "G")
+                node = KNode ("UNIPROT:{0}".format (r['uniprotSym'].split('/')[-1:][0]), node_types.GENE)
                 results.append ( (edge, node) )
         return results
 
@@ -355,4 +357,4 @@ class ChemBioKS(Service):
                             ctd:cid                     ?pubchemCID .
             }""")
         return [ ( self.get_edge (r, predicate='targets'),
-                   KNode ("UNIPROT:{0}".format (r['uniprotGeneID'].split('/')[-1:][0]), "G") ) for r in response ]
+                   KNode ("UNIPROT:{0}".format (r['uniprotGeneID'].split('/')[-1:][0]), node_types.GENE) ) for r in response ]

@@ -17,6 +17,7 @@ from greent.util import LoggingUtil
 from greent.async import AsyncUtil
 from greent.async import Operation
 from reasoner.graph_components import KEdge, KNode
+from reasoner import node_types
 from simplejson.scanner import JSONDecodeError
 
 logger = LoggingUtil.init_logging (__name__, logging.DEBUG)
@@ -115,7 +116,7 @@ class Pharos(Service):
                     logger.info('Pharos disease returning new kind: %s' % link['kind'])
                 else:
                     pharos_target_id = int(link['refid'])
-                    pharos_edge = KEdge( 'pharos', 'queried', {'properties': link['properties']} )
+                    pharos_edge = KEdge( 'pharos', 'disease_get_gene', {'properties': link['properties']} )
                     original_edge_nodes.append( (pharos_edge, pharos_target_id) )
 
 #    @cachier(stale_after=datetime.timedelta(days=8))
@@ -135,11 +136,11 @@ class Pharos(Service):
                 logger.info('Pharos disease returning new kind: %s' % link['kind'])
             else:
                 pharos_target_id = int(link['refid'])
-                pharos_edge = KEdge( 'pharos', 'queried', {'properties': link['properties']} )               
+                pharos_edge = KEdge( 'pharos', 'disease_get_gene', {'properties': link['properties']} )               
                 #Pharos returns target ids in its own numbering system. Collect other names for it.
                 hgnc = self.target_to_hgnc (pharos_target_id)
                 if hgnc is not None:
-                    hgnc_node = KNode (hgnc, 'G')
+                    hgnc_node = KNode (hgnc, node_types.GENE)
                     resolved_edge_nodes.append( (pharos_edge, hgnc_node) )
                 else:
                     logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
@@ -162,7 +163,7 @@ class AsyncPharos(Pharos):
                         logger.info('Pharos disease returning new kind: %s' % link['kind'])
                     else:
                         pharos_target_id = int(link['refid'])
-                        pharos_edge = KEdge( 'pharos', 'queried', {'properties': link['properties']} )
+                        pharos_edge = KEdge( 'pharos', 'disease_get_gene', {'properties': link['properties']} )
                         original_edge_nodes.append( (pharos_edge, pharos_target_id) )
             except JSONDecodeError as e:
                 pass #logger.error ("got exception %s", e)
@@ -189,7 +190,7 @@ class AsyncPharos(Pharos):
                 if synonym['label'] == 'HGNC':
                     hgnc = synonym['term']
             if hgnc is not None:
-                hgnc_node = KNode(hgnc, 'G')
+                hgnc_node = KNode(hgnc, node_types.GENE)
                 resolved_edge_nodes.append((edge,hgnc_node))
         AsyncUtil.execute_parallel_operations (
             operations=[ Operation(process_hgnc_request, HGNCRequest(pharos_target_id, edge)) for edge, pharos_target_id in original_edge_nodes ], #[:1],

@@ -2,6 +2,7 @@ from greent.service import Service
 from greent.service import ServiceContext
 from ontobio.ontol_factory import OntologyFactory
 from reasoner.graph_components import KNode, KEdge
+from reasoner import node_types
 from cachier import cachier
 import datetime
 
@@ -13,12 +14,17 @@ MONOGENIC_DISEASE='DOID:0050177'
 class Mondo(Service):
     
     """ A pragmatic class to query the mondo ontology. Until better sources emerge, we roll our own. """ 
-    def __init__(self, context = None):
+    def __init__(self, context ):
         super(Mondo, self).__init__("mondo", context)
         ofactory = OntologyFactory()
-        #This gets the remote owl which would be better in general, but is apparently not fully up to date
-        # giving us a problem with Acute Alcohol Sensitivity which does not register as a genetic condition
-        self.ont = ofactory.create('mondo')
+        try:
+            #sometimes the ontology world is down :(
+            self.ont = ofactory.create('mondo')
+        except:
+            try:
+                self.ont = ofactory.create('obo:mondo')
+            except:
+                self.ont = ofactory.create('onto_cache/mondo.owl')
         #self.ont = ofactory.create('./mondo.owl')
         #This seems to be required to make the ontology actually load:
         _ = self.ont.get_level(0)
@@ -93,7 +99,7 @@ class Mondo(Service):
                     new_object_id = new_object_id.replace (orphanet_prefix, 'ORPHANET.GENETIC_CONDITION:')
                 elif new_object_id.startswith ('DOID:'):
                     new_object_id = new_object_id.replace ('DOID:', 'DOID.GENETIC_CONDITION:')
-                relations.append ( (self.get_edge ({}, 'is_genetic_condition'), KNode (new_object_id, 'GC') ))
+                relations.append ( (self.get_edge ({}, 'is_genetic_condition'), KNode (new_object_id, node_types.GENETIC_CONDITION) ))
         return relations
 
     def doid_get_orphanet_genetic_condition (self, disease):
@@ -106,15 +112,15 @@ class Mondo(Service):
     
 def test():
     m = Mondo (ServiceContext.create_context ())
-    alc_sens = KNode('OMIM:610251','D')
+    alc_sens = KNode('OMIM:610251',node_types.DISEASE)
     print(m.is_genetic_disease(alc_sens))
     print('------')
-    huntingtons = KNode('DOID:12858','D')
+    huntingtons = KNode('DOID:12858',node_types.DISEASE)
     print(m.is_genetic_disease(huntingtons))
     tests = [ "DOID:8545", "OMIM:218550", "OMIM:234000", "DOID:0060334", "DOID:0050524", "DOID:0060599", "DOID:12858" ]
     for t in tests:
-        print (m.doid_get_orphanet_genetic_condition (KNode (t, 'D')))
-        print (m.doid_get_doid_genetic_condition (KNode (t, 'D')))
+        print (m.doid_get_orphanet_genetic_condition (KNode (t, node_types.DISEASE)))
+        print (m.doid_get_doid_genetic_condition (KNode (t, node_types.DISEASE)))
     
 if __name__ == '__main__':
     test()

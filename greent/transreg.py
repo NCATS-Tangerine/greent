@@ -16,6 +16,7 @@ from greent.util import Resource
 from greent.util import DataStructure
 from pprint import pprint
 from reasoner.graph_components import KNode,KEdge
+from reasoner import node_types
 from jsonpath_rw import jsonpath, parse
 from greent.util import Text
 
@@ -216,6 +217,6 @@ if __name__ == "__main__":
     """ Generate subscriptions """
     subscriptions = treg.get_subscriptions ()
 
-    r = treg.myvariantinfo__uniprot_to_hgvs(KNode ('UNIPROT:AKT1','G'))
+    r = treg.myvariantinfo__uniprot_to_hgvs(KNode ('UNIPROT:AKT1',node_types.GENE))
     pprint (r)
 
