@@ -4,6 +4,8 @@ from greent.config import Config
 from greent.util import LoggingUtil
 
 class ServiceContext:
+    """ A context for all service objects. Gives us a bit of control over how services behave
+    and a common point of coniguration. """
     def __init__(self, config=None):
         self.config = Config (config if config else os.path.join (os.path.dirname (__file__), "greent.conf"))
     @staticmethod
@@ -12,7 +14,6 @@ class ServiceContext:
     
 class Service:
     """ Basic characteristics of services. """
-
     def __init__(self, name, context):
         """ Initialize the service given a name and an application context. """
         self.context = context
@@ -33,7 +34,6 @@ class Service:
         # Add a predicate describing the connection between subject and object.
         # Pass up pmids for provenance and confidence scoring.
 #        print (pmids)
-#        print ("props: **********************>>>>>>>>>>>> {}".format (props))
         props['stdprop'] = {
             'predicate' : predicate,
             'pmids'     : pmids

@@ -30,6 +30,7 @@ from neo4jrestclient.client import GraphDatabase,Relationship,Node
 
 logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG)
 
+'''
 class Translation (object):
     """ A translation is a conceptual container for some thing, its type, and an 
     object type to convert it to. """    
@@ -40,6 +41,7 @@ class Translation (object):
     def __repr__(self):
         return "Translation(obj: {0} type_a: {1} type_b: {2})".format (
             self.obj, self.type_a, self.type_b)
+'''
 
 class Rosetta:
     """ Rosetta's translates between semantic domains generically and automatically.
@@ -52,7 +54,9 @@ class Rosetta:
     def __init__(self, greentConf="greent.conf",
                  config_file=os.path.join (os.path.dirname (__file__), "rosetta.yml"),
                  override={},
+                 delete_type_graph=False,
                  init_db=False):
+
         """ Load the config file and set up a DiGraph representing the types we know 
         about and how to transition between them. """
         from greent.core import GreenT
@@ -74,21 +78,20 @@ class Rosetta:
             
         # Prime the vocabulary
         logger.debug ("-- Initializing vocabulary.")
-        self.curie = {} #self.config["@curie"]
+        self.curie = {}
         self.to_curie_map = {}
         logger.debug ("-- Initializing Rosetta vocabulary")
         self.vocab = self.config["@vocab"]
         for k in self.vocab:
-            #self.g.add_node (self.vocab[k])
             self.to_curie_map[self.vocab[k]] = k
 
         # Store the concept dictionary
         logger.debug ("-- Initializing Rosetta concept dictionary")
         self.concepts = self.config["@concepts"]
         self.type_graph = TypeGraph (self.core.service_context)
-        
+
         # Build a curie map. import cmungall's uber context.
-        uber = Resource.get_resource_obj (os.path.join ("jsonld", "uber_context.jsonld")) #os.path.join (os.path.dirname (__file__), "jsonld", "uber_context.jsonld")
+        uber = Resource.get_resource_obj (os.path.join ("jsonld", "uber_context.jsonld"))
         context = uber['@context']
         self.terminate (context)
         for key, value in context.items ():
@@ -106,6 +109,9 @@ class Rosetta:
             self.to_curie_map[url] = curie
             self.vocab[curie] = url
 
+        if delete_type_graph:
+            self.type_graph.delete_all ()
+        
         # Exit if we're not creating the data shema.
         if not init_db:
             return
@@ -141,7 +147,6 @@ class Rosetta:
         '''
         errors = 0
         for L in transitions:
-            print ("-------------------> L {}".format (L))
             for R in transitions[L]:
                 if not L in self.vocab:
                     errors += 1
@@ -238,7 +243,7 @@ class Rosetta:
             #result = [ self.vocab[curie] ]
 
         return result
-
+    '''
     def get_translations (self, thing, object_type):
         """ 
         A Thing is a node with an identifier and a concept. The identifier could really be a number, an IRI, a curie, a proper noun, etc.
@@ -256,7 +261,6 @@ class Rosetta:
         for t in translations:
             logger.debug ("%s", t)
         return translations
-
     def get_transitions0 (self, source, target):
         """ Consulting the type graph, ask for paths between the source and destination types. 
         Turn those paths into trasitions - operators to call to effect the speicifed conversions from source->target."""
@@ -299,6 +303,7 @@ class Rosetta:
         except KeyError:
             pass
         return transitions
+    '''
 
     def to_curie (self, text):
         return self.to_curie_map.get (text, None)
@@ -314,7 +319,7 @@ class Rosetta:
             last = pieces[-1:][0]
             curie = last.upper ()
         return curie
-    
+    '''
     def get_transitions (self, source, target):
         return self.type_graph.get_transitions (
             self.to_curie (source),
@@ -345,10 +350,11 @@ class Rosetta:
                 logger.debug ("  > from[{0}]: {1}".format (source, p[1:]))
         except Exception as e:
             logger.debug (traceback.format_exc ().split ("\n")[-2:-1])
-
+    '''
     def get_ops (self, names):
-        return operator.attrgetter(names)(self.core) if isinstance(names,str) else [ operator.attrgetter(n)(self.core) for n in names ]
-        
+        return operator.attrgetter(names)(self.core) if isinstance(names,str) else [
+            operator.attrgetter(n)(self.core) for n in names ]
+    '''
     def translate (self, thing, source, target):
         """ Given a set of translation requests (go from A->B), get transitions (actual operators to execute A->B).
         Prime the response stack with the input node and a null edge - to be discarded before returning.
@@ -425,12 +431,12 @@ class Rosetta:
         seen = set()
         seen_add = seen.add
         return [ x for x in seq if not (x[1].identifier in seen or seen_add(x[1].identifier)) ]
-    
+    '''
     def log_debug (self, text, cycle=0, if_empty=False):
         if cycle < 3:
             if (text and len(text) > 0) or if_empty:
                 logger.debug ("{}".format (text))
-
+    '''
     def translate_levels (self, node, levels):
         results = []
         last = [ (None, node) ]
@@ -444,7 +450,7 @@ class Rosetta:
             last = new_last
             results += last
         return results
-
+    
     def graph0 (self, next_nodes, query):
         program = self.type_graph.get_transitions (query)
         print ("program: {}".format (program))
@@ -483,7 +489,7 @@ class Rosetta:
                         traceback.print_exc()
                         logger.error ("Error invokign> {0}".format (log_text))        
         return linked_result
-
+    '''
     def graph (self, next_nodes, query):
         programs = self.type_graph.get_transitions (query)
         result = []
@@ -539,12 +545,12 @@ class Rosetta:
                 """MATCH (a{name:"NAME.DISEASE"}),(b:GeneticCondition), p = allShortestPaths((a)-[*]->(b)) 
                 WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
                 RETURN p""")
-
-            '''
+            blackboard += self.graph (
+                [ ( None, KNode('NAME.DISEASE:{0}'.format (disease), 'D') ) ],
+                query=\
                 """MATCH (a{name:"NAME.DISEASE"}),(b:Gene), p = allShortestPaths((a)-[*]->(b)) 
                 WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
                 RETURN p""")
-            '''
         if drug:
             blackboard += self.graph (
                 [ ( None, KNode('NAME.DRUG:{0}'.format (drug), node_types.NAME_DRUG) ) ],
@@ -588,11 +594,14 @@ if __name__ == "__main__":
     sys.exit (0)
     '''
     parser = argparse.ArgumentParser(description='Rosetta.')
+    parser.add_argument('--delete-type-graph', help='Delete the graph of types and semantic transitions between them.', action="store_true", default=False)
     parser.add_argument('--initialize-type-graph', help='Build the graph of types and semantic transitions between them.', action="store_true", default=False)
     parser.add_argument('-d', '--disease', help='A disease to analyze.', default=None)
     parser.add_argument('-s', '--drug', help='A drug to analyze.', default=None)
     args = parser.parse_args()
     
-    rosetta = Rosetta (init_db=args.initialize_type_graph)
-    blackboard = Rosetta.clinical_outcome_pathway_app (drug=args.drug, disease=args.disease)
+    rosetta = Rosetta (init_db=args.initialize_type_graph,
+                       delete_type_graph=args.delete_type_graph)
+    blackboard = Rosetta.clinical_outcome_pathway_app (drug=args.drug,
+                                                       disease=args.disease)
     print (blackboard)
