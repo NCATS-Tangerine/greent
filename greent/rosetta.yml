@@ -108,6 +108,14 @@
     CL:
       link: bio_process_cell_type
       op: quickgo.go_term_xontology_relationships
+  HP:
+    UBERON:
+      link: phenotype_anatomy
+      op: uberongraph.get_anatomy_by_phenotype_graph
+  CL:
+    UBERON:
+      link: cell_anatomy
+      op: uberongraph.get_anatomy_by_cell_graph
 
 # Locally defined curies.
 '@vocab':
