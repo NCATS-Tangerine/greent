@@ -26,22 +26,19 @@ class GO(Service):
         """Return the label for an identifier"""
         return self.ont.label(identifier)
 
-    def has_ancestor(self,identifier, terms):
+    def has_ancestor(self,identifier, term):
         """Determine whether a term has a particular ancestor"""
         #TODO: The return signature is funky, fix it.
         ancestors = self.ont.ancestors(identifier)
-        for term in terms:
-            if term in ancestors:
-                return True
-        return False
+        return term in ancestors
 
     def is_cellular_component(self,identifier):
         """Checks go to find whether the subject is a cellular component"""
-        return self.has_ancestor(obj, CELLULAR_COMPONENT)
+        return self.has_ancestor(identifier, CELLULAR_COMPONENT)
     def is_biological_process(self,identifier):
         """Checks go to find whether the subject is a cellular component"""
-        return self.has_ancestor(obj, BIOLOGICAL_PROCESS)
+        return self.has_ancestor(identifier, BIOLOGICAL_PROCESS)
     def is_molecular_function(self,identifier):
         """Checks go to find whether the subject is a cellular component"""
-        return self.has_ancestor(obj, MOLECULAR_FUNCTION)
+        return self.has_ancestor(identifier, MOLECULAR_FUNCTION)
 

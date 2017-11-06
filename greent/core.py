@@ -13,6 +13,7 @@ from greent.cmaq import CMAQ
 from greent.config import Config
 from greent.disease_ont import DiseaseOntology
 from greent.endotype import Endotype
+from greent.go import GO
 from greent.hetio import HetIO
 from greent.hgnc import HGNC
 from greent.oxo import OXO
