@@ -104,6 +104,9 @@
     GO.MOLECULAR_FUNCTION:
       link: molecular_function
       op: biolink.get_gene_function
+    GO.BIOLOGICAL_PROCESS:
+      link: molecular_function
+      op: biolink.get_gene_function
   GO.BIOLOGICAL_PROCESS:
     CL:
       link: bio_process_cell_type
