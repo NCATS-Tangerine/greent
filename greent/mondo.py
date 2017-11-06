@@ -48,6 +48,11 @@ class Mondo(Service):
                     doids.append( xref_id )
         return doids
 
+    def get_label(self,identifier):
+        """Return the label for an identifier"""
+        obj_ids = self.get_mondo_id(identifier)
+        return self.ont.label(obj_ids[0])
+
     def get_mondo_id(self,obj_id):
         """Given an id, find the main key(s) that mondo uses for the id"""
         if self.ont.has_node(obj_id):

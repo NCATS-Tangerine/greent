@@ -14,6 +14,7 @@ from greent.config import Config
 from greent.disease_ont import DiseaseOntology
 from greent.endotype import Endotype
 from greent.hetio import HetIO
+from greent.hgnc import HGNC
 from greent.oxo import OXO
 from greent.mondo import Mondo
 from greent.pharos import Pharos
@@ -53,6 +54,7 @@ class GreenT:
         self.translator_registry = TranslatorRegistry (self.service_context)
         self.quickgo = QuickGo (self.service_context)
         self.translator = Translator (core=self)
+        self.hgnc = HGNC(self.service_context)
 
     # Exposure API
     def get_exposure_scores (self, exposure_type, start_date, end_date, exposure_point):
