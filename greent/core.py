@@ -50,6 +50,7 @@ class GreenT:
         self.hetio = HetIO (self.service_context)
         self.biolink = Biolink (self.service_context)
         self.mondo = Mondo(self.service_context)
+        self.go = GO(self.service_context)
         self.tkba = TranslatorKnowledgeBeaconAggregator (self.service_context)
         self.translator_registry = TranslatorRegistry (self.service_context)
         self.quickgo = QuickGo (self.service_context)

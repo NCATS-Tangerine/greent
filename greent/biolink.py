@@ -40,6 +40,8 @@ class Biolink(Service):
                 KNode(obj.replace ('GO:','GO.MOLECULAR_FUNCTION:'), node_types.FUNCTION)
             ) for obj in response['objects']
         ]
+    def get_gene_process ( self, gene):
+        pass
 
     def gene_get_genetic_condition(self, gene):
         """Given a gene specified as an HGNC curie, return associated genetic conditions.
