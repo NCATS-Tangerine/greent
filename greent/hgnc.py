@@ -29,7 +29,7 @@ class HGNC(Service):
         if node.node_type != node_types.GENE:
             raise ValueError('Node must be a gene')
         identifier_parts = node.identifier.split(':')
-        if not identifier_parts[0] == 'NCBIGENE':
+        if not identifier_parts[0].upper() == 'NCBIGENE':
             raise ValueError('Node must represent an NCBIGENE identifier.')
         hgnc_id = identifier_parts[1]
         headers = {'Accept':'application/json'}
