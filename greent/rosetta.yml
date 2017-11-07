@@ -47,6 +47,9 @@
     DRUGBANK:
       link: name_to_id
       op:   tkba.name_to_drugbank
+    PUBCHEM:
+      link: drugname_to_pubchem
+      op:   chembio.drugname_to_pubchem
   DOID:
     MESH.DISEASE:
       link: synonym
@@ -77,10 +80,14 @@
     DOID:
       link: gene_to_disease
       op:   hetio.gene_to_disease
-  DRUGBANK:
-    UNIPROT:
+  PUBCHEM:
+    NCBIGENE:
       link: targets
-      op:   chembio.graph_drugbank_to_uniprot
+      op:   chembio.graph_pubchem_to_ncbigene
+#  DRUGBANK:
+#    UNIPROT:
+#      link: targets
+#      op:   chembio.graph_drugbank_to_uniprot
   MESH:
     ROOT:
       op: oxo.mesh_to_other
