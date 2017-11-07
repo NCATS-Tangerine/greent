@@ -33,6 +33,10 @@ class Biolink(Service):
             edge = KEdge( 'biolink', 'gene_get_disease', props )
             edge_nodes.append( (edge , obj ) )
         return edge_nodes
+    def disease_get_phenotype(self,disease):
+        url = "{0}/bioentity/disease/{1}/phenotypes/".format (self.url, disease.identifier )
+        response = requests.get (url).json ()
+        return [ (a['object']['id'] , a['object']['label']) for a in response['associations'] ]
     def gene_get_go(self,gene):
         #this function is very finicky.  gene must be in uniprotkb, and the curie prefix must be correctly capitalized
         url = "{0}/bioentity/gene/UniProtKB:{1}/function/".format (self.url, Text.un_curie(gene.identifier) )
@@ -92,8 +96,15 @@ def test_go():
     for ke, kn in results:
         print(ke, kn)
 
+def test_phenotypes():
+    asthma = KNode('DOID:2841', node_types.DISEASE)
+    b = Biolink (ServiceContext.create_context ())
+    results=b.disease_get_phenotype(asthma)
+    for ke, kn in results:
+        print(ke, kn)
+
 if __name__ == '__main__':
-    test_go()
+    test_phenotypes()
     #test_output()
     #b = Biolink (ServiceContext.create_context ())
 #    print (b.get_gene_function (KNode('UniProtKB:P10721', 'G')))
