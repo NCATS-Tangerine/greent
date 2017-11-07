@@ -49,7 +49,7 @@
       op:   tkba.name_to_drugbank
     PUBCHEM:
       link: drugname_to_pubchem
-      op:   chembio.drugname_to_pubchem
+      op:   chembio.graph_drugname_to_pubchem
   DOID:
     MESH.DISEASE:
       link: synonym
