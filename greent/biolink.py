@@ -34,7 +34,8 @@ class Biolink(Service):
             edge_nodes.append( (edge , obj ) )
         return edge_nodes
     def gene_get_go(self,gene):
-        url = "{0}/bioentity/gene/{1}/function/".format (self.url, gene.identifier.strip ())
+        #this function is very finicky.  gene must be in uniprotkb, and the curie prefix must be correctly capitalized
+        url = "{0}/bioentity/gene/UniProtKB:{1}/function/".format (self.url, Text.un_curie(gene.identifier) )
         response = requests.get (url).json ()
         return [ (a['object']['id'] , a['object']['label']) for a in response['associations'] ]
     def gene_get_function (self, gene):
