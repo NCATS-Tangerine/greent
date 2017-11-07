@@ -47,6 +47,9 @@
     DRUGBANK:
       link: name_to_id
       op:   tkba.name_to_drugbank
+    PUBCHEM:
+      link: drugname_to_pubchem
+      op:   chembio.graph_drugname_to_pubchem
   DOID:
     MESH.DISEASE:
       link: synonym
@@ -60,6 +63,9 @@
     ORPHANET.GENETIC_CONDITION:
       link: genetic_condition
       op:   mondo.doid_get_genetic_condition
+    HP:
+      link: disease_to_phenotype
+      op:   biolink.disease_get_phenotype
   HGNC:
     DOID:
       link: gene_to_disease
@@ -77,10 +83,18 @@
     DOID:
       link: gene_to_disease
       op:   hetio.gene_to_disease
-  DRUGBANK:
-    UNIPROT:
+  PUBCHEM:
+    NCBIGENE:
       link: targets
-      op:   chembio.graph_drugbank_to_uniprot
+      op:   chembio.graph_pubchem_to_ncbigene
+#  DRUGBANK:
+#    UNIPROT:
+#      link: targets
+#      op:   chembio.graph_drugbank_to_uniprot
+  NCBIGENE:
+    UNIPROTKB:
+      link: synonym
+      op:   hgnc.ncbigene_to_uniprotkb
   MESH:
     ROOT:
       op: oxo.mesh_to_other
@@ -103,11 +117,22 @@
   UNIPROTKB:
     GO.MOLECULAR_FUNCTION:
       link: molecular_function
-      op: biolink.get_gene_function
+      op: biolink.gene_get_function
+    GO.BIOLOGICAL_PROCESS:
+      link: biological_process
+      op: biolink.gene_get_process
   GO.BIOLOGICAL_PROCESS:
     CL:
       link: bio_process_cell_type
       op: quickgo.go_term_xontology_relationships
+  HP:
+    UBERON:
+      link: phenotype_anatomy
+      op: uberongraph.get_anatomy_by_phenotype_graph
+  CL:
+    UBERON:
+      link: cell_anatomy
+      op: uberongraph.get_anatomy_by_cell_graph
 
 # Locally defined curies.
 '@vocab':
@@ -125,3 +150,4 @@
   PHAROS:                     http://pharos.nih.gov/identifier/
   ROOT:                       http://identifiers.org/doi
   UNIPROTKB:                  http://identifiers.org/uniprotkb
+  PUBCHEM:                    http://identifiers.org/pubchem/drug/id

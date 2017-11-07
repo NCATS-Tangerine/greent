@@ -60,7 +60,7 @@ class TypeGraph(Service):
         for concept, instances in self.concept_metadata.items ():
             self.concepts[concept] = self.db.labels.create (concept)
             for instance in instances:
-                logger.debug ("Registering conept {} for instance {}".format (
+                logger.debug ("Registering concept {} for instance {}".format (
                     concept, instance))
                 self.type_to_concept [instance] = concept
     def find_or_create (self, name, iri=None):

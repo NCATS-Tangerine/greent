@@ -50,6 +50,10 @@ class Text:
     def path_last (text):
         return text.split ('/')[-1:][0] if '/' in text else text
 
+    @staticmethod
+    def obo_to_curie (text):
+        return ':'.join( text.split('/')[-1].split('_') )
+
 class Resource:
     @staticmethod
     def get_resource_path(resource_name):

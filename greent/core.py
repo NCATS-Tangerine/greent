@@ -13,6 +13,7 @@ from greent.cmaq import CMAQ
 from greent.config import Config
 from greent.disease_ont import DiseaseOntology
 from greent.endotype import Endotype
+from greent.go import GO
 from greent.hetio import HetIO
 from greent.hgnc import HGNC
 from greent.oxo import OXO
@@ -25,6 +26,7 @@ from greent.translator import Translator
 from greent.transreg import TranslatorRegistry
 from greent.triplestore import TripleStore
 from greent.util import LoggingUtil
+from greent.uberongraph import UberonGraphKS
 from pprint import pprint
 
 logger = LoggingUtil.init_logging (__file__)
@@ -50,11 +52,13 @@ class GreenT:
         self.hetio = HetIO (self.service_context)
         self.biolink = Biolink (self.service_context)
         self.mondo = Mondo(self.service_context)
+        self.go = GO(self.service_context)
         self.tkba = TranslatorKnowledgeBeaconAggregator (self.service_context)
         self.translator_registry = TranslatorRegistry (self.service_context)
         self.quickgo = QuickGo (self.service_context)
         self.translator = Translator (core=self)
         self.hgnc = HGNC(self.service_context)
+        self.uberongraph = UberonGraphKS(self.service_context)
 
     # Exposure API
     def get_exposure_scores (self, exposure_type, start_date, end_date, exposure_point):

@@ -128,6 +128,23 @@ class ChemBioKS(Service):
             "diseaseId"     : b['diseaseID'].value
         }, results.bindings))
 
+
+    def pubchem_to_ncbigene (self, pubchemID):
+        result = self.triplestore.query_template (
+            inputs = { "pubchemID" : "pubchem:{}".format(pubchemID) },
+            outputs = [ 'NCBIGene' ],
+            template_text="""
+            prefix pubchem:        <http://chem2bio2rdf.org/pubchem/resource/pubchem_compound/>
+            prefix ctd:            <http://chem2bio2rdf.org/ctd/resource/>
+            select distinct ?NCBIGene where {
+               ?ctdChemGene ctd:cid                     $pubchemID;
+                            ctd:geneid                  ?NCBIGene;
+            }""")
+        return list(map(lambda r : {
+            'NCBIGene'   : r['NCBIGene'],
+        }, result))
+
+
     def drug_name_to_gene_symbol (self, drug_name):
         result = self.triplestore.query_template (
             inputs = { "drugName" : drug_name },
@@ -149,6 +166,23 @@ class ChemBioKS(Service):
             'pmids'        : r.get('pmids', None),
             'drugID'       : r['drugID']
         }, result))
+
+    def drugname_to_pubchem(self, drug_name):
+        result = self.triplestore.query_template (
+            inputs = { "drugName" : drug_name },
+            outputs = [ 'pubChemID' ],
+            template_text="""
+            prefix db_resource:    <http://chem2bio2rdf.org/drugbank/resource/>
+            select distinct ?pubChemID where {
+               values ( ?drugName ) { ( "$drugName" ) }
+               ?drugID      db_resource:CID                ?pubChemID ;
+  	                    db_resource:Generic_Name       ?drugGenericName .
+               filter regex(lcase(str(?drugGenericName)), lcase(?drugName))
+            }""")
+        return list(map(lambda r : {
+            'drugID'       : r['pubChemID']
+        }, result))
+ 
 
     def gene_symbol_to_pathway (self, uniprot_symbol):
         return self.triplestore.query_template (
@@ -358,3 +392,34 @@ class ChemBioKS(Service):
             }""")
         return [ ( self.get_edge (r, predicate='targets'),
                    KNode ("UNIPROT:{0}".format (r['uniprotGeneID'].split('/')[-1:][0]), node_types.GENE) ) for r in response ]
+
+    def graph_drugname_to_pubchem( self, drugname_node):
+        drug_name = Text.un_curie (drugname_node.identifier)
+        response = self.drugname_to_pubchem(drug_name)
+        return [ (self.get_edge( r, predicate='drugname_to_pubchem'), \
+                  KNode( "PUBCHEM:{}".format( r['drugID'].split('/')[-1]), node_types.DRUG)) for r in response  ]
+
+    def graph_pubchem_to_ncbigene( self, pubchem_node):
+        pubchemid = Text.un_curie (pubchem_node.identifier)
+        response = self.pubchem_to_ncbigene(pubchemid)
+        return [ (self.get_edge( r, predicate='pubchem_to_ncbigene'), \
+                  KNode( "NCBIGene:{}".format( r['NCBIGene']), node_types.GENE) ) for r in response  ]
+        
+def test():
+    from greent.service import ServiceContext
+    cb = ChemBioKS(ServiceContext.create_context())
+    print( cb.drugname_to_pubchem('imatinib') )
+    input_node = KNode("DRUG_NAME:imatinib", node_types.DRUG_NAME)
+    print( cb.graph_drugname_to_pubchem( input_node ) )
+
+def test2():
+    from greent.service import ServiceContext
+    cb = ChemBioKS(ServiceContext.create_context())
+    print( cb.pubchem_to_ncbigene(5291) )
+    input_node = KNode("DRUG_NAME:imatinib", node_types.DRUG_NAME)
+    drug_node = cb.graph_drugname_to_pubchem(input_node)[0][1]
+    ncbi_nodes = cb.graph_pubchem_to_ncbigene( drug_node )
+    print(ncbi_nodes)
+
+if __name__ == '__main__':
+    test2()
