@@ -14,7 +14,7 @@ from greent.util import DataStructure
 from greent.service import Service
 from greent.service import ServiceContext
 from pprint import pformat, pprint
-from neo4jrestclient.client import GraphDatabase#,Relationship,Node
+from neo4jrestclient.client import GraphDatabase
 
 logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG)
 
@@ -46,12 +46,6 @@ class TypeGraph(Service):
     def delete_all (self):
         """ Delete things in the graph. """
         try:
-            '''
-            tx = self.db.transaction (for_query=True)
-            tx.append ("MATCH (n) DETACH DELETE n")
-            results = tx.execute ()
-            results = tx.commit()
-            '''
             with self.db.transaction (for_query=True, commit=True, using_globals=False) as transaction:
                 transaction.query ("MATCH (n) DETACH DELETE n")
                 results = transaction.query ("MATCH (n) RETURN n")
@@ -69,22 +63,6 @@ class TypeGraph(Service):
                 logger.debug ("Registering conept {} for instance {}".format (
                     concept, instance))
                 self.type_to_concept [instance] = concept
-    '''
-    def get_concept (self, item):
-        return self.type_to_concept.get (item)
-    def get_relationships (self, a, b):
-        q = "MATCH (a:Type { name:'%s' })-[r]-(b:Type { name:'%s' }) return r".format (a, b)
-        return self.db.query(q, returns=(client.Node, str, client.Relationship), data_contents=True)
-    def set_node_property (self, node_name, key, value):
-        node = self.db.node (name=node_name)
-        node.set (key, value)
-    def get_shortest_paths (self, a, b):
-        return self.db.query (
-            "MATCH (a:Type { name: '%s' }),(b:Type { name : '%s' }), p = allShortestPaths((a)-[*]-(b)) RETURN p" % (a,b),
-            data_contents=True)
-    def get (self, url):
-        return requests.get(url).json ()
-    '''
     def find_or_create (self, name, iri=None):
         """ Find a type node, creating it if necessary. """
         n = self.types.get (name=name)
