@@ -63,6 +63,9 @@
     ORPHANET.GENETIC_CONDITION:
       link: genetic_condition
       op:   mondo.doid_get_genetic_condition
+    HP:
+      link: disease_to_phenotype
+      op:   biolink.disease_to_phenotype
   HGNC:
     DOID:
       link: gene_to_disease
