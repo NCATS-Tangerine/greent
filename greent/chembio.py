@@ -136,7 +136,7 @@ class ChemBioKS(Service):
             template_text="""
             prefix pubchem:        <http://chem2bio2rdf.org/pubchem/resource/pubchem_compound/>
             prefix ctd:            <http://chem2bio2rdf.org/ctd/resource/>
-            select ?NCBIGene where {
+            select distinct ?NCBIGene where {
                ?ctdChemGene ctd:cid                     $pubchemID;
                             ctd:geneid                  ?NCBIGene;
             }""")
@@ -173,7 +173,7 @@ class ChemBioKS(Service):
             outputs = [ 'pubChemID' ],
             template_text="""
             prefix db_resource:    <http://chem2bio2rdf.org/drugbank/resource/>
-            select ?pubChemID where {
+            select distinct ?pubChemID where {
                values ( ?drugName ) { ( "$drugName" ) }
                ?drugID      db_resource:CID                ?pubChemID ;
   	                    db_resource:Generic_Name       ?drugGenericName .
