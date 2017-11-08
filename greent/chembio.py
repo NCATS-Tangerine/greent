@@ -148,7 +148,7 @@ class ChemBioKS(Service):
             'NCBIGene'   : r['NCBIGene'],
             'meshID'     : r['meshID'],
             'interaction': r['interaction'],
-            'interactionTypes': r['interactionTypes']
+            'interactionTypes': r['interactionTypes'],
             'pubmedids'  : r['pubmedids']
         }, result))
 
