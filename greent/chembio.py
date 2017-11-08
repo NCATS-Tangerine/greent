@@ -400,7 +400,7 @@ class ChemBioKS(Service):
         drug_name = Text.un_curie (drugname_node.identifier)
         response = self.drugname_to_pubchem(drug_name)
         return [ (self.get_edge( r, predicate='drugname_to_pubchem'), \
-                  KNode( "PUBCHEM:{}".format( r['drugID'].split('/')[-1]), node_types.DRUG)) for r in response  ]
+                  KNode( "PUBCHEM:{}".format( r['drugID'].split('/')[-1]), node_types.DRUG), label=r['drugName']) for r in response  ]
 
     def graph_pubchem_to_ncbigene( self, pubchem_node):
         pubchemid = Text.un_curie (pubchem_node.identifier)
