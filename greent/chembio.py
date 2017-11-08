@@ -422,6 +422,7 @@ class ChemBioKS(Service):
         response = self.pubchem_to_ncbigene(pubchemid)
         retvals = []
         for r in response:
+            props = {}
             props['interaction'] = r['interaction']
             props['interactionTypes'] = r['interactionTypes']
             props['publications'] = r['pubmedids'].split('|')
