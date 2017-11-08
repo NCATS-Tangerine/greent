@@ -23,7 +23,7 @@ class QuickGo(Service):
             if 'xRelations' in r:
                 for xrel in r['xRelations']:
                     if xrel['id'].startswith('CL:'):
-                        results.append( ( self.get_edge (r, predicate=xrel['relation']), KNode (xrel['id'], node_types.CELL)) )
+                        results.append( ( self.get_edge (r, predicate=xrel['relation']), KNode (xrel['id'], node_types.CELL, label = xrel['term']) ))
         return results
 
 def test ():
