@@ -170,17 +170,18 @@ class ChemBioKS(Service):
     def drugname_to_pubchem(self, drug_name):
         result = self.triplestore.query_template (
             inputs = { "drugName" : drug_name },
-            outputs = [ 'pubChemID' ],
+            outputs = [ 'pubChemID', 'drugGenericName' ],
             template_text="""
             prefix db_resource:    <http://chem2bio2rdf.org/drugbank/resource/>
-            select distinct ?pubChemID where {
+            select distinct ?pubChemID ?drugGenericName where {
                values ( ?drugName ) { ( "$drugName" ) }
                ?drugID      db_resource:CID                ?pubChemID ;
   	                    db_resource:Generic_Name       ?drugGenericName .
                filter regex(lcase(str(?drugGenericName)), lcase(?drugName))
             }""")
         return list(map(lambda r : {
-            'drugID'       : r['pubChemID']
+            'drugID'       : r['pubChemID'],
+            'drugName'     : r['drugGenericName']
         }, result))
  
 
@@ -278,7 +279,9 @@ class ChemBioKS(Service):
         results = []
         for r in response:
             edge = self.get_edge (r, predicate="drugname")
-            node = KNode ("DRUGBANK:{0}".format (Text.path_last (r['drugID'])), node_types.DRUG)
+            node = KNode ("DRUGBANK:{0}".format (Text.path_last (r['drugID'])), \
+                          node_types.DRUG, \
+                          label=r['drugName'])
             results.append ( (edge, node) )
         return results
 
