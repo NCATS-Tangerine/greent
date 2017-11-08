@@ -420,11 +420,14 @@ class ChemBioKS(Service):
         #The compound mesh coming back from here is very out of date.  Ignore.
         pubchemid = Text.un_curie (pubchem_node.identifier)
         response = self.pubchem_to_ncbigene(pubchemid)
-        props['interaction'] = r['interaction']
-        props['interactionTypes'] = r['interactionTypes']
-        props['publications'] = r['pubmedids'].split('|')
-        return [ (self.get_edge( props, predicate='pubchem_to_ncbigene'), \
-                  KNode( "NCBIGene:{}".format( r['NCBIGene']), node_types.GENE) ) for r in response  ]
+        retvals = []
+        for r in response:
+            props['interaction'] = r['interaction']
+            props['interactionTypes'] = r['interactionTypes']
+            props['publications'] = r['pubmedids'].split('|')
+            retvals.append( (self.get_edge( props, predicate='pubchem_to_ncbigene'),
+                             KNode( "NCBIGene:{}".format( r['NCBIGene']), node_types.GENE) ) )
+        return retvals
         
 def test():
     from greent.service import ServiceContext
