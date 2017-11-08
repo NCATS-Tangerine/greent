@@ -132,16 +132,24 @@ class ChemBioKS(Service):
     def pubchem_to_ncbigene (self, pubchemID):
         result = self.triplestore.query_template (
             inputs = { "pubchemID" : "pubchem:{}".format(pubchemID) },
-            outputs = [ 'NCBIGene' ],
+            outputs = [ 'NCBIGene', 'meshID', 'interaction', 'interactionTypes', 'pubmedids' ],
             template_text="""
             prefix pubchem:        <http://chem2bio2rdf.org/pubchem/resource/pubchem_compound/>
             prefix ctd:            <http://chem2bio2rdf.org/ctd/resource/>
-            select distinct ?NCBIGene where {
-               ?ctdChemGene ctd:cid                     $pubchemID;
-                            ctd:geneid                  ?NCBIGene;
+	    select distinct ?NCBIGene ?meshID ?interaction ?interactionTypes ?pubmedids where {
+  		?ctdChemGene 	ctd:cid                     $pubchemID;
+               			ctd:chemicalid              ?meshID ;
+                                ctd:geneid                  ?NCBIGene;
+                                ctd:interaction             ?interaction;
+                                ctd:interactiontypes        ?interactionTypes;
+                                ctd:pubmedids               ?pubmedids.
             }""")
         return list(map(lambda r : {
             'NCBIGene'   : r['NCBIGene'],
+            'meshID'     : r['meshID'],
+            'interaction': r['interaction'],
+            'interactionTypes': r['interactionTypes']
+            'pubmedids'  : r['pubmedids']
         }, result))
 
 
@@ -402,10 +410,20 @@ class ChemBioKS(Service):
         return [ (self.get_edge( r, predicate='drugname_to_pubchem'), \
                   KNode( "PUBCHEM:{}".format( r['drugID'].split('/')[-1]), node_types.DRUG, label=r['drugName'])) for r in response  ]
 
+
+    #       'NCBIGene'   : r['NCBIGene'],
+    #        'meshID'     : r['meshID'],
+    #        'interaction': r['interaction'],
+    #        'interactionTypes': r['interactionTypes']
+    #        'pubmedids'  : r['pubmedids']
     def graph_pubchem_to_ncbigene( self, pubchem_node):
+        #The compound mesh coming back from here is very out of date.  Ignore.
         pubchemid = Text.un_curie (pubchem_node.identifier)
         response = self.pubchem_to_ncbigene(pubchemid)
-        return [ (self.get_edge( r, predicate='pubchem_to_ncbigene'), \
+        props['interaction'] = r['interaction']
+        props['interactionTypes'] = r['interactionTypes']
+        props['publications'] = r['pubmedids'].split('|')
+        return [ (self.get_edge( props, predicate='pubchem_to_ncbigene'), \
                   KNode( "NCBIGene:{}".format( r['NCBIGene']), node_types.GENE) ) for r in response  ]
         
 def test():
