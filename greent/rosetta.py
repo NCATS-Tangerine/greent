@@ -23,7 +23,7 @@ from greent.graph import TypeGraph
 from networkx.exception import NetworkXNoPath
 from networkx.exception import NetworkXError
 from pprint import pformat,pprint
-from reasoner.graph_components import KNode,KEdge,elements_to_json
+from greent.graph_components import KNode,KEdge,elements_to_json
 from networkx.readwrite import json_graph
 from neo4jrestclient.client import GraphDatabase,Relationship,Node
 
@@ -271,7 +271,7 @@ class Rosetta:
             
     def clinical_outcome_pathway (self, drug=None, disease=None):
         blackboard = []
-        from reasoner import node_types
+        from greent import node_types
         if disease:
             blackboard += self.graph (
                 [ ( None, KNode('NAME.DISEASE:{0}'.format (disease), node_types.NAME_DISEASE) ) ],

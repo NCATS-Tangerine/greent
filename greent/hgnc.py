@@ -1,7 +1,7 @@
 import json
 import requests
-from reasoner import node_types
-from reasoner.graph_components import KNode, KEdge
+from greent import node_types
+from greent.graph_components import KNode, KEdge
 from greent.service import Service
 
 class HGNC(Service):

@@ -6,8 +6,8 @@ from greent.service import Service
 from greent.triplestore import TripleStore
 from greent.util import LoggingUtil
 from greent.util import Text
-from reasoner.graph_components import KEdge, KNode
-from reasoner import node_types
+from greent.graph_components import KEdge, KNode
+from greent import node_types
 from pprint import pprint
 from cachier import cachier
 import datetime

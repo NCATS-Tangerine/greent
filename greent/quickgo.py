@@ -5,8 +5,8 @@ import urllib
 from greent.service import Service
 from greent.service import ServiceContext
 from greent.util import Text
-from reasoner.graph_components import KNode,KEdge
-from reasoner import node_types
+from greent.graph_components import KNode,KEdge
+from greent import node_types
 
 class QuickGo(Service):
 

@@ -2,7 +2,7 @@ import pronto
 import requests
 import os
 from collections import defaultdict
-from reasoner.graph_components import KEdge,KNode
+from greent.graph_components import KEdge,KNode
 from service import Service
 from service import ServiceContext
 

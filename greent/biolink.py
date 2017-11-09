@@ -6,8 +6,8 @@ from greent.service import ServiceContext
 from greent.mondo import Mondo
 from greent.go import GO
 from greent.util import Text
-from reasoner.graph_components import KNode,KEdge
-from reasoner import node_types
+from greent.graph_components import KNode,KEdge
+from greent import node_types
 import logging
 
 class Biolink(Service):

@@ -5,8 +5,8 @@ from greent.mesh import MeSH
 from greent.neo4j import Neo4JREST
 from greent.util import LoggingUtil
 from pprint import pprint
-from reasoner.graph_components import KNode, KEdge
-from reasoner import node_types
+from greent.graph_components import KNode, KEdge
+from greent import node_types
 
 logger = LoggingUtil.init_logging (__file__)
 
