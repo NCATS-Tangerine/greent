@@ -1,11 +1,14 @@
 from functools import singledispatch
 from greent.node_types import node_types
+from greent.util import Text
 
 class KNode():
     """Used as the node object in KnowledgeGraph.
     
     Instances of this class can be passed to WorldGraph/greent as query subjects/objects."""
     def __init__(self,identifier,node_type,label=None):
+        if identifier.startswith('http'):
+            identifier = Text.obo_to_curie(identifier)
         self.identifier = identifier
         self.label = label
         if node_type not in node_types:
