@@ -57,7 +57,6 @@ class Biolink(Service):
             node.node_type = node_types.FUNCTION
         return process_results
     def gene_get_process ( self, gene):
-        print (gene.identifier)
         edges_nodes = self.gene_get_go( gene )
         process_results = list( filter( lambda x: self.go.is_biological_process(x[1].identifier), edges_nodes ) )
         for edge, node in process_results:
