@@ -1,4 +1,5 @@
 import json
+import os
 import unittest
 from collections import defaultdict
 from greent.mesh import MeSH
@@ -14,6 +15,18 @@ class Chemotext(Neo4JREST):
     def __init__(self, context): #url="http://chemotext.mml.unc.edu:7474"):
         super (Chemotext, self).__init__("chemotext", context)
         self.mesh = MeSH ()
+        self.cache = os.path.join(os.path.dirname(__file__),'chemotext.words.txt')
+        if not os.path.exists(self.cache):
+            build_synonym_cache(self)
+        self.load_synonym_cache()
+
+    def load_synonym_cache( self ):
+        self.term_map = {}
+        with open(self.cache,'r') as infile:
+            h = infile.readline()
+            for line in infile:
+                x = line.strip().split('\t')
+                self.term_map[x[0]] = x[1]
         
     def term_to_term (self, A, of_type=None, limit=100):
         response = self.query (
@@ -55,7 +68,38 @@ class Chemotext(Neo4JREST):
         for r in drug_names:
             result.append ( ( self.get_edge (props=r), KNode("DRUGBANK.NAME:{0}".format (r['name']), node_types.NAME_DRUG) ) )
         return result
+
+    def get_chemotext_term(self, input_term):
+        qterm = input_term.upper()
+        if qterm not in self.term_map:
+            return None
+        return self.term_map[qterm]
     
+
+def build_synonym_cache(ctext = None):
+    if ctext is None:
+        from greent.service import ServiceContext
+        ctext = Chemotext(ServiceContext.create_context())
+    response = ctext.query( query="MATCH (d:Term) RETURN d")
+    with open(ctext.cache,'w') as outfile:
+        outfile.write('QUERY\tKEY\n')
+        res = response['results'][0]
+        n = 0
+        for datum in res['data']:
+            rows = datum['row']
+            for row in rows:
+                n+=1
+                rowtype = row['type']
+                meshname = row['name']
+                if 'synonyms' in row:
+                    rowsyn  = row['synonyms']
+                else:
+                    rowsyn = []
+                outfile.write('{}\t{}\n'.format(meshname.upper(), meshname))
+                for syn in rowsyn:
+                    outfile.write('{}\t{}\n'.format(syn.upper(), meshname) )
+
+
 '''
 class TestChemotext(unittest.TestCase):
 
@@ -73,5 +117,7 @@ class TestChemotext(unittest.TestCase):
         pprint (self.chemotext.term_to_term ('Asthma', of_type={'name': 'Respiratory Hypersensitivity' }))
 '''
 if __name__ == '__main__':
-    unittest.main ()
+    pass
+    #build_synonym_cache()
+    #unittest.main ()
 

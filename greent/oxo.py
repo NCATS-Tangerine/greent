@@ -7,19 +7,32 @@ class OXO(Service):
     """ Generic id translation service. Essentially a highly generic synonym finder. """
     def __init__(self, context): #url="https://www.ebi.ac.uk/spot/oxo/api/search?size=500"):
         super(OXO, self).__init__("oxo", context)
-        #self.url = url
+        self.build_valid_curie_prefixes()
+
+    def build_valid_curie_prefixes(self):
+        """Query for the current valid list of input curies"""
+        #size defaults to 40...
+        url = "https://www.ebi.ac.uk/spot/oxo/api/datasources?size=10000"
+        response = requests.get (url).json ()
+        self.curies = set()
+        for ds in response['_embedded']['datasources']:
+            self.curies.add(ds['prefix'])
+            self.curies.update( ds['alternatePrefix'] )
+
+    def is_valid_curie_prefix(self, cp):
+        return cp in self.curies
 
     def request (self, url, obj):
         return requests.post (self.url,
                               data=json.dumps (obj, indent=2),
                               headers={ "Content-Type" : "application/json" }).json ()
-    def query (self, ids):        
+    def query (self, ids, distance=2):        
         return self.request (
             url = self.url,
             obj = {
                 "ids"           : ids,
                 "mappingTarget" : [],
-                "distance"      : "2"
+                "distance"      : str(distance)
             })
     
     def mesh_to_other (self, mesh_id):
@@ -32,6 +45,17 @@ class OXO(Service):
             result = list(map(lambda v : v['curie'], others))
         return result
     
+
+def test():
+    from service import ServiceContext
+    oxo = OXO(ServiceContext.create_context())
+    r=oxo.query(['CL:0000084'])
+    import json
+    print (json.dumps(r, indent=4) )
+
+if __name__ == '__main__':
+    test()
+
 '''
 
 Reference: a conversation with OXO:
