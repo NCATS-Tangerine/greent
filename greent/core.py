@@ -41,7 +41,8 @@ class GreenT:
         service_context = self.service_context
         
         self.clinical = Clinical (service_context)
-        self.exposures = CMAQ (service_context)
+        #temporarly taken out because of http errors
+        #self.exposures = CMAQ (service_context)
         self.endotype = Endotype (service_context)
 
         self.chembio = ChemBioKS (self.service_context)

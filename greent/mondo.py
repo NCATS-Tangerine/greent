@@ -1,8 +1,8 @@
 from greent.service import Service
 from greent.service import ServiceContext
 from ontobio.ontol_factory import OntologyFactory
-from reasoner.graph_components import KNode, KEdge
-from reasoner import node_types
+from greent.graph_components import KNode, KEdge
+from greent import node_types
 from cachier import cachier
 import datetime
 

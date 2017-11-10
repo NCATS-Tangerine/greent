@@ -5,8 +5,8 @@ import urllib
 from greent.service import Service
 from greent.service import ServiceContext
 from greent.util import Text
-from reasoner.graph_components import KNode,KEdge
-from reasoner import node_types
+from greent.graph_components import KNode,KEdge
+from greent import node_types
 
 class QuickGo(Service):
 
@@ -23,7 +23,7 @@ class QuickGo(Service):
             if 'xRelations' in r:
                 for xrel in r['xRelations']:
                     if xrel['id'].startswith('CL:'):
-                        results.append( ( self.get_edge (r, predicate=xrel['relation']), KNode (xrel['id'], node_types.CELL)) )
+                        results.append( ( self.get_edge (r, predicate=xrel['relation']), KNode (xrel['id'], node_types.CELL, label = xrel['term']) ))
         return results
 
 def test ():

@@ -4,8 +4,8 @@ from pprint import pprint
 from greent.neo4j import Neo4JREST
 from greent.util import Munge
 from greent.util import Text
-from reasoner.graph_components import KEdge, KNode
-from reasoner import node_types 
+from greent.graph_components import KEdge, KNode
+from greent import node_types 
 from greent.service import ServiceContext
 
 class HetIO(Neo4JREST):

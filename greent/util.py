@@ -9,7 +9,6 @@ import os
 import yaml
 from collections import namedtuple
 from bravado.client import SwaggerClient
-from reasoner.graph_components import KNode,KEdge,elements_to_json
 from bravado.requests_client import RequestsClient
 
 class LoggingUtil(object):

@@ -6,8 +6,8 @@ from greent.service import ServiceContext
 from greent.mondo import Mondo
 from greent.go import GO
 from greent.util import Text
-from reasoner.graph_components import KNode,KEdge
-from reasoner import node_types
+from greent.graph_components import KNode,KEdge
+from greent import node_types
 import logging
 
 class Biolink(Service):
@@ -16,50 +16,54 @@ class Biolink(Service):
         super(Biolink, self).__init__("biolink", context)
         self.checker = Mondo(ServiceContext.create_context ())
         self.go = GO(ServiceContext.create_context ())
+    def process_associations(self, r, predicate, target_node_type):
+        edge_nodes = [ ]
+        for association in r['associations']:
+            pubs = []
+            if 'publications' in association and association['publications'] is not None:
+                for pub in association['publications']:
+                    #Sometimes, we get back something like "uniprotkb" instead of a PMID.  We don't want it.
+                    pubid_prefix = pub['id'][:4].upper()
+                    if pubid_prefix == 'PMID':
+                        pubs.append( pub['id'] )
+            obj = KNode(association['object']['id'], target_node_type, association['object']['label'] )
+            rel = { 'typeid': association['relation']['id'], 'label':association['relation']['label'] }
+            props = { 'publications': pubs, 'relation':rel }
+            edge = KEdge( 'biolink', predicate , props )
+            edge_nodes.append( (edge , obj ) )
+        return edge_nodes
     def gene_get_disease(self, gene_node):
         """Given a gene specified as an HGNC curie, return associated diseases. """
         ehgnc = urllib.parse.quote_plus(gene_node.identifier)
         logging.getLogger('application').debug('          biolink: %s/bioentity/gene/%s/diseases' % (self.url, ehgnc))
         r = requests.get('%s/bioentity/gene/%s/diseases' % (self.url, ehgnc)).json()
-        edge_nodes = [ ]
-        for association in r['associations']:
-            if 'publications' in association and association['publications'] is not None:
-                pubs = [ {'id': pub['id']} for pub in association['publications'] ]
-            else:
-                pubs = []
-            obj = KNode(association['object']['id'], node_types.DISEASE, association['object']['label'] )
-            rel = { 'typeid': association['relation']['id'], 'label':association['relation']['label'] }
-            props = { 'publications': pubs, 'relation':rel }
-            edge = KEdge( 'biolink', 'gene_get_disease', props )
-            edge_nodes.append( (edge , obj ) )
-        return edge_nodes
+        return self.process_associations( r, 'gene_get_disease', node_types.DISEASE )
     def disease_get_phenotype(self,disease):
         url = "{0}/bioentity/disease/{1}/phenotypes/".format (self.url, disease.identifier )
         response = requests.get (url).json ()
-        return [ ( self.get_edge(props={}, predicate='disease_to_phenotype' ),\
-                   KNode( a['object']['id'], node_types.PHENOTYPE, label=a['object']['label'] )) \
-                for a in response['associations'] ]
+        return self.process_associations( response, 'disease_get_phenotype', node_types.PHENOTYPE )
     def gene_get_go(self,gene):
         #this function is very finicky.  gene must be in uniprotkb, and the curie prefix must be correctly capitalized
         url = "{0}/bioentity/gene/UniProtKB:{1}/function/".format (self.url, Text.un_curie(gene.identifier) )
         response = requests.get (url).json ()
-        return [ (a['object']['id'] , a['object']['label']) for a in response['associations'] ]
+        #return [ (a['object']['id'] , a['object']['label']) for a in response['associations'] ]
+        return self.process_associations(response, 'gene_get_go', node_types.PROCESS)
     def gene_get_function (self, gene):
-        response = self.gene_get_go( gene )
-        return [
-            (
-                self.get_edge (props={}, predicate='molecular_function'),
-                KNode(go_id.replace ('GO:','GO.MOLECULAR_FUNCTION:'), node_types.FUNCTION, label=go_label)
-            ) for go_id, go_label in response if self.go.is_molecular_function(go_id)
-        ]
+        edges_nodes = self.gene_get_go( gene )
+        process_results = list( filter( lambda x: self.go.is_molecular_function(x[1].identifier), edges_nodes ) )
+        for edge, node in process_results:
+            edge.predicate='gene_get_molecular_function'
+            node.identifier.replace('GO:', 'GO.MOLECULAR_FUNCTION:')
+            node.node_type = node_types.FUNCTION
+        return process_results
     def gene_get_process ( self, gene):
-        response = self.gene_get_go( gene )
-        return [
-            (
-                self.get_edge (props={},  predicate='biological_process'),
-                KNode(go_id.replace ('GO:','GO.BIOLOGICAL_PROCESS:'), node_types.PROCESS, label=go_label)
-            ) for go_id, go_label in response if self.go.is_biological_process(go_id)
-        ]
+        edges_nodes = self.gene_get_go( gene )
+        process_results = list( filter( lambda x: self.go.is_biological_process(x[1].identifier), edges_nodes ) )
+        for edge, node in process_results:
+            edge.predicate='gene_get_biological_process'
+            node.identifier.replace('GO:', 'GO.BIOLOGICAL_PROCESS:')
+            node.node_type = node_types.PROCESS
+        return process_results
 
     def gene_get_genetic_condition(self, gene):
         """Given a gene specified as an HGNC curie, return associated genetic conditions.

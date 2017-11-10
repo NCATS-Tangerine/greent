@@ -6,8 +6,8 @@ from greent.service import Service
 from greent.triplestore import TripleStore
 from greent.util import LoggingUtil
 from greent.util import Text
-from reasoner.graph_components import KEdge, KNode
-from reasoner import node_types
+from greent.graph_components import KEdge, KNode
+from greent import node_types
 from pprint import pprint
 from cachier import cachier
 import datetime
@@ -132,16 +132,24 @@ class ChemBioKS(Service):
     def pubchem_to_ncbigene (self, pubchemID):
         result = self.triplestore.query_template (
             inputs = { "pubchemID" : "pubchem:{}".format(pubchemID) },
-            outputs = [ 'NCBIGene' ],
+            outputs = [ 'NCBIGene', 'meshID', 'interaction', 'interactionTypes', 'pubmedids' ],
             template_text="""
             prefix pubchem:        <http://chem2bio2rdf.org/pubchem/resource/pubchem_compound/>
             prefix ctd:            <http://chem2bio2rdf.org/ctd/resource/>
-            select distinct ?NCBIGene where {
-               ?ctdChemGene ctd:cid                     $pubchemID;
-                            ctd:geneid                  ?NCBIGene;
+	    select distinct ?NCBIGene ?meshID ?interaction ?interactionTypes ?pubmedids where {
+  		?ctdChemGene 	ctd:cid                     $pubchemID;
+               			ctd:chemicalid              ?meshID ;
+                                ctd:geneid                  ?NCBIGene;
+                                ctd:interaction             ?interaction;
+                                ctd:interactiontypes        ?interactionTypes;
+                                ctd:pubmedids               ?pubmedids.
             }""")
         return list(map(lambda r : {
             'NCBIGene'   : r['NCBIGene'],
+            'meshID'     : r['meshID'],
+            'interaction': r['interaction'],
+            'interactionTypes': r['interactionTypes'],
+            'pubmedids'  : r['pubmedids']
         }, result))
 
 
@@ -170,17 +178,18 @@ class ChemBioKS(Service):
     def drugname_to_pubchem(self, drug_name):
         result = self.triplestore.query_template (
             inputs = { "drugName" : drug_name },
-            outputs = [ 'pubChemID' ],
+            outputs = [ 'pubChemID', 'drugGenericName' ],
             template_text="""
             prefix db_resource:    <http://chem2bio2rdf.org/drugbank/resource/>
-            select distinct ?pubChemID where {
+            select distinct ?pubChemID ?drugGenericName where {
                values ( ?drugName ) { ( "$drugName" ) }
                ?drugID      db_resource:CID                ?pubChemID ;
   	                    db_resource:Generic_Name       ?drugGenericName .
                filter regex(lcase(str(?drugGenericName)), lcase(?drugName))
             }""")
         return list(map(lambda r : {
-            'drugID'       : r['pubChemID']
+            'drugID'       : r['pubChemID'],
+            'drugName'     : r['drugGenericName']
         }, result))
  
 
@@ -278,7 +287,9 @@ class ChemBioKS(Service):
         results = []
         for r in response:
             edge = self.get_edge (r, predicate="drugname")
-            node = KNode ("DRUGBANK:{0}".format (Text.path_last (r['drugID'])), node_types.DRUG)
+            node = KNode ("DRUGBANK:{0}".format (Text.path_last (r['drugID'])), \
+                          node_types.DRUG, \
+                          label=r['drugName'])
             results.append ( (edge, node) )
         return results
 
@@ -397,13 +408,27 @@ class ChemBioKS(Service):
         drug_name = Text.un_curie (drugname_node.identifier)
         response = self.drugname_to_pubchem(drug_name)
         return [ (self.get_edge( r, predicate='drugname_to_pubchem'), \
-                  KNode( "PUBCHEM:{}".format( r['drugID'].split('/')[-1]), node_types.DRUG)) for r in response  ]
+                  KNode( "PUBCHEM:{}".format( r['drugID'].split('/')[-1]), node_types.DRUG, label=r['drugName'])) for r in response  ]
 
+
+    #       'NCBIGene'   : r['NCBIGene'],
+    #        'meshID'     : r['meshID'],
+    #        'interaction': r['interaction'],
+    #        'interactionTypes': r['interactionTypes']
+    #        'pubmedids'  : r['pubmedids']
     def graph_pubchem_to_ncbigene( self, pubchem_node):
+        #The compound mesh coming back from here is very out of date.  Ignore.
         pubchemid = Text.un_curie (pubchem_node.identifier)
         response = self.pubchem_to_ncbigene(pubchemid)
-        return [ (self.get_edge( r, predicate='pubchem_to_ncbigene'), \
-                  KNode( "NCBIGene:{}".format( r['NCBIGene']), node_types.GENE) ) for r in response  ]
+        retvals = []
+        for r in response:
+            props = {}
+            props['interaction'] = r['interaction']
+            props['interactionTypes'] = r['interactionTypes']
+            props['publications'] = r['pubmedids'].split('|')
+            retvals.append( (self.get_edge( props, predicate='pubchem_to_ncbigene'),
+                             KNode( "NCBIGene:{}".format( r['NCBIGene']), node_types.GENE) ) )
+        return retvals
         
 def test():
     from greent.service import ServiceContext

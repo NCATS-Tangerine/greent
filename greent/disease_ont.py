@@ -4,8 +4,8 @@ import logging
 import pronto
 import requests
 import os
-from reasoner.graph_components import KNode,KEdge,elements_to_json
-from reasoner import node_types
+from greent.graph_components import KNode,KEdge,elements_to_json
+from greent import node_types
 from greent.service import Service
 
 class DiseaseOntology (Service):

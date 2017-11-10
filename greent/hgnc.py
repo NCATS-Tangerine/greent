@@ -1,7 +1,7 @@
 import json
 import requests
-from reasoner import node_types
-from reasoner.graph_components import KNode, KEdge
+from greent import node_types
+from greent.graph_components import KNode, KEdge
 from greent.service import Service
 
 class HGNC(Service):
@@ -15,11 +15,15 @@ class HGNC(Service):
         if node.node_type != node_types.GENE:
             raise ValueError('Node must be a gene')
         identifier_parts = node.identifier.split(':')
-        if not identifier_parts[0] == 'HGNC':
-            raise ValueError('Node must represent an HGNC id.')
+        if identifier_parts[0] == 'HGNC':
+            query_string='hgnc_id'
+        elif identifier_parts[0].upper() == 'NCBIGENE':
+            query_string = 'entrez_id'
+        else:
+            raise ValueError('Node must represent an HGNC or NCBIGene id.')
         hgnc_id = identifier_parts[1]
         headers = {'Accept':'application/json'}
-        r = requests.get('%s/hgnc_id/%s' % (self.url, hgnc_id), headers= headers).json()
+        r = requests.get('%s/%s/%s' % (self.url, query_string, hgnc_id), headers= headers).json()
         symbol = r['response']['docs'][0]['symbol']
         return symbol 
 
