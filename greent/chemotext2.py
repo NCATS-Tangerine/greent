@@ -77,7 +77,7 @@ if __name__ == "__main__":
     print (ct2.get_semantic_similarity ("cell cycle", "krebbs"))
 
     print (ct2.get_semantic_similarity ("MAPK2", "P53"))
-    
+
     w = [ "albuterol", "imatinib", "aspirin", "atrovent", "decadron", "medrol", "rayos" , "abemaciclib", "abraxane"]
     pairs = zip (w, w[1:])
     for k, v in pairs:
@@ -86,3 +86,19 @@ if __name__ == "__main__":
     print (ct2.model.most_similar (positive=['p53' ]))
     print (ct2.model.most_similar (positive=['kit' ]))
     print (ct2.model.most_similar (positive=['asthma' ]))
+
+    print (ct2.get_semantic_similarity('ebola', 'niemann'))
+    print (ct2.get_semantic_similarity('Ebola', 'niemann'))
+    print (ct2.get_semantic_similarity('ebola', 'Niemann'))
+    print (ct2.get_semantic_similarity('ebola', 'niemann-pick'))
+    print (ct2.get_semantic_similarity('niemann', 'pick'))
+    print ('')
+    print (ct2.get_semantic_similarity('Ebola Virus','niemann'))
+    print (ct2.get_semantic_similarity('Ebola','niemann-pick disease'))
+    print (ct2.get_semantic_similarity('Ebola virus','niemann-pick disease'))
+    print ('')
+    #This is pretty clear that the bigram is tough to use:
+    print (ct2.get_semantic_similarity('Usher','WHRN'))           #gives 0.3
+    print (ct2.get_semantic_similarity('Usher syndrome','WHRN'))  #gives -1
+ 
+
