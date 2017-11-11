@@ -37,7 +37,8 @@ class CTD (Service):
 
     def load_names(self):
         self.name_to_id = defaultdict(list)
-        with open('CTD_chemicals.tsv','r') as inf:
+        fname = os.path.join (os.path.dirname (__file__), 'CTD_chemicals.tsv') 
+        with open(fname,'r') as inf:
             line = inf.readline()
             while line.startswith('#'):
                 line = inf.readline()
@@ -52,7 +53,8 @@ class CTD (Service):
 
     def load_genes(self):
         self.drug_genes = defaultdict(list)
-        with open('CTD_chem_gene_ixns.tsv','r') as inf:
+        fname = os.path.join (os.path.dirname (__file__), 'CTD_chem_gene_ixns.tsv') 
+        with open(fname,'r') as inf:
             line = inf.readline()
             while line.startswith('#'):
                 line = inf.readline()

@@ -79,6 +79,9 @@
     DOID.GENETIC_CONDITION:
       link: gene_to_genetic_condition
       op: biolink.gene_get_genetic_condition
+    UNIPROTKB:
+      link: synonym
+      op:   hgnc.hgnc_to_uniprotkb
   HGNC.SYMBOL:
     UBERON:
       link: anatomy
@@ -167,3 +170,4 @@
   ROOT:                       http://identifiers.org/doi
   UNIPROTKB:                  http://identifiers.org/uniprotkb
   PUBCHEM:                    http://identifiers.org/pubchem/drug/id
+  CTD:                        http://identifiers.org/ctd
