@@ -45,11 +45,11 @@ class CTD (Service):
             for line in inf:
                 x = line.strip().split('\t')
                 indexname = x[0]
-                self.name_to_id[ indexname ].append(indexname)
+                self.name_to_id[ indexname.lower() ].append(indexname)
                 if len(x) > 7:
                     synonyms = x[7].split('|')
                     for synonym in synonyms:
-                        self.name_to_id[ synonym ].append(indexname)
+                        self.name_to_id[ synonym.lower() ].append(indexname)
 
     def load_genes(self):
         self.drug_genes = defaultdict(list)
@@ -84,11 +84,11 @@ class CTD (Service):
             ctdid = 'CTD:{}'.format(ident)
             label = drugname
             newnode = KNode( ctdid, node_types.DRUG, label=label)
-            newedge = KEdge( 'CTD', 'drugname_to_ctd', {}, is_synonym=True )
+            newedge = KEdge( 'CTD', 'drugname_to_ctd', {})
             results.append( (newedge, newnode ) )
         return results
 
-    def drug_get_gene(self, subject):
+    def drug_to_gene(self, subject):
         """ Get a gene from a ctd drug id. """
         ctdid = Text.un_curie (subject.identifier)
         actions = set()
@@ -129,7 +129,7 @@ def test_all_drugs():
             ident=''
             gene_nodes=[]
         if ident != '':
-            gene_nodes = ctd.drug_get_gene( drug_node )
+            gene_nodes = ctd.drug_to_gene( drug_node )
             if len(gene_nodes) == 0:
                 n_no_gene += 1
         print('{}\t{}\t{}\t{}'.format(name, ident, len(results), len(gene_nodes) ))
