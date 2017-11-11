@@ -69,7 +69,7 @@ class DiseaseOntology (Service):
             return []
         return list(map(lambda v : (
             KEdge('local','doid_to_pharos', is_synonym=True),
-            KNode(identifier="PHAROS:{0}".format (v), node_type=node_types.DISEASE) ), pharos_list ))
+            KNode(identifier="PHAROS.DISEASE:{0}".format (v), node_type=node_types.DISEASE) ), pharos_list ))
     
 if __name__ == "__main__":
     do = DiseaseOntology ()

@@ -14,14 +14,14 @@
   BiologicalProcess  : [ 'GO.BIOLOGICAL_PROCESS' ]
   Cell               : [ 'CL' ]
   CellularComponent  : [ 'GO.CELLULAR_COMPONENT' ]
-  Disease            : [ 'MESH.DISEASE', 'DOID', 'PHAROS', 'OMIM', 'MESH.DISEASE', 'ORPHANET' ]
+  Disease            : [ 'MESH.DISEASE', 'DOID', 'PHAROS.DISEASE', 'OMIM', 'MESH.DISEASE', 'ORPHANET' ]
   Gene               : [ 'UNIPROT', 'HGNC', 'HGNC.SYMBOL', 'ENTREZ', 'NCBIGENE', 'ENSEMBL', 'ENSEMBL.TRANSCRIPT', 'UNIPROTKB' ]
   GeneticCondition   : [ 'DOID.GENETIC_CONDITION', 'ORPHANET.GENETIC_CONDITION' ]
   MolecularFunction  : [ 'GO.MOLECULAR_FUNCTION' ]
   Name               : [ 'NAME.DRUG', 'NAME.DISEASE', 'NAME.SYMPTOM', 'NAME.ANATOMY', 'DISEASE_NAME', 'MESH.NAME' ]
   Pathway            : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY', 'KEGG.PATHWAY' ]
   Phenotype          : [ 'HP' ]
-  Substance          : [ 'DRUGBANK', 'DRUG.INTERACTION', 'INCHI', 'INCHIKEY', 'PUBCHEM', 'CHEMBL', 'CHEBI', 'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' ]
+  Substance          : [ 'DRUGBANK', 'DRUG.INTERACTION', 'INCHI', 'INCHIKEY', 'PUBCHEM', 'CHEMBL', 'CHEBI', 'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' , 'PHAROS.DRUG', 'CTD' ]
 
 # Only operations specifying semantic predicates will be invoked.
 '@translator-semantics':
@@ -50,11 +50,17 @@
     PUBCHEM:
       link: drugname_to_pubchem
       op:   chembio.graph_drugname_to_pubchem
+    PHAROS.DRUG:
+      link: drugname_to_pharos
+      op:   pharos.drugname_to_pharos
+    CTD:
+      link: drugname_to_ctd
+      op:   ctd.drugname_to_ctd
   DOID:
     MESH.DISEASE:
       link: synonym
       op: disease_ontology.graph_doid_to_mesh
-    PHAROS:
+    PHAROS.DISEASE:
       link: synonym
       op:   disease_ontology.doid_to_pharos
     UBERON:
@@ -83,6 +89,10 @@
     DOID:
       link: gene_to_disease
       op:   hetio.gene_to_disease
+  CTD:
+    NCBIGENE:
+      link: drug_to_gene
+      op:   ctd.drug_to_gene
   PUBCHEM:
     NCBIGENE:
       link: targets
@@ -100,13 +110,18 @@
       op: oxo.mesh_to_other
     DRUGBANK:
       op: chembio.get_drugs_by_condition_graph
-  PHAROS:
+  PHAROS.DISEASE:
     HGNC:
       link: disease_gene
       op:   pharos.disease_get_gene
-    HGNC.SYMBOL:
+  PHAROS.DRUG:
+    HGNC:
       link: disease_gene
-      op:   pharos.disease_get_gene
+      op:   pharos.drug_get_gene
+# IS this actually getting returned?
+#    HGNC.SYMBOL:
+#      link: disease_gene
+#      op:   pharos.disease_get_gene
   UNIPROT:
     HGNC.SYMBOL:
       link: synonym
@@ -147,7 +162,8 @@
   NAME.DISEASE:               http://identifiers.org/name/disease
   NAME.DRUG:                  http://identifiers.org/name/drug
   ORPHANET.GENETIC_CONDITION: http://identifiers.org/orphanet/gentic_condition
-  PHAROS:                     http://pharos.nih.gov/identifier/
+  PHAROS.DISEASE:             http://pharos.nih.gov/identifier/disease
+  PHAROS.DRUG:                http://pharos.nih.gov/identifier/drug
   ROOT:                       http://identifiers.org/doi
   UNIPROTKB:                  http://identifiers.org/uniprotkb
   PUBCHEM:                    http://identifiers.org/pubchem/drug/id
