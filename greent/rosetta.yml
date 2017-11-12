@@ -14,7 +14,7 @@
   BiologicalProcess  : [ 'GO.BIOLOGICAL_PROCESS' ]
   Cell               : [ 'CL' ]
   CellularComponent  : [ 'GO.CELLULAR_COMPONENT' ]
-  Disease            : [ 'MESH.DISEASE', 'DOID', 'PHAROS.DISEASE', 'OMIM', 'MESH.DISEASE', 'ORPHANET' ]
+  Disease            : [ 'MESH.DISEASE', 'DOID', 'PHAROS.DISEASE', 'OMIM', 'MESH.DISEASE', 'ORPHANET' , 'EFO']
   Gene               : [ 'UNIPROT', 'HGNC', 'HGNC.SYMBOL', 'ENTREZ', 'NCBIGENE', 'ENSEMBL', 'ENSEMBL.TRANSCRIPT', 'UNIPROTKB' ]
   GeneticCondition   : [ 'DOID.GENETIC_CONDITION', 'ORPHANET.GENETIC_CONDITION' ]
   MolecularFunction  : [ 'GO.MOLECULAR_FUNCTION' ]
@@ -43,6 +43,9 @@
     MESH.DISEASE:
       link: name_to_id
       op:   tkba.name_to_mesh_disease
+    EFO:
+      link: name_to_id
+      op:   tkba.name_to_efo
   NAME.DRUG:
     DRUGBANK:
       link: name_to_id
@@ -56,6 +59,10 @@
     CTD:
       link: drugname_to_ctd
       op:   ctd.drugname_to_ctd
+  EFO:
+    DOID:
+      link: synonym
+      op:   oxo.efo_to_doid
   DOID:
     MESH.DISEASE:
       link: synonym

@@ -27,11 +27,33 @@ class TranslatorKnowledgeBeaconAggregator(Service):
         response = self.request_concept (name)
         seen = {}
         for r in response:
+#            import json
+#            print('TKBA')
+#            print(json.dumps(r,indent=2))
+            got_doid = False
             for a in r['aliases']:
                 if a.startswith ("DOID:"):
+                    got_doid = True
                     if not a in seen:
                         logger.debug ("      -- appending a {}".format (a))
                         result.append ( ( self.get_edge (r, predicate='name_to_doid'), KNode(a, node_types.DISEASE ) ) )
+                        seen[a] = a
+            if not got_doid:
+                logger.warn('No DOID found for name:{}'.format(name))
+                logger.debug( ';'.join(r['aliases']))
+        logger.info("Returning {} doids".format(len(result)))
+        return result
+
+    def name_to_efo (self, name):
+        result = []
+        response = self.request_concept (name)
+        seen = {}
+        for r in response:
+            for a in r['aliases']:
+                if a.startswith ("EFO:"):
+                    if not a in seen:
+                        logger.debug ("      -- appending a {}".format (a))
+                        result.append ( ( self.get_edge (r, predicate='name_to_efo'), KNode(a, node_types.DISEASE ) ) )
                         seen[a] = a
         return result
 
@@ -83,5 +105,11 @@ class TranslatorKnowledgeBeaconAggregator(Service):
 
 if __name__ == "__main__":
     t = TranslatorKnowledgeBeaconAggregator (ServiceContext.create_context ())
-    print (t.name_to_mesh_disease (KNode("NAME.DISEASE:asthma", node_types.NAME_DISEASE)))
-    print (t.name_to_doid (KNode("NAME.DISEASE:asthma", node_types.DISEASE)))
+    #print (t.name_to_mesh_disease (KNode("NAME.DISEASE:asthma", node_types.NAME_DISEASE)))
+    #print (t.name_to_doid (KNode("NAME.DISEASE:asthma", node_types.DISEASE)))
+    print ('1.')
+    print (t.name_to_doid (KNode("NAME.DISEASE:Osteoporosis", node_types.DISEASE)))
+    print ('2.')
+    print (t.name_to_doid (KNode("NAME.DISEASE:HIV infection", node_types.DISEASE)))
+    print ('3.')
+    print (t.name_to_efo (KNode("NAME.DISEASE:HIV infection", node_types.DISEASE)))
