@@ -22,16 +22,21 @@ class CTD (Service):
             'CTD_chem_gene_ixns.tsv','CTD_chemicals.tsv'
         ]
         for f in files:
-            if os.path.exists (f):
+            fname = os.path.join (os.path.dirname (__file__), f)
+            if os.path.exists (fname):
                 continue
             logger.debug ("  --downloading CTD component: {0}".format (f))
-            url = "{0}/{1}".format (self.url, f)
+            gzname = fname+'.gz'
+            url = "{0}/{1}.gz".format (self.url, f )
             r = requests.get (url, stream=True)
-            with open (f, 'wb') as f:
+            with open (fname+'.gz', 'wb') as outf:
                 for chunk in r.iter_content(chunk_size=1024): 
                     if chunk: # filter out keep-alive new chunks
-                        f.write (chunk)
-
+                        outf.write (chunk)
+            import gzip
+            import shutil
+            with gzip.open(fname+'.gz','rb') as f_in, open(fname,'wb') as f_out:
+                shutil.copyfileobj(f_in,f_out)
         self.load_names()
         self.load_genes()
 
