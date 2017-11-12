@@ -110,7 +110,7 @@ class Pharos(Service):
             pharosid = 'PHAROS.DRUG:{}'.format(contents['id'])
             label = contents['name']
             newnode = KNode( pharosid, node_types.DRUG, label=label)
-            newedge = KEdge( 'pharos', 'drugname_to_pharos', {}, is_synonym=True )
+            newedge = KEdge( 'pharos', 'drugname_to_pharos', {} )
             results.append( (newedge, newnode ) )
         return results
 

@@ -143,6 +143,9 @@
     CL:
       link: bio_process_cell_type
       op: quickgo.go_term_xontology_relationships
+    CL:
+      link: bio_process_cell_type
+      op: quickgo.go_term_annotation_extensions
   HP:
     UBERON:
       link: phenotype_anatomy
