@@ -14,6 +14,7 @@ class Biolink(Service):
     """ Preliminary interface to Biolink. Will move to automated Translator Registry invocation over time. """
     def __init__(self, context):
         super(Biolink, self).__init__("biolink", context)
+        #TODO, can we just use the Mondo that's inthe core already?
         self.checker = Mondo(ServiceContext.create_context ())
         self.go = GO(ServiceContext.create_context ())
     def process_associations(self, r, predicate, target_node_type):
@@ -109,8 +110,17 @@ def test_phenotypes():
     for ke, kn in results:
         print(ke, kn)
 
+def test_gc():
+    b = Biolink (ServiceContext.create_context ())
+    gene = KNode('HGNC:4851',node_type=node_types.GENE)
+    results = b.gene_get_disease(gene)
+    for e,k in results:
+        print(k)
+    results = b.gene_get_genetic_condition(gene)
+    print(results)
+
 if __name__ == '__main__':
-    test_phenotypes()
+    test_gc()
     #test_output()
     #b = Biolink (ServiceContext.create_context ())
 #    print (b.get_gene_function (KNode('UniProtKB:P10721', 'G')))

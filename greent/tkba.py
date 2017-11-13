@@ -15,16 +15,21 @@ class TranslatorKnowledgeBeaconAggregator(Service):
     def __init__(self, context):
         super(TranslatorKnowledgeBeaconAggregator, self).__init__("tkba", context)
 
-    def request_concept (self, concept):
+    def request_concept (self, concept, stype=None):
         #Without quotes around the keyword, this function treats space as a delimiter...
         keyword = Text.un_curie (concept.identifier)
         keyword = '"{0}"'.format (keyword) if ' ' in keyword else keyword
-        url = '{0}/concepts?keywords={1}'.format (self.url, keyword)
+        if stype is None:
+            url = '{0}/concepts?keywords={1}'.format (self.url, keyword)
+        elif stype == node_types.DISEASE:
+            url = '{0}/concepts?keywords={1}&semanticGroups=DISO'.format (self.url, keyword)
+        else:
+            url = '{0}/concepts?keywords={1}'.format (self.url, keyword)
         return requests.get (url).json ()
 
     def name_to_doid (self, name):
         result = []
-        response = self.request_concept (name)
+        response = self.request_concept (name, node_types.DISEASE)
         seen = {}
         for r in response:
 #            import json
