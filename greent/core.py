@@ -8,6 +8,7 @@ from collections import defaultdict
 from greent.biolink import Biolink
 from greent.chembio import ChemBioKS
 from greent.chemotext import Chemotext
+from greent.ctd import CTD
 from greent.clinical import Clinical
 from greent.cmaq import CMAQ
 from greent.config import Config
@@ -60,6 +61,7 @@ class GreenT:
         self.translator = Translator (core=self)
         self.hgnc = HGNC(self.service_context)
         self.uberongraph = UberonGraphKS(self.service_context)
+        self.ctd = CTD(self.service_context)
 
     # Exposure API
     def get_exposure_scores (self, exposure_type, start_date, end_date, exposure_point):

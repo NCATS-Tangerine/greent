@@ -1,6 +1,8 @@
 import json
 import requests
 from greent.service import Service
+from greent.graph_components import KNode, KEdge
+from greent import node_types
 
 class OXO(Service):
 
@@ -45,7 +47,19 @@ class OXO(Service):
             result = list(map(lambda v : v['curie'], others))
         return result
     
-
+    def efo_to_doid(self, efo_node):
+        result = []
+        response = self.query (ids=[ efo_node.identifier ])
+        searchResults = response['_embedded']['searchResults']
+        if len(searchResults) > 0 and searchResults[0]['queryId'] == efo_node.identifier:
+            others = searchResults[0]['mappingResponseList']
+            for other in others:
+                if other['targetPrefix'] == 'DOID':
+                    result.append (
+                            ( KEdge('oxo','efo_to_doid', is_synonym=True),
+                              KNode(identifier=other['curie'], node_type=node_types.DISEASE  )) )
+        return result
+ 
 def test():
     from service import ServiceContext
     oxo = OXO(ServiceContext.create_context())
@@ -53,8 +67,15 @@ def test():
     import json
     print (json.dumps(r, indent=4) )
 
+def test2():
+    from service import ServiceContext
+    oxo = OXO(ServiceContext.create_context())
+    r=oxo.efo_to_doid(KNode('EFO:0000764', node_types.DISEASE))
+    print( r )
+
+
 if __name__ == '__main__':
-    test()
+    test2()
 
 '''
 

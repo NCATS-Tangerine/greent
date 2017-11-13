@@ -102,6 +102,18 @@ class Pharos(Service):
             pass
         return result
 
+    def drugname_to_pharos(self, namenode):
+        drugname = Text.un_curie(namenode.identifier)
+        r = requests.get('https://pharos.nih.gov/idg/api/v1/ligands/search?q={}'.format(drugname)).json()
+        results = []
+        for contents in r['content']:
+            pharosid = 'PHAROS.DRUG:{}'.format(contents['id'])
+            label = contents['name']
+            newnode = KNode( pharosid, node_types.DRUG, label=label)
+            newedge = KEdge( 'pharos', 'drugname_to_pharos', {} )
+            results.append( (newedge, newnode ) )
+        return results
+
     def disease_get_gene0(self, subject):
         """ Get a gene from a pharos disease id. """
         pharosids = self.translate (subject)
@@ -124,6 +136,34 @@ class Pharos(Service):
 #        return requests.get (url.json ())
 
 #    @cachier(stale_after=datetime.timedelta(days=8))
+    def drug_get_gene(self, subject):
+        """ Get a gene from a pharos disease id. """
+        pharosid = Text.un_curie (subject.identifier)
+        original_edge_nodes=[]
+        r = requests.get('https://pharos.nih.gov/idg/api/v1/ligands(%s)?view=full' % pharosid)
+        result = r.json()
+        resolved_edge_nodes = []
+        actions = set() #for testing
+        for link in result['links']:
+            if link['kind'] == 'ix.idg.models.Target':
+                pharos_target_id = int(link['refid'])
+                edge_properties = {}
+                for prop in link['properties']:
+                    if prop['label'] == 'Pharmalogical Action': #!
+                        actions.add(prop['term'] ) 
+                pharos_edge = KEdge( 'pharos', 'drug_get_gene', {'properties': link['properties']} )               
+                #Pharos returns target ids in its own numbering system. Collect other names for it.
+                hgnc = self.target_to_hgnc (pharos_target_id)
+                if hgnc is not None:
+                    hgnc_node = KNode (hgnc, node_types.GENE)
+                    resolved_edge_nodes.append( (pharos_edge, hgnc_node) )
+                else:
+                    logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
+        for a in actions:
+            print ('Action: {}'.format(a) ) 
+        return resolved_edge_nodes
+
+#    @cachier(stale_after=datetime.timedelta(days=8))
     def disease_get_gene(self, subject):
         """ Get a gene from a pharos disease id. """
         pharosid = Text.un_curie (subject.identifier)
@@ -132,9 +172,7 @@ class Pharos(Service):
         result = r.json()
         resolved_edge_nodes = []
         for link in result['links']:
-            if link['kind'] != 'ix.idg.models.Target':
-                logger.info('Pharos disease returning new kind: %s' % link['kind'])
-            else:
+            if link['kind'] == 'ix.idg.models.Target':
                 pharos_target_id = int(link['refid'])
                 pharos_edge = KEdge( 'pharos', 'disease_get_gene', {'properties': link['properties']} )               
                 #Pharos returns target ids in its own numbering system. Collect other names for it.
@@ -233,3 +271,51 @@ def test_hgnc_for_output():
     import json
     with open('testpharos.txt','w') as outf:
         json.dump(result,outf,indent=4)
+
+def test_drugs():
+    in_node = KNode( 'NAME.DRUG:ADAPALENE', node_types.DRUG_NAME, label='ADAPALENE' )
+    from service import ServiceContext
+    pharos = Pharos(ServiceContext.create_context())
+    results = pharos.drugname_to_pharos(in_node)
+    for e,n in results:
+        gres = pharos.drug_get_gene(n)
+        for ge, gn in gres:
+            print(gn)
+
+def test_all_drugs():
+    from greent.service import ServiceContext
+    pharos = Pharos(ServiceContext.create_context())
+    with open('q2-drugandcondition-list.txt','r') as inf:
+        h = inf.readline()
+        uniq = set()
+        for line in inf:
+            x = line.split('\t')[0]
+            uniq.add(x)
+    n_no_pharos = 0
+    n_no_hgnc = 0
+    for name in uniq:
+        input_node = KNode("DRUG_NAME:{}".format(name), node_types.DRUG_NAME)
+        try:
+            results =  pharos.drugname_to_pharos(input_node)
+            drug_node = results [0][1]
+            ident = drug_node.identifier
+            hgnc_nodes = pharos.drug_get_gene( drug_node )
+            if len(hgnc_nodes) == 0:
+                n_no_hgnc += 1
+        except:
+            #print ('Not finding {}'.format(name))
+            #exit()
+            n_no_pharos += 1
+            ident=''
+            hgnc_nodes=[]
+        print('{}\t{}\t{}\t{}'.format(name, ident, len(results), len(hgnc_nodes) ))
+    print( '{} drugs'.format(len(uniq)) )
+    print( '{} without pubchem id'.format(n_no_pharos) )
+    print( '{} without genes'.format(n_no_hgnc) )
+    ngood = len(uniq) - n_no_pharos - n_no_hgnc
+    print( '{} good ({})'.format( ngood, ngood/len(uniq) ) )
+
+
+
+if __name__ == '__main__':
+    test_all_drugs()

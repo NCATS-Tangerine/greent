@@ -26,11 +26,32 @@ class QuickGo(Service):
                         results.append( ( self.get_edge (r, predicate=xrel['relation']), KNode (xrel['id'], node_types.CELL, label = xrel['term']) ))
         return results
 
+    def go_term_annotation_extensions(self,node):
+        """This is playing a little fast and loose with the annotations.  Annotations relate a gene to a go term,
+        and they can have an extension like occurs_in(celltype). Technically, that occurs_in only relates to that
+        particular gene/go combination.  But it's the only way to traverse from neurotransmitter release to neurons 
+        that is currently available"""
+        url = '{0}/QuickGO/services/annotation/search?includeFields=goName&goId=GO:{1}&taxonId=9606&extension=occurs_in(CL)'.format( self.url, Text.un_curie(node.identifier)) 
+        response = requests.get(url).json()
+        results = []
+        cell_ids = set()
+        for r in response['results']:
+            for e in r['extensions']:
+                for c in e['connectedXrefs']:
+                    if c['db'] == 'CL':
+                        if c['id'] not in cell_ids:
+                            results.append( (self.get_edge( r, predicate=c['qualifier']), 
+                                KNode( 'CL:{}'.format(c['id']), node_types.CELL ) ) )
+                            cell_ids.add(c['id'])
+        return results
+
 def test ():
     q = QuickGo (ServiceContext.create_context ())
     r = q.go_term_xontology_relationships (KNode("GO:0002551", node_types.PROCESS))
     pprint.pprint (r)
     r = q.go_term_xontology_relationships (KNode("GO.BIOLOGICAL_PROCESS:0042626", node_types.PROCESS))
+    pprint.pprint (r)
+    r = q.go_term_annotation_extensions (KNode("GO.BIOLOGICAL_PROCESS:0007269", node_types.PROCESS))
     pprint.pprint (r)
 
 if __name__ == '__main__':
