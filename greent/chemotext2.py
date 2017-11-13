@@ -38,12 +38,12 @@ class Chemotext2 (Service):
 
         start = time.time ()
         self.model = gensim.models.Word2Vec.load (model_path)
-        print ("  -- loaded w2v term model: {0} in {1} seconds.".format (
+        logger.debug ("  -- loaded w2v term model: {0} in {1} seconds.".format (
             model_path, time.time () - start ))
 
         start = time.time ()
-        self.bigram_model = gensim.models.Word2Vec.load (model_path)
-        print ("  -- loaded w2v bigram model: {0} in {1} seconds.".format (
+#       self.bigram_model = gensim.models.Word2Vec.load (model_path)
+        logger.debug ("  -- loaded w2v bigram model: {0} in {1} seconds.".format (
             model_path, time.time () - start ))
         #with open ("a", "w") as stream:            
         #    stream.write (pformat (self.bigram_model.vocab))
@@ -56,6 +56,7 @@ class Chemotext2 (Service):
         result = None
         model = None
         if term_a.count(' ') == 1:
+            raise ValueError ("We don't have a word embedding model for {0} word phrases".format (term_a.count(' ') + 1))
             model = self.bigram_model
             term_a = term_a.replace (' ', '_')
             term_b = term_b.replace (' ', '_')
