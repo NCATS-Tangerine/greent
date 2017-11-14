@@ -28,6 +28,7 @@ class OXO(Service):
         return requests.post (self.url,
                               data=json.dumps (obj, indent=2),
                               headers={ "Content-Type" : "application/json" }).json ()
+
     def query (self, ids, distance=2):        
         return self.request (
             url = self.url,
@@ -37,33 +38,42 @@ class OXO(Service):
                 "distance"      : str(distance)
             })
     
+    def get_synonyms( self, identifier, distance=2 ):
+        """ Find all synonyms for a curie for a given distance . """
+        result = []
+        response = self.query (ids=[ identifier ])
+        searchResults = response['_embedded']['searchResults']
+        if len(searchResults) > 0 and searchResults[0]['queryId'] == identifier:
+            others = searchResults[0]['mappingResponseList']
+        return others
+
+    def get_specific_synonym( self, identifier, prefix, distance=2 ):
+        synonyms = self.get_synonyms( identifier, distance )
+        return list( filter( lambda x: x['targetPrefix'] == prefix ,synonyms) )
+
+    def get_specific_synonym_expanding(self, identifier, prefix):
+        for i in range(1,4):
+            synonyms = self.get_specific_synonym( identifier, prefix, distance=i )
+            if len(synonyms) > 0:
+                return synonyms
+        return []
+
     def mesh_to_other (self, mesh_id):
         """ Find connections from a mesh id to other vocabulary domains. """
-        result = []
-        response = self.query (ids=[ mesh_id ])
-        searchResults = response['_embedded']['searchResults']
-        if len(searchResults) > 0 and searchResults[0]['queryId'] == mesh_id:
-            others = searchResults[0]['mappingResponseList']
-            result = list(map(lambda v : v['curie'], others))
-        return result
+        return get_synonyms( mesh_id )
     
     def efo_to_doid(self, efo_node):
+        searchResults = self.get_specific_synonym( efo_node.identifier, 'DOID' )
         result = []
-        response = self.query (ids=[ efo_node.identifier ])
-        searchResults = response['_embedded']['searchResults']
-        if len(searchResults) > 0 and searchResults[0]['queryId'] == efo_node.identifier:
-            others = searchResults[0]['mappingResponseList']
-            for other in others:
-                if other['targetPrefix'] == 'DOID':
-                    result.append (
-                            ( KEdge('oxo','efo_to_doid', is_synonym=True),
-                              KNode(identifier=other['curie'], node_type=node_types.DISEASE  )) )
+        for other in searchResults:
+            result.append( ( KEdge('oxo','efo_to_doid', is_synonym=True),
+                           KNode(identifier=other['curie'], node_type=node_types.DISEASE  )) )
         return result
  
 def test():
     from service import ServiceContext
     oxo = OXO(ServiceContext.create_context())
-    r=oxo.query(['CL:0000084'])
+    r=oxo.query(['CL:85'])
     import json
     print (json.dumps(r, indent=4) )
 
@@ -73,9 +83,16 @@ def test2():
     r=oxo.efo_to_doid(KNode('EFO:0000764', node_types.DISEASE))
     print( r )
 
+def test3():
+    from service import ServiceContext
+    oxo = OXO(ServiceContext.create_context())
+    r=oxo.get_synonyms('EFO:0000764')
+    import json
+    print( json.dumps(r,indent=2) )
+
 
 if __name__ == '__main__':
-    test2()
+    test3()
 
 '''
 
