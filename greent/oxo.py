@@ -20,6 +20,7 @@ class OXO(Service):
         for ds in response['_embedded']['datasources']:
             self.curies.add(ds['prefix'])
             self.curies.update( ds['alternatePrefix'] )
+        self.curies.add('MESH')
 
     def is_valid_curie_prefix(self, cp):
         return cp in self.curies
@@ -35,13 +36,14 @@ class OXO(Service):
             obj = {
                 "ids"           : ids,
                 "mappingTarget" : [],
-                "distance"      : str(distance)
+                "distance"      : str(distance),
+                "size"          : 10000
             })
     
     def get_synonyms( self, identifier, distance=2 ):
         """ Find all synonyms for a curie for a given distance . """
         result = []
-        response = self.query (ids=[ identifier ])
+        response = self.query (ids=[ identifier ], distance=distance)
         searchResults = response['_embedded']['searchResults']
         if len(searchResults) > 0 and searchResults[0]['queryId'] == identifier:
             others = searchResults[0]['mappingResponseList']
@@ -90,9 +92,16 @@ def test3():
     import json
     print( json.dumps(r,indent=2) )
 
+def test4():
+    from service import ServiceContext
+    oxo = OXO(ServiceContext.create_context())
+    r=oxo.get_specific_synonym_expanding('DOID:9352', 'ICD9CM')
+    import json
+    print( json.dumps(r,indent=2) )
+
 
 if __name__ == '__main__':
-    test3()
+    test4()
 
 '''
 
