@@ -32,9 +32,6 @@ class TranslatorKnowledgeBeaconAggregator(Service):
         response = self.request_concept (name, node_types.DISEASE)
         seen = {}
         for r in response:
-#            import json
-#            print('TKBA')
-#            print(json.dumps(r,indent=2))
             got_doid = False
             for a in r['aliases']:
                 if a.startswith ("DOID:"):
@@ -43,11 +40,14 @@ class TranslatorKnowledgeBeaconAggregator(Service):
                         logger.debug ("      -- appending a {}".format (a))
                         result.append ( ( self.get_edge (r, predicate='name_to_doid'), KNode(a, node_types.DISEASE ) ) )
                         seen[a] = a
-            if not got_doid:
-                logger.warn('No DOID found for name:{}'.format(name))
-                logger.debug( ';'.join(r['aliases']))
         logger.info("Returning {} doids".format(len(result)))
         return result
+
+    def name_to_anything (self, name):
+        result = []
+        response = self.request_concept (name, node_types.DISEASE)
+        for r in response:
+            return ';'.join(r['aliases'])
 
     def name_to_efo (self, name):
         result = []
@@ -108,7 +108,7 @@ class TranslatorKnowledgeBeaconAggregator(Service):
                             seen[a] = a
         return list(set(result))
 
-if __name__ == "__main__":
+def basic_test():
     t = TranslatorKnowledgeBeaconAggregator (ServiceContext.create_context ())
     #print (t.name_to_mesh_disease (KNode("NAME.DISEASE:asthma", node_types.NAME_DISEASE)))
     #print (t.name_to_doid (KNode("NAME.DISEASE:asthma", node_types.DISEASE)))
@@ -118,3 +118,37 @@ if __name__ == "__main__":
     print (t.name_to_doid (KNode("NAME.DISEASE:HIV infection", node_types.DISEASE)))
     print ('3.')
     print (t.name_to_efo (KNode("NAME.DISEASE:HIV infection", node_types.DISEASE)))
+
+def test_q2_diseases():
+    t = TranslatorKnowledgeBeaconAggregator (ServiceContext.create_context ())
+    n_good = 0
+    n_bad = 0
+    diseases = set()
+#    with open('q2-drugandcondition-list.txt','r') as inf, open('q2_disease_report.txt','w') as outf:
+#        h = inf.readline()
+#        outf.write('OriginalName\tDOIDs\tOthers\n')
+#        for line in inf:
+#            x = line.strip().split('\t')[1]
+    with open('q1-disease-list.txt','r') as inf, open('q1_disease_report.txt','w') as outf:
+        h = inf.readline()
+        outf.write('OriginalName\tDOIDs\tOthers\n')
+        for line in inf:
+            x = line.strip().split('\t')[0]
+            if x in diseases:
+                continue
+            diseases.add(x)
+            node = KNode("NAME.DISEASE:{}".format(x), node_types.DISEASE)
+            result = t.name_to_doid (node)
+            if len(result) == 0:
+                doids = ''
+                aliases = t.name_to_anything(node)
+                n_bad += 1
+            else:
+                n_good += 1
+                doids = ';'.join( [r[1].identifier for r in result] )
+                aliases = ''
+            outf.write('{}\t{}\t{}\n'.format(x, doids, aliases))
+            print( 'Good: {}   Bad: {}'.format(n_good, n_bad) )
+
+if __name__ == "__main__":
+    test_q2_diseases()

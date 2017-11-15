@@ -69,7 +69,7 @@ class Pharos(Service):
         return result
 
     def translate(self, subject_node):
-        """Convert a subject with a DOID into a Pharos Disease ID"""
+        """Convert a subject with a DOID or UMLS into a Pharos Disease ID"""
         #TODO: This relies on a pretty ridiculous caching of a map between pharos ids and doids.  
         #      As Pharos improves, this will not be required, but for the moment I don't know a better way.
         pmap = defaultdict(list)
@@ -79,7 +79,7 @@ class Pharos(Service):
                 if row['DOID'] != '':
                     doidlist = row['DOID'].split(',')
                     for d in doidlist:
-                        pmap[d].append(row['PharosID'])
+                        pmap[d.upper()].append(row['PharosID'])
         doid = subject_node.identifier
         pharos_list = pmap[doid]
         if len(pharos_list) == 0:
@@ -239,14 +239,14 @@ class AsyncPharos(Pharos):
 #Poking around on the website there are about 10800 ( a few less )
 def build_disease_translation():
     """Write to disk a table mapping Pharos disease ID to DOID (and other?) so we can reverse lookup"""
-    with open('pharos.id.txt','w') as pfile:
+    with open('pharos.id.all.txt','w') as pfile:
         pfile.write('PharosID\tDOID\n')
         for pharosid in range(1,10800):
             r = requests.get('https://pharos.nih.gov/idg/api/v1/diseases(%d)/synonyms' % pharosid).json()
             doids = []
             for synonym in r:
-                if synonym['label'] == 'DOID':
-                    doids.append(synonym['term'])
+                #if synonym['label'] == 'DOID':
+                doids.append(synonym['term'])
             if len(doids) > 1:
                 import json
                 exit()
@@ -318,4 +318,5 @@ def test_all_drugs():
 
 
 if __name__ == '__main__':
-    test_all_drugs()
+    #test_all_drugs()
+    build_disease_translation()

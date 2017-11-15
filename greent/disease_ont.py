@@ -51,18 +51,18 @@ class DiseaseOntology (Service):
         return [ ( self.get_edge (predicate='synonym'),
                    KNode(identifier=i.replace ("MESH:", "MESH.DISEASE:"), node_type=node_types.DISEASE) ) for i in mesh_ids ]
 
-    def doid_to_pharos(self,doid):
+    def doid_or_umls_to_pharos(self,doid):
         """ Convert a doid to a pharos id. Perhaps there's a public service that does this but in the
         mean time, we'll roll our own. """
         if not self.pmap:
             self.pmap = defaultdict(list)
-            with open(os.path.join(os.path.dirname(__file__), 'pharos.id.txt'),'r') as inf:     #'pharos.id.txt','r') as inf:
+            with open(os.path.join(os.path.dirname(__file__), 'pharos.id.all.txt'),'r') as inf:     #'pharos.id.txt','r') as inf:
                 rows = DictReader(inf,dialect='excel-tab')
                 for row in rows:
                     if row['DOID'] != '':
                         doidlist = row['DOID'].split(',')
                         for d in doidlist:
-                            self.pmap[d].append(row['PharosID'])
+                            self.pmap[d.upper()].append(row['PharosID'])
         pharos_list = self.pmap[doid.identifier]
         if len(pharos_list) == 0:
             #logging.getLogger('application').warn('Unable to translate doid: %s into a Pharos ID' % doid)

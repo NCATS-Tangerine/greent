@@ -14,7 +14,7 @@
   BiologicalProcess  : [ 'GO.BIOLOGICAL_PROCESS' ]
   Cell               : [ 'CL' ]
   CellularComponent  : [ 'GO.CELLULAR_COMPONENT' ]
-  Disease            : [ 'MESH.DISEASE', 'DOID', 'PHAROS.DISEASE', 'OMIM', 'MESH.DISEASE', 'ORPHANET' , 'EFO']
+  Disease            : [ 'MESH.DISEASE', 'DOID', 'PHAROS.DISEASE', 'OMIM', 'MESH.DISEASE', 'ORPHANET' , 'EFO', 'UMLS']
   Gene               : [ 'UNIPROT', 'HGNC', 'HGNC.SYMBOL', 'ENTREZ', 'NCBIGENE', 'ENSEMBL', 'ENSEMBL.TRANSCRIPT', 'UNIPROTKB' ]
   GeneticCondition   : [ 'DOID.GENETIC_CONDITION', 'ORPHANET.GENETIC_CONDITION' ]
   MolecularFunction  : [ 'GO.MOLECULAR_FUNCTION' ]
@@ -63,13 +63,20 @@
     DOID:
       link: synonym
       op:   oxo.efo_to_doid
+    UMLS:
+      link: synonym
+      op:   oxo.umls_to_doid
+  UMLS:
+    PHAROS.DISEASE:
+      link: synonym
+      op:   disease_ontology.doid_or_umls_to_pharos
   DOID:
     MESH.DISEASE:
       link: synonym
       op: disease_ontology.graph_doid_to_mesh
     PHAROS.DISEASE:
       link: synonym
-      op:   disease_ontology.doid_to_pharos
+      op:   disease_ontology.doid_or_umls_to_pharos
     UBERON:
       link: phenotype
       op:   hetio.disease_to_phenotype

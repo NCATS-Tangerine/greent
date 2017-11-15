@@ -54,6 +54,24 @@ class Mondo(Service):
                     doids.append( xref_id )
         return doids
 
+
+    def mondo_get_doid(self,mondo_identifier):
+        return self.mondo_get_synonym(mondo_identifier,'DOID')
+
+    def mondo_get_umls(self,mondo_identifier):
+        return self.mondo_get_synonym(mondo_identifier,'UMLS')
+
+    def mondo_get_efo(self,mondo_identifier):
+        return self.mondo_get_synonym(mondo_identifier,'EFO')
+
+    def mondo_get_synonym(self,mondo_identifier,curie_prefix):
+        xref_ids = self.ont.xrefs(mondo_identifier)
+        doids = []
+        for xref_id in xref_ids:
+            if xref_id.startswith(curie_prefix):
+                doids.append( xref_id )
+        return doids
+
     def get_label(self,identifier):
         """Return the label for an identifier"""
         obj_ids = self.get_mondo_id(identifier)
@@ -120,7 +138,71 @@ class Mondo(Service):
     def doid_get_doid_genetic_condition (self, disease):
         results = self.doid_get_genetic_condition (disease)
         return [ r for r in results if r[1].identifier.startswith ('DOID.GENETIC_CONDITION') ]
+
+    def substring_search(self,name):
+        ciname = '(?i){}'.format(name)
+        results = self.ont.search(ciname,synonyms=True,is_regex=True)
+
+    def case_insensitive_search(self,name):
+        ciname = '(?i)^{}$'.format(name)
+        return self.ont.search(ciname,synonyms=True,is_regex=True)
+
+    def search(self, name):
+        #Exact match 
+        results = self.case_insensitive_search(name)
+        if len(results) == 0:
+            if ',' in name:
+                parts =name.split(',')
+                parts.reverse()
+                ps = [p.strip() for p in parts]
+                newname = ' '.join(ps)
+                results = self.case_insensitive_search(newname)
+        return results
+
+
+def test_both():
+    q1in='q1-disease-list.txt'
+    q1out='q1_disease_mondo.txt'
+    q1field = 0
+    test_one(q1in, q1out, q1field)
+    q2in='q2-drugandcondition-list.txt'
+    q2out='q2_disease_mondo.txt'
+    q2field = 1
+    test_one(q2in, q2out, q2field)
     
+def test_one(infname,outfname,fieldnum):
+    m = Mondo (ServiceContext.create_context ())
+    n_good = 0
+    n_bad = 0
+    diseases = set()
+    with open(infname,'r') as inf, open(outfname,'w') as outf:
+        h = inf.readline()
+        for line in inf:
+            if line.startswith('#'):
+                continue
+            x = line.strip().split('\t')[fieldnum]
+            if x in diseases:
+                continue
+            diseases.add(x)
+            result = m.search (x)
+            if len(result) == 0:
+                mondos = ''
+                names = ''
+                doids = ''
+                umlss = ''
+                efos  = ''
+                n_bad += 1
+            else:
+                n_good += 1
+                mondos = ';'.join( result )
+                names = ';'.join([ m.get_label( r ) for r in result ])
+                doids = ';'.join(sum([ m.mondo_get_doid( r ) for r in result ], [] ))
+                umlss = ';'.join(sum([ m.mondo_get_umls( r ) for r in result ], [] ))
+                efos = ';'.join(sum([ m.mondo_get_efo( r ) for r in result ], [] ))
+            outf.write('{}\t{}\t{}\t{}\t{}\n'.format(x, mondos, doids, umlss, efos ))
+            print( 'Good: {}   Bad: {}'.format(n_good, n_bad) )
+
+
 def test():
     m = Mondo (ServiceContext.create_context ())
     huntington = KNode('OMIM:143100',node_types.DISEASE)
@@ -132,7 +214,6 @@ def test():
 #    tests = [ "DOID:8545", "OMIM:218550", "OMIM:234000", "DOID:0060334", "DOID:0050524", "DOID:0060599", "DOID:12858" ]
 #    for t in tests:
 #        print (m.doid_get_orphanet_genetic_condition (KNode (t, node_types.DISEASE)))
-#        print (m.doid_get_doid_genetic_condition (KNode (t, node_types.DISEASE)))
-    
+
 if __name__ == '__main__':
-    test()
+    test_both()
