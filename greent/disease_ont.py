@@ -70,7 +70,16 @@ class DiseaseOntology (Service):
         return list(map(lambda v : (
             KEdge('local','doid_to_pharos', is_synonym=True),
             KNode(identifier="PHAROS.DISEASE:{0}".format (v), node_type=node_types.DISEASE) ), pharos_list ))
+
+def test():
+    k = KNode("DOID:11476",node_types.DISEASE)
+    from service import ServiceContext
+    do = DiseaseOntology(ServiceContext.create_context())
+    r=do.doid_or_umls_to_pharos(k)
+    print (r)
+
     
 if __name__ == "__main__":
-    do = DiseaseOntology ()
-    print (do.doid_to_mesh ("DOID:2841"))
+    #do = DiseaseOntology ()
+    #print (do.doid_to_mesh ("DOID:2841"))
+    test()

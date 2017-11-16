@@ -102,14 +102,16 @@ class Pharos(Service):
             pass
         return result
 
-    def drugname_to_pharos(self, namenode):
-        drugname = Text.un_curie(namenode.identifier)
+    def drugname_string_to_pharos_info(self,drugname):
+        """Exposed for use in name lookups without KNodes"""
         r = requests.get('https://pharos.nih.gov/idg/api/v1/ligands/search?q={}'.format(drugname)).json()
-        results = []
-        for contents in r['content']:
-            pharosid = 'PHAROS.DRUG:{}'.format(contents['id'])
-            label = contents['name']
-            newnode = KNode( pharosid, node_types.DRUG, label=label)
+        return [ ('PHAROS.DRUG:{}'.format(contents['id']),contents['name']) for contents in r['content'] ]
+
+    def drugname_to_pharos(self, namenode):
+        drugname  = Text.un_curie(namenode.identifier)
+        pharosids = drugname_string_to_pharos_string(drugname)
+        for pharosid, pharoslabel in pharosids:
+            newnode = KNode( pharosid, node_types.DRUG, label=pharoslabel)
             newedge = KEdge( 'pharos', 'drugname_to_pharos', {} )
             results.append( (newedge, newnode ) )
         return results
@@ -159,8 +161,8 @@ class Pharos(Service):
                     resolved_edge_nodes.append( (pharos_edge, hgnc_node) )
                 else:
                     logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
-        for a in actions:
-            print ('Action: {}'.format(a) ) 
+#        for a in actions:
+#            print ('Action: {}'.format(a) ) 
         return resolved_edge_nodes
 
 #    @cachier(stale_after=datetime.timedelta(days=8))

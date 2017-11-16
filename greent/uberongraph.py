@@ -28,6 +28,29 @@ class UberonGraphKS(Service):
         """ Execute and return the result of a SPARQL query. """
         return self.triplestore.execute_query (query)
 
+
+    def cell_get_cellname (self, cell_identifier):
+        """ Identify label for a cell type
+        :param cell: CL identifier for cell type 
+        """
+        text = """
+        prefix CL: <http://purl.obolibrary.org/obo/CL_>
+        select distinct ?cellLabel
+        from <http://reasoner.renci.org/nonredundant>
+        from <http://example.org/uberon-hp-cl.ttl>
+        where {
+                  $cellID rdfs:label ?cellLabel .
+              }
+        """
+        results = self.triplestore.query_template( 
+            inputs = { 'cellID': cell_identifier }, \
+            outputs = [ 'cellLabel' ], \
+            template_text = text \
+        )
+        return results
+
+
+
     def cell_to_anatomy (self, cell_identifier):
         """ Identify anatomy terms related to cells.
 
@@ -112,6 +135,14 @@ class UberonGraphKS(Service):
             results.append ( (edge, node) )
         return results
 
+def test_name():
+    uk = UberonGraphKS(ServiceContext.create_context ())
+    #Test cell->name
+    cn ='CL:0000097'
+    results = uk.cell_get_cellname( cn )
+    print(results)
+ 
+
 def test():
     uk = UberonGraphKS(ServiceContext.create_context ())
     #Test cell->anatomy
@@ -124,4 +155,4 @@ def test():
     print(results)
 
 if __name__ == '__main__':
-    test()
+    test_name()

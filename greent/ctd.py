@@ -81,12 +81,16 @@ class CTD (Service):
                     result['publications'] = []
                 self.drug_genes[chemname].append(result)
 
+    def drugname_string_to_ctd_string(self,drugname):
+        """This is exposed so that it can be used to look up names without the KNode structure"""
+        identifiers = self.name_to_id[ drugname.lower() ]
+        results = [ 'CTD:{}'.format(ident) for ident in identifiers ]
+        return results
+
     def drugname_to_ctd(self, namenode):
-        drugname = Text.un_curie(namenode.identifier).lower()
-        identifiers = self.name_to_id[ drugname ]
-        results = []
-        for ident in identifiers:
-            ctdid = 'CTD:{}'.format(ident)
+        drugname = Text.un_curie(namenode.identifier)
+        ctdids = self.drugname_string_to_ctd_string(drugname)
+        for ctd in ctdids:
             label = drugname
             newnode = KNode( ctdid, node_types.DRUG, label=label)
             newedge = KEdge( 'CTD', 'drugname_to_ctd', {})
@@ -106,8 +110,8 @@ class CTD (Service):
             edge = KEdge( 'ctd', 'drug_get_gene', {'properties': edge_properties } )
             node = KNode (target_id, node_types.GENE)
             edge_nodes.append( (edge, node) )
-        for action in actions:
-            print( 'Action: {}'.format(action) )
+#        for action in actions:
+#            print( 'Action: {}'.format(action) )
         return edge_nodes
 
 

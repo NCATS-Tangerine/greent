@@ -231,7 +231,7 @@ class Rosetta:
         return result
     
     def graph_inner (self, next_nodes, program):
-        print ("program: {}".format (json.dumps (program, indent=2)))
+        #print ("program: {}".format (json.dumps (program, indent=2)))
         if not program or len(program) == 0:
             return []
         primed = [ { 'collector' : next_nodes } ] + program
