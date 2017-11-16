@@ -110,6 +110,8 @@ class TypeGraph(Service):
         """ Execute a cypher query and walk the results to build a set of transitions to execute. """
         programs = []
         result = self.db.query (query, data_contents=True)
+        if result.rows is None:
+            return []
         for row_set in result.rows:
             program = []
             for row in row_set:
