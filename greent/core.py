@@ -17,6 +17,7 @@ from greent.endotype import Endotype
 from greent.go import GO
 from greent.hetio import HetIO
 from greent.hgnc import HGNC
+from greent.hpo import HPO
 from greent.oxo import OXO
 from greent.mondo import Mondo
 from greent.pharos import Pharos
@@ -51,6 +52,7 @@ class GreenT:
         self.disease_ontology = DiseaseOntology (self.service_context)
         self.pharos = Pharos (self.service_context)
         self.oxo = OXO (self.service_context)
+        self.hpo = HPO (self.service_context)
         self.hetio = HetIO (self.service_context)
         self.biolink = Biolink (self.service_context)
         self.mondo = Mondo(self.service_context)
