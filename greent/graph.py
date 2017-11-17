@@ -115,14 +115,14 @@ class TypeGraph(Service):
         for row_set in result.rows:
             program = []
             for row in row_set:
-                logger.debug (json.dumps (row, indent=2))
+                #logger.debug (json.dumps (row, indent=2))
                 node_type = None
                 for col in row:
                     if isinstance (col, str):
                         node_type = col.split('>')[0] if '>' in col else col
                     elif isinstance(col, dict):
                         if 'name' in col:
-                            logger.debug ("  --result type: {0}".format (col))
+                            #logger.debug ("  --result type: {0}".format (col))
                             node_type = col['name']
                         elif 'op' in col:
                             op = col['op']
