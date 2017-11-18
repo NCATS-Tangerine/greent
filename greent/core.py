@@ -106,12 +106,3 @@ class GreenT:
 
     def execute (self, request):
         return self.translator.translate_chain (request)
-
-if __name__ == "__main__":    
-    g = GreenT ()
-    response = g.translator.translate_chain (request={
-        "iri"     : "mox://drug/gene/pathway/cell/anatomy/disease",
-        "drug"    : "Aspirin",
-        "disease" : "Asthma"
-    })
-    pprint (response)

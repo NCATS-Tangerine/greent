@@ -25,14 +25,11 @@
 
 # Only operations specifying semantic predicates will be invoked.
 '@translator-semantics':
-  mygene.info:
-    http://identifiers.org/hgnc.symbol/:
-      http://identifiers.org/ncbigene/:
-        synonym
   biolink:
-    http://identifiers.org/ncbigene/:
-      http://identifiers.org/doid/:
-        gene_to_disease
+    DOID:
+      NCBIGENE:
+        link: associatedWithGene
+        path: "[*].'http://biothings.io/ontology/associatedWithGene'[*].@id"
 
 # Defines transitions from one vocabulary domain to another including a predicate.
 '@transitions':

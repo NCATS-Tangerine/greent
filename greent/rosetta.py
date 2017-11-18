@@ -127,6 +127,7 @@ class Rosetta:
             sys.exit (errors)
             
         logger.debug ("-- Connecting to translator registry to the type graph.")
+        '''
         subscriptions = self.core.translator_registry.get_subscriptions ()
         for s in subscriptions:
             t_a_iri = s[0]
@@ -147,7 +148,25 @@ class Rosetta:
                 self.type_graph.find_or_create (t_b, iri=t_b_iri)
                 if link and op:
                     self.type_graph.add_edge (t_a, t_b, rel_name=link, predicate=link, op=op)
-
+        '''
+        from transreg import MethodMetadata
+        self.core.translator_registry.set_rosetta (self)
+        subscriptions = self.core.translator_registry.get_subscriptions ()
+        for sub in subscriptions:
+            in_curie = self.to_curie (self.unterminate (sub.in_type))
+            out_curie = self.to_curie (self.unterminate (sub.out_type))
+            op = "translator_registry.{0}".format (sub.op)
+            link = sub.predicate if sub.predicate else "unknown"
+            link = link.upper ()
+            if not in_curie:
+                logger.debug ("Unable to find curie for {}".format (sub.in_type))
+            elif not out_curie:
+                logger.debug ("Unable to find curie for {}".format (sub.out_type))
+            else:
+                if link and op:
+                    print ("--------------> {} {}".format (in_curie, out_curie))
+                    self.type_graph.add_edge (in_curie, out_curie, rel_name=link, predicate=link, op=op)
+        
     def terminate (self, d):
         for k, v in d.items ():
             if isinstance(v, str) and not v.endswith ("/"):
@@ -155,7 +174,10 @@ class Rosetta:
 
     def unterminate (self, text):
         return text[:-1] if text.endswith ('/') else text
-        
+
+    def curie_to_iri (self, curie):
+        return self.curie[curie] if curie in self.curie else None
+    
     def guess_type (self, thing, source=None):
         """ Look for a CURIE we know. If that doesn't work, try one of our locally made up vocab words. """
         if thing and not source and ':' in thing:
@@ -195,7 +217,7 @@ class Rosetta:
         return result
 
     def to_curie (self, text):
-        return self.to_curie_map.get (text, None)
+        return self.to_curie_map.get (self.unterminate (text), None)
     
     def make_up_curie (self, text):
         """ If we got one, great. Yay for standards. If not, get creative. This is legitimate and
@@ -327,4 +349,4 @@ if __name__ == "__main__":
                        delete_type_graph=args.delete_type_graph)
     blackboard = Rosetta.clinical_outcome_pathway_app (drug=args.drug,
                                                        disease=args.disease)
-    print (blackboard)
+    print ("output: {}".format (blackboard))
