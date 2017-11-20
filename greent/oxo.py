@@ -79,6 +79,10 @@ class OXO(Service):
         searchResults = self.get_specific_synonym( efo_node.identifier, 'UMLS' )
         return self.compile_results('efo_to_umls',node_types.DISEASE, searchResults)
 
+    def ncit_to_hp(self, ncit_node):
+        searchResults = self.get_specific_synonym( ncit_node.identifier, 'HP' )
+        return self.compile_results('efo_to_umls',node_types.DISEASE, searchResults)
+
 def test():
     from service import ServiceContext
     oxo = OXO(ServiceContext.create_context())
