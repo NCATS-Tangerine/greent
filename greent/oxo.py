@@ -64,7 +64,7 @@ class OXO(Service):
         """ Find connections from a mesh id to other vocabulary domains. """
         return get_synonyms( mesh_id )
     
-    def compile_results(self, fname, ntype):
+    def compile_results(self, fname, ntype, searchResults):
         result = []
         for other in searchResults:
             result.append( ( KEdge('oxo',fname, is_synonym=True),
@@ -73,11 +73,11 @@ class OXO(Service):
 
     def efo_to_doid(self, efo_node):
         searchResults = self.get_specific_synonym( efo_node.identifier, 'DOID' )
-        return self.compile_results('efo_to_doid',node_types.DISEASE)
+        return self.compile_results('efo_to_doid',node_types.DISEASE, searchResults)
 
     def efo_to_umls(self, efo_node):
         searchResults = self.get_specific_synonym( efo_node.identifier, 'UMLS' )
-        return self.compile_results('efo_to_umls',node_types.DISEASE)
+        return self.compile_results('efo_to_umls',node_types.DISEASE, searchResults)
 
 def test():
     from service import ServiceContext
