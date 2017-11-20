@@ -43,7 +43,7 @@ class HGNC(Service):
             return  [  ( KEdge( 'hgnc', 'ncbigene_to_uniprotkb', is_synonym=True ),\
                          KNode( identifier='UNIPROTKB:{}'.format(uniprot), node_type = node_types.GENE )) \
                          for uniprot in uniprots ]
-        except IndexError:
+        except (IndexError, KeyError):
             #No results back
             return []
 
@@ -62,7 +62,7 @@ class HGNC(Service):
             return  [  ( KEdge( 'hgnc', 'ncbigene_to_uniprotkb', is_synonym=True ),\
                          KNode( identifier='UNIPROTKB:{}'.format(uniprot), node_type = node_types.GENE )) \
                          for uniprot in uniprots ]
-        except IndexError:
+        except (IndexError,KeyError):
             #No results back
             return []
 
