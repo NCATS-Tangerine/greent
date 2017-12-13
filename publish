@@ -8,9 +8,14 @@ set -x
 write_setup_config () {
 cat <<EOF > setup.py
 from distutils.core import setup
-from pip.req import parse_requirements
-install_reqs = parse_requirements("greent/requirements.txt", session="i")
-requirements = [str(r.req) for r in install_reqs]
+#from pip.req import parse_requirements
+def parse_requirements(filename):
+    """ load requirements from a pip requirements file """
+    lineiter = (line.strip() for line in open(filename))
+    return [line for line in lineiter if line and not line.startswith("#")]
+
+install_reqs = parse_requirements("greent/requirements.txt") #, session="i")
+requirements = [str(r) for r in install_reqs]
 setup(
     name = 'greent',
     packages = [ 'greent' ], # this must be the same as the name above
