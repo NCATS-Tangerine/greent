@@ -20,7 +20,7 @@
   MolecularFunction  : [ 'GO.MOLECULAR_FUNCTION' ]
   Name               : [ 'NAME.DRUG', 'NAME.DISEASE', 'NAME.SYMPTOM', 'NAME.ANATOMY', 'DISEASE_NAME', 'MESH.NAME' ]
   Pathway            : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY', 'KEGG.PATHWAY' ]
-  Phenotype          : [ 'HP' ]
+  Phenotype          : [ 'HP' , 'NCIT']
   Substance          : [ 'DRUGBANK', 'DRUG.INTERACTION', 'INCHI', 'INCHIKEY', 'PUBCHEM', 'CHEMBL', 'CHEBI', 'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' , 'PHAROS.DRUG', 'CTD' ]
 
 # Only operations specifying semantic predicates will be invoked.
@@ -67,6 +67,9 @@
     PHAROS.DISEASE:
       link: synonym
       op:   disease_ontology.doid_or_umls_to_pharos
+    HP:
+      link: disease_to_phenotype
+      op:   biolink.disease_get_phenotype
   DOID:
     MESH.DISEASE:
       link: synonym
@@ -157,6 +160,10 @@
     CL:
       link: bio_process_cell_type
       op: quickgo.go_term_annotation_extensions
+  NCIT:
+    HP:
+      link: synonym
+      op: oxo.NCIT_to_HP
   HP:
     UBERON:
       link: phenotype_anatomy

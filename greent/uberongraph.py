@@ -50,6 +50,30 @@ class UberonGraphKS(Service):
         return results
 
 
+    def get_anatomy_parts(self, anatomy_identifier):
+        """Given an UBERON id, find other UBERONS that are parts of the query"""
+        if anatomy_identifier.startswith('http'):
+            anatomy_identifier = Text.obo_to_curie(anatomy_identifier)
+        text="""
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix UBERON: <http://purl.obolibrary.org/obo/UBERON_>
+        prefix BFO: <http://purl.obolibrary.org/obo/BFO_>
+        select distinct ?part ?partlabel
+        from <http://reasoner.renci.org/nonredundant> 
+        from <http://example.org/uberon-hp-cl.ttl>
+        where {
+                $anatomy_id BFO:0000051 ?part .
+                ?part rdfs:subClassOf* UBERON:0001062 .
+                ?part rdfs:label ?partlabel .
+        }
+        """
+        results = self.triplestore.query_template(  
+            inputs  = { 'anatomy_id': anatomy_identifier }, \
+            outputs = [ 'part', 'partlabel' ], \
+            template_text = text \
+        )
+        return results
+
 
     def cell_to_anatomy (self, cell_identifier):
         """ Identify anatomy terms related to cells.
@@ -122,17 +146,30 @@ class UberonGraphKS(Service):
             results.append ( (edge, node) )
         return results
     
+    def create_phenotype_anatomy_edge(self, node_id, node_label ):
+        edge = KEdge ('uberongraph', 'phenotypeToAnatomy')
+        node = KNode ( Text.obo_to_curie(node_id), \
+               node_types.ANATOMY )
+        node.label = node_label
+        return edge,node
+
     def get_anatomy_by_phenotype_graph (self, phenotype_node):
         anatomies = self.phenotype_to_anatomy (phenotype_node.identifier)
         results = []
         for r in anatomies:
-            edge = KEdge ('uberongraph', 'phenotypeToAnatomy')
-            node = KNode ( Text.obo_to_curie(r['anatomy_id']), \
-                   node_types.ANATOMY )
-            node.label = r['anatomy_label']
+            edge, node = self.create_phenotype_anatomy_edge(r['anatomy_id'],r['anatomy_label'])
             if phenotype_node.label is None:
                 phenotype_node.label = r['input_label']
             results.append ( (edge, node) )
+            #These tend to be very high level terms.  Let's also get their parts to
+            #be more inclusive.
+            #TODO: there ought to be a more principled way to take care of this, but
+            #it highlights the uneasy relationship between the high level world of
+            #smartapi and the low-level sparql-vision.
+            part_results = self.get_anatomy_parts( r['anatomy_id'] )
+            for pr in part_results:
+                pedge, pnode = self.create_phenotype_anatomy_edge(pr['part'],pr['partlabel'])
+                results.append ( (pedge, pnode) )
         return results
 
 def test_name():
@@ -146,13 +183,17 @@ def test_name():
 def test():
     uk = UberonGraphKS(ServiceContext.create_context ())
     #Test cell->anatomy
-    k = KNode('CL:0000097',node_types.CELL)
-    results = uk.get_anatomy_by_cell_graph( k )
-    print(results)
+#    k = KNode('CL:0000097',node_types.CELL)
+#    results = uk.get_anatomy_by_cell_graph( k )
+#    print(results)
     #Test pheno->anatomy
-    k = KNode('HP:0000403',node_types.PHENOTYPE)
+    k = KNode('HP:0011675',node_types.PHENOTYPE)
     results = uk.get_anatomy_by_phenotype_graph( k )
     print(results)
 
+def test_parts():
+    uk = UberonGraphKS(ServiceContext.create_context ())
+    print( uk.get_anatomy_parts('UBERON:0004535') )
+
 if __name__ == '__main__':
-    test_name()
+    test()

@@ -38,10 +38,14 @@ class HGNC(Service):
         hgnc_id = identifier_parts[1]
         headers = {'Accept':'application/json'}
         r = requests.get('{0}/entrez_id/{1}'.format(self.url, hgnc_id), headers= headers).json()
-        uniprots = r['response']['docs'][0]['uniprot_ids']
-        return  [  ( KEdge( 'hgnc', 'ncbigene_to_uniprotkb', is_synonym=True ),\
-                      KNode( identifier='UNIPROTKB:{}'.format(uniprot), node_type = node_types.GENE )) \
-                    for uniprot in uniprots ]
+        try:
+            uniprots = r['response']['docs'][0]['uniprot_ids']
+            return  [  ( KEdge( 'hgnc', 'ncbigene_to_uniprotkb', is_synonym=True ),\
+                         KNode( identifier='UNIPROTKB:{}'.format(uniprot), node_type = node_types.GENE )) \
+                         for uniprot in uniprots ]
+        except (IndexError, KeyError):
+            #No results back
+            return []
 
     def hgnc_to_uniprotkb(self, node):
         """Given a node representing an HGNC retrieve the UniProtKB identifier"""
@@ -53,10 +57,14 @@ class HGNC(Service):
         hgnc_id = identifier_parts[1]
         headers = {'Accept':'application/json'}
         r = requests.get('{0}/hgnc_id/{1}'.format(self.url, hgnc_id), headers= headers).json()
-        uniprots = r['response']['docs'][0]['uniprot_ids']
-        return  [  ( KEdge( 'hgnc', 'ncbigene_to_uniprotkb', is_synonym=True ),\
-                      KNode( identifier='UNIPROTKB:{}'.format(uniprot), node_type = node_types.GENE )) \
-                    for uniprot in uniprots ]
+        try:
+            uniprots = r['response']['docs'][0]['uniprot_ids']
+            return  [  ( KEdge( 'hgnc', 'ncbigene_to_uniprotkb', is_synonym=True ),\
+                         KNode( identifier='UNIPROTKB:{}'.format(uniprot), node_type = node_types.GENE )) \
+                         for uniprot in uniprots ]
+        except (IndexError,KeyError):
+            #No results back
+            return []
 
 def test():
     from greent.service import ServiceContext 
