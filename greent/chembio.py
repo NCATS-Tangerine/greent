@@ -1,14 +1,9 @@
-from string import Template
-import json
-import os
-import logging
 from greent.service import Service
 from greent.triplestore import TripleStore
 from greent.util import LoggingUtil
 from greent.util import Text
 from greent.graph_components import KEdge, KNode
 from greent import node_types
-from pprint import pprint
 from cachier import cachier
 import datetime
 
