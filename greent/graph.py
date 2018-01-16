@@ -44,12 +44,11 @@ class TypeGraph(Service):
         self.types = self.db.labels.create("Type")
         self.concept_label = self.db.labels.create("Concept")
     def delete_all (self):
-        """ Delete things in the graph. """
+        """ Delete the type-graph only.  Leave result graphs alone. """
         try:
             with self.db.transaction (for_query=True, commit=True, using_globals=False) as transaction:
-                transaction.query ("MATCH (n) DETACH DELETE n")
-                results = transaction.query ("MATCH (n) RETURN n")
-                print (results)
+                self.db.query ("MATCH (n:Concept) DETACH DELETE n")
+                self.db.query ("MATCH (n:Type) DETACH DELETE n")
             self.initialize_connection ()
         except Exception as e:
             traceback.print_exc ()
@@ -81,7 +80,7 @@ class TypeGraph(Service):
         return n
     def add_edge (self, a, b, rel_name, predicate, op):
         """ Create a transition edge between two type nodes, storing the semantic predicate
-        and transition operation. """
+        and transition operation.  Also create an edge between the two concepts."""
         a_node = self.find_or_create (a)
         b_node = self.find_or_create (b)
         a_rels = a_node.relationships.outgoing(rel_name, b_node)
@@ -94,6 +93,19 @@ class TypeGraph(Service):
             synonym = predicate == "SYNONYM"
             a_node.relationships.create (rel_name, b_node, predicate=predicate, op=op,
                                          enabled=enabled, synonym=synonym)
+            logger.debug(f"{a}->{b}")
+            a_concept = self.type_to_concept.get(a)
+            b_concept = self.type_to_concept.get(b)
+            logger.debug(f" {a_concept} ---> {b_concept}")
+            a_concept_node = self._find_or_create_concept(a_concept)
+            b_concept_node = self._find_or_create_concept(b_concept)
+            CONCEPT_RELATION_NAME="translation"
+            concept_rels = a_concept_node.relationships.outgoing(CONCEPT_RELATION_NAME)
+            if b_concept_node not in [rel.end for rel in concept_rels]:
+                logger.debug(" MAKE IT")
+                a_concept_node.relationships.create(CONCEPT_RELATION_NAME, b_concept_node)
+            else:
+                logger.debug(" NAH")
     def _find_or_create_concept (self, concept):
         """ Find or create a concept object which will be linked to member type object. """
         concept_node = self.concept_label.get (name=concept)

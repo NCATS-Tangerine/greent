@@ -12,6 +12,9 @@ import yaml
 import requests
 import requests_cache
 from enum import Enum
+
+from neo4jrestclient.exceptions import StatusException
+
 from greent.util import LoggingUtil
 from greent.util import Resource
 from greent.util import Text
@@ -165,7 +168,10 @@ class Rosetta:
             else:
                 if link and op:
                     print ("--------------> {} {}".format (in_curie, out_curie))
-                    self.type_graph.add_edge (in_curie, out_curie, rel_name=link, predicate=link, op=op)
+                    try:
+                        self.type_graph.add_edge (in_curie, out_curie, rel_name=link, predicate=link, op=op)
+                    except StatusException:
+                        logger.error(f"Failed to create edge from {in_curie} to {out_curie}.  One of these has an unspecified mapping to a concept")
         
     def terminate (self, d):
         for k, v in d.items ():
