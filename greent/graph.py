@@ -91,21 +91,19 @@ class TypeGraph(Service):
         if not exists:
             enabled = predicate != "UNKNOWN"
             synonym = predicate == "SYNONYM"
-            a_node.relationships.create (rel_name, b_node, predicate=predicate, op=op,
+            if enabled:
+                a_node.relationships.create (rel_name, b_node, predicate=predicate, op=op,
                                          enabled=enabled, synonym=synonym)
-            logger.debug(f"{a}->{b}")
-            a_concept = self.type_to_concept.get(a)
-            b_concept = self.type_to_concept.get(b)
-            logger.debug(f" {a_concept} ---> {b_concept}")
-            a_concept_node = self._find_or_create_concept(a_concept)
-            b_concept_node = self._find_or_create_concept(b_concept)
-            CONCEPT_RELATION_NAME="translation"
-            concept_rels = a_concept_node.relationships.outgoing(CONCEPT_RELATION_NAME)
-            if b_concept_node not in [rel.end for rel in concept_rels]:
-                logger.debug(" MAKE IT")
-                a_concept_node.relationships.create(CONCEPT_RELATION_NAME, b_concept_node)
-            else:
-                logger.debug(" NAH")
+            if enabled and not synonym:
+                #Make a translation link between the concepts
+                a_concept = self.type_to_concept.get(a)
+                b_concept = self.type_to_concept.get(b)
+                a_concept_node = self._find_or_create_concept(a_concept)
+                b_concept_node = self._find_or_create_concept(b_concept)
+                CONCEPT_RELATION_NAME="translation"
+                concept_rels = a_concept_node.relationships.outgoing(CONCEPT_RELATION_NAME)
+                if b_concept_node not in [rel.end for rel in concept_rels]:
+                    a_concept_node.relationships.create(CONCEPT_RELATION_NAME, b_concept_node)
     def _find_or_create_concept (self, concept):
         """ Find or create a concept object which will be linked to member type object. """
         concept_node = self.concept_label.get (name=concept)
