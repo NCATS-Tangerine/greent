@@ -115,6 +115,10 @@ class TypeGraph(Service):
             concept_node = self.concept_label.create(name=concept)
         return concept_node
 
+    def run_cypher_query(self,query):
+        result = self.db.query(query, data_contents=True)
+        return result
+
     def get_transitions(self, query):
         """ Execute a cypher query and walk the results to build a set of transitions to execute. """
         programs = []
