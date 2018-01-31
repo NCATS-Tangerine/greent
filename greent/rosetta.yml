@@ -27,7 +27,7 @@
 '@translator-semantics':
   biolink:
     DOID:
-      NCBIGENE:
+      XNCBIGENE:
         link: associatedWithGene
         path: "[*].'http://biothings.io/ontology/associatedWithGene'[*].@id"
 
