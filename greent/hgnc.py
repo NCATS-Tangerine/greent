@@ -24,7 +24,12 @@ class HGNC(Service):
         hgnc_id = identifier_parts[1]
         headers = {'Accept':'application/json'}
         r = requests.get('%s/%s/%s' % (self.url, query_string, hgnc_id), headers= headers).json()
-        symbol = r['response']['docs'][0]['symbol']
+        try:
+            symbol = r['response']['docs'][0]['symbol']
+        except:
+            import json
+            json.dumps(r,indent=2)
+            symbol = hgnc_id
         return symbol 
 
     #todo, it would probably be straightforward to autogenerate these and have common logic for them

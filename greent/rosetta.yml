@@ -122,6 +122,9 @@
     UNIPROTKB:
       link: synonym
       op:   hgnc.ncbigene_to_uniprotkb
+    CTD:
+      link: gene_to_drug
+      op:   ctd.gene_to_drug
   MESH:
     ROOT:
       op: oxo.mesh_to_other
