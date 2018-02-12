@@ -19,7 +19,7 @@
   GeneticCondition   : [ 'DOID.GENETIC_CONDITION', 'ORPHANET.GENETIC_CONDITION' ]
   MolecularFunction  : [ 'GO.MOLECULAR_FUNCTION' ]
   Name               : [ 'NAME.DRUG', 'NAME.DISEASE', 'NAME.SYMPTOM', 'NAME.ANATOMY', 'DISEASE_NAME', 'MESH.NAME', 'NAME.PHENOTYPE' ]
-  Pathway            : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY', 'KEGG.PATHWAY' ]
+  Pathway            : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY', 'KEGG.PATHWAY', 'REACT', 'KEGG-path' ]
   Phenotype          : [ 'HP' , 'NCIT']
   Substance          : [ 'DRUGBANK', 'DRUG.INTERACTION', 'INCHI', 'INCHIKEY', 'PUBCHEM', 'CHEMBL', 'CHEBI', 'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' , 'PHAROS.DRUG', 'CTD' ]
 
@@ -96,6 +96,20 @@
     UNIPROTKB:
       link: synonym
       op:   hgnc.hgnc_to_uniprotkb
+    REACT:
+      link: gene_to_pathway
+      op:   biolink.gene_get_react_pathway
+    KEGG-path:
+      link: gene_to_pathway
+      op:   biolink.gene_get_kegg_pathway
+  REACT:
+    HGNC:
+      link: pathway_to_gene
+      op:   biolink.pathway_get_gene
+  KEGG-path:
+    HGNC:
+      link: pathway_to_gene
+      op:   biolink.pathway_get_gene
   HGNC.SYMBOL:
     UBERON:
       link: anatomy
@@ -195,3 +209,6 @@
   UNIPROTKB:                  http://identifiers.org/uniprotkb
   PUBCHEM:                    http://identifiers.org/pubchem/drug/id
   CTD:                        http://identifiers.org/ctd
+  #TODO These are here just to make stuff run - need to figure out the right IRI
+  REACT:                      http://identifiers.org/react
+  KEGG-path:                  http://identifiers.org/kegg-path
