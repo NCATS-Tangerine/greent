@@ -241,7 +241,7 @@ class AsyncPharos(Pharos):
 #Poking around on the website there are about 10800 ( a few less )
 def build_disease_translation():
     """Write to disk a table mapping Pharos disease ID to DOID (and other?) so we can reverse lookup"""
-    with open('pharos.id.all.txt','w') as pfile:
+    with open('services/pharos.id.all.txt','w') as pfile:
         pfile.write('PharosID\tDOID\n')
         for pharosid in range(1,10800):
             r = requests.get('https://pharos.nih.gov/idg/api/v1/diseases(%d)/synonyms' % pharosid).json()

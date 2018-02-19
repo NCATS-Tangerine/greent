@@ -1,35 +1,25 @@
-import datetime
 import json
-import logging
-import os
-import pprint
-import unittest
-from collections import defaultdict
-from greent.biolink import Biolink
-from greent.chembio import ChemBioKS
-from greent.chemotext import Chemotext
-from greent.ctd import CTD
+from greent.services.biolink import Biolink
+from greent.services.chembio import ChemBioKS
+from greent.services.chemotext import Chemotext
+from greent.services.ctd import CTD
 from greent.clinical import Clinical
-from greent.cmaq import CMAQ
-from greent.config import Config
 from greent.disease_ont import DiseaseOntology
 from greent.endotype import Endotype
 from greent.go import GO
-from greent.hetio import HetIO
-from greent.hgnc import HGNC
+from greent.services.hetio import HetIO
+from greent.services.hgnc import HGNC
 from greent.hpo import HPO
-from greent.oxo import OXO
+from greent.services.oxo import OXO
 from greent.mondo import Mondo
-from greent.pharos import Pharos
+from greent.services.pharos import Pharos
 from greent.quickgo import QuickGo
 from greent.service import ServiceContext
-from greent.tkba import TranslatorKnowledgeBeaconAggregator
+from greent.services.tkba import TranslatorKnowledgeBeaconAggregator
 from greent.translator import Translator
 from greent.transreg import TranslatorRegistry
-from greent.triplestore import TripleStore
 from greent.util import LoggingUtil
-from greent.uberongraph import UberonGraphKS
-from pprint import pprint
+from greent.services.uberongraph import UberonGraphKS
 
 logger = LoggingUtil.init_logging (__file__)
 
