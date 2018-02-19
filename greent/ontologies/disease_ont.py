@@ -73,7 +73,7 @@ class DiseaseOntology (Service):
 
 def test():
     k = KNode("DOID:11476",node_types.DISEASE)
-    from service import ServiceContext
+    from greent.service import ServiceContext
     do = DiseaseOntology(ServiceContext.create_context())
     r=do.doid_or_umls_to_pharos(k)
     print (r)

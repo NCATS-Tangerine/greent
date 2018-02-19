@@ -1,9 +1,21 @@
-import json
 import requests
 from greent import node_types
 from greent.graph_components import KNode, KEdge
 from greent.service import Service
 
+
+#A map from identifiers.org namespaces (curie prefixes) to how HGNC describes these things
+prefixes_to_hgnc = {
+    'HGNC': 'hgnc_id',
+    'NCBIGENE': 'entrez_id',
+    'HGNC.SYMBOL': 'symbol',
+    'OMIM': 'omim_id',
+    #UNIPROTKB is not a identifiers.org prefix.  Uniprot is, and uniprot.isoform is.
+    'UNIPROTKB': 'uniprot_ids',
+    'ENSEMBL': 'ensembl_gene_id'
+}
+
+hgnc_to_prefixes = { v: k for k,v in prefixes_to_hgnc.items()}
 
 class HGNC(Service):
 
@@ -32,6 +44,29 @@ class HGNC(Service):
             json.dumps(r,indent=2)
             symbol = hgnc_id
         return symbol 
+
+    def get_synonyms(self, identifier):
+        identifier_parts = identifier.split(':')
+        prefix = identifier_parts[0]
+        id = identifier_parts[1]
+        query_type = prefixes_to_hgnc[prefix]
+        headers = {'Accept':'application/json'}
+        r = requests.get('%s/%s/%s' % (self.url, query_type, id), headers= headers).json()
+        docs = r['response']['docs']
+        synonyms = set()
+        for doc in docs:
+            for key in doc:
+                if key in hgnc_to_prefixes:
+                    values = doc[key]
+                    prefix = hgnc_to_prefixes[key]
+                    if not isinstance(values, list):
+                        values = [values]
+                    for value in values:
+                        if ':' in value:
+                            value = value.split(':')[-1]
+                        synonym = f'{prefix}:{value}'
+                        synonyms.add(synonym)
+        return synonyms
 
     #todo, it would probably be straightforward to autogenerate these and have common logic for them
     def ncbigene_to_uniprotkb(self, node):
@@ -78,6 +113,14 @@ def test():
     input_knode = KNode( 'NCBIGENE:3815' , node_type = node_types.GENE )
     print( hgnc.ncbigene_to_uniprotkb( input_knode ) )
 
+def test_synonym():
+    from greent.service import ServiceContext
+    hgnc = HGNC( ServiceContext.create_context() )
+    ncbigene = 'NCBIGENE:3815'
+    syns = hgnc.retrieve_synonyms(ncbigene)
+    for s in syns:
+        print(s)
+
 if __name__ == '__main__':
-    test()
+    test_synonym()
 
