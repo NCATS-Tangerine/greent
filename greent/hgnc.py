@@ -4,6 +4,7 @@ from greent import node_types
 from greent.graph_components import KNode, KEdge
 from greent.service import Service
 
+
 class HGNC(Service):
 
     """ Generic GENE id translation service. Essentially a highly generic synonym finder. """
