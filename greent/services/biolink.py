@@ -1,10 +1,9 @@
 import requests
-import json
 import urllib
 from greent.service import Service
 from greent.service import ServiceContext
-from greent.mondo import Mondo
-from greent.go import GO
+from greent.ontologies.mondo import Mondo
+from greent.ontologies.go import GO
 from greent.util import Text
 from greent.graph_components import KNode, KEdge
 from greent import node_types

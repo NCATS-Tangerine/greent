@@ -56,7 +56,7 @@ class DiseaseOntology (Service):
         mean time, we'll roll our own. """
         if not self.pmap:
             self.pmap = defaultdict(list)
-            with open(os.path.join(os.path.dirname(__file__), 'services/pharos.id.all.txt'),'r') as inf:     #'pharos.id.txt','r') as inf:
+            with open(os.path.join(os.path.dirname(__file__), '../services/pharos.id.all.txt'),'r') as inf:     #'pharos.id.txt','r') as inf:
                 rows = DictReader(inf,dialect='excel-tab')
                 for row in rows:
                     if row['DOID'] != '':
