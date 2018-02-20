@@ -1,25 +1,26 @@
 import json
+from greent.clinical import Clinical
+from greent.endotype import Endotype
+from greent.ontologies.disease_ont import DiseaseOntology
+from greent.ontologies.go import GO
+from greent.ontologies.hpo import HPO
+from greent.ontologies.mondo import Mondo
 from greent.services.biolink import Biolink
 from greent.services.chembio import ChemBioKS
 from greent.services.chemotext import Chemotext
 from greent.services.ctd import CTD
-from greent.clinical import Clinical
-from greent.ontologies.disease_ont import DiseaseOntology
-from greent.endotype import Endotype
-from greent.ontologies.go import GO
 from greent.services.hetio import HetIO
 from greent.services.hgnc import HGNC
-from greent.ontologies.hpo import HPO
 from greent.services.oxo import OXO
-from greent.ontologies.mondo import Mondo
 from greent.services.pharos import Pharos
 from greent.services.quickgo import QuickGo
 from greent.service import ServiceContext
 from greent.services.tkba import TranslatorKnowledgeBeaconAggregator
+from greent.services.uberongraph import UberonGraphKS
+from greent.services.unichem import UniChem
 from greent.translator import Translator
 from greent.transreg import TranslatorRegistry
 from greent.util import LoggingUtil
-from greent.services.uberongraph import UberonGraphKS
 
 logger = LoggingUtil.init_logging (__file__)
 
@@ -54,6 +55,7 @@ class GreenT:
         self.hgnc = HGNC(self.service_context)
         self.uberongraph = UberonGraphKS(self.service_context)
         self.ctd = CTD(self.service_context)
+        self.unichem = UniChem(self.service_context)
 
     # Exposure API
     def get_exposure_scores (self, exposure_type, start_date, end_date, exposure_point):

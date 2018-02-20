@@ -90,7 +90,7 @@ class OXO(Service):
 
 
 def test():
-    from service import ServiceContext
+    from greent.service import ServiceContext
     oxo = OXO(ServiceContext.create_context())
     r = oxo.query(['CL:85'])
     import json
@@ -98,14 +98,14 @@ def test():
 
 
 def test2():
-    from service import ServiceContext
+    from greent.service import ServiceContext
     oxo = OXO(ServiceContext.create_context())
     r = oxo.efo_to_doid(KNode('EFO:0000764', node_types.DISEASE))
     print(r)
 
 
 def test3():
-    from service import ServiceContext
+    from greent.service import ServiceContext
     oxo = OXO(ServiceContext.create_context())
     r = oxo.get_synonyms('EFO:0000764')
     import json
@@ -113,7 +113,7 @@ def test3():
 
 
 def test4():
-    from service import ServiceContext
+    from greent.service import ServiceContext
     oxo = OXO(ServiceContext.create_context())
     r = oxo.get_specific_synonym_expanding('DOID:9352', 'ICD9CM')
     import json

@@ -19,6 +19,7 @@ class KNode():
         self.properties = {}
         self.mesh_identifiers = []
         self.synonyms = set()
+        self.synonyms.add(identifier)
 
     def add_synonyms(self, new_synonym_set):
         self.synonyms.update(new_synonym_set)

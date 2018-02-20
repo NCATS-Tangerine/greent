@@ -56,27 +56,27 @@
     CTD:
       link: drugname_to_ctd
       op:   ctd.drugname_to_ctd
-  EFO:
-    DOID:
-      link: synonym
-      op:   oxo.efo_to_doid
-    UMLS:
-      link: synonym
-      op:   oxo.umls_to_doid
+#  EFO:
+#    DOID:
+#      link: synonym
+#      op:   oxo.efo_to_doid
+#    UMLS:
+#      link: synonym
+#      op:   oxo.umls_to_doid
   UMLS:
-    PHAROS.DISEASE:
-      link: synonym
-      op:   disease_ontology.doid_or_umls_to_pharos
+#    PHAROS.DISEASE:
+#      link: synonym
+#      op:   disease_ontology.doid_or_umls_to_pharos
     HP:
       link: disease_to_phenotype
       op:   biolink.disease_get_phenotype
   DOID:
-    MESH.DISEASE:
-      link: synonym
-      op: disease_ontology.graph_doid_to_mesh
-    PHAROS.DISEASE:
-      link: synonym
-      op:   disease_ontology.doid_or_umls_to_pharos
+#    MESH.DISEASE:
+#      link: synonym
+#      op: disease_ontology.graph_doid_to_mesh
+#    PHAROS.DISEASE:
+#      link: synonym
+#      op:   disease_ontology.doid_or_umls_to_pharos
     UBERON:
       link: phenotype
       op:   hetio.disease_to_phenotype
@@ -93,9 +93,9 @@
     DOID.GENETIC_CONDITION:
       link: gene_to_genetic_condition
       op: biolink.gene_get_genetic_condition
-    UNIPROTKB:
-      link: synonym
-      op:   hgnc.hgnc_to_uniprotkb
+#    UNIPROTKB:
+#      link: synonym
+#      op:   hgnc.hgnc_to_uniprotkb
     REACT:
       link: gene_to_pathway
       op:   biolink.gene_get_react_pathway
@@ -133,9 +133,9 @@
 #      link: targets
 #      op:   chembio.graph_drugbank_to_uniprot
   NCBIGENE:
-    UNIPROTKB:
-      link: synonym
-      op:   hgnc.ncbigene_to_uniprotkb
+#    UNIPROTKB:
+#      link: synonym
+#      op:   hgnc.ncbigene_to_uniprotkb
     CTD:
       link: gene_to_drug
       op:   ctd.gene_to_drug
@@ -157,9 +157,9 @@
 #      link: disease_gene
 #      op:   pharos.disease_get_gene
   UNIPROT:
-    HGNC.SYMBOL:
-      link: synonym
-      op:   chembio.graph_uniprot_to_hgnc
+#    HGNC.SYMBOL:
+#      link: synonym
+#      op:   chembio.graph_uniprot_to_hgnc
     KEGG:
       link: gene_pathway
       op:   chembio.graph_get_pathways_by_gene
@@ -177,10 +177,10 @@
     CL:
       link: bio_process_cell_type
       op: quickgo.go_term_annotation_extensions
-  NCIT:
-    HP:
-      link: synonym
-      op: oxo.NCIT_to_HP
+#  NCIT:
+#    HP:
+#      link: synonym
+#      op: oxo.NCIT_to_HP
   HP:
     UBERON:
       link: phenotype_anatomy

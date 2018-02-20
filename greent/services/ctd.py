@@ -41,6 +41,7 @@ class CTD(Service):
 
     def load_names(self):
         self.name_to_id = defaultdict(list)
+        self.id_lookups = {}
         fname = os.path.join(os.path.dirname(__file__), 'CTD_chemicals.tsv')
         with open(fname, 'r') as inf:
             line = inf.readline()
@@ -54,6 +55,16 @@ class CTD(Service):
                     synonyms = x[7].split('|')
                     for synonym in synonyms:
                         self.name_to_id[synonym.lower()].append(indexname)
+                ctdid = f'CTD:{indexname}'
+                mesh = x[1] #already has curie prefix
+                synonym_ids = [ ctdid, mesh]
+                if len(x[2]) > 0:
+                    synonym_ids.append( f'CAS:{x[2]}' )
+                if len(x) > 8:
+                    synonym_ids.append( f'DRUGBANK:{x[8]}' )
+                synonym_ids = tuple(synonym_ids)
+                for sid in synonym_ids:
+                    self.id_lookups[sid] = synonym_ids
 
     def load_genes(self):
         self.drug_genes = defaultdict(list)
@@ -83,6 +94,11 @@ class CTD(Service):
                     result['publications'] = []
                 self.drug_genes[chemname].append(result)
                 self.gene_drugs[gene_id].append(result)
+
+    def get_synonyms(self, input_identifier):
+        if input_identifier not in self.id_lookups:
+            return set()
+        return self.id_lookups[ input_identifier ]
 
     def drugname_string_to_ctd_string(self, drugname):
         """This is exposed so that it can be used to look up names without the KNode structure"""
