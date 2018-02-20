@@ -1,7 +1,12 @@
+import logging
+from collections import defaultdict
+
 from greent import node_types
+from greent.util import Text, LoggingUtil
 from greent.synonymizers import hgnc_synonymizer
 from greent.synonymizers import oxo_synonymizer
 from greent.synonymizers import substance_synonymizer
+
 
 #The mapping from a node type to the synonymizing module
 synonymizers = {
@@ -17,6 +22,37 @@ synonymizers = {
     node_types.ANATOMY:oxo_synonymizer,
 }
 
-def synonymize(node, gt):
-    """Given a node, determine its type and dispatch it to the correct synonymizer"""
-    synonymizers[node.node_type].synonymize(node,gt)
+logger = LoggingUtil.init_logging(__file__, level=logging.DEBUG)
+
+class Synonymizer:
+
+    def __init__(self, config, core):
+        self.core = core
+        self.identifier_lists = config['@concepts']
+
+    def synonymize(self, node):
+        """Given a node, determine its type and dispatch it to the correct synonymizer"""
+        synonymizers[node.node_type].synonymize(node, self.core)
+        self.normalize(node)
+
+    def normalize(self,node):
+        """Given a node, which will have many potential identifiers, choose the best identifier to be the node ID,
+        where 'best' is defined by the order in which identifiers appear in the @concept section of the rosetta.yml"""
+        type_curies = self.identifier_lists[ node.node_type ]
+        original_curie = Text.get_curie(node.identifier)
+        if original_curie == type_curies:
+            #The identifier is already the best curie, so stop doing anything
+            return
+        #Now start looking for the best curies
+        synonyms_by_curie = defaultdict(list)
+        for s in node.synonyms:
+            c = Text.get_curie(s)
+            synonyms_by_curie[c].append(s)
+        for type_curie in type_curies:
+            potential_identifiers = synonyms_by_curie[type_curie]
+            if len(potential_identifiers) > 0:
+                if len(potential_identifiers) > 1:
+                    logger.warn('More than one potential identifier for a node: {}'.format(','.join(potential_identifiers)))
+                node.identifier = potential_identifiers[0]
+                break
+

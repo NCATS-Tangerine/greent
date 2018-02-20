@@ -9,19 +9,20 @@
 #########################################################################
 
 # Rosetta will build a concept/type graph is based on these mappings.
+# The order of these lists determines the preference for making the node identifier.
 '@concepts' :
   Anatomy            : [ 'UBERON' ]
   BiologicalProcess  : [ 'GO.BIOLOGICAL_PROCESS' ]
   Cell               : [ 'CL' ]
   CellularComponent  : [ 'GO.CELLULAR_COMPONENT' ]
-  Disease            : [ 'MESH.DISEASE', 'DOID', 'PHAROS.DISEASE', 'OMIM', 'MESH.DISEASE', 'ORPHANET' , 'EFO', 'UMLS']
-  Gene               : [ 'UNIPROT', 'HGNC', 'HGNC.SYMBOL', 'ENTREZ', 'NCBIGENE', 'ENSEMBL', 'ENSEMBL.TRANSCRIPT', 'UNIPROTKB' , 'MGI', 'ZFIN']
-  GeneticCondition   : [ 'DOID.GENETIC_CONDITION', 'ORPHANET.GENETIC_CONDITION' ]
+  Disease            : [ 'MONDO', 'DOID', 'PHAROS.DISEASE', 'OMIM', 'MESH.DISEASE', 'ORPHANET' , 'EFO', 'UMLS']
+  Gene               : [ 'HGNC', 'NCBIGENE', 'HGNC.SYMBOL', 'ENTREZ',  'ENSEMBL', 'ENSEMBL.TRANSCRIPT', 'UNIPROTKB' , 'UNIPROT', 'MGI', 'ZFIN']
+  GeneticCondition   : [ 'MONDO.GENETIC_CONDITION', 'DOID.GENETIC_CONDITION', 'ORPHANET.GENETIC_CONDITION' ]
   MolecularFunction  : [ 'GO.MOLECULAR_FUNCTION' ]
   Name               : [ 'NAME.DRUG', 'NAME.DISEASE', 'NAME.SYMPTOM', 'NAME.ANATOMY', 'DISEASE_NAME', 'MESH.NAME', 'NAME.PHENOTYPE' ]
   Pathway            : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY', 'KEGG.PATHWAY', 'REACT', 'KEGG-path' ]
   Phenotype          : [ 'HP' , 'NCIT']
-  Substance          : [ 'DRUGBANK', 'DRUG.INTERACTION', 'INCHI', 'INCHIKEY', 'PUBCHEM', 'CHEMBL', 'CHEBI', 'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' , 'PHAROS.DRUG', 'CTD' ]
+  Substance          : [ 'DRUGBANK', 'PUBCHEM', 'CHEBI', 'CHEMBL','DRUG.INTERACTION', 'INCHI', 'INCHIKEY',  'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' , 'PHAROS.DRUG', 'CTD' ]
 
 # Only operations specifying semantic predicates will be invoked.
 '@translator-semantics':
