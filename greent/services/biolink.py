@@ -15,7 +15,7 @@ class Biolink(Service):
 
     def __init__(self, context):
         super(Biolink, self).__init__("biolink", context)
-        # TODO, can we just use the Mondo that's inthe core already?
+        # TODO, can we just use the Mondo that's in the core already?
         self.checker = Mondo(ServiceContext.create_context())
         self.go = GO(ServiceContext.create_context())
 
@@ -44,20 +44,30 @@ class Biolink(Service):
         return edge_nodes
 
     def gene_get_disease(self, gene_node):
-        """Given a gene specified as an HGNC curie, return associated diseases. """
+        """Given a gene specified as a curie, return associated diseases."""
+        #Biolink is pretty forgiving on gene inputs, and our genes should have HGNC as their identifiers nearly always
         ehgnc = urllib.parse.quote_plus(gene_node.identifier)
         logging.getLogger('application').debug('          biolink: %s/bioentity/gene/%s/diseases' % (self.url, ehgnc))
         r = requests.get('%s/bioentity/gene/%s/diseases' % (self.url, ehgnc)).json()
         return self.process_associations(r, 'gene_get_disease', node_types.DISEASE)
 
     def disease_get_phenotype(self, disease):
+        #Biolink should understand any of our disease inputs here.
         url = "{0}/bioentity/disease/{1}/phenotypes/".format(self.url, disease.identifier)
         response = requests.get(url).json()
         return self.process_associations(response, 'disease_get_phenotype', node_types.PHENOTYPE)
 
     def gene_get_go(self, gene):
         # this function is very finicky.  gene must be in uniprotkb, and the curie prefix must be correctly capitalized
-        url = "{0}/bioentity/gene/UniProtKB:{1}/function/".format(self.url, Text.un_curie(gene.identifier))
+        uniprot_id = None
+        for gene_synonym in gene.synonyms:
+            curie = Text.get_curie(gene_synonym)
+            if curie == 'UNIPROTKB':
+                uniprot_id = gene_synonym
+                break
+        if uniprot_id is None:
+            return None
+        url = "{0}/bioentity/gene/UniProtKB:{1}/function/".format(self.url, Text.un_curie(uniprot_id))
         response = requests.get(url).json()
         # return [ (a['object']['id'] , a['object']['label']) for a in response['associations'] ]
         return self.process_associations(response, 'gene_get_go', node_types.PROCESS)
@@ -85,13 +95,13 @@ class Biolink(Service):
         response = requests.get(url).json()
         return self.process_associations(response, 'gene_get_pathways', node_types.PATHWAY)
 
-    def gene_get_react_pathway(self, gene):
-        process_results = self.gene_get_pathways(gene)
-        return list(filter(lambda en: en[1].identifier.startswith('REACT:'), process_results))
-
-    def gene_get_kegg_pathway(self, gene):
-        process_results = self.gene_get_pathways(gene)
-        return list(filter(lambda en: en[1].identifier.startswith('KEGG-path:'), process_results))
+    #def gene_get_react_pathway(self, gene):
+    #    process_results = self.gene_get_pathways(gene)
+    #    return list(filter(lambda en: en[1].identifier.startswith('REACT:'), process_results))
+#
+#    def gene_get_kegg_pathway(self, gene):
+#        process_results = self.gene_get_pathways(gene)
+#        return list(filter(lambda en: en[1].identifier.startswith('KEGG-path:'), process_results))
 
     def pathway_get_gene(self, pathway):
         url = "{0}/bioentity/pathway/{1}/genes/".format(self.url, pathway.identifier)

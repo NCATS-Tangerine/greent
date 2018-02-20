@@ -247,10 +247,13 @@ class Rosetta:
         return result
 
     def graph_inner(self, next_nodes, program):
-        # print ("program: {}".format (json.dumps (program, indent=2)))
+        import json
+        print ("program: {}".format (json.dumps (program, indent=2)))
         if not program or len(program) == 0:
             return []
         synonymizer = Synonymizer( self.config, self.core )
+        for node in next_nodes:
+            synonymizer.synonymize(node[1])
         primed = [{'collector': next_nodes}] + program
         linked_result = []
         for index, level in enumerate(program):

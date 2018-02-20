@@ -100,8 +100,13 @@ class TypeGraph(Service):
                 b_concept_node = self._find_or_create_concept(b_concept)
                 CONCEPT_RELATION_NAME = "translation"
                 concept_rels = a_concept_node.relationships.outgoing(CONCEPT_RELATION_NAME)
-                if b_concept_node not in [rel.end for rel in concept_rels]:
-                    a_concept_node.relationships.create(CONCEPT_RELATION_NAME, b_concept_node)
+                found = False
+                for rel in concept_rels:
+                    if rel.end == b_concept_node and rel.get('op') == op:
+                        found = True
+                if not found:
+                    a_concept_node.relationships.create(CONCEPT_RELATION_NAME, b_concept_node, predicate=predicate,
+                                                        op=op, enabled=enabled)
 
     def _find_or_create_concept(self, concept):
         """ Find or create a concept object which will be linked to member type object. """

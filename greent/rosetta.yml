@@ -99,10 +99,10 @@
 #      op:   hgnc.hgnc_to_uniprotkb
     REACT:
       link: gene_to_pathway
-      op:   biolink.gene_get_react_pathway
+      op:   biolink.gene_get_pathways
     KEGG-path:
       link: gene_to_pathway
-      op:   biolink.gene_get_kegg_pathway
+      op:   biolink.gene_get_pathways
   REACT:
     HGNC:
       link: pathway_to_gene
