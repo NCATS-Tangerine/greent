@@ -41,9 +41,13 @@ class OXO(Service):
                 "size": 10000
             })
 
+    def get_synonymous_curies(self, identifier, distance=2):
+        synonyms = self.get_synonyms(identifier, distance)
+        return set([x['curie'] for x in synonyms])
+
     def get_synonyms(self, identifier, distance=2):
         """ Find all synonyms for a curie for a given distance . """
-        result = []
+        others = []
         response = self.query(ids=[identifier], distance=distance)
         searchResults = response['_embedded']['searchResults']
         if len(searchResults) > 0 and searchResults[0]['queryId'] == identifier:

@@ -2,6 +2,9 @@ import json
 import os
 import unittest
 from collections import defaultdict
+
+from ontobio.vocabulary import upper
+
 from greent.mesh import MeSH
 from greent.neo4j import Neo4JREST
 from greent.util import LoggingUtil
@@ -16,8 +19,11 @@ class Chemotext(Neo4JREST):
         super (Chemotext, self).__init__("chemotext", context)
         self.mesh = MeSH ()
         self.cache = os.path.join(os.path.dirname(__file__),'chemotext.words.txt')
+        self.mesh_map_name = os.path.join(os.path.dirname(__file__),'meshnames_2018.bin')
         if not os.path.exists(self.cache):
             build_synonym_cache(self)
+        if not os.path.exists(self.mesh_map_name):
+            parse_mesh_files(self)
         self.load_synonym_cache()
 
     def load_synonym_cache( self ):
@@ -27,6 +33,12 @@ class Chemotext(Neo4JREST):
             for line in infile:
                 x = line.strip().split('\t')
                 self.term_map[x[0]] = x[1]
+        self.mesh_id_map = {}
+        with open(self.mesh_map_name,'r') as infile:
+            h = infile.readline()
+            for line in infile:
+                x = line.strip().split('\t')
+                self.mesh_id_map[x[0]] = x[1]
         
     def term_to_term (self, A, of_type=None, limit=100):
         response = self.query (
@@ -74,6 +86,11 @@ class Chemotext(Neo4JREST):
         if qterm not in self.term_map:
             return None
         return self.term_map[qterm]
+
+    def get_chemotext_term_from_meshid(self,mesh_id):
+        if mesh_id not in self.mesh_id_map:
+            return None
+        return self.get_chemotext_term(self.mesh_id_map[mesh_id])
     
 
 def build_synonym_cache(ctext = None):
@@ -100,6 +117,29 @@ def build_synonym_cache(ctext = None):
                     outfile.write('{}\t{}\n'.format(syn.upper(), meshname) )
 
 
+def parse_mesh_files():
+    mesh_map_name = os.path.join(os.path.dirname(__file__),'meshnames_2018.bin')
+    with open(mesh_map_name,'w') as outfile:
+        for branch,namekey in (('c','NM'),('d','MH'),('q','SH')):
+            mesh_file_name = os.path.join(os.path.dirname(__file__),f'{branch}2018.bin')
+            with open(mesh_file_name) as infile:
+                line = infile.readline()
+                while line != '':
+                    #Following loops over a *NEWRECORD
+                    while len(line.strip())>0:
+                        if line.startswith('*NEWRECORD'):
+                            line = infile.readline()
+                            continue
+                        kv = line.strip().split(' = ')
+                        if kv[0] == namekey:
+                            name = kv[1]
+                        if kv[0] == 'UI':
+                            meshid = kv[1]
+                        line = infile.readline()
+                    outfile.write(f'{meshid}\t{name}\n')
+                    line = infile.readline()
+
+
 '''
 class TestChemotext(unittest.TestCase):
 
@@ -117,7 +157,8 @@ class TestChemotext(unittest.TestCase):
         pprint (self.chemotext.term_to_term ('Asthma', of_type={'name': 'Respiratory Hypersensitivity' }))
 '''
 if __name__ == '__main__':
-    pass
+    #pass
     #build_synonym_cache()
+    parse_mesh_files()
     #unittest.main ()
 

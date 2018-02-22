@@ -19,4 +19,14 @@ def synonymize_with_MONDO(node,gt):
 def synonymize_with_OXO(node,gt):
     oxo_synonymizer.synonymize(node,gt)
 
+def testit():
+    from greent.graph_components import KNode
+    from greent import node_types
+    node = KNode('MONDO:0005737',node_types.DISEASE)
+    from greent.core import GreenT
+    gt = GreenT()
+    synonymize(node,gt)
+    print("\n-----\n"+'\n'.join(list(node.synonyms)))
 
+if __name__ == '__main__':
+    testit()
