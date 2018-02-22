@@ -9,7 +9,7 @@ def synonymize(node, gt):
         #OXO didn't know about it.  So we're going to call oxo with our (valid) synonyms
         known_synonyms = node.synonyms
         for s in known_synonyms:
-            synonyms.update( get_synonyms_with_curie_check(s,gt,distance=1))
+            synonyms.update( get_synonyms_with_curie_check(s,gt) )
     # OK, we're not going to use them all, there's some BS PMIDs that come back...
     synonyms = {s for s in synonyms if not s.startswith('PMID')}
     node.add_synonyms(synonyms)

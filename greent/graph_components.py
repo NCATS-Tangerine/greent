@@ -24,6 +24,9 @@ class KNode():
     def add_synonyms(self, new_synonym_set):
         self.synonyms.update(new_synonym_set)
 
+    def get_synonyms_by_prefix(self, prefix):
+        return set( filter(lambda x: Text.get_curie(x) == prefix, self.synonyms) )
+
     def add_synonym(self, synonymous_node):
         """Merge anther KNode (representing a synonym) into this KNode."""
         self.synonyms.add(synonymous_node.identifier)

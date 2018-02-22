@@ -4,6 +4,7 @@ import requests
 import json
 import logging
 import sys
+import os
 import traceback
 import datetime
 from cachier import cachier
@@ -73,18 +74,20 @@ class Pharos(Service):
         #TODO: This relies on a pretty ridiculous caching of a map between pharos ids and doids.  
         #      As Pharos improves, this will not be required, but for the moment I don't know a better way.
         pmap = defaultdict(list)
-        with open('pharos.id.txt','r') as inf:
+        pharos_id_filename = os.path.join(os.path.dirname(__file__),'pharos.id.all.txt')
+        with open(pharos_id_filename,'r') as inf:
             rows = DictReader(inf,dialect='excel-tab')
             for row in rows:
                 if row['DOID'] != '':
                     doidlist = row['DOID'].split(',')
                     for d in doidlist:
                         pmap[d.upper()].append(row['PharosID'])
-        doid = subject_node.identifier
-        pharos_list = pmap[doid]
-        if len(pharos_list) == 0:
-            #logging.getLogger('application').warn('Unable to translate %s into Pharos ID' % doid)
-            return None
+        valid_identifiers = subject_node.get_synonyms_by_prefix('DOID')
+        valid_identifiers.update(subject_node.get_synonyms_by_prefix('UMLS'))
+        pharos_set = set()
+        for vi in valid_identifiers:
+            pharos_set.update( pmap[vi] )
+        pharos_list = list(pharos_set)
         return pharos_list
 
     def target_to_hgnc(self, target_id):
@@ -116,22 +119,22 @@ class Pharos(Service):
             results.append( (newedge, newnode ) )
         return results
 
-    def disease_get_gene0(self, subject):
-        """ Get a gene from a pharos disease id. """
-        pharosids = self.translate (subject)
-        print ("pharos ids: {}".format (pharosids))
-        original_edge_nodes=[]
-        for pharosid in pharosids:
-            logger.debug ('pharos> https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid)
-            r = requests.get('https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid)
-            result = r.json()
-            for link in result['links']:
-                if link['kind'] != 'ix.idg.models.Target':
-                    logger.info('Pharos disease returning new kind: %s' % link['kind'])
-                else:
-                    pharos_target_id = int(link['refid'])
-                    pharos_edge = KEdge( 'pharos', 'disease_get_gene', {'properties': link['properties']} )
-                    original_edge_nodes.append( (pharos_edge, pharos_target_id) )
+#    def disease_get_gene0(self, subject):
+#        """ Get a gene from a pharos disease id. """
+#        pharos_ids = self.translate (subject)
+#        print ("pharos ids: {}".format (pharos_ids))
+#        original_edge_nodes=[]
+#        for pharosid in pharosids:
+#            logger.debug ('pharos> https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid)
+#            r = requests.get('https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid)
+#            result = r.json()
+#            for link in result['links']:
+#                if link['kind'] != 'ix.idg.models.Target':
+#                    logger.info('Pharos disease returning new kind: %s' % link['kind'])
+#                else:
+#                    pharos_target_id = int(link['refid'])
+#                    pharos_edge = KEdge( 'pharos', 'disease_get_gene', {'properties': link['properties']} )
+#                    original_edge_nodes.append( (pharos_edge, pharos_target_id) )
 
 #    @cachier(stale_after=datetime.timedelta(days=8))
 #    def get_request (self, url):
@@ -168,22 +171,24 @@ class Pharos(Service):
 #    @cachier(stale_after=datetime.timedelta(days=8))
     def disease_get_gene(self, subject):
         """ Get a gene from a pharos disease id. """
-        pharosid = Text.un_curie (subject.identifier)
-        original_edge_nodes=[]
-        r = requests.get('https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid)
-        result = r.json()
+        pharos_ids = self.translate (subject)
         resolved_edge_nodes = []
-        for link in result['links']:
-            if link['kind'] == 'ix.idg.models.Target':
-                pharos_target_id = int(link['refid'])
-                pharos_edge = KEdge( 'pharos', 'disease_get_gene', {'properties': link['properties']} )               
-                #Pharos returns target ids in its own numbering system. Collect other names for it.
-                hgnc = self.target_to_hgnc (pharos_target_id)
-                if hgnc is not None:
-                    hgnc_node = KNode (hgnc, node_types.GENE)
-                    resolved_edge_nodes.append( (pharos_edge, hgnc_node) )
-                else:
-                    logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
+        for pharosid in pharos_ids:
+            logging.getLogger('application').debug("Identifier:"+subject.identifier)
+            original_edge_nodes=[]
+            r = requests.get('https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid)
+            result = r.json()
+            for link in result['links']:
+                if link['kind'] == 'ix.idg.models.Target':
+                    pharos_target_id = int(link['refid'])
+                    pharos_edge = KEdge( 'pharos', 'disease_get_gene', {'properties': link['properties']} )               
+                    #Pharos returns target ids in its own numbering system. Collect other names for it.
+                    hgnc = self.target_to_hgnc (pharos_target_id)
+                    if hgnc is not None:
+                        hgnc_node = KNode (hgnc, node_types.GENE)
+                        resolved_edge_nodes.append( (pharos_edge, hgnc_node) )
+                    else:
+                        logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
         return resolved_edge_nodes
 
 class AsyncPharos(Pharos):

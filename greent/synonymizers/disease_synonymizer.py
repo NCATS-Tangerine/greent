@@ -22,7 +22,8 @@ def synonymize_with_OXO(node,gt):
 def testit():
     from greent.graph_components import KNode
     from greent import node_types
-    node = KNode('MONDO:0005737',node_types.DISEASE)
+    #node = KNode('MONDO:0005737',node_types.DISEASE)
+    node = KNode('MONDO:0009757',node_types.DISEASE)
     from greent.core import GreenT
     gt = GreenT()
     synonymize(node,gt)
