@@ -63,7 +63,9 @@ class UberonGraphKS(Service):
         from <http://example.org/uberon-hp-cl.ttl>
         where {
                 $anatomy_id BFO:0000051 ?part .
-                ?part rdfs:subClassOf* UBERON:0001062 .
+                graph <http://reasoner.renci.org/redundant> {
+                  ?part rdfs:subClassOf UBERON:0001062 .
+                }
                 ?part rdfs:label ?partlabel .
         }
         """
@@ -87,7 +89,10 @@ class UberonGraphKS(Service):
         from <http://reasoner.renci.org/nonredundant>
         from <http://example.org/uberon-hp-cl.ttl>
         where {
-                  $cellID rdfs:subClassOf*/BFO:0000050 ?anatomyID .
+                  graph <http://reasoner.renci.org/redundant> {
+                    $cellID rdfs:subClassOf ?super .
+                  }
+                  ?super BFO:0000050 ?anatomyID .
                   ?anatomyID rdfs:label ?anatomyLabel .
               }
         """
@@ -118,12 +123,16 @@ class UberonGraphKS(Service):
         from <http://reasoner.renci.org/nonredundant>
         from <http://example.org/uberon-hp-cl.ttl>
         where {
-                  ?anatomy_id rdfs:subClassOf* UBERON:0001062.
+                  graph <http://reasoner.renci.org/redundant> {
+                    ?anatomy_id rdfs:subClassOf UBERON:0001062 .
+                  }
                   ?anatomy_id rdfs:label ?anatomy_label .
                   graph <http://reasoner.renci.org/nonredundant> {
                        ?phenotype phenotype_of: ?anatomy_id .
                   }
-                  $HPID rdfs:subClassOf* ?phenotype .
+                  graph <http://reasoner.renci.org/redundant> {
+                    $HPID rdfs:subClassOf ?phenotype .
+                  }
                   $HPID rdfs:label ?input_label .
               }
         """
