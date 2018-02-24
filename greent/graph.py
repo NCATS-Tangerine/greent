@@ -134,41 +134,42 @@ class TypeGraph(Service):
         """ Execute a cypher query and walk the results to build a set of transitions to execute. """
         programs = []
         result = self.db.query(query, data_contents=True)
+        import json
         if result.rows is None:
             return []
         for row_set in result.rows:
             program = []
             for row in row_set:
-                # logger.debug (json.dumps (row, indent=2))
+                logger.debug (json.dumps (row, indent=2))
                 node_type = None
-                for col in row:
-                    if isinstance(col, str):
-                        node_type = col.split('>')[0] if '>' in col else col
-                    elif isinstance(col, dict):
-                        if 'name' in col:
-                            # logger.debug ("  --result type: {0}".format (col))
-                            node_type = col['name']
-                        elif 'op' in col:
-                            op = col['op']
-                            predicate = col['predicate']
-                            is_new = True
-                            for level in program:
-                                if level['node_type'] == node_type:
-                                    level['ops'].append({
-                                        'link': predicate,
-                                        'op': op
-                                    })
-                                    is_new = False
-                            if is_new:
-                                program.append({
-                                    'node_type': node_type,
-                                    'ops': [
-                                        {
-                                            'link': predicate,
-                                            'op': op
-                                        }
-                                    ],
-                                    'collector': []
-                                })
+                if len(row) != 3:
+                    logger.error("Better check on the program")
+                    logger.error (json.dumps (row, indent=2))
+                    exit()
+                node_type = row[0]['name']
+                col = row[1]
+                op = col['op']
+                predicate = col['predicate']
+                is_new = True
+                for level in program:
+                    if level['node_type'] == node_type:
+                        level['ops'].append({
+                            'link': predicate,
+                            'op': op
+                        })
+                        is_new = False
+                next_type = row[2]['name']
+                if is_new:
+                    program.append({
+                        'node_type': node_type,
+                        'ops': [
+                            {
+                                'link': predicate,
+                                'op': op
+                            }
+                        ],
+                        'next_type': next_type,
+                        'collector': []
+                    })
             programs.append(program)
         return programs
