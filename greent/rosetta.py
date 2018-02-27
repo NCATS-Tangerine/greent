@@ -50,6 +50,8 @@ class Rosetta:
         with open(config_file, 'r') as stream:
             self.config = yaml.load(stream)
 
+        self.synonymizer = Synonymizer( self.config, self.core )
+
         logger.debug("-- Initializing vocabulary and curies.")
         self.curie = {}
         self.to_curie_map = {}
@@ -248,12 +250,8 @@ class Rosetta:
 
     def graph_inner(self, next_nodes, program):
         import json
-        print ("program: {}".format (json.dumps (program, indent=2)))
         if not program or len(program) == 0:
             return []
-        synonymizer = Synonymizer( self.config, self.core )
-        for node in next_nodes:
-            synonymizer.synonymize(node[1])
         primed = [{'collector': next_nodes}] + program
         linked_result = []
         for index, level in enumerate(program):
@@ -274,7 +272,7 @@ class Rosetta:
                             if isinstance(edge, KEdge):
                                 edge.predicate = operator['link']
                                 edge.source_node = source_node
-                                synonymizer.synonymize(r[1])
+                                self.synonymizer.synonymize(r[1])
                                 edge.target_node = r[1]
                                 linked_result.append(edge)
                         logger.debug("{0} => {1}".format(log_text, Text.short(results)))

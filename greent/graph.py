@@ -140,7 +140,7 @@ class TypeGraph(Service):
         for row_set in result.rows:
             program = []
             for row in row_set:
-                logger.debug (json.dumps (row, indent=2))
+                #logger.debug (json.dumps (row, indent=2))
                 node_type = None
                 if len(row) != 3:
                     logger.error("Better check on the program")

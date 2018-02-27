@@ -1,5 +1,9 @@
 from greent.util import Text
 from greent.synonymizers import oxo_synonymizer
+from greent.util import LoggingUtil
+import logging
+
+logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG)
 
 # Substances are a special case, because the landscape of identifiers is such a mess.
 # Therefore, it's going to take a few different approaches in conjunction to get anywhere.
@@ -15,6 +19,7 @@ from greent.synonymizers import oxo_synonymizer
 # If we add other drug name resolvers then things may change. Adding other functions that simply use compound ids
 # should be ok, as long as these two paths resolve whatever the name of interest is.
 def synonymize(node,gt):
+    logger.debug("Synonymize: {}".format(node.identifier))
     curie = Text.get_curie(node.identifier)
     if curie == 'CTD':
         synonymize_with_CTD(node,gt)
@@ -25,16 +30,23 @@ def synonymize(node,gt):
         synonymize_with_OXO(node,gt)
         synonymize_with_CTD(node,gt)
     else:
-        raise Exception("Unexpected curie on Substance node")
+        synonymize_with_OXO(node,gt)
+        synonymize_with_UniChem(node,gt)
+        synonymize_with_CTD(node,gt)
 
 def synonymize_with_CTD(node,gt):
+    logger.debug(" CTD: {}".format(node.identifier))
     synonyms = gt.ctd.get_synonyms( node.identifier )
     node.add_synonyms( synonyms )
+    logger.debug("  updated syns: {}".format( ','.join(list(node.synonyms))))
 
 def synonymize_with_OXO(node,gt):
+    logger.debug(" OXO: {}".format(node.identifier))
     oxo_synonymizer.synonymize(node,gt)
+    logger.debug("  updated syns: {}".format( ','.join(list(node.synonyms))))
 
 def synonymize_with_UniChem(node,gt):
+    logger.debug(" UniChem: {}".format(node.identifier))
     all_synonyms = set()
     for synonym in node.synonyms:
         curie = Text.get_curie(synonym)
@@ -42,3 +54,6 @@ def synonymize_with_UniChem(node,gt):
             new_synonyms = gt.unichem.get_synonyms( synonym )
             all_synonyms.update(new_synonyms)
     node.add_synonyms( all_synonyms )
+    logger.debug("  updated syns: {}".format( ','.join(list(node.synonyms))))
+
+

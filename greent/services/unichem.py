@@ -14,7 +14,7 @@ class UniChem(Service):
         # 1 = Chembl
         # 2 = PubChem
         # 7 = CHEBI
-        self.curie_to_sourceid = { 'CHEMBL': '1', 'PUBCHEM': '2', 'CHEBI': '7' }
+        self.curie_to_sourceid = { 'CHEMBL': '1', 'DRUGBANK': '2', 'CHEBI': '7' , 'PUBCHEM': '22'}
         self.sourceid_to_curie = { v:k for k,v in self.curie_to_sourceid.items()}
 
 
