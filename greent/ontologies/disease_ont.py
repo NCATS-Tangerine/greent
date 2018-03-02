@@ -51,29 +51,29 @@ class DiseaseOntology (Service):
         return [ ( self.get_edge (predicate='synonym'),
                    KNode(identifier=i.replace ("MESH:", "MESH.DISEASE:"), node_type=node_types.DISEASE) ) for i in mesh_ids ]
 
-    def doid_or_umls_to_pharos(self,doid):
-        """ Convert a doid to a pharos id. Perhaps there's a public service that does this but in the
-        mean time, we'll roll our own. """
-        if not self.pmap:
-            self.pmap = defaultdict(list)
-            with open(os.path.join(os.path.dirname(__file__), 'pharos.id.all.txt'),'r') as inf:     #'pharos.id.txt','r') as inf:
-                rows = DictReader(inf,dialect='excel-tab')
-                for row in rows:
-                    if row['DOID'] != '':
-                        doidlist = row['DOID'].split(',')
-                        for d in doidlist:
-                            self.pmap[d.upper()].append(row['PharosID'])
-        pharos_list = self.pmap[doid.identifier]
-        if len(pharos_list) == 0:
-            #logging.getLogger('application').warn('Unable to translate doid: %s into a Pharos ID' % doid)
-            return []
-        return list(map(lambda v : (
-            KEdge('local','doid_to_pharos', is_synonym=True),
-            KNode(identifier="PHAROS.DISEASE:{0}".format (v), node_type=node_types.DISEASE) ), pharos_list ))
+#    def doid_or_umls_to_pharos(self,doid):
+#        """ Convert a doid to a pharos id. Perhaps there's a public service that does this but in the
+#        mean time, we'll roll our own. """
+#        if not self.pmap:
+#            self.pmap = defaultdict(list)
+#            with open(os.path.join(os.path.dirname(__file__), '../services/pharos.id.all.txt'),'r') as inf:     #'pharos.id.txt','r') as inf:
+#                rows = DictReader(inf,dialect='excel-tab')
+#                for row in rows:
+#                    if row['DOID'] != '':
+#                        doidlist = row['DOID'].split(',')
+#                        for d in doidlist:
+#                            self.pmap[d.upper()].append(row['PharosID'])
+#        pharos_list = self.pmap[doid.identifier]
+#        if len(pharos_list) == 0:
+#            #logging.getLogger('application').warn('Unable to translate doid: %s into a Pharos ID' % doid)
+#            return []
+#        return list(map(lambda v : (
+#            KEdge('local','doid_to_pharos', is_synonym=True),
+#            KNode(identifier="PHAROS.DISEASE:{0}".format (v), node_type=node_types.DISEASE) ), pharos_list ))
 
 def test():
     k = KNode("DOID:11476",node_types.DISEASE)
-    from service import ServiceContext
+    from greent.service import ServiceContext
     do = DiseaseOntology(ServiceContext.create_context())
     r=do.doid_or_umls_to_pharos(k)
     print (r)

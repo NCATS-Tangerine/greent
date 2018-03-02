@@ -1,35 +1,26 @@
-import datetime
 import json
-import logging
-import os
-import pprint
-import unittest
-from collections import defaultdict
-from greent.biolink import Biolink
-from greent.chembio import ChemBioKS
-from greent.chemotext import Chemotext
-from greent.ctd import CTD
 from greent.clinical import Clinical
-from greent.cmaq import CMAQ
-from greent.config import Config
-from greent.disease_ont import DiseaseOntology
 from greent.endotype import Endotype
-from greent.go import GO
-from greent.hetio import HetIO
-from greent.hgnc import HGNC
-from greent.hpo import HPO
-from greent.oxo import OXO
-from greent.mondo import Mondo
-from greent.pharos import Pharos
-from greent.quickgo import QuickGo
+from greent.ontologies.disease_ont import DiseaseOntology
+from greent.ontologies.go import GO
+from greent.ontologies.hpo import HPO
+from greent.ontologies.mondo import Mondo
+from greent.services.biolink import Biolink
+from greent.services.chembio import ChemBioKS
+from greent.services.chemotext import Chemotext
+from greent.services.ctd import CTD
+from greent.services.hetio import HetIO
+from greent.services.hgnc import HGNC
+from greent.services.oxo import OXO
+from greent.services.pharos import Pharos
+from greent.services.quickgo import QuickGo
 from greent.service import ServiceContext
-from greent.tkba import TranslatorKnowledgeBeaconAggregator
+from greent.services.tkba import TranslatorKnowledgeBeaconAggregator
+from greent.services.uberongraph import UberonGraphKS
+from greent.services.unichem import UniChem
 from greent.translator import Translator
 from greent.transreg import TranslatorRegistry
-from greent.triplestore import TripleStore
 from greent.util import LoggingUtil
-from greent.uberongraph import UberonGraphKS
-from pprint import pprint
 
 logger = LoggingUtil.init_logging (__file__)
 
@@ -64,6 +55,7 @@ class GreenT:
         self.hgnc = HGNC(self.service_context)
         self.uberongraph = UberonGraphKS(self.service_context)
         self.ctd = CTD(self.service_context)
+        self.unichem = UniChem(self.service_context)
 
     # Exposure API
     def get_exposure_scores (self, exposure_type, start_date, end_date, exposure_point):

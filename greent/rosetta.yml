@@ -9,19 +9,20 @@
 #########################################################################
 
 # Rosetta will build a concept/type graph is based on these mappings.
+# The order of these lists determines the preference for making the node identifier.
 '@concepts' :
   Anatomy            : [ 'UBERON' ]
   BiologicalProcess  : [ 'GO.BIOLOGICAL_PROCESS' ]
   Cell               : [ 'CL' ]
   CellularComponent  : [ 'GO.CELLULAR_COMPONENT' ]
-  Disease            : [ 'MESH.DISEASE', 'DOID', 'PHAROS.DISEASE', 'OMIM', 'MESH.DISEASE', 'ORPHANET' , 'EFO', 'UMLS']
-  Gene               : [ 'UNIPROT', 'HGNC', 'HGNC.SYMBOL', 'ENTREZ', 'NCBIGENE', 'ENSEMBL', 'ENSEMBL.TRANSCRIPT', 'UNIPROTKB' , 'MGI', 'ZFIN']
-  GeneticCondition   : [ 'DOID.GENETIC_CONDITION', 'ORPHANET.GENETIC_CONDITION' ]
+  Disease            : [ 'MONDO', 'DOID', 'PHAROS.DISEASE', 'OMIM', 'MESH.DISEASE', 'ORPHANET' , 'EFO', 'UMLS']
+  Gene               : [ 'HGNC', 'NCBIGENE', 'HGNC.SYMBOL', 'ENTREZ',  'ENSEMBL', 'ENSEMBL.TRANSCRIPT', 'UNIPROTKB' , 'UNIPROT', 'MGI', 'ZFIN']
+  GeneticCondition   : [ 'MONDO.GENETIC_CONDITION', 'DOID.GENETIC_CONDITION', 'ORPHANET.GENETIC_CONDITION' ]
   MolecularFunction  : [ 'GO.MOLECULAR_FUNCTION' ]
   Name               : [ 'NAME.DRUG', 'NAME.DISEASE', 'NAME.SYMPTOM', 'NAME.ANATOMY', 'DISEASE_NAME', 'MESH.NAME', 'NAME.PHENOTYPE' ]
   Pathway            : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY', 'KEGG.PATHWAY', 'REACT', 'KEGG-path' ]
   Phenotype          : [ 'HP' , 'NCIT']
-  Substance          : [ 'DRUGBANK', 'DRUG.INTERACTION', 'INCHI', 'INCHIKEY', 'PUBCHEM', 'CHEMBL', 'CHEBI', 'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' , 'PHAROS.DRUG', 'CTD' ]
+  Substance          : [ 'DRUGBANK', 'PUBCHEM', 'CHEBI', 'CHEMBL','DRUG.INTERACTION', 'INCHI', 'INCHIKEY',  'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' , 'PHAROS.DRUG', 'CTD' ]
 
 # Only operations specifying semantic predicates will be invoked.
 '@translator-semantics':
@@ -56,27 +57,27 @@
     CTD:
       link: drugname_to_ctd
       op:   ctd.drugname_to_ctd
-  EFO:
-    DOID:
-      link: synonym
-      op:   oxo.efo_to_doid
-    UMLS:
-      link: synonym
-      op:   oxo.umls_to_doid
+#  EFO:
+#    DOID:
+#      link: synonym
+#      op:   oxo.efo_to_doid
+#    UMLS:
+#      link: synonym
+#      op:   oxo.umls_to_doid
   UMLS:
-    PHAROS.DISEASE:
-      link: synonym
-      op:   disease_ontology.doid_or_umls_to_pharos
+#    PHAROS.DISEASE:
+#      link: synonym
+#      op:   disease_ontology.doid_or_umls_to_pharos
     HP:
       link: disease_to_phenotype
       op:   biolink.disease_get_phenotype
   DOID:
-    MESH.DISEASE:
-      link: synonym
-      op: disease_ontology.graph_doid_to_mesh
-    PHAROS.DISEASE:
-      link: synonym
-      op:   disease_ontology.doid_or_umls_to_pharos
+#    MESH.DISEASE:
+#      link: synonym
+#      op: disease_ontology.graph_doid_to_mesh
+#    PHAROS.DISEASE:
+#      link: synonym
+#      op:   disease_ontology.doid_or_umls_to_pharos
     UBERON:
       link: phenotype
       op:   hetio.disease_to_phenotype
@@ -93,15 +94,15 @@
     DOID.GENETIC_CONDITION:
       link: gene_to_genetic_condition
       op: biolink.gene_get_genetic_condition
-    UNIPROTKB:
-      link: synonym
-      op:   hgnc.hgnc_to_uniprotkb
+#    UNIPROTKB:
+#      link: synonym
+#      op:   hgnc.hgnc_to_uniprotkb
     REACT:
       link: gene_to_pathway
-      op:   biolink.gene_get_react_pathway
+      op:   biolink.gene_get_pathways
     KEGG-path:
       link: gene_to_pathway
-      op:   biolink.gene_get_kegg_pathway
+      op:   biolink.gene_get_pathways
   REACT:
     HGNC:
       link: pathway_to_gene
@@ -133,9 +134,9 @@
 #      link: targets
 #      op:   chembio.graph_drugbank_to_uniprot
   NCBIGENE:
-    UNIPROTKB:
-      link: synonym
-      op:   hgnc.ncbigene_to_uniprotkb
+#    UNIPROTKB:
+#      link: synonym
+#      op:   hgnc.ncbigene_to_uniprotkb
     CTD:
       link: gene_to_drug
       op:   ctd.gene_to_drug
@@ -157,9 +158,9 @@
 #      link: disease_gene
 #      op:   pharos.disease_get_gene
   UNIPROT:
-    HGNC.SYMBOL:
-      link: synonym
-      op:   chembio.graph_uniprot_to_hgnc
+#    HGNC.SYMBOL:
+#      link: synonym
+#      op:   chembio.graph_uniprot_to_hgnc
     KEGG:
       link: gene_pathway
       op:   chembio.graph_get_pathways_by_gene
@@ -177,10 +178,10 @@
     CL:
       link: bio_process_cell_type
       op: quickgo.go_term_annotation_extensions
-  NCIT:
-    HP:
-      link: synonym
-      op: oxo.NCIT_to_HP
+#  NCIT:
+#    HP:
+#      link: synonym
+#      op: oxo.NCIT_to_HP
   HP:
     UBERON:
       link: phenotype_anatomy

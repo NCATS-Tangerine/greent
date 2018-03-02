@@ -1,12 +1,3 @@
 {
-  "query" : "{
-     exposureConditions (chemicals: [\"D052638\"]) {
-        chemical
-        gene
-        pathway
-        pathName
-        pathID
-        human
-     }
-  }"
+  "query" : "{ exposureConditions (chemicals: [\"D052638\"]) { chemical gene pathway pathName pathID human }"
 }

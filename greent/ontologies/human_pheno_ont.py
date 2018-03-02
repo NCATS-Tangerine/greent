@@ -3,8 +3,8 @@ import requests
 import os
 from collections import defaultdict
 from greent.graph_components import KEdge,KNode
-from service import Service
-from service import ServiceContext
+from greent.service import Service
+from greent.service import ServiceContext
 
 class HumanPhenotypeOntology (Service):
     def __init__(self, context):

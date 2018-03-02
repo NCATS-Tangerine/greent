@@ -41,6 +41,7 @@ class CTD(Service):
 
     def load_names(self):
         self.name_to_id = defaultdict(list)
+        self.id_lookups = {}
         fname = os.path.join(os.path.dirname(__file__), 'CTD_chemicals.tsv')
         with open(fname, 'r') as inf:
             line = inf.readline()
@@ -54,6 +55,16 @@ class CTD(Service):
                     synonyms = x[7].split('|')
                     for synonym in synonyms:
                         self.name_to_id[synonym.lower()].append(indexname)
+                ctdid = f'CTD:{indexname}'
+                mesh = x[1] #already has curie prefix
+                synonym_ids = [ ctdid, mesh]
+                if len(x[2]) > 0:
+                    synonym_ids.append( f'CAS:{x[2]}' )
+                if len(x) > 8:
+                    synonym_ids.append( f'DRUGBANK:{x[8]}' )
+                synonym_ids = tuple(synonym_ids)
+                for sid in synonym_ids:
+                    self.id_lookups[sid] = synonym_ids
 
     def load_genes(self):
         self.drug_genes = defaultdict(list)
@@ -84,6 +95,11 @@ class CTD(Service):
                 self.drug_genes[chemname].append(result)
                 self.gene_drugs[gene_id].append(result)
 
+    def get_synonyms(self, input_identifier):
+        if input_identifier not in self.id_lookups:
+            return set()
+        return self.id_lookups[ input_identifier ]
+
     def drugname_string_to_ctd_string(self, drugname):
         """This is exposed so that it can be used to look up names without the KNode structure"""
         identifiers = self.name_to_id[drugname.lower()]
@@ -103,19 +119,24 @@ class CTD(Service):
 
     def drug_to_gene(self, subject):
         """ Get a gene from a ctd drug id. """
-        ctdid = Text.un_curie(subject.identifier)
-        actions = set()
+        print( list(self.drug_genes.keys())[:10])
         edge_nodes = []
-        for link in self.drug_genes[ctdid]:
-            target_id = link['gene_id']
-            edge_properties = {'actions': link['actions'],
-                               'publications': link['publications']}
-            actions.update(link['actions'])
-            edge = KEdge('ctd', 'drug_get_gene', {'properties': edge_properties})
-            node = KNode(target_id, node_types.GENE)
-            edge_nodes.append((edge, node))
-        #        for action in actions:
-        #            print( 'Action: {}'.format(action) )
+        for synonym in subject.synonyms:
+            curie = Text.get_curie(synonym)
+            if curie == 'CTD':
+                ctdid = Text.un_curie(synonym)
+                print('...',ctdid, ctdid in self.drug_genes)
+                actions = set()
+                for link in self.drug_genes[ctdid]:
+                    target_id = link['gene_id']
+                    edge_properties = {'actions': link['actions'],
+                                       'publications': link['publications']}
+                    actions.update(link['actions'])
+                    edge = KEdge('ctd', 'drug_get_gene', {'properties': edge_properties})
+                    node = KNode(target_id, node_types.GENE)
+                    edge_nodes.append((edge, node))
+                #        for action in actions:
+                #            print( 'Action: {}'.format(action) )
         return edge_nodes
 
     def gene_to_drug(self, subject):
@@ -136,6 +157,14 @@ class CTD(Service):
         #            print( 'Action: {}'.format(action) )
         return edge_nodes
 
+
+def test_d2g():
+    from greent.service import ServiceContext
+    ctd = CTD(ServiceContext.create_context())
+    input_node = KNode("DRUGBANK:DB00482", node_types.DRUG)
+    input_node.add_synonyms(set(["CTD:Celecoxib"]))
+    results = ctd.drug_to_gene(input_node)
+    print(results)
 
 def test_all_drugs():
     from greent.service import ServiceContext
@@ -171,4 +200,5 @@ def test_all_drugs():
 
 
 if __name__ == "__main__":
-    test_all_drugs()
+    #test_all_drugs()
+    test_d2g()
