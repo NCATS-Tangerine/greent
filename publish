@@ -17,7 +17,7 @@ def parse_requirements(filename):
 install_reqs = parse_requirements("greent/requirements.txt") #, session="i")
 requirements = [str(r) for r in install_reqs]
 setup(
-    name = 'greent',
+    name = 'robokop-interfaces',
     packages = [ 'greent' ], # this must be the same as the name above
     package_data={ 'greent' : [
         'greent.conf',
@@ -25,17 +25,18 @@ setup(
         'rosetta.yml',
         'identifiers.org.json',
         'requirements.txt',
+        'api/*',
         'jsonld/*',
         'query/*.sparql'
     ]},
     version = '${version}',
-    description = 'Green Team BioMedical Data Translator',
+    description = 'Translator API',
     author = 'Steve Cox',
     author_email = 'scox@renci.org',
     install_requires = requirements,
     include_package_data=True,
-    url = 'https://github.com/NCATS-Tangerine/greent.git',
-    download_url = 'http://github.com/NCATS-Tangerine/greent/archive/0.1.tar.gz',
+    url = 'http://github.com/NCATS-Gamma/robokop-interfaces.git',
+    download_url = 'http://github.com/NCATS-Gamma/robokop-interfaces/archive/0.1.tar.gz',
     keywords = [ 'biomedical', 'environmental', 'exposure', 'clinical' ],
     classifiers = [ ],
 )
@@ -50,8 +51,9 @@ publish () {
     git tag
     if [ -z "$( git tag --list $version )" ]; then
 	python setup.py sdist
-	tar tf dist/greent-${version}.tar.gz
-	twine upload --skip-existing dist/greent-${version}.tar.gz
+        archive=dist/robokop-interfaces-${version}.tar.gz
+	tar tf $archive
+	twine upload --skip-existing $archive
 
         echo $version > version
 	git commit -am "api version $version"
