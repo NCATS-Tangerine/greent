@@ -119,19 +119,24 @@ class CTD(Service):
 
     def drug_to_gene(self, subject):
         """ Get a gene from a ctd drug id. """
-        ctdid = Text.un_curie(subject.identifier)
-        actions = set()
+        print( list(self.drug_genes.keys())[:10])
         edge_nodes = []
-        for link in self.drug_genes[ctdid]:
-            target_id = link['gene_id']
-            edge_properties = {'actions': link['actions'],
-                               'publications': link['publications']}
-            actions.update(link['actions'])
-            edge = KEdge('ctd', 'drug_get_gene', {'properties': edge_properties})
-            node = KNode(target_id, node_types.GENE)
-            edge_nodes.append((edge, node))
-        #        for action in actions:
-        #            print( 'Action: {}'.format(action) )
+        for synonym in subject.synonyms:
+            curie = Text.get_curie(synonym)
+            if curie == 'CTD':
+                ctdid = Text.un_curie(synonym)
+                print('...',ctdid, ctdid in self.drug_genes)
+                actions = set()
+                for link in self.drug_genes[ctdid]:
+                    target_id = link['gene_id']
+                    edge_properties = {'actions': link['actions'],
+                                       'publications': link['publications']}
+                    actions.update(link['actions'])
+                    edge = KEdge('ctd', 'drug_get_gene', {'properties': edge_properties})
+                    node = KNode(target_id, node_types.GENE)
+                    edge_nodes.append((edge, node))
+                #        for action in actions:
+                #            print( 'Action: {}'.format(action) )
         return edge_nodes
 
     def gene_to_drug(self, subject):
@@ -152,6 +157,14 @@ class CTD(Service):
         #            print( 'Action: {}'.format(action) )
         return edge_nodes
 
+
+def test_d2g():
+    from greent.service import ServiceContext
+    ctd = CTD(ServiceContext.create_context())
+    input_node = KNode("DRUGBANK:DB00482", node_types.DRUG)
+    input_node.add_synonyms(set(["CTD:Celecoxib"]))
+    results = ctd.drug_to_gene(input_node)
+    print(results)
 
 def test_all_drugs():
     from greent.service import ServiceContext
@@ -187,4 +200,5 @@ def test_all_drugs():
 
 
 if __name__ == "__main__":
-    test_all_drugs()
+    #test_all_drugs()
+    test_d2g()

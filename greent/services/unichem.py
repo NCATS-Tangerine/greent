@@ -27,6 +27,8 @@ class UniChem(Service):
         bare_id = Text.un_curie(identifier)
         url = "{0}/src_compound_id/{1}/{2}".format(self.url, bare_id, self.curie_to_sourceid[curie] )
         response = requests.get(url).json ()
+        if 'error' in response:
+            return set()
         results = set()
         for result in response:
             sid = result['src_id']

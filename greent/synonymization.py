@@ -33,9 +33,6 @@ class Synonymizer:
 
     def synonymize(self, node):
         """Given a node, determine its type and dispatch it to the correct synonymizer"""
-        logger.debug('synonymize: {}'.format(node.identifier))
-        logger.debug(' which one?: {}'.format(node.node_type))
-        logger.debug(' which one?: {}'.format(synonymizers[node.node_type]))
         synonymizers[node.node_type].synonymize(node, self.core)
         self.normalize(node)
 
