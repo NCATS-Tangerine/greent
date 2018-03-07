@@ -21,9 +21,9 @@ class Chemotext(Neo4JREST):
         self.cache = os.path.join(os.path.dirname(__file__),'chemotext.words.txt')
         self.mesh_map_name = os.path.join(os.path.dirname(__file__),'meshnames_2018.bin')
         if not os.path.exists(self.cache):
-            self.build_synonym_cache()
+            build_synonym_cache()
         if not os.path.exists(self.mesh_map_name):
-            self.parse_mesh_files()
+            parse_mesh_files()
         self.load_synonym_cache()
 
     def load_synonym_cache( self ):
