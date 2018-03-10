@@ -6,9 +6,9 @@ import sys
 import traceback
 import yaml
 import requests_cache
-
-from neo4jrestclient.exceptions import StatusException
-
+from collections import defaultdict
+from greent.transreg import TranslatorRegistry
+from greent.identifiers import Identifiers
 from greent.util import LoggingUtil
 from greent.util import Resource
 from greent.util import Text
@@ -16,9 +16,9 @@ from greent.util import DataStructure
 from greent.graph import TypeGraph
 from greent.graph_components import KNode, KEdge
 from greent.synonymization import Synonymizer
+from neo4jrestclient.exceptions import StatusException
 
-logger = LoggingUtil.init_logging(__file__, level=logging.DEBUG)
-
+logger = LoggingUtil.init_logging(__file__, level=logging.INFO)
 
 class Rosetta:
     """ Rosetta's translates between semantic domains generically and automatically.
@@ -32,7 +32,8 @@ class Rosetta:
                  config_file=os.path.join(os.path.dirname(__file__), "rosetta.yml"),
                  override={},
                  delete_type_graph=False,
-                 init_db=False):
+                 init_db=False,
+                 debug=False):
 
         """ The constructor loads the config file an prepares the type graph. If the delete_type_graph 
         flag is true, the graph is deleted entirely. If the init_db flag is true, the type_graph will
@@ -49,120 +50,78 @@ class Rosetta:
         logger.debug("-- Loading Rosetta graph schematic config: {0}".format(config_file))
         with open(config_file, 'r') as stream:
             self.config = yaml.load(stream)
-
+        self.concepts = self.config["@concepts"]
+        self.operators = self.config["@operators"]
+        
         self.synonymizer = Synonymizer( self.config, self.core )
 
-        logger.debug("-- Initializing vocabulary and curies.")
-        self.curie = {}
-        self.to_curie_map = {}
-        self.vocab = self.config["@vocab"]
-        for k in self.vocab:
-            self.to_curie_map[self.vocab[k]] = k
-
         logger.debug("-- Initializing Rosetta type graph")
-        self.concepts = self.config["@concepts"]
-        self.type_graph = TypeGraph(self.core.service_context)
-
-        logger.debug("-- Extending curie map with uber_context.")
-        uber = Resource.get_resource_obj(os.path.join("jsonld", "uber_context.jsonld"))
-        context = uber['@context']
-        self.terminate(context)
-        for key, value in context.items():
-            self.curie[k] = value
-            if isinstance(value, str):
-                self.vocab[k] = value
+        self.type_graph = TypeGraph(self.core.service_context, debug=debug)
 
         logger.debug("-- Merge Identifiers.org vocabulary into Rosetta vocab.")
-        identifiers_org = Resource.get_resource_obj('identifiers.org.json')
-        for module in identifiers_org:
-            curie = module['prefix'].upper()
-            url = module['url']
-            self.curie[curie] = url
-            self.to_curie_map[url] = curie
-            self.vocab[curie] = url
-
+        self.identifiers = Identifiers ()
         if delete_type_graph:
             logger.debug("--Deleting type graph")
             self.type_graph.delete_all()
 
-        if not init_db:
-            return
+        if init_db:
+            logger.debug("--Initialize concept graph metadata and create type nodes.")
+            for k, v in self.identifiers.vocab.items():
+                if isinstance(v, str):
+                    self.type_graph.find_or_create(k, v)
 
-        logger.debug("--Initialize concept graph metadata and create type nodes.")
-        self.type_graph.set_concept_metadata(self.concepts)
-        for k, v in self.vocab.items():
-            if isinstance(v, str):
-                self.type_graph.find_or_create(k, v)
-
-        logger.debug("-- Initializing Rosetta transition graph.")
-        transitions = self.config["@transitions"]
-        errors = 0
-        for L in transitions:
-            for R in transitions[L]:
-                if not L in self.vocab:
-                    errors += 1
-                    self.log_debug("{0} not in vocab.".format(L))
-                    continue
-                if not R in self.vocab:
-                    errors += 1
-                    self.log_debug("{0} not in vocab.".format(R))
-                    continue
-                assert L in self.vocab and R in self.vocab
-                transition_dict = transitions[L][R]
-                transition_obj = DataStructure.to_named_tuple('TransitionTuple', transitions[L][R])
-                if 'link' in transition_dict and 'op' in transition_dict:
-                    self.type_graph.add_edge(L, R,
-                                             rel_name=transition_obj.link.upper(),
-                                             predicate=transition_obj.link.upper(),
-                                             op=transition_obj.op)
-        if errors > 0:
-            logger.error("** Encountered {0} errors. exiting.".format(errors))
-            sys.exit(errors)
-
-        logger.debug("-- Connecting to translator registry to the type graph.")
-        '''
-        subscriptions = self.core.translator_registry.get_subscriptions ()
-        for s in subscriptions:
-            t_a_iri = s[0]
-            t_b_iri = s[1]
-            method = s[2]
-            op = "translator_registry.{0}".format (method["op"])
-            if not 'link' in method or method['link'] == None:
-                link='unknown' #continue
-            link = link.upper ()
-            t_a = self.make_up_curie (self.unterminate (t_a_iri))
-            t_b = self.make_up_curie (self.unterminate (t_b_iri))
-            if not t_a:
-                logger.debug ("Unable to find curie for {}".format (t_b))
-            elif not t_b:
-                logger.debug ("Unable to find curie for {}".format (t_b))
-            else:
-                self.type_graph.find_or_create (t_a, iri=t_a_iri)
-                self.type_graph.find_or_create (t_b, iri=t_b_iri)
-                if link and op:
-                    self.type_graph.add_edge (t_a, t_b, rel_name=link, predicate=link, op=op)
-        '''
-        self.core.translator_registry.set_rosetta(self)
+        logger.debug ("Configure operators in the Rosetta config.")
+        logger.debug ("""
+    ____                  __  __       
+   / __ \____  ________  / /_/ /_____ _
+  / /_/ / __ \/ ___/ _ \/ __/ __/ __ `/
+ / _, _/ /_/ (__  /  __/ /_/ /_/ /_/ / 
+/_/ |_|\____/____/\___/\__/\__/\__,_/  
+                                       """)
+        for a_concept, transition_list in self.operators.items ():
+            for b_concept, transitions in transition_list.items ():
+                for transition in transitions:
+                    link = transition['link']
+                    op   = transition['op']
+                    self.create_concept_transition (a_concept, b_concept, link, op)
+                
+        logger.debug ("Configure operators derived from the Translator Registry.")
+        logger.debug ("""
+  ______                      __      __                ____             _      __            
+ /_  ___________ _____  _____/ ____ _/ /_____  _____   / __ \___  ____ _(______/ /________  __
+  / / / ___/ __ `/ __ \/ ___/ / __ `/ __/ __ \/ ___/  / /_/ / _ \/ __ `/ / ___/ __/ ___/ / / /
+ / / / /  / /_/ / / / (__  / / /_/ / /_/ /_/ / /     / _, _/  __/ /_/ / (__  / /_/ /  / /_/ / 
+/_/ /_/   \__,_/_/ /_/____/_/\__,_/\__/\____/_/     /_/ |_|\___/\__, /_/____/\__/_/   \__, /  
+                                                               /____/                /____/   """)
+        self.core.translator_registry = TranslatorRegistry(self.core.service_context)
         subscriptions = self.core.translator_registry.get_subscriptions()
+        registrations = defaultdict(list)
         for sub in subscriptions:
-            in_curie = self.to_curie(self.unterminate(sub.in_type))
-            out_curie = self.to_curie(self.unterminate(sub.out_type))
-            op = "translator_registry.{0}".format(sub.op)
+            in_concept = sub.in_concept
+            out_concept = sub.out_concept
+            op = f"translator_registry.{sub.op}"
+            key = f"{in_concept}-{out_concept}-{op}"
             link = sub.predicate if sub.predicate else "unknown"
             link = link.upper()
-            if not in_curie:
-                logger.debug("Unable to find curie for {}".format(sub.in_type))
-            elif not out_curie:
-                logger.debug("Unable to find curie for {}".format(sub.out_type))
+            if key in registrations:
+                continue
+            registrations [key] = sub
+            if not in_concept:
+                logger.debug(f"Unable to find in concept for {sub}")
+            elif not out_concept:
+                logger.debug(f"Unable to find out concept for {sub}")
             else:
                 if link and op:
-                    print("--------------> {} {}".format(in_curie, out_curie))
-                    try:
-                        self.type_graph.add_edge(in_curie, out_curie, rel_name=link, predicate=link, op=op)
-                    except StatusException:
-                        logger.error(
-                            f"Failed to create edge from {in_curie} to {out_curie}.  One of these has an unspecified mapping to a concept")
+                    self.create_concept_transition (in_concept, out_concept, link, op)
 
+    def create_concept_transition (self, a_concept, b_concept, link, op):
+        """ Create a link between two concepts in the type graph. """
+        logger.debug ("  -+ {} {} link: {} op: {}".format(a_concept, b_concept, link, op))
+        try:
+            self.type_graph.add_concepts_edge(a_concept, b_concept, predicate=link, op=op)
+        except StatusException:
+            logger.error(f"Failed to create edge from {a_concept} to {b_concept} with link {link} and op {op}")
+            
     def terminate(self, d):
         for k, v in d.items():
             if isinstance(v, str) and not v.endswith("/"):
@@ -170,63 +129,6 @@ class Rosetta:
 
     def unterminate(self, text):
         return text[:-1] if text.endswith('/') else text
-
-    def curie_to_iri(self, curie):
-        return self.curie[curie] if curie in self.curie else None
-
-    def guess_type(self, thing, source=None):
-        """ Look for a CURIE we know. If that doesn't work, try one of our locally made up vocab words. """
-        if thing and not source and ':' in thing:
-            curie = thing.upper().split(':')[0]
-            if curie in self.curie:
-                source = self.curie[curie]
-        if source and not source.startswith("http://"):
-            source = self.vocab[source] if source in self.vocab else None
-        return source
-
-    def map_concept_types(self, thing, object_type=None):
-        """ Expand high level concepts into concrete types our data sources understand. """
-
-        # Try the CURIE approach.
-        the_type = self.guess_type(thing.identifier) if thing and thing.identifier else None
-
-        # If that didn't work, get candiddate types based on the (abstract) node type.
-        if thing and not the_type:
-            the_type = self.concepts.get(thing.node_type, None)
-            if the_type:
-                # Attempt to map them down to IRIs
-                the_type = [self.vocab.get(t, t) for t in the_type]
-
-        # Systematize this:
-        # If the concept type is disease but the curie is NAME, we don't have a DOID.
-        if isinstance(the_type, str):
-            # If we've ended up with just one string, make it a list for conformity of return type
-            the_type = [the_type]
-
-        result = the_type if the_type else self.concepts.get(object_type, [object_type])
-
-        curie = Text.get_curie(thing.identifier) if thing else None
-        if curie:
-            result = [self.make_up_curie(curie)]  # [ self.vocab[curie] ]
-            # result = [ self.vocab[curie] ]
-
-        return result
-
-    def to_curie(self, text):
-        return self.to_curie_map.get(self.unterminate(text), None)
-
-    def make_up_curie(self, text):
-        """ If we got one, great. Yay for standards. If not, get creative. This is legitimate and
-        important because we can't have useful automated reasoning without granular semantics. But
-        folks make more specific sub domain names which is probably essential for semantics and
-        therefore automation. Until we arrive at a better approach, lets accept this approach and make up
-        a curie if the service author thought it was important to have one."""
-        curie = self.to_curie(text)
-        if not curie:
-            pieces = text.split('/')
-            last = pieces[-1:][0]
-            curie = last.upper()
-        return curie
 
     def get_ops(self, names):
         """ Dynamically locate python methods corresponding to names configured for semantic links. """
@@ -243,6 +145,7 @@ class Rosetta:
         Each path reflects a set of transitions from the starting tokens through the graph.
         Each path is then executed and the resulting links and nodes returned. """
         programs = self.type_graph.get_transitions(query)
+        logger.debug (f"-- programs: {programs}")
         result = []
         for program in programs:
             result += self.graph_inner(next_nodes, program)
@@ -293,20 +196,17 @@ class Rosetta:
         from greent import node_types
         if disease:
             blackboard += self.graph(
-                [(None, KNode('NAME.DISEASE:{0}'.format(disease), node_types.NAME_DISEASE))],
-                query= \
-                    """MATCH (a{name:"NAME.DISEASE"}),(b:GeneticCondition), p = allShortestPaths((a)-[*]->(b)) 
-                    WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
-                    RETURN p""")
+                [(None, KNode(f"NAME.DISEASE:{disease}", node_types.DISEASE_NAME))],
+                query= """MATCH (n:named_thing)-[a]->(d:disease)-[b]->(g:gene) RETURN *""")
             blackboard += self.graph(
-                [(None, KNode('NAME.DISEASE:{0}'.format(disease), 'D'))],
+                [(None, KNode('NAME.DISEASE:{0}'.format(disease), node_types.DISEASE))],
                 query= \
                     """MATCH (a{name:"NAME.DISEASE"}),(b:Gene), p = allShortestPaths((a)-[*]->(b)) 
                     WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
                     RETURN p""")
         if drug:
             blackboard += self.graph(
-                [(None, KNode('NAME.DRUG:{0}'.format(drug), node_types.NAME_DRUG))],
+                [(None, KNode('NAME.DRUG:{0}'.format(drug), node_types.DRUG_NAME))],
                 query= \
                     """MATCH (a{name:"NAME.DRUG"}),(b:Pathway), p = allShortestPaths((a)-[*]->(b)) 
                     WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
@@ -314,8 +214,8 @@ class Rosetta:
         return blackboard
 
     @staticmethod
-    def clinical_outcome_pathway_app(drug=None, disease=None, greent_conf='greent.conf'):
-        return Rosetta(greentConf=greent_conf).clinical_outcome_pathway(drug=drug, disease=disease)
+    def clinical_outcome_pathway_app(drug=None, disease=None, greent_conf='greent.conf', debug=False):
+        return Rosetta(greentConf=greent_conf, debug=debug).clinical_outcome_pathway(drug=drug, disease=disease)
 
     @staticmethod
     def clinical_outcome_pathway_app_from_args(args, greent_conf='greent.conf'):
@@ -333,6 +233,7 @@ class Rosetta:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Rosetta.')
+    parser.add_argument('--debug', help="Debug", action="store_true", default=False)
     parser.add_argument('--delete-type-graph',
                         help='Delete the graph of types and semantic transitions between them.',
                         action="store_true", default=False)
@@ -343,11 +244,18 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--drug', help='A drug to analyze.', default=None)
     args = parser.parse_args()
 
-    rosetta = Rosetta(init_db=args.initialize_type_graph,
-                      delete_type_graph=args.delete_type_graph)
-    blackboard = Rosetta.clinical_outcome_pathway_app(drug=args.drug,
-                                                      disease=args.disease)
-    print("output: {}".format(blackboard))
+    if args.debug:
+        logger = LoggingUtil.init_logging(__file__, level=logging.DEBUG)
+
+    if args.initialize_type_graph or args.delete_type_graph:
+        rosetta = Rosetta(init_db=args.initialize_type_graph,
+                          delete_type_graph=args.delete_type_graph,
+                          debug=args.debug)
+    else:
+        blackboard = Rosetta.clinical_outcome_pathway_app(drug=args.drug,
+                                                          disease=args.disease,
+                                                          debug=args.debug)
+        print("output: {}".format(blackboard))
 
 
 

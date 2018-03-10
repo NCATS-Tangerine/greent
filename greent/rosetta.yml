@@ -10,7 +10,9 @@
 
 # Rosetta will build a concept/type graph is based on these mappings.
 # The order of these lists determines the preference for making the node identifier.
+
 '@concepts' :
+
   Anatomy            : [ 'UBERON' ]
   BiologicalProcess  : [ 'GO.BIOLOGICAL_PROCESS' ]
   Cell               : [ 'CL' ]
@@ -24,15 +26,98 @@
   Phenotype          : [ 'HP' , 'NCIT']
   Substance          : [ 'DRUGBANK', 'PUBCHEM', 'CHEBI', 'CHEMBL','DRUG.INTERACTION', 'INCHI', 'INCHIKEY',  'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' , 'PHAROS.DRUG', 'CTD' ]
 
-# Only operations specifying semantic predicates will be invoked.
-'@translator-semantics':
-  biolink:
-    DOID:
-      XNCBIGENE:
-        link: associatedWithGene
-        path: "[*].'http://biothings.io/ontology/associatedWithGene'[*].@id"
-
 # Defines transitions from one vocabulary domain to another including a predicate.
+
+
+# Not sure how to do this yet
+#  MESH:
+#    ROOT:
+#      op: oxo.mesh_to_other
+#    DRUGBANK:
+#      op: chembio.get_drugs_by_condition_graph
+
+
+'@operators':
+  anatomical_entity:
+    anatomical_entity:
+      - link : cell_type_to_anatomy
+        op   : uberongraph.get_anatomy_by_cell_graph
+  biological_process:
+    anatomical_entity:
+      - link : bio_process_cell_type
+        op   : quickgo.go_term_xontology_relationships
+      - link : bio_process_cell_type
+        op   : quickgo.go_term_annotation_extensions
+  chemical_substance:
+    gene:
+      - link  : chemical_targets_gene
+        op    : chembio.graph_pubchem_to_ncbigene
+  disease:
+    phenotypic_feature:
+      - link  : disease_to_phenotype
+        op    : biolink.disease_get_phenotype
+      - link  : disease_to_phenotype
+        op    : hetio.disease_to_phenotype
+      - link  : disease_to_genetic_condition
+        op    : mondo.doid_get_genetic_condition
+    gene:
+      - link  : disease_to_gene
+        op    : pharos.disease_get_gene
+  drug_exposure:
+    gene:
+      - link  : drug_to_gene
+        op    : ctd.drug_to_gene
+      - link  : drug_to_gene
+        op    : pharos.drug_get_gene
+  gene:
+    anatomical_entity:
+      - link  : gene_to_anatomy
+        op    : hetio.gene_to_anatomy
+      - link  : gene_to_cell
+        op    : hetio.gene_to_cell
+    disease:
+      - link  : gene_to_disease
+        op    : biolink.gene_get_disease
+      - link  : gene_to_genetic_condition
+        op    : biolink.gene_get_genetic_condition
+      - link  : gene_to_pathway
+        op    : biolink.gene_get_pathways
+      - link  : gene_to_disease
+        op    : hetio.gene_to_disease
+    drug_exposure:
+      - link  : gene_to_drug
+        op    : ctd.gene_to_drug
+    pathway:
+      - link  : gene_to_pathway
+        op    : chembio.graph_get_pathways_by_gene
+    molecular_activity:
+      - link  : molecular_function
+        op    : biolink.gene_get_function
+    biological_process:
+      - link  : biological_process
+        op    : biolink.gene_get_process
+  named_thing :
+    disease :
+      - link  : name_to_disease
+        op    : tkba.name_to_doid
+    drug_exposure    :
+      - link  : name_to_drug
+        op    : tkba.name_to_drugbank
+      - link  : name_to_drug
+        op    : chembio.graph_drugname_to_pubchem
+      - link  : name_to_drug
+        op    : pharos.drugname_to_pharos
+      - link  : name_to_drug
+        op    : ctd.drugname_to_ctd
+  pathway:
+    gene:
+      - link  : pathway_to_gene
+        op    : biolink.pathway_get_gene
+  phenotypic_feature:
+    anatomical_entity:
+      - link  : phenotype_to_anatomy
+        op    : uberongraph.get_anatomy_by_phenotype_graph
+
 '@transitions':
   NAME.DISEASE:
     DOID:
