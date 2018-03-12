@@ -36,9 +36,13 @@ In the returned graph, nodes are biolink-model concepts and edges contain attrib
 
 ## API
 
-We will be publshing an OpenAPI interface to the graph. For now, run 
+We will be publshing an OpenAPI interface to the graph. 
+
+For now, run 
 ```
-$ PYTHONPATH=$PWD/.. python api/server.py
+$ git clone https://github.com/NCATS-Tangerine/smartBag
+$ cd robokop-interfaces/greent
+$ PYTHONPATH=$PWD/..:$PWD/../.. python api/server.py
 ```
 To start the server. Usage examples coming soon.
 
