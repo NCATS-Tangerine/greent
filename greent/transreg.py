@@ -277,7 +277,7 @@ class TranslatorRegistry(Service):
                          * Decisions about how to create nodes and edges
                          * What to say about the semantic types of returned identifiers
             """
-            #print (json.dumps (expanded, indent=2))
+            print (json.dumps (expanded, indent=2))
             for obj in expanded:
                 for predicate, v in obj.items ():
                     if isinstance (v, list):
@@ -288,7 +288,7 @@ class TranslatorRegistry(Service):
                                 #print (f"val: {val} curie: {curie}")
                                 out_concept = method_metadata.out_concept
                                 node_type = get_node_type (out_concept)
-                                if node_type:
+                                if curie and node_type:
                                     #print (f" ------> node type {node_type} id {val} ")
                                     new_node = KNode(curie, node_type)
                                     result.append (

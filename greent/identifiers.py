@@ -30,6 +30,9 @@ class Identifiers:
 
         """ These identifiers are used in the translator registry but not loaded from previous sources. """
         names = {
+            "HGNC"             : [
+                "http://identifiers.org/hgnc/"
+            ],
             "HP"             : [
                 "http://identifiers.org/hp/"
             ],
@@ -64,7 +67,9 @@ class Identifiers:
     def instance2curie (self, obj):
         """ Given an instance prefixed by an IRI, return an instance prefixed by a curie. """
         result = None
-        if '/' in obj:
+        if not obj.startswith ("http://") and ":" in obj:
+            result = obj
+        elif '/' in obj:
             parts = obj.split ("/")
             iri = "/".join (parts[:-1])
             key = parts[-1]
