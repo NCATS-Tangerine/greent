@@ -163,9 +163,10 @@
 #    PHAROS.DISEASE:
 #      link: synonym
 #      op:   disease_ontology.doid_or_umls_to_pharos
-    UBERON:
-      link: phenotype
-      op:   hetio.disease_to_phenotype
+#TODO: I Don't think that this is correct.  It's producing a phenotype->anatomy link at the concept level...
+#    UBERON:
+#      link: phenotype
+#      op:   hetio.disease_to_phenotype
     ORPHANET.GENETIC_CONDITION:
       link: genetic_condition
       op:   mondo.doid_get_genetic_condition

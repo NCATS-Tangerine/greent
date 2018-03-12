@@ -19,7 +19,7 @@ class TypeGraph(Service):
            * executable transitions translating from one nomenclature system to another
         Transitions specify the semantics by which operations convert between nomanclature systems.
         Each nomenclature system is referred to as a Type and recieves a label in the graph.
-        Each concept is created as a node. Each type node with an associated concept 
+        Each concept is created as a node. Each type node with an associated concept
            * Receives a label for the connected concept
            * Is the source of an is_a link connecting to the concept node.
         This enables queries between concept spaces to return alternative paths of operations
@@ -185,48 +185,61 @@ class TypeGraph(Service):
             return None
         return result
 
+    #TODO: There's some potential issues if there are adjacent nodes of the same type (gene-gene interactions or similarities)
     def get_transitions(self, query):
-        """ Execute a cypher query and walk the results to build a set of transitions to execute. """
-        programs = []
+        """ Execute a cypher query and walk the results to build a set of transitions to execute.
+        The query should be such that it returns a path (node0-relation0-node1-relation1-node2), and
+        an array of the relation start nodes.  For the path above, start nodes like (node0,node1) would
+        indicate a unidirectional path, while (node0,node2) would indicate an end-based path meeting in
+        the middle.
+        Each node in the path can be described with an arbitrary node index.  Note that this index does not
+        have to correspond to the order of calling or any structural property of the graph.  It simply points
+        to a particular node in the call map.
+        Returns:
+            nodes: A map from a node index to the concept.
+            transitions: a map from a node index to an (operation, output index) pair
+        """
         result = self.db.query(query, data_contents=True)
         import json
         if result.rows is None:
+            logger.debug("No rows")
             return []
-        for row_set in result.rows:
-            logger.debug (row_set)
-            program = []
-            for row in row_set:
-                #logger.debug (json.dumps (row, indent=2))
-                node_type = None
-                if len(row) != 3:
-                    logger.error("Better check on the program")
-                    logger.error (json.dumps (row, indent=2))
-                    exit()
-                print ("------------" + json.dumps(row, indent=2))
-                node_type = row[0]['name']
-                col = row[1]
-                op = col['op']
-                predicate = col['predicate']
-                is_new = True
-                for level in program:
-                    if level['node_type'] == node_type:
-                        level['ops'].append({
-                            'link': predicate,
-                            'op': op
-                        })
-                        is_new = False
-                next_type = row[2]['name']
-                if is_new:
-                    program.append({
-                        'node_type': node_type,
-                        'ops': [
-                            {
-                                'link': predicate,
-                                'op': op
-                            }
-                        ],
-                        'next_type': next_type,
-                        'collector': []
-                    })
-            programs.append(program)
-        return programs
+        graphs=[]
+        for row in result.rows:
+            #Each row_set should be a (path, startnodes) pair
+            if len(row) != 2:
+                logger.error("Unexpected number of elements ({})in cypher query return".format(len(row)))
+                logger.error (json.dumps (row, indent=2))
+                raise Exception()
+            nodes = {}
+            transitions = {}
+            path = row[0]
+            start_nodes = row[1]
+            #len(start_nodes) = number of transitions
+            #len(path) = number of transitions + number of nodes = 2*number of transitions + 1
+            if len(path) != 2 * len(start_nodes) + 1:
+                logger.error ("Inconsistent length of path and startnodes")
+                logger.debug (json.dumps (row, indent=2))
+                raise Exception()
+            for i, element in enumerate(path):
+                if i % 2 == 0:
+                    #node
+                    nodenum = int(i / 2)
+                    nodes[nodenum] = element['name']
+                else:
+                    #relationship
+                    predicate=element['predicate']
+                    op = element['op']
+                    relnum = int((i-1)/2)
+                    if start_nodes[relnum] == path[i-1]:
+                        from_node=relnum
+                        to_node = relnum+1
+                    elif start_nodes[relnum] == path[i+1]:
+                        from_node=relnum+1
+                        to_node = relnum
+                    transitions[from_node] = { 'link': predicate,
+                                               'op': op,
+                                               'to': to_node}
+            graphs.append( (nodes, transitions) )
+        return graphs
+

@@ -66,7 +66,7 @@ class Biolink(Service):
                 uniprot_id = gene_synonym
                 break
         if uniprot_id is None:
-            return None
+            return []
         url = "{0}/bioentity/gene/UniProtKB:{1}/function/".format(self.url, Text.un_curie(uniprot_id))
         response = requests.get(url).json()
         # return [ (a['object']['id'] , a['object']['label']) for a in response['associations'] ]
