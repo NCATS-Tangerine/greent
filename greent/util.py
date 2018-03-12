@@ -19,8 +19,11 @@ class LoggingUtil(object):
             "short" : '%(funcName)s: %(message)s',
             "long"  : '%(asctime)-15s %(filename)s %(funcName)s %(levelname)s: %(message)s'
         }[format]
-        logging.basicConfig (format=FORMAT, level=logging.WARNING)
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter(FORMAT)
+        handler.setFormatter(formatter)
         logger = logging.getLogger (name)
+        logger.addHandler(handler)
         logger.setLevel(level)
         return logger
     
