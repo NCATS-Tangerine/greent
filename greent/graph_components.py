@@ -1,3 +1,4 @@
+from collections import defaultdict
 from functools import singledispatch
 from greent.node_types import node_types
 from greent.util import Text
@@ -20,6 +21,7 @@ class KNode():
         self.mesh_identifiers = []
         self.synonyms = set()
         self.synonyms.add(identifier)
+        self.contexts = defaultdict(set)
 
     def add_synonyms(self, new_synonym_set):
         self.synonyms.update(new_synonym_set)
@@ -27,9 +29,17 @@ class KNode():
     def get_synonyms_by_prefix(self, prefix):
         return set( filter(lambda x: Text.get_curie(x) == prefix, self.synonyms) )
 
+    def add_context(self, program_id, context):
+        self.contexts[program_id].add(context)
+
+    def get_context(self,program_id):
+        return self.contexts[program_id]
+
     def add_synonym(self, synonymous_node):
         """Merge anther KNode (representing a synonym) into this KNode."""
         self.synonyms.add(synonymous_node.identifier)
+        for prog_id in synonymous_node.contexts:
+            self.contexts[prog_id].update(synonymous_node.contexts[prog_id])
         for propkey in synonymous_node.properties:
             if propkey in self.properties:
                 # TODO: this is messy

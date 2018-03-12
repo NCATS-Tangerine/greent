@@ -8,6 +8,7 @@ from greent.service import Service
 prefixes_to_hgnc = {
     'HGNC': 'hgnc_id',
     'NCBIGENE': 'entrez_id',
+    'NCBIGene': 'entrez_id',
     'HGNC.SYMBOL': 'symbol',
     'OMIM': 'omim_id',
     #UNIPROTKB is not a identifiers.org prefix.  Uniprot is, and uniprot.isoform is.
