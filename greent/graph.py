@@ -85,10 +85,6 @@ class TypeGraph(Service):
         try:
             label = self.get_concept_label (concept)
             label.add (node)
-            '''
-            if concept.is_a:
-                self.add_concept_labels (concept.is_a, node)
-            '''
         except KeyError:
             logger.debug ("  -- error - unable to find concept {}".format (concept.name))
                 
@@ -206,6 +202,7 @@ class TypeGraph(Service):
                     logger.error("Better check on the program")
                     logger.error (json.dumps (row, indent=2))
                     exit()
+                print ("------------" + json.dumps(row, indent=2))
                 node_type = row[0]['name']
                 col = row[1]
                 op = col['op']
