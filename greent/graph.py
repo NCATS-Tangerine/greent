@@ -3,12 +3,14 @@ import traceback
 
 from neo4jrestclient.client import GraphDatabase
 from neo4jrestclient.exceptions import TransactionException
-
+from neo4jrestclient.exceptions import NotFoundError
+ 
+from greent.concept import Concept
+from greent.concept import ConceptModel
 from greent.service import Service
 from greent.util import LoggingUtil
 
-logger = LoggingUtil.init_logging(__file__, level=logging.DEBUG)
-
+logger = LoggingUtil.init_logging(__file__, level=logging.INFO)
 
 class TypeGraph(Service):
     """ A graph of 
@@ -23,17 +25,20 @@ class TypeGraph(Service):
         This enables queries between concept spaces to return alternative paths of operations
     """
 
-    def __init__(self, service_context):
+    def __init__(self, service_context, concept_model_name="biolink-model", debug=False):
         """ Construct a type graph, registering labels for concepts and types. """
+        if debug:
+            logger = LoggingUtil.init_logging(__file__, level=logging.DEBUG)
         super(TypeGraph, self).__init__("rosetta-graph", service_context)
         self.url = "{0}/db/data/".format(self.url)
         self.initialize_connection()
         self.concepts = {}
         self.type_to_concept = {}
-        self.concept_metadata = None
+        self.concept_model_name = concept_model_name
+        self.set_concept_model ()
 
     def initialize_connection(self):
-        logger.debug("Creating type labels")
+        logger.debug("  -+ Connecting to graph database.")
         self.db = GraphDatabase(self.url)
         self.types = self.db.labels.create("Type")
         self.concept_label = self.db.labels.create("Concept")
@@ -48,17 +53,41 @@ class TypeGraph(Service):
         except Exception as e:
             traceback.print_exc()
 
-    def set_concept_metadata(self, concept_metadata):
+    def set_concept_model(self):
         """ Set the concept metadata. """
-        logger.debug("-- Initializing bio types.")
-        self.concept_metadata = concept_metadata
-        for concept, instances in self.concept_metadata.items():
-            self.concepts[concept] = self.db.labels.create(concept)
-            for instance in instances:
-                logger.debug("Registering concept {} for instance {}".format(
-                    concept, instance))
-                self.type_to_concept[instance] = concept
+        logger.debug("-- Initializing graph semantic concepts.")
+        self.concept_model = ConceptModel (self.concept_model_name)
+        for concept_name, concept in self.concept_model.items():
+            if len(concept.id_prefixes) > 0:
+                logger.debug("  -+ associating concept {} with prefixes {}".format(
+                    concept_name, concept.id_prefixes))
+            for identifier in concept.id_prefixes:
+                self.type_to_concept[identifier] = concept #_name
 
+    def get_concept_label (self, concept):
+        try:
+            concept_node = self._find_or_create_concept (concept)
+            if concept.is_a:
+                base_class = self._find_or_create_concept (concept.is_a)
+                rels = concept_node.relationships.all()
+                already_linked = False
+                for r in rels:
+                    if r.end == base_class:
+                        already_linked = True
+                        break
+                if not already_linked:
+                    concept_node.relationships.create ("is_a", base_class)
+            label = self.db.labels.get (concept.name)
+        except KeyError:
+            self.concepts[concept.name] = self.db.labels.create (concept.name)
+        return self.concepts[concept.name]
+    def add_concept_labels (self, concept, node):
+        try:
+            label = self.get_concept_label (concept)
+            label.add (node)
+        except KeyError:
+            logger.debug ("  -- error - unable to find concept {}".format (concept.name))
+                
     def find_or_create(self, name, iri=None):
         """ Find a type node, creating it if necessary. """
         n = self.types.get(name=name)
@@ -70,9 +99,9 @@ class TypeGraph(Service):
             n = self.types.create(name=name, iri=iri)
             concept = self.type_to_concept.get(name)
             if concept:
-                logger.debug("   adding node {} to concept {}".format(name, concept))
-                self.concepts[concept].add(n)
-                concept_node = self._find_or_create_concept(concept)
+                logger.debug("   adding node {} to concept {}".format(name, concept.name))
+                concept_node = self._find_or_create_concept (concept)
+                self.add_concept_labels (concept, n)
                 n.relationships.create("is_a", concept_node)
         return n
 
@@ -94,6 +123,8 @@ class TypeGraph(Service):
                                             enabled=enabled, synonym=synonym)
             if enabled and not synonym:
                 # Make a translation link between the concepts
+                self.add_concepts_edge (a, b, predicate, op)
+                '''
                 a_concept = self.type_to_concept.get(a)
                 b_concept = self.type_to_concept.get(b)
                 a_concept_node = self._find_or_create_concept(a_concept)
@@ -107,18 +138,42 @@ class TypeGraph(Service):
                 if not found:
                     a_concept_node.relationships.create(CONCEPT_RELATION_NAME, b_concept_node, predicate=predicate,
                                                         op=op, enabled=enabled)
-
+                '''
+    def add_concepts_edge (self, a, b, predicate, op):
+        a_concept = self.concept_model.get (a)
+        b_concept = self.concept_model.get (b)
+        assert a_concept, f"Unable to find concept {a}"
+        assert b_concept, f"Unable to find concept {b}"
+        a_concept_node = self._find_or_create_concept(a_concept)
+        b_concept_node = self._find_or_create_concept(b_concept)
+        concept_rels = a_concept_node.relationships.outgoing(predicate)
+        found = False
+        for rel in concept_rels:
+            if rel.end == b_concept_node and rel.get('op') == op:
+                found = True
+        if not found:
+            a_concept_node.relationships.create(predicate, b_concept_node, predicate=predicate,
+                                                op=op, enabled=True)
+        
     def _find_or_create_concept(self, concept):
         """ Find or create a concept object which will be linked to member type object. """
-        concept_node = self.concept_label.get(name=concept)
-        if len(concept_node) == 1:
-            logger.debug("-- Loaded existing concept: {0}".format(concept))
-            concept_node = concept_node[0]
-        elif len(concept_node) > 1:
-            raise ValueError("Unexpected non-unique concept node: {}".format(concept))
-        else:
-            logger.debug("-- Creating concept {0}".format(concept))
-            concept_node = self.concept_label.create(name=concept)
+        concept_node = None
+        try:
+            concept_node = self.concept_label.get(name=concept.name)
+            if len(concept_node) == 1:
+                concept_node = concept_node[0]
+            elif len(concept_node) > 1:
+                raise ValueError("Unexpected non-unique concept node: {}".format(concept.name))
+            else:
+                logger.debug("--+ add concept {0}".format(concept.name))
+                concept_node = self.concept_label.create(name=concept.name)
+                
+                label = self.get_concept_label (concept)
+                label.add (concept_node)
+        except:
+            print ("concept-> {}".format (concept.name))
+            traceback.print_exc ()
+            traceback.print_stack ()
         return concept_node
 
     def run_cypher_query(self,query):
@@ -187,3 +242,4 @@ class TypeGraph(Service):
                                                'to': to_node}
             graphs.append( (nodes, transitions) )
         return graphs
+

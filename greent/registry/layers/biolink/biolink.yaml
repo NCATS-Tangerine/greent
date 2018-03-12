@@ -1,0 +1,32 @@
+paths:
+  '/bioentity/disease/{disease_id}/genes/':
+    get:
+      summary: 'Returns genes associated with a disease'
+      parameters:
+        - name: disease_id
+          in: path
+          description: >-
+            CURIE identifier of disease, e.g. OMIM:605543, DOID:678. Equivalent IDs can be used with same results
+          required: true
+          schema:
+            type: string
+          x-concept: disease
+          x-valueType:
+            - 'http://identifiers.org/omim/'
+            - 'http://identifiers.org/doid/'
+          x-requestTemplate:
+            - valueType: 'http://identifiers.org/omim/'
+              template: /bioentity/disease/OMIM:{{input}}/genes/
+            - valueType: 'http://identifiers.org/doid/'
+              template: /bioentity/disease/{{input}}/genes/
+      responses:
+        '200':
+          description: 'A distinct set of association.objects (typically ontology terms). This appears at the top level of the results payload'
+          x-concept: gene
+          x-responseValueType:
+            - path: objects
+              valueType: 'http://identifiers.org/hgnc/'
+            - path: objects
+              valueType: 'http://identifiers.org/ncbigene/'
+          x-JSONLDContext:
+            'registry/layers/biolink/jsonld/biolink_gene_context.jsonld' # Override JSONLD with local file
