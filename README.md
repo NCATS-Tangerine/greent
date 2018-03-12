@@ -34,4 +34,15 @@ MATCH (n:named_thing)-[a]->(d:disease)-[b]->(g:gene) RETURN *
 ```
 In the returned graph, nodes are biolink-model concepts and edges contain attributes indicating the service to invoke. 
 
+## API
+
+We will be publshing an OpenAPI interface to the graph. For now, run 
+```
+$ PYTHONPATH=$PWD/.. python api/server.py
+```
+To start the server. Usage examples coming soon.
+
+Caveat: The repo is undergoing substantial development so please expect delays.
+
+```
 
