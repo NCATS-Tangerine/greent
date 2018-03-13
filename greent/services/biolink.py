@@ -138,8 +138,9 @@ def test_output():
     ehgnc = urllib.parse.quote_plus("HGNC:6136")
     r = requests.get('https://api.monarchinitiative.org/api/bioentity/gene/%s/diseases' % ehgnc).json()
     import json
-    with open('testbiolink.json', 'w') as outf:
-        json.dump(r, outf, indent=4)
+    print(json.dumps(r,indent=4))
+    #with open('testbiolink.json', 'w') as outf:
+    #    json.dump(r, outf, indent=4)
 
 
 def test_go():
@@ -184,8 +185,8 @@ def test_pathways():
 
 
 if __name__ == '__main__':
-    test_pathways()
-    # test_output()
+    #test_pathways()
+    test_output()
     # b = Biolink (ServiceContext.create_context ())
 #    print (b.get_gene_function (KNode('UniProtKB:P10721', 'G')))
 # print (b.gene_get_genetic_condition (KNode ('DOID:2841', node_types.DISEASE)))
