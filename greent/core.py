@@ -62,4 +62,5 @@ class GreenT:
         else:
             if attr in self.lazy_loader:
                 value = self.lazy_loader [attr] ()
+                __dict__[attr] = value
         return value
