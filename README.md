@@ -34,7 +34,24 @@ MATCH (n:named_thing)-[a]->(d:disease)-[b]->(g:gene) RETURN *
 ```
 In the returned graph, nodes are biolink-model concepts and edges contain attributes indicating the service to invoke. 
 
-## API
+## Python API
+
+This simple snippet demonstrates usage via the Python API:
+
+```
+
+from greent.graph_components import elements_to_json
+from greent.rosetta import Rosetta
+...
+rosetta = Rosetta ()
+...
+knowledge = get_translator().clinical_outcome_pathway_app(drug=drug,
+                                                              disease=disease)
+result = [ elements_to_json (e) for e in knowledge ]
+return jsonify (result)
+```
+
+## Web API
 
 We will be publshing an OpenAPI interface to the graph. 
 
