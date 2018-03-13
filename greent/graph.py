@@ -149,7 +149,7 @@ class TypeGraph(Service):
         concept_rels = a_concept_node.relationships.outgoing(predicate)
         found = False
         for rel in concept_rels:
-            if rel.end == b_concept_node and rel.get('op') == op:
+            if rel.end == b_concept_node and rel.get('op',default=None) == op:
                 found = True
         if not found:
             a_concept_node.relationships.create(predicate, b_concept_node, predicate=predicate,

@@ -38,12 +38,12 @@
 
 
 '@operators':
-  anatomical_entity:
+  cell:
     anatomical_entity:
       - link : cell_type_to_anatomy
         op   : uberongraph.get_anatomy_by_cell_graph
   biological_process:
-    anatomical_entity:
+    cell:
       - link : bio_process_cell_type
         op   : quickgo.go_term_xontology_relationships
       - link : bio_process_cell_type
@@ -52,6 +52,10 @@
     gene:
       - link  : chemical_targets_gene
         op    : chembio.graph_pubchem_to_ncbigene
+      - link  : drug_to_gene
+        op    : ctd.drug_to_gene
+      - link  : drug_to_gene
+        op    : pharos.drug_get_gene
   disease:
     phenotypic_feature:
       - link  : disease_to_phenotype
@@ -63,12 +67,6 @@
     gene:
       - link  : disease_to_gene
         op    : pharos.disease_get_gene
-  drug_exposure:
-    gene:
-      - link  : drug_to_gene
-        op    : ctd.drug_to_gene
-      - link  : drug_to_gene
-        op    : pharos.drug_get_gene
   gene:
     anatomical_entity:
       - link  : gene_to_anatomy
@@ -84,7 +82,7 @@
         op    : biolink.gene_get_pathways
       - link  : gene_to_disease
         op    : hetio.gene_to_disease
-    drug_exposure:
+    chemical_substance:
       - link  : gene_to_drug
         op    : ctd.gene_to_drug
     pathway:
@@ -100,7 +98,7 @@
     disease :
       - link  : name_to_disease
         op    : tkba.name_to_doid
-    drug_exposure    :
+    chemical_substance    :
       - link  : name_to_drug
         op    : tkba.name_to_drugbank
       - link  : name_to_drug
