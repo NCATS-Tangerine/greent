@@ -78,6 +78,7 @@ class Pharos(Service):
         # TODO: This relies on a pretty ridiculous caching of a map between pharos ids and doids.
         #      As Pharos improves, this will not be required, but for the moment I don't know a better way.
         pmap = defaultdict(list)
+        print (f"-------------------- {subject_node}")
         pharos_id_filename = os.path.join(os.path.dirname(__file__), 'pharos.id.all.txt')
         with open(pharos_id_filename, 'r') as inf:
             rows = DictReader(inf, dialect='excel-tab')
@@ -193,6 +194,8 @@ class Pharos(Service):
         """ Get a gene from a pharos disease id. """
         pharos_ids = self.translate(subject)
         resolved_edge_nodes = []
+        print (f"-------------------- {pharos_ids}")
+
         for pharosid in pharos_ids:
             logging.getLogger('application').debug("Identifier:" + subject.identifier)
             original_edge_nodes = []

@@ -2,7 +2,38 @@ from collections import defaultdict
 from functools import singledispatch
 from greent.node_types import node_types
 from greent.util import Text
+from json import JSONEncoder
+from json import JSONDecoder
 
+class GenericJSONEncoder(JSONEncoder):
+    def default(self, o):
+        d = { '__class__':obj.__class__.__name__, 
+              '__module__':obj.__module__,
+        }
+        d.update(obj.__dict__)
+        return d
+class KNodeEncoder(GenericJSONEncoder):
+    pass
+class KNodeEncoder(GenericJSONEncoder):
+    pass
+class GenericJSONDecoder(JSONDecoder):
+    def __init__(self, encoding=None):
+        json.JSONDecoder.__init__(self, object_hook=self.dict_to_object)
+    def dict_to_object(self, d):
+        if '__class__' in d:
+            class_name = d.pop('__class__')
+            module_name = d.pop('__module__')
+            module = __import__(module_name)
+            class_ = getattr(module, class_name)
+            args = dict( (key.encode('ascii'), value) for key, value in d.items())
+            inst = class_(**args)
+        else:
+            inst = d
+        return inst
+class KNodeDecoder(GenericJSONDecoder):
+    pass
+class KEdgeEncoder(GenericJSONEncoder):
+    pass
 
 class KNode():
     """Used as the node object in KnowledgeGraph.
@@ -14,8 +45,8 @@ class KNode():
             identifier = Text.obo_to_curie(identifier)
         self.identifier = identifier
         self.label = label
-        if node_type not in node_types:
-            raise ValueError('node_type {} unsupported.'.format(node_type))
+#        if node_type not in node_types:
+#            raise ValueError('node_type {} unsupported.'.format(node_type))
         self.node_type = node_type
         self.properties = {}
         self.mesh_identifiers = []

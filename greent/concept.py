@@ -11,14 +11,15 @@ class Concept:
         self.is_a = is_a
         is_a_name = is_a.name if is_a else None
         self.id_prefixes = [] if id_prefixes is None else id_prefixes
-        
+    def __repr__(self):
+        return f"Concept(name={self.name},is_a={self.is_a is not None},id_prefixes={self.id_prefixes})"
 class ConceptModel:
     """ A grouping of concepts.
     Should ultimately be generalizable to different concept models. We begin with the biolink-model. """
     
     def __init__(self, name):
         self.name = name
-        self.by_name = defaultdict(lambda:None)
+        self.by_name = {} #defaultdict(lambda:None)
         self.by_prefix = defaultdict(lambda:None)
 
         self.model_loaders = {
@@ -37,7 +38,8 @@ class ConceptModel:
         of associations between identifiers and concepts. """
         identifier_map_path = os.path.join (os.path.dirname (__file__), "conf", "identifier_map.yaml")
         self.the_map = Resource.load_yaml (identifier_map_path)['identifier_map']
-
+        #for c in self.by_name.values ():
+        #    print (f"by name {c}")
     def get (self, concept_name):
         return self.by_name[concept_name]
     

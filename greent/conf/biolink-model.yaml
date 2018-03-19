@@ -474,7 +474,14 @@ classes:
       - CTD
     mappings:
       - SIO:010004
-      
+
+  - name: drug
+    is_a: chemical substance
+    description: >-
+      A chemical substance with clinically verified indications.
+    id_prefixes:
+      - DRUGBANK
+
   - name: attribute
     subclass_of: PATO:0000001
     description: >-

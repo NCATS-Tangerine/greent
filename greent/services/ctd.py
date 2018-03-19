@@ -16,6 +16,8 @@ class CTD(Service):
 
     def __init__(self, context):
         super(CTD, self).__init__("ctd", context)
+        self.url = "https://ctdapi.renci.org/"
+        '''
         logger.debug("Ensuring presence of CTD files: {0}".format(self.url))
         files = [
             'CTD_chem_gene_ixns.tsv', 'CTD_chemicals.tsv'
@@ -94,7 +96,7 @@ class CTD(Service):
                     result['publications'] = []
                 self.drug_genes[chemname].append(result)
                 self.gene_drugs[gene_id].append(result)
-
+        
     def get_synonyms(self, input_identifier):
         if input_identifier not in self.id_lookups:
             return set()
@@ -105,7 +107,7 @@ class CTD(Service):
         identifiers = self.name_to_id[drugname.lower()]
         results = ['CTD:{}'.format(ident) for ident in identifiers]
         return results
-
+        '''
     def drugname_to_ctd(self, namenode):
         drugname = Text.un_curie(namenode.identifier)
         ctdids = self.drugname_string_to_ctd_string(drugname)
@@ -116,7 +118,7 @@ class CTD(Service):
             newedge = KEdge('CTD', 'drugname_to_ctd', {})
             results.append((newedge, newnode))
         return results
-
+    '''
     def drug_to_gene(self, subject):
         """ Get a gene from a ctd drug id. """
         print( list(self.drug_genes.keys())[:10])
@@ -138,7 +140,6 @@ class CTD(Service):
                 #        for action in actions:
                 #            print( 'Action: {}'.format(action) )
         return edge_nodes
-
     def gene_to_drug(self, subject):
         """ Get a ctd drug from an NCBI Gene. """
         gene_id = subject.identifier
@@ -156,7 +157,24 @@ class CTD(Service):
         #        for action in actions:
         #            print( 'Action: {}'.format(action) )
         return edge_nodes
+    '''
+    def drugname_string_to_ctd_string(self, drugname):
+        obj = requests.get (f"{self.url}/CTD_chem_gene_ixns_ChemicalName/{Text.un_curie(subject.identifier)}/").json ()
+        return [
+            ( self.get_edge(props=r, pmids=r['PubMedIDs']),
+              KNode(f"MESH:{r['ChemicalID']}", "drug") ) for r in obj ]
 
+    def drug_to_gene(self, subject):
+        obj = requests.get (f"{self.url}/CTD_chem_gene_ixns_ChemicalID/{Text.un_curie(subject.identifier)}/").json ()
+        return [
+            ( self.get_edge(props=r, pmids=r['PubMedIDs']),
+              KNode(f"NCBIGene:{r['GeneID']}", "gene") ) for r in obj ]
+
+    def gene_to_drug(self, subject):
+        obj = requests.get (f"{self.url}/CTD_chem_gene_ixns_GeneID/{Text.un_curie(subject.identifier)}/").json ()
+        return [
+            ( self.get_edge(props=r, pmids=r['PubMedIDs']),
+              KNode(f"MESH:{r['ChemicalID']}", "drug") ) for r in obj ]
 
 def test_d2g():
     from greent.service import ServiceContext
@@ -165,7 +183,11 @@ def test_d2g():
     input_node.add_synonyms(set(["CTD:Celecoxib"]))
     results = ctd.drug_to_gene(input_node)
     print(results)
-
+    
+    input_node = KNode("MESH:D000068877", "disease")
+    results = ctd.drug_to_gene(input_node)
+    print(results)
+'''
 def test_all_drugs():
     from greent.service import ServiceContext
     ctd = CTD(ServiceContext.create_context())
@@ -197,7 +219,7 @@ def test_all_drugs():
     print('{} without genes'.format(n_no_gene))
     ngood = len(uniq) - n_no_ctd - n_no_gene
     print('{} good ({})'.format(ngood, ngood / len(uniq)))
-
+'''
 
 if __name__ == "__main__":
     #test_all_drugs()

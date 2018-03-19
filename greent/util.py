@@ -11,6 +11,7 @@ from collections import namedtuple
 from bravado.client import SwaggerClient
 from bravado.requests_client import RequestsClient
 
+#loggers = {}
 class LoggingUtil(object):
     """ Logging utility controlling format and setting initial logging level """
     @staticmethod
@@ -27,6 +28,16 @@ class LoggingUtil(object):
         logger.setLevel(level)
         return logger
     
+        '''
+        logger = None
+        global loggers
+        if name in loggers:
+            logger = loggers[name]
+        else:
+            loggers[name] = logger
+        return logger
+        '''
+        
 class Munge(object):
     @staticmethod
     def gene (gene):

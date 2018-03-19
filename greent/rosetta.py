@@ -1,11 +1,16 @@
 import argparse
 import logging
+import json
 import operator
 import os
 import sys
 import traceback
 import yaml
 import requests_cache
+from requests_cache.backends.redis import RedisCache
+import redis
+import pickle
+
 from collections import defaultdict
 from greent.transreg import TranslatorRegistry
 from greent.identifiers import Identifiers
@@ -14,16 +19,78 @@ from greent.util import Resource
 from greent.util import Text
 from greent.util import DataStructure
 from greent.graph import TypeGraph
-from greent.graph_components import KNode, KEdge
+from greent.graph import Operator
+from greent.graph import Frame
+from greent.graph_components import KNode, KEdge, elements_to_json
 from greent.synonymization import Synonymizer
 from neo4jrestclient.exceptions import StatusException
 
 logger = LoggingUtil.init_logging(__file__, level=logging.INFO)
 
+class CacheSerializer:
+    """ Generic serializer. """
+    def __init__(self):
+        pass
+class PickleSerializer(CacheSerializer):
+    """ Use Python's default serialization. """
+    def __init__(self):
+        pass
+    def dumps(self, obj):
+        return pickle.dumps (obj)
+    def loads(self, str):
+        return pickle.loads (str)
+
+class Cache:
+    """ Cache objects by various means. """
+    def __init__(self, cache_path="cache",
+                 serializer=PickleSerializer,
+                 redis_host="localhost", redis_port=6379,
+                 enabled=True):
+        """ Connect to cache. """
+        self.enabled = enabled
+        try:
+            self.redis = redis.StrictRedis(host=redis_host, port=redis_port, db=0)
+            self.redis.get ('x')
+        except:
+            self.redis = None
+            logger.error ("Failed to connect to redis. Is the server running?")
+        self.cache_path = cache_path
+        if not os.path.exists (self.cache_path):
+            os.makedirs (self.cache_path)
+        self.cache = {}
+        self.serializer = serializer ()
+    def get(self, key):
+        result = None
+        if self.enabled:
+            if self.redis:
+                rec = self.redis.get (key)
+                result = self.serializer.loads (rec) if rec else None
+            elif key in self.cache:
+                result = self.cache[key]
+            else:
+                path = os.path.join (self.cache_path, key)
+                if os.path.exists (path):
+                    with open(path, 'rb') as stream:
+                        result = self.serializer.loads (stream.read ())
+                        self.cache[key] = result
+        return result
+    def set(self, key, value):
+        if self.enabled:
+            if self.redis:
+                if value:
+                    self.redis.set (key, self.serializer.dumps (value))
+            else:
+                self.cache[key] = value
+                path = os.path.join (self.cache_path, key)
+                with open(path, 'wb') as stream:
+                    stream.write (self.serializer.dumps (value))
+    def close (self):
+        self.cache.close ()
+        
 class Rosetta:
     """ Rosetta's translates between semantic domains generically and automatically.
     Based on a configuration file, it builds a directed graph where types are nodes.
-    Types can be IRIs or CURIEs. Edges are annotated with the names of operators used
+    Types are concepts from a model. Edges are annotated with the names of operators used
     to transition between the connected types. The engine can then accept requests to 
     translate a term from one domain to another. It does this by collecting transitions
     from the graph and executing the list of transitions. """
@@ -33,6 +100,8 @@ class Rosetta:
                  override={},
                  delete_type_graph=False,
                  init_db=False,
+                 redis_host="localhost",
+                 redis_port=6379,
                  debug=False):
 
         """ The constructor loads the config file an prepares the type graph. If the delete_type_graph 
@@ -44,28 +113,29 @@ class Rosetta:
         self.debug = False
         self.cache_path = 'rosetta_cache'
 
-        logger.debug("-- Initialize GreenT service core.")
+        logger.debug("-- rosetta init.")
         self.core = GreenT(config=greentConf, override=override)
 
-        logger.debug("-- Loading Rosetta graph schematic config: {0}".format(config_file))
+        """ Load configuration. """
         with open(config_file, 'r') as stream:
             self.config = yaml.load(stream)
-        self.concepts = self.config["@concepts"]
+        #self.concepts = self.config["@concepts"]
         self.operators = self.config["@operators"]
-        
-        self.synonymizer = Synonymizer( self.config, self.core )
 
-        logger.debug("-- Initializing Rosetta type graph")
+        self.cache = Cache ()
+
+        """ Initialize type graph. """
         self.type_graph = TypeGraph(self.core.service_context, debug=debug)
+        self.synonymizer = Synonymizer( self.type_graph.concept_model, self.core )
 
-        logger.debug("-- Merge Identifiers.org vocabulary into Rosetta vocab.")
+        """ Merge identifiers.org vocabulary into Rosetta voab. """
         self.identifiers = Identifiers ()
         if delete_type_graph:
             logger.debug("--Deleting type graph")
             self.type_graph.delete_all()
 
         if init_db:
-            logger.debug("--Initialize concept graph metadata and create type nodes.")
+            """ Initialize type graph metadata. """
             for k, v in self.identifiers.vocab.items():
                 if isinstance(v, str):
                     self.type_graph.find_or_create(k, v)
@@ -74,13 +144,6 @@ class Rosetta:
             
     def configure_local_operators (self):
         logger.debug ("Configure operators in the Rosetta config.")
-        logger.debug ("""
-    ____                  __  __       
-   / __ \____  ________  / /_/ /_____ _
-  / /_/ / __ \/ ___/ _ \/ __/ __/ __ `/
- / _, _/ /_/ (__  /  __/ /_/ /_/ /_/ / 
-/_/ |_|\____/____/\___/\__/\__/\__,_/  
-                                       """)
         for a_concept, transition_list in self.operators.items ():
             for b_concept, transitions in transition_list.items ():
                 for transition in transitions:
@@ -90,13 +153,6 @@ class Rosetta:
                     
     def configure_translator_registry (self):
         logger.debug ("Configure operators derived from the Translator Registry.")
-        logger.debug ("""
-  ______                      __      __                ____             _      __            
- /_  ___________ _____  _____/ ____ _/ /_____  _____   / __ \___  ____ _(______/ /________  __
-  / / / ___/ __ `/ __ \/ ___/ / __ `/ __/ __ \/ ___/  / /_/ / _ \/ __ `/ / ___/ __/ ___/ / / /
- / / / /  / /_/ / / / (__  / / /_/ / /_/ /_/ / /     / _, _/  __/ /_/ / (__  / /_/ /  / /_/ / 
-/_/ /_/   \__,_/_/ /_/____/_/\__,_/\__/\____/_/     /_/ |_|\___/\__, /_/____/\__/_/   \__, /  
-                                                               /____/                /____/   """)
         self.core.translator_registry = TranslatorRegistry(self.core.service_context)
         subscriptions = self.core.translator_registry.get_subscriptions()
         registrations = defaultdict(list)
@@ -149,16 +205,16 @@ class Rosetta:
         Each path reflects a set of transitions from the starting tokens through the graph.
         Each path is then executed and the resulting links and nodes returned. """
         programs = self.type_graph.get_transitions(query)
-        logger.debug (f"-- programs: {programs}")
         result = []
         for program in programs:
             result += self.graph_inner(next_nodes, program)
         return result
 
     def graph_inner(self, next_nodes, program):
-        import json
+        #=import json
         if not program or len(program) == 0:
             return []
+        logger.info (program)
         primed = [{'collector': next_nodes}] + program
         linked_result = []
         for index, level in enumerate(program):
@@ -175,6 +231,7 @@ class Rosetta:
                         with requests_cache.enabled("rosetta_cache"):
                             results = op(source_node)
                         for r in results:
+                            print (f"--- result --- {r}")
                             edge = r[0]
                             if isinstance(edge, KEdge):
                                 edge.predicate = operator['link']
@@ -195,45 +252,97 @@ class Rosetta:
                         logger.error("Error invoking> {0}".format(log_text))
         return linked_result
 
-    def clinical_outcome_pathway(self, drug=None, disease=None):
-        blackboard = []
-        from greent import node_types
-        if disease:
-            blackboard += self.graph(
-                [(None, KNode(f"NAME.DISEASE:{disease}", node_types.DISEASE_NAME))],
-                query= """MATCH (n:named_thing)-[a]->(d:disease)-[b]->(g:gene) RETURN *""")
-            blackboard += self.graph(
-                [(None, KNode('NAME.DISEASE:{0}'.format(disease), node_types.DISEASE))],
-                query= \
-                    """MATCH (a{name:"NAME.DISEASE"}),(b:Gene), p = allShortestPaths((a)-[*]->(b)) 
-                    WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
-                    RETURN p""")
-        if drug:
-            blackboard += self.graph(
-                [(None, KNode('NAME.DRUG:{0}'.format(drug), node_types.DRUG_NAME))],
-                query= \
-                    """MATCH (a{name:"NAME.DRUG"}),(b:Pathway), p = allShortestPaths((a)-[*]->(b)) 
-                    WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
-                    RETURN p""")
-        return blackboard
+    def construct_knowledge_graph (self, inputs, query):
+        programs = self.type_graph.get_knowledge_map_programs(query)
+        results = []
+        for program in programs:
+            print (f" program --**-->> {program}")
+            results += self.execute_knowledge_graph_program (inputs, program)
+        return results
+    
+    def execute_knowledge_graph_program (self, inputs, program):
+        """ Construct a knowledge graph given a set of input nodes and a program - a list
+        of frames, each of which contains the name of a concept, a collector containing a list of edges and
+        nodes where all target nodes are instances of the frame's concept, and a list of operations for 
+        transitioning from one frame's concept space to the next frames.
 
-    @staticmethod
-    def clinical_outcome_pathway_app(drug=None, disease=None, greent_conf='greent.conf', debug=False):
-        return Rosetta(greentConf=greent_conf, debug=debug).clinical_outcome_pathway(drug=drug, disease=disease)
+        This method assumes a linear path.
+        """
 
-    @staticmethod
-    def clinical_outcome_pathway_app_from_args(args, greent_conf='greent.conf'):
+        """ Convert inputs to be structured like edges-and-nodes returned by a previous services. """
+        next_nodes = { key : [ (None, KNode(val, key)) for val in val_list ] for key, val_list in inputs.items () }
+        logger.debug (f"inputs: {next_nodes}")
+
+        """ Validated the input program. """
+        if len(program) == 0:
+            logger.info (f"No program found for {query}")
+            return result
+        logger.info (f"program> {program}")
         result = []
-        if isinstance(args, list) and len(args) == 2 and \
-                isinstance(args[0], str) and isinstance(args[1], str):
-            result = (
-                args,
-                Rosetta.clinical_outcome_pathway_app(
-                    drug=args[0],
-                    disease=args[1],
-                    greent_conf=greent_conf))
-        return result
+        
+        """ Each frame's name is a concept. We use the top frame's as a key to index the arguments. """
+        top_frame = program[0]
+        inputs = next_nodes[top_frame.name]
+        for i in inputs:
+            self.synonymizer.synonymize(i[1])
+            
+        """ Stack is the overall executable. We prepend a base frame with a collector primed with input arguments. """
+        stack = [ Frame (collector=inputs) ] + program
 
+        """ Execute the program frame by frame. """
+        for index, frame in enumerate(program):
+            #logger.debug (f"--inputs: {stack[index].collector}")
+            for k, o in frame.ops.items ():                
+                logger.debug(f"  -- frame-index--> {frame} {index} {k}=>{o.op}")
+
+            """ Process each node in the collector. """
+            for edge, source_node in stack[index].collector:
+                """ Process each operator in the frame. """
+                for op_name, operator in frame.ops.items ():
+
+                    """ Generate a cache key. """
+                    key =  f"{frame.name}->{operator.op}({source_node.identifier})"
+                    try:
+                        logger.debug (f"--op: {key}")
+
+                        """ Load the object from cache. """
+                        response = self.cache.get (key)
+                        if not response:
+                            
+                            """ Invoke the knowledge source with the given input. """
+                            op = self.get_ops(operator.op)
+                            response = op(source_node)
+                            for edge, node in response:
+                                
+                                """ Process the edge adding metadata. """
+                                if isinstance(edge, KEdge):
+                                    edge.predicate = operator.predicate
+                                    edge.source_node = source_node
+                                    self.synonymizer.synonymize(node)
+                                    edge.target_node = node
+
+                                """ Validate the id space of the returned data maps to the target concept. """
+                                if index < len(program) - 1:
+                                    target_concept_name = program[index + 1].name
+                                    prefixes = self.type_graph.concept_model.get (target_concept_name).id_prefixes
+                                    valid = any([ node.identifier.upper().startswith(p.upper()) for p in prefixes])
+                                    if not valid:
+                                        logger.debug(
+                                            f"Operator {operator} wired to type: {concept_name} returned node with id: {node.identifier}")
+
+                            """ Cache the annotated and validated response. """
+                            self.cache.set (key, response)
+                            
+                        """ Add processed edges to the overall result. """
+                        result += [ edge for edge, node in response ]
+                        logger.debug(f"{key} => {Text.short(response)}")
+
+                        """ Response edges go in the collector to become input for the next operation. """
+                        frame.collector += response
+                    except Exception as e:
+                        traceback.print_exc()
+                        logger.error("Error invoking> {key}")
+        return result
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Rosetta.')
@@ -244,23 +353,76 @@ if __name__ == "__main__":
     parser.add_argument('--initialize-type-graph',
                         help='Build the graph of types and semantic transitions between them.',
                         action="store_true", default=False)
-    parser.add_argument('-d', '--disease', help='A disease to analyze.', default=None)
-    parser.add_argument('-s', '--drug', help='A drug to analyze.', default=None)
+    parser.add_argument('-d', '--redis-host', help='Redis server hostname.', default=None)
+    parser.add_argument('-s', '--redis-port', help='Redis server port.', default=None)
     args = parser.parse_args()
 
     if args.debug:
+        logger.info ("setting debug log level")
+        #logger.setLevel (logging.DEBUG)
         logger = LoggingUtil.init_logging(__file__, level=logging.DEBUG)
 
     if args.initialize_type_graph or args.delete_type_graph:
         rosetta = Rosetta(init_db=args.initialize_type_graph,
                           delete_type_graph=args.delete_type_graph,
                           debug=args.debug)
-    else:
-        blackboard = Rosetta.clinical_outcome_pathway_app(drug=args.drug,
-                                                          disease=args.disease,
-                                                          debug=args.debug)
-        print("output: {}".format(blackboard))
 
+""" Test Harness """
+rosetta = None
+def get_rosetta ():
+    global rosetta
+    if not rosetta:
+        rosetta = Rosetta(debug=True)
+    return rosetta
 
-
+def execute_query (args, outputs):
+    blackboard = get_rosetta().construct_knowledge_graph(**args)
+    out = list(map (lambda v : v.lower (), outputs))
+    ids = [ e.target_node.identifier.lower() for e in blackboard ]
+    print (ids)
+    print (out)
+    #assert all([ an_id in out for an_id in ids ])
+    assert all ([ an_id.startswith('ncbigene') for an_id in ids])
+    return blackboard, ids
     
+def test_disease_gene ():
+    execute_query (**{
+        "args" : {
+            "inputs" : {
+                "disease" : [
+                    "DOID:2841"
+                ]
+            },            
+            "query" :
+            """MATCH (a:disease),(b:gene), p = allShortestPaths((a)-[*]->(b))
+            WHERE NONE (r IN relationships(p) WHERE type(r) = 'UNKNOWN' OR r.op is null) 
+            RETURN p"""
+        },
+        "outputs" : [
+            "NCBIGene:79034",
+            "NCBIGene:154064",
+            "NCBIGene:3550"
+        ]
+    })
+    
+def test_drug_pathway ():
+    execute_query (**{
+        "args" : {
+            "inputs" : {
+                "drug" : [
+                    "MESH:D000068877",
+                    "DRUGBANK:DB00619"
+                ],
+            },
+            "query" :
+            """MATCH (a:drug),(b:pathway), p = allShortestPaths((a)-[*]->(b)) 
+            WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN' OR r.op is null) 
+            RETURN p"""
+        },
+        "outputs" : [
+            "REACT:R-HSA-6799990"
+        ]
+    })
+
+#test_drug_pathway()
+#test_disease_gene ()

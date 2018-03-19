@@ -1,6 +1,6 @@
 import logging
 import traceback
-
+from collections import defaultdict
 from neo4jrestclient.client import GraphDatabase
 from neo4jrestclient.exceptions import TransactionException
 from neo4jrestclient.exceptions import NotFoundError
@@ -154,7 +154,10 @@ class TypeGraph(Service):
         if not found:
             a_concept_node.relationships.create(predicate, b_concept_node, predicate=predicate,
                                                 op=op, enabled=True)
-        
+            '''
+            a_concept_node.relationships.create(predicate, b_concept_node, predicate=predicate,
+                                                op=op, enabled=True)
+            '''
     def _find_or_create_concept(self, concept):
         """ Find or create a concept object which will be linked to member type object. """
         concept_node = None
@@ -243,3 +246,63 @@ class TypeGraph(Service):
             graphs.append( (nodes, transitions) )
         return graphs
 
+    def get_knowledge_map_programs(self, query):
+        """ Execute a cypher query and walk the results to build a set of transitions to execute.
+        The query should be such that it returns a path (node0-relation0-node1-relation1-node2), and
+        an array of the relation start nodes. 
+
+        This algorithm focuses on linear paths.
+
+        Returns:
+            a list of list of Frame.
+        """
+
+        """ A list of possible executable pathways enacting the input query. """
+        programs = []
+
+        """ Query the database for paths. """
+        result = self.db.query(query, data_contents=True)
+        if result.rows is not None:
+            for row in result.rows:
+                logger.debug (f"row> {row}")
+                for path in row:
+                    """ One path corresponds to one program, or stack of frames. """
+                    program = defaultdict(Frame)
+                    frame = None
+                    for i, element in enumerate(path):
+                        if 'name' in element:
+                            logger.debug (f"  -+ adding frame {element['name']}")
+                            name = element['name']
+                            frame = program[name]
+                            frame.name = name 
+                        elif 'op' in element:
+                            logger.debug (f"  -+ adding op {element['op']} to frame {frame.name}")
+                            frame.add_operator (op = element['op'], predicate = element['predicate'])
+                    programs.append (list(program.values ()))
+                    for p in programs:
+                        print (f"  list {p}")
+        return programs
+
+class Operator:
+    def __init__(self, op=None, predicate=None):
+        self.op = op
+        self.predicate = predicate
+    def __repr__(self):
+        return f"Operator(op={self.op},pred={self.predicate})"
+    def __str__(self):
+        return self.__repr__()
+class Frame:
+    def __init__(self, name=None, ops=[], collector=[]):
+        self.name = name
+        self.ops = defaultdict(Operator)
+        self.collector = collector
+    def add_operator (self, op, predicate):
+        operator = self.ops[op]
+        operator.op = op
+        operator.predicate = predicate
+    def __repr__(self):
+        ops = []
+        for k, op in self.ops.items ():
+            ops.append (str(op))
+        ops = ",".join (ops)
+        return f"Frame(name={self.name},ops=[{ops}])"

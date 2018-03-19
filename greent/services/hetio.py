@@ -1,7 +1,7 @@
 import json
 import unittest
 from pprint import pprint
-from greent.neo4j import Neo4JREST
+from greent.neo4jbase import Neo4JREST
 from greent.util import Munge
 from greent.util import Text
 from greent.graph_components import KEdge, KNode

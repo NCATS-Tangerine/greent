@@ -4,7 +4,10 @@ import os
 import requests
 import yaml
 import shutil
-from smartBag.grok import SemanticCrunch
+try:
+   from smartBag.grok import SemanticCrunch
+except:
+   print ("smartbag not in path")
 from greent.rosetta import Rosetta
 from greent import node_types
 from greent.graph_components import KNode,KEdge,elements_to_json
@@ -41,10 +44,10 @@ app.config['SWAGGER'] = {
 swagger = Swagger(app, template=template)
 
 rosetta = None
-def get_translator ():
+def get_rosetta ():
    global rosetta
    if not rosetta:
-      rosetta = Rosetta ()
+      rosetta = Rosetta (debug=True)
    return rosetta
 
 @app.route('/cop/')
@@ -76,22 +79,70 @@ def cop (drug="imatinib", disease="asthma"):
      200:
        description: ...
    """
-   print ("drug => {}".format (drug))
-   print ("disease => {}".format (disease))
-   blackboard = get_translator().graph (
-      [ ( None, KNode('NAME.DISEASE:{0}'.format (disease), node_types.DISEASE_NAME) ) ],
-      query=\
-      """MATCH (d:disease),(b:gene), p = allShortestPaths((a)-[*]->(b)) 
-      WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
-      RETURN p LIMIT 10""")
-   blackboard += get_translator().graph (
-      [ ( None, KNode('NAME.DRUG:{0}'.format (drug), node_types.DRUG_NAME) ) ],
-      query=\
-      """MATCH (a{name:"NAME.DRUG"}),(b:pathway), p = allShortestPaths((a)-[*]->(b)) 
-      WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN') 
-      RETURN p LIMIT 10""")
-   result = [ elements_to_json (e) for e in blackboard ]
-   return jsonify (result)
+   return jsonify (
+      get_rosetta().construct_knowledge_graph(**{
+         "inputs" : {
+            "disease" : [
+               disease
+            ]
+         },            
+         "query" :
+         """MATCH (a:disease),(b:gene), p = allShortestPaths((a)-[*]->(b))
+         WHERE NONE (r IN relationships(p) WHERE type(r) = 'UNKNOWN' OR r.op is null) 
+         RETURN p"""
+      }) +
+      get_rosetta().construct_knowledge_graph(**{
+         "inputs" : {
+            "drug" : [
+               drug
+            ]
+         },            
+         "query" :
+         """MATCH (a:drug),(b:gene), p = allShortestPaths((a)-[*]->(b))
+         WHERE NONE (r IN relationships(p) WHERE type(r) = 'UNKNOWN' OR r.op is null) 
+         RETURN p"""
+      })
+   )
+
+@app.route('/query/<inputs>/<query>')
+def query (inputs, query):
+   """ Get service metadata 
+   ---
+   parameters:
+     - name: inputs
+       in: path
+       type: string
+       required: true
+       x-valueType:
+         - http://schema.org/string
+       x-requestTemplate:
+         - valueType: http://schema.org/string
+           template: /query?inputs={{ input }}
+     - name: query
+       in: path
+       type: string
+       required: true
+       x-valueType:
+         - http://schema.org/string
+       x-requestTemplate:
+         - valueType: http://schema.org/string
+           template: /query?inputs={{ input }}&query={{ query }}
+   responses:
+     200:
+       description: ...
+   """
+   if '=' not in inputs:
+      raise ValueError ("Inputs must be key value of concept=<comma separated ids>")
+   
+   concept, items = inputs.split ("=")
+   return jsonify (
+      get_rosetta().construct_knowledge_graph(**{
+         "inputs" : {
+            concept : inputs.split (",")
+         },
+         "query"  : query
+      })
+   )
     
 @app.route('/smartbag/compile/<bag_url>/')
 def smartbag_compile (bag_url):

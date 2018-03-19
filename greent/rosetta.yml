@@ -53,8 +53,6 @@
       - link  : chemical_targets_gene
         op    : chembio.graph_pubchem_to_ncbigene
       - link  : drug_to_gene
-        op    : ctd.drug_to_gene
-      - link  : drug_to_gene
         op    : pharos.drug_get_gene
   disease:
     phenotypic_feature:
@@ -67,6 +65,10 @@
     gene:
       - link  : disease_to_gene
         op    : pharos.disease_get_gene
+  drug:
+    gene:
+      - link  : drug_to_gene
+        op    : ctd.drug_to_gene
   gene:
     anatomical_entity:
       - link  : gene_to_anatomy

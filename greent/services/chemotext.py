@@ -6,7 +6,7 @@ from collections import defaultdict
 from ontobio.vocabulary import upper
 
 from greent.mesh import MeSH
-from greent.neo4j import Neo4JREST
+from greent.neo4jbase import Neo4JREST
 from greent.util import LoggingUtil
 from pprint import pprint
 from greent.graph_components import KNode, KEdge

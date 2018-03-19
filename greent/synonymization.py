@@ -27,10 +27,10 @@ logger = LoggingUtil.init_logging(__file__, level=logging.DEBUG)
 
 class Synonymizer:
 
-    def __init__(self, config, core):
+    def __init__(self, concepts, core):
         self.core = core
-        self.identifier_lists = config['@concepts']
-
+        self.concepts = concepts
+        
     def synonymize(self, node):
         """Given a node, determine its type and dispatch it to the correct synonymizer"""
         synonymizers[node.node_type].synonymize(node, self.core)
@@ -38,8 +38,8 @@ class Synonymizer:
 
     def normalize(self,node):
         """Given a node, which will have many potential identifiers, choose the best identifier to be the node ID,
-        where 'best' is defined by the order in which identifiers appear in the @concept section of the rosetta.yml"""
-        type_curies = self.identifier_lists[ node.node_type ]
+        where 'best' is defined by the order in which identifiers appear in the id prefix configurations within the concept model."""
+        type_curies = self.concepts.get(node.node_type).id_prefixes
         original_curie = Text.get_curie(node.identifier)
         if original_curie == type_curies:
             #The identifier is already the best curie, so stop doing anything
