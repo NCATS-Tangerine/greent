@@ -132,17 +132,28 @@ def query (inputs, query):
        description: ...
    """
    if '=' not in inputs:
-      raise ValueError ("Inputs must be key value of concept=<comma separated ids>")
-   
-   concept, items = inputs.split ("=")
-   return jsonify (
-      get_rosetta().construct_knowledge_graph(**{
+      raise ValueError ("Inputs must be key value of concept=<comma separated ids>")   
+   concept, items =inputs.split ("=")
+   args = {
          "inputs" : {
             concept : inputs.split (",")
          },
          "query"  : query
-      })
-   )
+   }
+   print (f" args => {json.dumps (args)}")
+   blackboard = get_rosetta().construct_knowledge_graph(**args)
+
+   nodes = set([ e.target_node for e in blackboard ] + [ e.source_node for e in blackboard ])
+   node_ids = {}
+   for i, n in enumerate(nodes):
+      node_ids[n.identifier] = i
+   for e in blackboard:
+      e.properties['src'] = e.source_node.identifier
+      e.properties['dst'] = e.target_node.identifier
+   return jsonify ({
+      "edges" : [ elements_to_json(e) for e in blackboard ],
+      "nodes" : [ elements_to_json(e) for e in nodes ]
+   })
     
 @app.route('/smartbag/compile/<bag_url>/')
 def smartbag_compile (bag_url):

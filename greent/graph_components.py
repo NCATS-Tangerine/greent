@@ -105,8 +105,10 @@ class KNode():
         """Used to serialize a node to JSON."""
         j = {'identifier': self.identifier, \
              'node_type': self.node_type}
+        '''
         if self.layer_number is not None:
             j['layer_number'] = self.layer_number
+        '''
         for key in self.properties:
             j[key] = self.properties[key]
         return j
