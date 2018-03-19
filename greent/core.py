@@ -1,6 +1,5 @@
 import json
-from greent.clinical import Clinical
-from greent.endotype import Endotype
+
 from greent.ontologies.disease_ont import DiseaseOntology
 from greent.ontologies.go import GO
 from greent.ontologies.hpo import HPO
@@ -14,11 +13,11 @@ from greent.services.hgnc import HGNC
 from greent.services.oxo import OXO
 from greent.services.pharos import Pharos
 from greent.services.quickgo import QuickGo
-from greent.service import ServiceContext
 from greent.services.tkba import TranslatorKnowledgeBeaconAggregator
 from greent.services.uberongraph import UberonGraphKS
 from greent.services.unichem import UniChem
-from greent.translator import Translator
+
+from greent.service import ServiceContext
 from greent.util import LoggingUtil
 
 logger = LoggingUtil.init_logging (__file__)
@@ -33,8 +32,6 @@ class GreenT:
         service_context = self.service_context
         self.translator_registry = None
         self.lazy_loader = {
-            "clinical"         : lambda :  Clinical (self.service_context),
-            "endotype"         : lambda :  Endotype (self.service_context),
             "chembio"          : lambda :  ChemBioKS (self.service_context),
             "chemotext"        : lambda :  Chemotext (self.service_context),
             "pharos"           : lambda :  Pharos (self.service_context),

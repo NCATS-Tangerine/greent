@@ -3,6 +3,8 @@ import logging
 import json
 import operator
 import os
+import pytest
+import re
 import sys
 import traceback
 import yaml
@@ -156,6 +158,8 @@ class Rosetta:
         self.core.translator_registry = TranslatorRegistry(self.core.service_context)
         subscriptions = self.core.translator_registry.get_subscriptions()
         registrations = defaultdict(list)
+        skip_patterns = list(map (lambda v : re.compile (v),
+                              self.config.get ('@translator-registry',{}).get('skip_list', [])))     
         for sub in subscriptions:
             in_concept = sub.in_concept
             out_concept = sub.out_concept
@@ -163,6 +167,9 @@ class Rosetta:
             key = f"{in_concept}-{out_concept}-{op}"
             link = sub.predicate if sub.predicate else "unknown"
             link = link.upper()
+            if any([ p.match (sub.op) for p in skip_patterns ]):
+                logger.debug (f"==> Skipping registration of translator API {sub.op} based on configuration setting.")
+                continue
             if key in registrations:
                 continue
             registrations [key] = sub
@@ -279,6 +286,7 @@ class Rosetta:
             return result
         logger.info (f"program> {program}")
         result = []
+        threshold = 50000000
         
         """ Each frame's name is a concept. We use the top frame's as a key to index the arguments. """
         top_frame = program[0]
@@ -296,7 +304,13 @@ class Rosetta:
                 logger.debug(f"  -- frame-index--> {frame} {index} {k}=>{o.op}")
 
             """ Process each node in the collector. """
+            index = 0
             for edge, source_node in stack[index].collector:
+                '''
+                if index > threshold:
+                    break
+                index = index + 1
+                '''
                 """ Process each operator in the frame. """
                 for op_name, operator in frame.ops.items ():
 
@@ -344,48 +358,26 @@ class Rosetta:
                         logger.error("Error invoking> {key}")
         return result
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Rosetta.')
-    parser.add_argument('--debug', help="Debug", action="store_true", default=False)
-    parser.add_argument('--delete-type-graph',
-                        help='Delete the graph of types and semantic transitions between them.',
-                        action="store_true", default=False)
-    parser.add_argument('--initialize-type-graph',
-                        help='Build the graph of types and semantic transitions between them.',
-                        action="store_true", default=False)
-    parser.add_argument('-d', '--redis-host', help='Redis server hostname.', default=None)
-    parser.add_argument('-s', '--redis-port', help='Redis server port.', default=None)
-    args = parser.parse_args()
-
-    if args.debug:
-        logger.info ("setting debug log level")
-        #logger.setLevel (logging.DEBUG)
-        logger = LoggingUtil.init_logging(__file__, level=logging.DEBUG)
-
-    if args.initialize_type_graph or args.delete_type_graph:
-        rosetta = Rosetta(init_db=args.initialize_type_graph,
-                          delete_type_graph=args.delete_type_graph,
-                          debug=args.debug)
-
-""" Test Harness """
-rosetta = None
-def get_rosetta ():
-    global rosetta
-    if not rosetta:
-        rosetta = Rosetta(debug=True)
-    return rosetta
-
-def execute_query (args, outputs):
-    blackboard = get_rosetta().construct_knowledge_graph(**args)
-    out = list(map (lambda v : v.lower (), outputs))
+def execute_query (args, outputs, rosetta):
+    """ Query rosetta. """
+    blackboard = rosetta.construct_knowledge_graph(**args)
+    """ Lower case all output values. """
+    expect = list(map (lambda v : v.lower (), outputs['nodes']))
+    """ Make a list of result ids. """
     ids = [ e.target_node.identifier.lower() for e in blackboard ]
-    print (ids)
-    print (out)
-    #assert all([ an_id in out for an_id in ids ])
-    assert all ([ an_id.startswith('ncbigene') for an_id in ids])
+    logger.debug (f"Received {len(ids)} nodes.")
+    logger.debug (f"Expected {len(expect)} nodes.")
+    logger.debug (f"  ==> ids: {ids}")
+    matched = 0
+    for o in expect:
+        if o in ids:
+            matched = matched + 1
+        else:
+            logger.error (f" {o} not in ids")
+    assert matched == len(expect)
     return blackboard, ids
     
-def test_disease_gene ():
+def test_disease_gene (rosetta):
     execute_query (**{
         "args" : {
             "inputs" : {
@@ -398,14 +390,13 @@ def test_disease_gene ():
             WHERE NONE (r IN relationships(p) WHERE type(r) = 'UNKNOWN' OR r.op is null) 
             RETURN p"""
         },
-        "outputs" : [
-            "NCBIGene:79034",
-            "NCBIGene:154064",
-            "NCBIGene:3550"
-        ]
-    })
+        "outputs" : {
+            "nodes" : ['ncbigene:191585', 'ncbigene:2289', 'ncbigene:4057', 'ncbigene:1442', 'ncbigene:4843', 'ncbigene:165829', 'ncbigene:5739', 'ncbigene:79034', 'ncbigene:7031', 'ncbigene:1048', 'ncbigene:80206', 'ncbigene:6541', 'ncbigene:340547', 'ncbigene:55600', 'ncbigene:55076', 'ncbigene:9173', 'ncbigene:115362', 'ncbigene:85413', 'ncbigene:948', 'ncbigene:56521', 'ncbigene:2043', 'ncbigene:133308', 'ncbigene:1359', 'ncbigene:1475', 'ncbigene:1469', 'ncbigene:1803', 'ncbigene:6402', 'ncbigene:11254', 'ncbigene:5625', 'ncbigene:29126', 'ncbigene:137835', 'ncbigene:5744', 'ncbigene:10964', 'ncbigene:10085', 'ncbigene:6783', 'ncbigene:6318', 'ncbigene:7903', 'ncbigene:55107', 'ncbigene:3081', 'ncbigene:60437', 'ncbigene:1178', 'ncbigene:59340', 'ncbigene:7033', 'ncbigene:760', 'ncbigene:1470', 'ncbigene:3371', 'ncbigene:10631', 'ncbigene:6528', 'ncbigene:400823', 'ncbigene:117157', 'ncbigene:405753', 'ncbigene:154064', 'ncbigene:202333', 'ncbigene:150', 'ncbigene:1179', 'ncbigene:84830', 'ncbigene:2015', 'ncbigene:25803', 'ncbigene:5055', 'ncbigene:883', 'ncbigene:3171', 'ncbigene:202309', 'ncbigene:4915', 'ncbigene:51301', 'ncbigene:131450', 'ncbigene:26998', 'ncbigene:10344', 'ncbigene:6280', 'ncbigene:90102', 'ncbigene:2206', 'ncbigene:960', 'ncbigene:246', 'ncbigene:9982', 'ncbigene:9245', 'ncbigene:3550', 'ncbigene:50506', 'ncbigene:27306', 'ncbigene:8875']
+        }
+    },
+    rosetta=rosetta)
     
-def test_drug_pathway ():
+def test_drug_pathway (rosetta):
     execute_query (**{
         "args" : {
             "inputs" : {
@@ -419,10 +410,40 @@ def test_drug_pathway ():
             WHERE NONE (r IN relationships(p) WHERE type(r)='UNKNOWN' OR r.op is null) 
             RETURN p"""
         },
-        "outputs" : [
-            "REACT:R-HSA-6799990"
-        ]
-    })
+        "outputs" : {
+            "nodes" : [
+                "REACT:R-HSA-6799990"
+            ]
+        }
+    },
+    rosetta=rosetta)
 
-#test_drug_pathway()
-#test_disease_gene ()
+def run_test_suite ():
+    test_disease_gene ()
+    test_drug_pathway()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Rosetta.')
+    parser.add_argument('--debug', help="Debug", action="store_true", default=False)
+    parser.add_argument('--delete-type-graph',
+                        help='Delete the graph of types and semantic transitions between them.',
+                        action="store_true", default=False)
+    parser.add_argument('--initialize-type-graph',
+                        help='Build the graph of types and semantic transitions between them.',
+                        action="store_true", default=False)
+    parser.add_argument('-d', '--redis-host', help='Redis server hostname.', default=None)
+    parser.add_argument('-s', '--redis-port', help='Redis server port.', default=None)
+    parser.add_argument('-t', '--test', help='Redis server port.', action="store_true", default=False)
+    args = parser.parse_args()
+
+    if args.debug:
+        logger.info ("setting debug log level")
+        #logger.setLevel (logging.DEBUG)
+        logger = LoggingUtil.init_logging(__file__, level=logging.DEBUG)
+
+    if args.initialize_type_graph or args.delete_type_graph:
+        rosetta = Rosetta(init_db=args.initialize_type_graph,
+                          delete_type_graph=args.delete_type_graph,
+                          debug=args.debug)
+    if args.test:
+        run_test_suite ()

@@ -164,18 +164,10 @@ class TranslatorRegistry(Service):
                         """
                         all_input_types = [ v['valueType'] for v in values_in ]
                         in_concept = self.get_concept (parameters, all_input_types)
-                        '''
-                        in_curies = [ self.identifiers.id2curie (v) for v in all_input_types ]
-                        in_concept = parameters.get ("x-concept",
-                                                     self.concept_model.get_single_concept_by_prefixes (in_curies)) #all_input_types))
-                        '''
+                        
                         all_out_types = [ response_value['valueType'] for response_value in success_response.get('x-responseValueType',{}) ]
                         out_concept = self.get_concept (success_response, all_out_types)
-                        '''
-                        out_curies = [ self.identifiers.id2curie (v) for v in all_out_types ] 
-                        out_concept = success_response.get ("x-concept",
-                                                            self.concept_model.get_single_concept_by_prefixes (out_curies)) #all_out_types))
-                        '''
+                        
                         for v in values_in: 
                             in_type = v['valueType']
                             x_template = v['template']

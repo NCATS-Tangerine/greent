@@ -33,7 +33,10 @@ class Synonymizer:
         
     def synonymize(self, node):
         """Given a node, determine its type and dispatch it to the correct synonymizer"""
-        synonymizers[node.node_type].synonymize(node, self.core)
+        if node.node_type in synonymizers:
+            synonymizers[node.node_type].synonymize(node, self.core)
+        else:
+            logger.warn (f"No synonymizer registered for concept: {node.node_type}")
         self.normalize(node)
 
     def normalize(self,node):

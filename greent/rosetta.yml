@@ -26,8 +26,11 @@
   Phenotype          : [ 'HP' , 'NCIT']
   Substance          : [ 'DRUGBANK', 'PUBCHEM', 'CHEBI', 'CHEMBL','DRUG.INTERACTION', 'INCHI', 'INCHIKEY',  'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' , 'PHAROS.DRUG', 'CTD' ]
 
-# Defines transitions from one vocabulary domain to another including a predicate.
+'@translator-registry' :
+  skip_list:
+    - .*diseaseontologyapi.*
 
+# Defines transitions from one vocabulary domain to another including a predicate.
 
 # Not sure how to do this yet
 #  MESH:
