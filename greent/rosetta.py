@@ -70,7 +70,7 @@ class Rosetta:
                 if isinstance(v, str):
                     self.type_graph.find_or_create(k, v)
             self.configure_local_operators ()
-            self.configure_translator_registry ()
+            #self.configure_translator_registry ()
             
     def configure_local_operators (self):
         logger.debug ("Configure operators in the Rosetta config.")

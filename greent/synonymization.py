@@ -33,6 +33,9 @@ class Synonymizer:
 
     def synonymize(self, node):
         """Given a node, determine its type and dispatch it to the correct synonymizer"""
+        #import traceback
+        #traceback.print_stack()
+        #exit()
         synonymizers[node.node_type].synonymize(node, self.core)
         self.normalize(node)
 
@@ -41,7 +44,7 @@ class Synonymizer:
         where 'best' is defined by the order in which identifiers appear in the @concept section of the rosetta.yml"""
         type_curies = self.identifier_lists[ node.node_type ]
         original_curie = Text.get_curie(node.identifier)
-        if original_curie == type_curies:
+        if original_curie == type_curies[0]:
             #The identifier is already the best curie, so stop doing anything
             return
         #Now start looking for the best curies
