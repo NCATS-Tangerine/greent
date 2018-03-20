@@ -59,7 +59,7 @@ class TypeGraph(Service):
         self.concept_model = ConceptModel (self.concept_model_name)
         for concept_name, concept in self.concept_model.items():
             if len(concept.id_prefixes) > 0:
-                logger.debug("  -+ associating concept {} with prefixes {}".format(
+                logger.debug("  -+ concept {} <= {}".format(
                     concept_name, concept.id_prefixes))
             for identifier in concept.id_prefixes:
                 self.type_to_concept[identifier] = concept #_name

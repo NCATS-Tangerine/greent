@@ -356,6 +356,7 @@ class Rosetta:
                     except Exception as e:
                         traceback.print_exc()
                         logger.error("Error invoking> {key}")
+        logger.debug (f"returning {len(result)} values.")
         return result
 
 def execute_query (args, outputs, rosetta):

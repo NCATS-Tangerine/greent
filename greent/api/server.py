@@ -113,6 +113,8 @@ def query (inputs, query):
        in: path
        type: string
        required: true
+       default: drug=MESH:D000068877,DRUGBANK:DB00619
+       description: A key value pair where the key is a biolink-model concept and the value is a comma separated list of curies. eg, concept=curie:id\[,curie:id\]
        x-valueType:
          - http://schema.org/string
        x-requestTemplate:
@@ -122,6 +124,12 @@ def query (inputs, query):
        in: path
        type: string
        required: true
+       description: A cypher query over the biolink-model concept space returning a shortest path.
+       default: >
+         MATCH (a:drug),(b:pathway), p = allShortestPaths((a)-[*]->(b)) 
+         WHERE NONE (r IN relationships(p)
+         WHERE type(r)=UNKNOWN OR r.op is null)
+         RETURN p'
        x-valueType:
          - http://schema.org/string
        x-requestTemplate:
@@ -131,25 +139,34 @@ def query (inputs, query):
      200:
        description: ...
    """
+
+   """ Validate input ids structure is <concept>=<id>[,<id>]* """
    if '=' not in inputs:
       raise ValueError ("Inputs must be key value of concept=<comma separated ids>")   
    concept, items =inputs.split ("=")
+   query = query.replace ("UNKNOWN", "'UNKNOWN'")
    args = {
          "inputs" : {
-            concept : inputs.split (",")
+            concept : items.split (",")
          },
          "query"  : query
    }
-   print (f" args => {json.dumps (args)}")
+   print (f" args => {json.dumps (args, indent=2)}")
    blackboard = get_rosetta().construct_knowledge_graph(**args)
-
+   
    nodes = set([ e.target_node for e in blackboard ] + [ e.source_node for e in blackboard ])
+   ''' Do we really need different ids here?
    node_ids = {}
    for i, n in enumerate(nodes):
       node_ids[n.identifier] = i
+   '''
+   # propagate this back to an edge standard.
    for e in blackboard:
-      e.properties['src'] = e.source_node.identifier
-      e.properties['dst'] = e.target_node.identifier
+      if not 'stdprop' in e.properties:
+         e.properties['stdprop'] = {}
+      e.properties['stdprop']['src'] = e.source_node.identifier
+      e.properties['stdprop']['dst'] = e.target_node.identifier
+
    return jsonify ({
       "edges" : [ elements_to_json(e) for e in blackboard ],
       "nodes" : [ elements_to_json(e) for e in nodes ]
