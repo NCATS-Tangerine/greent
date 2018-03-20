@@ -44,7 +44,7 @@ class Synonymizer:
         where 'best' is defined by the order in which identifiers appear in the id prefix configurations within the concept model."""
         type_curies = self.concepts.get(node.node_type).id_prefixes
         original_curie = Text.get_curie(node.identifier)
-        if original_curie == type_curies:
+        if original_curie == type_curies[0]:
             #The identifier is already the best curie, so stop doing anything
             return
         #Now start looking for the best curies

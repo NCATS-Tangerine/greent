@@ -13,18 +13,18 @@
 
 '@concepts' :
 
-  Anatomy            : [ 'UBERON' ]
-  BiologicalProcess  : [ 'GO.BIOLOGICAL_PROCESS' ]
-  Cell               : [ 'CL' ]
-  CellularComponent  : [ 'GO.CELLULAR_COMPONENT' ]
-  Disease            : [ 'MONDO', 'DOID', 'PHAROS.DISEASE', 'OMIM', 'MESH.DISEASE', 'ORPHANET' , 'EFO', 'UMLS']
-  Gene               : [ 'HGNC', 'NCBIGENE', 'HGNC.SYMBOL', 'ENTREZ',  'ENSEMBL', 'ENSEMBL.TRANSCRIPT', 'UNIPROTKB' , 'UNIPROT', 'MGI', 'ZFIN']
-  GeneticCondition   : [ 'MONDO.GENETIC_CONDITION', 'DOID.GENETIC_CONDITION', 'ORPHANET.GENETIC_CONDITION' ]
-  MolecularFunction  : [ 'GO.MOLECULAR_FUNCTION' ]
+  anatomical_entity  : [ 'UBERON' ]
+  biological_process : [ 'GO.BIOLOGICAL_PROCESS' ]
+  cell               : [ 'CL' ]
+  cellular_component : [ 'GO.CELLULAR_COMPONENT' ]
+  disease            : [ 'MONDO', 'DOID', 'PHAROS.DISEASE', 'OMIM', 'MESH.DISEASE', 'ORPHANET' , 'EFO', 'UMLS']
+  gene               : [ 'HGNC', 'NCBIGENE', 'HGNC.SYMBOL', 'ENTREZ',  'ENSEMBL', 'ENSEMBL.TRANSCRIPT', 'UNIPROTKB' , 'UNIPROT', 'MGI', 'ZFIN']
+  genetic_condition  : [ 'MONDO.GENETIC_CONDITION', 'DOID.GENETIC_CONDITION', 'ORPHANET.GENETIC_CONDITION' ]
+  molecular_function : [ 'GO.MOLECULAR_FUNCTION' ]
   Name               : [ 'NAME.DRUG', 'NAME.DISEASE', 'NAME.SYMPTOM', 'NAME.ANATOMY', 'DISEASE_NAME', 'MESH.NAME', 'NAME.PHENOTYPE' ]
-  Pathway            : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY', 'KEGG.PATHWAY', 'REACT', 'KEGG-path' ]
-  Phenotype          : [ 'HP' , 'NCIT']
-  Substance          : [ 'DRUGBANK', 'PUBCHEM', 'CHEBI', 'CHEMBL','DRUG.INTERACTION', 'INCHI', 'INCHIKEY',  'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' , 'PHAROS.DRUG', 'CTD' ]
+  pathway            : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY', 'KEGG.PATHWAY', 'REACT', 'KEGG-path' ]
+  phenotypic_feature : [ 'HP' , 'NCIT']
+  chemical_substance : [ 'DRUGBANK', 'PUBCHEM', 'CHEBI', 'CHEMBL','DRUG.INTERACTION', 'INCHI', 'INCHIKEY',  'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' , 'PHAROS.DRUG', 'CTD' ]
 
 '@translator-registry' :
   skip_list:
