@@ -15,7 +15,7 @@ class CTD(Service):
     def __init__(self, context):
         super(CTD, self).__init__("ctd", context)
 
-    def drugname_string_to_drug(self, drugname):
+    def drugname_string_to_drug_identifier(self,drugname):
         #First, check to see if the name is already an exact name of something
         chemnamerows = requests.get (f"{self.url}CTD_chemicals_ChemicalName/{drugname}/").json ()
         keepers = [ x for x in chemnamerows if x['ChemicalName'].upper() == drugname.upper()]
@@ -26,7 +26,11 @@ class CTD(Service):
                 synonyms = [syn.upper() for syn in row['Synonyms'].split('|')]
                 if drugname.upper() in synonyms:
                     keepers.append(row)
-        return [ KNode(f"{r['ChemicalID']}", node_types.DRUG) for r in keepers ]
+        return [ f"{r['ChemicalID']}" for r in keepers ]
+
+    def drugname_string_to_drug(self, drugname):
+        identifiers = self.drugname_string_to_drug_identifier(drugname)
+        return [ KNode(identifier, node_types.DRUG) for identifier in identifiers ]
 
     def drug_to_gene(self, subject):
         output = []

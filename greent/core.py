@@ -1,6 +1,5 @@
 import json
 
-from greent.ontologies.disease_ont import DiseaseOntology
 from greent.ontologies.go import GO
 from greent.ontologies.hpo import HPO
 from greent.ontologies.mondo import Mondo
