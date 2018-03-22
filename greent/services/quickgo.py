@@ -13,6 +13,8 @@ class QuickGo(Service):
     def __init__(self, context):
         super(QuickGo, self).__init__("quickgo", context)
 
+    #TODO: Rename to reflect that this only returns cells?  See what else we can get?
+    #Applies also to the annotation_extension functions
     def go_term_xontology_relationships(self, node):
         #Many of the nodes coming in will be something like GO.BIOLOGICAL_PROCESS:0042626 and
         # need to be downgraded to just GO
@@ -45,14 +47,4 @@ class QuickGo(Service):
                             cell_ids.add(c['id'])
         return results
 
-def test ():
-    q = QuickGo (ServiceContext.create_context ())
-    r = q.go_term_xontology_relationships (KNode("GO:0002551", node_types.PROCESS))
-    pprint.pprint (r)
-    r = q.go_term_xontology_relationships (KNode("GO.BIOLOGICAL_PROCESS:0042626", node_types.PROCESS))
-    pprint.pprint (r)
-    r = q.go_term_annotation_extensions (KNode("GO.BIOLOGICAL_PROCESS:0007269", node_types.PROCESS))
-    pprint.pprint (r)
 
-if __name__ == '__main__':
-    test ()
