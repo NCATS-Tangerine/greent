@@ -18,7 +18,6 @@ class UniChem(Service):
         self.sourceid_to_curie = { v:k for k,v in self.curie_to_sourceid.items()}
 
 
-
     # Identifiers going into and coming out from the service are not curies, just identifiers
     def get_synonyms(self, identifier):
         curie = Text.get_curie(identifier)
@@ -38,13 +37,4 @@ class UniChem(Service):
         return results
 
 
-def test ():
-    q = UniChem (ServiceContext.create_context ())
-    synonyms = q.get_synonyms("CHEMBL:CHEMBL12")
-    print('')
-    for s in synonyms:
-        print(s)
 
-
-if __name__ == '__main__':
-    test ()
