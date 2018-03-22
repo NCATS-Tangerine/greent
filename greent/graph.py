@@ -113,10 +113,10 @@ class TypeGraph(Service):
         b_concept_node = self._find_or_create_concept(b_concept)
         self.db.create_relationship (name_a=a_concept.name, type_a=self.CONCEPT,
                                      properties={
-                                         "name"    : predicate,
-                                         "link"    : predicate,
-                                         "op"      : op,
-                                         "enabled" : True
+                                         "name"      : predicate,
+                                         "predicate" : predicate,
+                                         "op"        : op,
+                                         "enabled"   : True
                                      },
                                      name_b=b_concept.name, type_b=self.CONCEPT)
 
@@ -219,28 +219,24 @@ class TypeGraph(Service):
         graphs=[]
         result = self.db.query(query)
         for row in result:
-            logger.debug (f"  row --> {row}")
             nodes = {}
             transitions = {}
             path = row[0]
-            node_map = {}
-            for i, node in enumerate(path.nodes):
-                print (f" node > {node}")
-                node_map[node.id] = node.properties
+            node_map = { node.id : node.properties['name'] for i, node in enumerate (path.nodes) }
             for i, element in enumerate(path):
-                print (f"pathelement {i}> {element}")
-                from_node = (i + 1) * 2 - 1
-                to_node   = (i + 1) * 2 + 1
-                nodes[from_node] = node_map[element.start]['name']
-                nodes[to_node] = node_map[element.end]['name']
-                print (f" props: {element.properties}")
-                if 'op' in element.properties:
-                    transitions[from_node] = {
-                        'link' : element.type,
-                        'op'   : element.properties['op'],
-                        'to'   : to_node}
-            print (f"transitions> {json.dumps (nodes, indent=2)}")
-            print (f"transitions> {json.dumps (transitions, indent=2)}")
+                logger.debug (f"pathelement {i}> {element}")
+                from_node = i
+                to_node = i+1
+                nodes[from_node] = node_map[element.start]
+                nodes[to_node] = node_map[element.end]
+                transitions[from_node] = {
+                    'link' : element.properties['predicate'],
+                    'op'   : element.properties['op'],
+                    'to'   : to_node
+                }
+            logger.debug (f"""
+            nodes> {json.dumps (nodes, indent=2)}
+            transitions> {json.dumps (transitions, indent=2)}""")
             graphs.append( (nodes, transitions) )
         return graphs
 

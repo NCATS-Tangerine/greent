@@ -53,6 +53,7 @@ class Cache:
         try:
             self.redis = redis.StrictRedis(host=redis_host, port=redis_port, db=0)
             self.redis.get ('x')
+            logger.info ("Cache connected to Redis.")
         except:
             self.redis = None
             logger.error ("Failed to connect to redis. Is the server running?")
@@ -124,7 +125,6 @@ class Rosetta:
         """ Load configuration. """
         with open(config_file, 'r') as stream:
             self.config = yaml.load(stream)
-        #self.concepts = self.config["@concepts"]
         self.operators = self.config["@operators"]
 
         self.cache = Cache ()
@@ -454,6 +454,7 @@ def test_double_ended_query(rosetta):
     
 def run_test_suite ():
     rosetta = Rosetta (debug=True)
+    print ("0---")
     test_disease_gene (rosetta)
 #    test_drug_pathway(rosetta)
 
