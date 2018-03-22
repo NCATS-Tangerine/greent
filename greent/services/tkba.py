@@ -108,6 +108,7 @@ class TranslatorKnowledgeBeaconAggregator(Service):
                             seen[a] = a
         return list(set(result))
 
+#It's unclear to me what we should test here.  We're not making good use of tkba at the moment.  Once we are, tests will make more sense
 def basic_test():
     t = TranslatorKnowledgeBeaconAggregator (ServiceContext.create_context ())
     #print (t.name_to_mesh_disease (KNode("NAME.DISEASE:asthma", node_types.NAME_DISEASE)))

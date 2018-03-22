@@ -74,6 +74,8 @@ class UberonGraphKS(Service):
             outputs = [ 'part', 'partlabel' ], \
             template_text = text \
         )
+        for result in results:
+            result['curie'] = Text.obo_to_curie(result['part'])
         return results
 
 
@@ -181,28 +183,4 @@ class UberonGraphKS(Service):
                 results.append ( (pedge, pnode) )
         return results
 
-def test_name():
-    uk = UberonGraphKS(ServiceContext.create_context ())
-    #Test cell->name
-    cn ='CL:0000097'
-    results = uk.cell_get_cellname( cn )
-    print(results)
- 
 
-def test():
-    uk = UberonGraphKS(ServiceContext.create_context ())
-    #Test cell->anatomy
-#    k = KNode('CL:0000097',node_types.CELL)
-#    results = uk.get_anatomy_by_cell_graph( k )
-#    print(results)
-    #Test pheno->anatomy
-    k = KNode('HP:0011675',node_types.PHENOTYPE)
-    results = uk.get_anatomy_by_phenotype_graph( k )
-    print(results)
-
-def test_parts():
-    uk = UberonGraphKS(ServiceContext.create_context ())
-    print( uk.get_anatomy_parts('UBERON:0004535') )
-
-if __name__ == '__main__':
-    test()
