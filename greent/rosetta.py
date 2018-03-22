@@ -97,7 +97,7 @@ class Rosetta:
     translate a term from one domain to another. It does this by collecting transitions
     from the graph and executing the list of transitions. """
 
-    def __init__(self, greentConf="greent.conf",
+    def __init__(self, greentConf=None,
                  config_file=os.path.join(os.path.dirname(__file__), "rosetta.yml"),
                  override={},
                  delete_type_graph=False,
@@ -114,6 +114,9 @@ class Rosetta:
         from greent.core import GreenT
         self.debug = False
         self.cache_path = 'rosetta_cache'
+
+        if not greentConf:
+            greentConf = "greent.conf"
 
         logger.debug("-- rosetta init.")
         self.core = GreenT(config=greentConf, override=override)
@@ -301,7 +304,7 @@ class Rosetta:
         for index, frame in enumerate(program):
             #logger.debug (f"--inputs: {stack[index].collector}")
             for k, o in frame.ops.items ():                
-                logger.debug(f"  -- frame-index--> {frame} {index} {k}=>{o.op}")
+                logger.debug(f"-- frame-index--> {frame} {index} {k}=>{o.op}")
 
             """ Process each node in the collector. """
             index = 0
@@ -317,7 +320,7 @@ class Rosetta:
                     """ Generate a cache key. """
                     key =  f"{frame.name}->{operator.op}({source_node.identifier})"
                     try:
-                        logger.debug (f"--op: {key}")
+                        logger.debug (f"  --op: {key}")
 
                         """ Load the object from cache. """
                         response = self.cache.get (key)
@@ -325,6 +328,8 @@ class Rosetta:
                             
                             """ Invoke the knowledge source with the given input. """
                             op = self.get_ops(operator.op)
+                            if not op:
+                                raise Exception (f"Unable to find op: {operator.op}")
                             response = op(source_node)
                             for edge, node in response:
                                 
@@ -419,11 +424,40 @@ def test_drug_pathway (rosetta):
     },
     rosetta=rosetta)
 
+def test_double_ended_query(rosetta):
+    b = rosetta.graph (
+        next_nodes=[
+            (None, KNode("D000068877", "chemical_substance"))
+        ],
+        query="""MATCH p=
+        (c0:Concept {name: "chemical_substance" })
+        --
+        (c1:Concept {name: "gene" })
+        --
+        (c2:Concept {name: "biological_process" })
+        --
+        (c3:Concept {name: "cell" })
+        --
+        (c4:Concept {name: "anatomical_entity" })
+        --
+        (c5:Concept {name: "phenotypic_feature" })
+        --
+        (c6:Concept {name: "disease" })
+        FOREACH (n in relationships(p) | SET n.marked = TRUE)
+        WITH p,c0,c6
+        MATCH q=(c0:Concept)-[*0..6 {marked:True}]->()<-[*0..6 {marked:True}]-(c6:Concept)
+        WHERE p=q
+        FOREACH (n in relationships(p) | SET n.marked = FALSE)
+        RETURN p, EXTRACT( r in relationships(p) | startNode(r) )
+        """)
+    print (b)
+    
 def run_test_suite ():
-    test_disease_gene ()
-    test_drug_pathway()
+    rosetta = Rosetta (debug=True)
+    test_disease_gene (rosetta)
+#    test_drug_pathway(rosetta)
 
-if __name__ == "__main__":
+def parse_args (args):
     parser = argparse.ArgumentParser(description='Rosetta.')
     parser.add_argument('--debug', help="Debug", action="store_true", default=False)
     parser.add_argument('--delete-type-graph',
@@ -435,15 +469,17 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--redis-host', help='Redis server hostname.', default=None)
     parser.add_argument('-s', '--redis-port', help='Redis server port.', default=None)
     parser.add_argument('-t', '--test', help='Redis server port.', action="store_true", default=False)
-    args = parser.parse_args()
+    parser.add_argument('-c', '--conf', help='GreenT config file to use.', default=None)
+    return parser.parse_args(args)
 
+if __name__ == "__main__":
+    args = parse_args (sys.argv[1:])
     if args.debug:
-        logger.info ("setting debug log level")
-        #logger.setLevel (logging.DEBUG)
-        logger = LoggingUtil.init_logging(__file__, level=logging.DEBUG)
+        logger.setLevel (logging.DEBUG)
 
     if args.initialize_type_graph or args.delete_type_graph:
-        rosetta = Rosetta(init_db=args.initialize_type_graph,
+        rosetta = Rosetta(greentConf=args.conf,
+                          init_db=args.initialize_type_graph,
                           delete_type_graph=args.delete_type_graph,
                           debug=args.debug)
     if args.test:

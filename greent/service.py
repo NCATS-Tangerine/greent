@@ -24,6 +24,9 @@ class Service:
         
     def _type(self):
         return self.__class__.__name__
+
+    def get_config(self):
+        return self.context.config.get_service (self.name)
     
     def get_edge (self, props={}, predicate=None, pmids=[]):
         """ Generate graph edges in a standard way, propagating information needed for
