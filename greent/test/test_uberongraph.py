@@ -40,6 +40,12 @@ def test_pheno_to_anatomy(uberon):
     assert 'UBERON:0000948' in identifiers #heart
     assert 'UBERON:0001981' in identifiers #blood vessel
 
+def test_non_HP_pheno_to_anatomy(uberon):
+    #Arrhythmia occurs in...
+    k = KNode('xx:0011675',node_types.PHENOTYPE)
+    results = uberon.get_anatomy_by_phenotype_graph( k )
+    assert len(results) == 0
+
 def test_parts(uberon):
     uk = UberonGraphKS(ServiceContext.create_context ())
     results = uberon.get_anatomy_parts('UBERON:0004535')

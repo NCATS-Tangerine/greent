@@ -165,22 +165,23 @@ class UberonGraphKS(Service):
         return edge,node
 
     def get_anatomy_by_phenotype_graph (self, phenotype_node):
-        anatomies = self.phenotype_to_anatomy (phenotype_node.identifier)
         results = []
-        for r in anatomies:
-            edge, node = self.create_phenotype_anatomy_edge(r['anatomy_id'],r['anatomy_label'])
-            if phenotype_node.label is None:
-                phenotype_node.label = r['input_label']
-            results.append ( (edge, node) )
-            #These tend to be very high level terms.  Let's also get their parts to
-            #be more inclusive.
-            #TODO: there ought to be a more principled way to take care of this, but
-            #it highlights the uneasy relationship between the high level world of
-            #smartapi and the low-level sparql-vision.
-            part_results = self.get_anatomy_parts( r['anatomy_id'] )
-            for pr in part_results:
-                pedge, pnode = self.create_phenotype_anatomy_edge(pr['part'],pr['partlabel'])
-                results.append ( (pedge, pnode) )
+        for curie in phenotype_node.get_synonyms_by_prefix('HP'):
+            anatomies = self.phenotype_to_anatomy (curie)
+            for r in anatomies:
+                edge, node = self.create_phenotype_anatomy_edge(r['anatomy_id'],r['anatomy_label'])
+                if phenotype_node.label is None:
+                    phenotype_node.label = r['input_label']
+                results.append ( (edge, node) )
+                #These tend to be very high level terms.  Let's also get their parts to
+                #be more inclusive.
+                #TODO: there ought to be a more principled way to take care of this, but
+                #it highlights the uneasy relationship between the high level world of
+                #smartapi and the low-level sparql-vision.
+                part_results = self.get_anatomy_parts( r['anatomy_id'] )
+                for pr in part_results:
+                    pedge, pnode = self.create_phenotype_anatomy_edge(pr['part'],pr['partlabel'])
+                    results.append ( (pedge, pnode) )
         return results
 
 

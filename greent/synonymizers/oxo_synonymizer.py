@@ -1,13 +1,23 @@
 from greent.util import Text
+from greent.util import LoggingUtil
+import logging
+
+logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG, format='long')
 
 def synonymize(node, gt):
+    logger.debug("Synonymize: {}".format(node.identifier))
     synonyms = get_synonyms(node,gt)
     # do we have any MeSH ids?   If not, we want to dig deeper and get some so that chemotext will work
     # As we modify our literature diving methods, we might not need this any more.
-    double_check_for_mesh(node,synonyms,gt)
+    try:
+        double_check_for_mesh(node,synonyms,gt)
+    except Exception as e:
+        logger.error("Failure for getting MESH: {}".format(node.identifier))
+        logger.error(e)
     # OK, we're not going to use them all, there's some BS PMIDs that come back...
     synonyms = {s for s in synonyms if not s.startswith('PMID')}
     node.add_synonyms(synonyms)
+    logger.debug("  Done")
 
 def get_synonyms(node, gt, distance=2):
     #OXO doesn't know about every kind of curie.  So let's see if it knows about our node identifier

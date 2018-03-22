@@ -22,13 +22,10 @@ def test_prefixes(oxo):
     assert not oxo.is_valid_curie_prefix("dummy")
     assert not oxo.is_valid_curie_prefix("MONDO")
 
-def test_synonyms():
-    from greent.service import ServiceContext
-    oxo = OXO(ServiceContext.create_context())
+def test_synonyms(oxo):
     curieset = oxo.get_synonymous_curies('EFO:0000764')
     #A bunch of stuff comes back. We'll spot check a few
     assert 'MeSH:D015658' in curieset
     assert 'DOID:526' in curieset
     assert 'UMLS:C1858709' in curieset
-
 
