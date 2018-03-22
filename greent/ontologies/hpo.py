@@ -98,11 +98,4 @@ class HPO(Service):
 
 
 
-def test():
-    h = HPO (ServiceContext.create_context ())
-    #print( h.search('Arrhythmias, Cardiac') )
-    print( h.search('Thyroid Neoplasms') )
-    print( h.search('Neoplasm of the thyroid gland') )
 
-if __name__ == '__main__':
-    test()
