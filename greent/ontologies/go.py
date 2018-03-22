@@ -1,9 +1,8 @@
 from greent.service import Service
-from greent.service import ServiceContext
 from ontobio.ontol_factory import OntologyFactory
 
 CELLULAR_COMPONENT='GO:0005575'
-MOLECULAR_FUNCTION='GO:0005674'
+MOLECULAR_FUNCTION='GO:0003674'
 BIOLOGICAL_PROCESS='GO:0008150'
 
 #TODO: move commonalities here and with mondo into somehwere
