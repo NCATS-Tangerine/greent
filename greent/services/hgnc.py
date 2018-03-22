@@ -108,20 +108,3 @@ class HGNC(Service):
             #No results back
             return []
 
-def test():
-    from greent.service import ServiceContext 
-    hgnc = HGNC( ServiceContext.create_context() )
-    input_knode = KNode( 'NCBIGENE:3815' , node_type = node_types.GENE )
-    print( hgnc.ncbigene_to_uniprotkb( input_knode ) )
-
-def test_synonym():
-    from greent.service import ServiceContext
-    hgnc = HGNC( ServiceContext.create_context() )
-    ncbigene = 'NCBIGENE:3815'
-    syns = hgnc.retrieve_synonyms(ncbigene)
-    for s in syns:
-        print(s)
-
-if __name__ == '__main__':
-    test_synonym()
-

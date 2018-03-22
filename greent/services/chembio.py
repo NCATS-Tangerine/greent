@@ -426,6 +426,3 @@ class ChemBioKS(Service):
         return retvals
         
 
-
-if __name__ == '__main__':
-    test2()

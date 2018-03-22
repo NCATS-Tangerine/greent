@@ -4,15 +4,12 @@ from ontobio.ontol_factory import OntologyFactory
 from greent.graph_components import KNode, KEdge
 from greent.util import LoggingUtil
 from greent import node_types
-from cachier import cachier
-import datetime
 
 
 logger = LoggingUtil.init_logging (__file__)
 
 #TODO: LOOKUP all the terms that map to this... or use an ancestor call that doesn't require such stuff (i.e. that handles this)
 GENETIC_DISEASE=('DOID:630','http://purl.obolibrary.org/obo/EFO_0000508','MONDO:0003847','http://purl.obolibrary.org/obo/MONDO_0003847')
-#GENETIC_DISEASE='EFO:0000508'
 MONOGENIC_DISEASE='DOID:0050177'
 
 class Mondo(Service):
@@ -203,17 +200,3 @@ def test_one(infname,outfname,fieldnum):
             print( 'Good: {}   Bad: {}'.format(n_good, n_bad) )
 
 
-def test():
-    m = Mondo (ServiceContext.create_context ())
-    huntington = KNode('OMIM:143100',node_types.DISEASE)
-    print(m.is_genetic_disease(huntington))
-    print('------')
-#    alc_sens = KNode('OMIM:610251',node_types.DISEASE)
-#    print(m.is_genetic_disease(alc_sens))
-#    print('------')
-#    tests = [ "DOID:8545", "OMIM:218550", "OMIM:234000", "DOID:0060334", "DOID:0050524", "DOID:0060599", "DOID:12858" ]
-#    for t in tests:
-#        print (m.doid_get_orphanet_genetic_condition (KNode (t, node_types.DISEASE)))
-
-if __name__ == '__main__':
-    test_both()

@@ -21,24 +21,15 @@ logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG)
 def synonymize(node,gt):
     logger.debug("Synonymize: {}".format(node.identifier))
     curie = Text.get_curie(node.identifier)
-    if curie == 'CTD':
-        synonymize_with_CTD(node,gt)
-        synonymize_with_OXO(node,gt)
-        synonymize_with_UniChem(node,gt)
-    elif curie == 'CHEMBL':
+    if curie == 'CHEMBL':
         synonymize_with_UniChem(node,gt)
         synonymize_with_OXO(node,gt)
-        synonymize_with_CTD(node,gt)
+        #synonymize_with_CTD(node,gt)
     else:
         synonymize_with_OXO(node,gt)
         synonymize_with_UniChem(node,gt)
-        synonymize_with_CTD(node,gt)
+        #synonymize_with_CTD(node,gt)
 
-def synonymize_with_CTD(node,gt):
-    logger.debug(" CTD: {}".format(node.identifier))
-    synonyms = gt.ctd.get_synonyms( node.identifier )
-    node.add_synonyms( synonyms )
-    logger.debug("  updated syns: {}".format( ','.join(list(node.synonyms))))
 
 def synonymize_with_OXO(node,gt):
     logger.debug(" OXO: {}".format(node.identifier))

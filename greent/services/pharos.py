@@ -140,27 +140,6 @@ class Pharos(Service):
             results.append((newedge, newnode))
         return results
 
-    #    def disease_get_gene0(self, subject):
-    #        """ Get a gene from a pharos disease id. """
-    #        pharos_ids = self.translate (subject)
-    #        print ("pharos ids: {}".format (pharos_ids))
-    #        original_edge_nodes=[]
-    #        for pharosid in pharosids:
-    #            logger.debug ('pharos> https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid)
-    #            r = requests.get('https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid)
-    #            result = r.json()
-    #            for link in result['links']:
-    #                if link['kind'] != 'ix.idg.models.Target':
-    #                    logger.info('Pharos disease returning new kind: %s' % link['kind'])
-    #                else:
-    #                    pharos_target_id = int(link['refid'])
-    #                    pharos_edge = KEdge( 'pharos', 'disease_get_gene', {'properties': link['properties']} )
-    #                    original_edge_nodes.append( (pharos_edge, pharos_target_id) )
-
-    #    @cachier(stale_after=datetime.timedelta(days=8))
-    #    def get_request (self, url):
-    #        return requests.get (url.json ())
-
     #    @cachier(stale_after=datetime.timedelta(days=8))
     def drug_get_gene(self, subject):
         """ Get a gene from a drug. """
@@ -295,74 +274,4 @@ def build_disease_translation():
             pfile.write('%d\t%s\n' % (pharosid, doids[0]))
 
 
-def xtest_disese_gene_for_output():
-    """Call a function so that we can examine the output"""
-    pharosid = 455
-    r = requests.get('https://pharos.nih.gov/idg/api/v1/diseases(%d)?view=full' % pharosid)
-    result = r.json()
-    import json
-    with open('testpharos.txt', 'w') as outf:
-        json.dump(result, outf, indent=4)
 
-
-def xtest_hgnc_for_output():
-    """Call a function so that we can examine the output"""
-    pharosid = 91
-    r = requests.get('https://pharos.nih.gov/idg/api/v1/targets(%d)/synonyms' % pharosid)
-    result = r.json()
-    import json
-    with open('testpharos.txt', 'w') as outf:
-        json.dump(result, outf, indent=4)
-
-
-def xtest_drugs():
-    in_node = KNode('NAME.DRUG:ADAPALENE', node_types.DRUG_NAME, label='ADAPALENE')
-    from greent.service import ServiceContext
-    pharos = Pharos(ServiceContext.create_context())
-    results = pharos.drugname_to_pharos(in_node)
-    for e, n in results:
-        gres = pharos.drug_get_gene(n)
-        for ge, gn in gres:
-            print(gn)
-
-
-def test_all_drugs():
-    from greent.service import ServiceContext
-    pharos = Pharos(ServiceContext.create_context())
-    with open('q2-drugandcondition-list.txt', 'r') as inf:
-        h = inf.readline()
-        uniq = set()
-        for line in inf:
-            x = line.split('\t')[0]
-            uniq.add(x)
-    n_no_pharos = 0
-    n_no_hgnc = 0
-    for name in uniq:
-        input_node = KNode("DRUG_NAME:{}".format(name), node_types.DRUG_NAME)
-        try:
-            results = pharos.drugname_to_pharos(input_node)
-            #print(name, results)
-            drug_node = results[0][1]
-            ident = drug_node.identifier
-            hgnc_nodes = pharos.drug_get_gene(drug_node)
-            if len(hgnc_nodes) == 0:
-                n_no_hgnc += 1
-        except:
-            # print ('Not finding {}'.format(name))
-            # exit()
-            n_no_pharos += 1
-            ident = ''
-            hgnc_nodes = []
-        print('{}\t{}\t{}\t{}'.format(name, ident, len(results), len(hgnc_nodes)))
-    print('{} drugs'.format(len(uniq)))
-    print('{} without pubchem id'.format(n_no_pharos))
-    print('{} without genes'.format(n_no_hgnc))
-    ngood = len(uniq) - n_no_pharos - n_no_hgnc
-    print('{} good ({})'.format(ngood, ngood / len(uniq)))
-
-
-
-if __name__ == '__main__':
-    #test_pid_to_drug()
-    test_all_drugs()
-    #build_disease_translation()

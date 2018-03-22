@@ -65,6 +65,5 @@ def test_pathways(biolink):
         for pe,pk in presults:
             assert pk.node_type == node_types.GENE
         gene_ids = [ pk.identifier for pe,pk in presults ]
-        #This doesn't work. Keep an eye on
-        #https://github.com/biolink/biolink-api/issues/153
+        #TODO: This doesn't work because we're not handling paging correctly
         #assert gene_id in gene_ids

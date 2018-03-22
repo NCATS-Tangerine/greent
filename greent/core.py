@@ -1,6 +1,5 @@
 import json
 
-from greent.ontologies.disease_ont import DiseaseOntology
 from greent.ontologies.go import GO
 from greent.ontologies.hpo import HPO
 from greent.ontologies.mondo import Mondo
@@ -38,7 +37,6 @@ class GreenT:
             "oxo"              : lambda :  OXO (self.service_context),
             "hetio"            : lambda :  HetIO (self.service_context),
             "biolink"          : lambda :  Biolink (self.service_context),
-            "disease_ontology" : lambda :  DiseaseOntology (self.service_context),
             "mondo"            : lambda :  Mondo(self.service_context),
             "hpo"              : lambda :  HPO (self.service_context),
             "go"               : lambda :  GO(self.service_context),
