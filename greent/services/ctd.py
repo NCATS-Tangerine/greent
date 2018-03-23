@@ -1,7 +1,5 @@
 import logging
-import os
 import requests
-from collections import defaultdict
 from greent.service import Service
 import greent.util
 from greent.graph_components import KNode, KEdge
