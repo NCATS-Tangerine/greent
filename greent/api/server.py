@@ -47,7 +47,8 @@ rosetta = None
 def get_rosetta ():
    global rosetta
    if not rosetta:
-      rosetta = Rosetta (debug=True)
+      config = app.config['SWAGGER']['greent_conf']
+      rosetta = Rosetta (debug=True, greentConf=config)
    return rosetta
 
 @app.route('/cop/')
@@ -231,6 +232,8 @@ if __name__ == "__main__":
    parser = argparse.ArgumentParser(description='Rosetta Server')
    parser.add_argument('-s', '--bag-source', help='Filesystem path or URL serving bags.', default='.')
    parser.add_argument('-p', '--port', type=int, help='Port to run service on.', default=None)
+   parser.add_argument('-c', '--conf', help='GreenT config file to use.', default=None)
    args = parser.parse_args ()
    app.config['SWAGGER']['bag_source'] = args.bag_source
+   app.config['SWAGGER']['greent_conf'] = args.greent_conf = args.conf
    app.run(host='0.0.0.0', port=args.port, debug=True, threaded=True)

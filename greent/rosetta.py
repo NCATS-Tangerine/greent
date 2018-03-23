@@ -1,6 +1,6 @@
 import argparse
-import logging
 import json
+import logging
 import operator
 import os
 import pytest
@@ -8,87 +8,22 @@ import re
 import sys
 import traceback
 import yaml
-import requests_cache
-from requests_cache.backends.redis import RedisCache
-import redis
-import pickle
-
 from collections import defaultdict
-from greent.transreg import TranslatorRegistry
+from greent.cache import Cache
+from greent.graph import Frame
+from greent.graph import Operator
+from greent.graph import TypeGraph
+from greent.graph_components import KNode, KEdge, elements_to_json
 from greent.identifiers import Identifiers
+from greent.synonymization import Synonymizer
+from greent.transreg import TranslatorRegistry
+from greent.util import DataStructure
 from greent.util import LoggingUtil
 from greent.util import Resource
 from greent.util import Text
-from greent.util import DataStructure
-from greent.graph import TypeGraph
-from greent.graph import Operator
-from greent.graph import Frame
-from greent.graph_components import KNode, KEdge, elements_to_json
-from greent.synonymization import Synonymizer
-from neo4jrestclient.exceptions import StatusException
 
 logger = LoggingUtil.init_logging(__file__, level=logging.INFO)
 
-class CacheSerializer:
-    """ Generic serializer. """
-    def __init__(self):
-        pass
-class PickleSerializer(CacheSerializer):
-    """ Use Python's default serialization. """
-    def __init__(self):
-        pass
-    def dumps(self, obj):
-        return pickle.dumps (obj)
-    def loads(self, str):
-        return pickle.loads (str)
-
-class Cache:
-    """ Cache objects by various means. """
-    def __init__(self, cache_path="cache",
-                 serializer=PickleSerializer,
-                 redis_host="localhost", redis_port=6379,
-                 enabled=True):
-        """ Connect to cache. """
-        self.enabled = enabled
-        try:
-            self.redis = redis.StrictRedis(host=redis_host, port=redis_port, db=0)
-            self.redis.get ('x')
-        except:
-            self.redis = None
-            logger.error ("Failed to connect to redis. Is the server running?")
-        self.cache_path = cache_path
-        if not os.path.exists (self.cache_path):
-            os.makedirs (self.cache_path)
-        self.cache = {}
-        self.serializer = serializer ()
-    def get(self, key):
-        result = None
-        if self.enabled:
-            if self.redis:
-                rec = self.redis.get (key)
-                result = self.serializer.loads (rec) if rec else None
-            elif key in self.cache:
-                result = self.cache[key]
-            else:
-                path = os.path.join (self.cache_path, key)
-                if os.path.exists (path):
-                    with open(path, 'rb') as stream:
-                        result = self.serializer.loads (stream.read ())
-                        self.cache[key] = result
-        return result
-    def set(self, key, value):
-        if self.enabled:
-            if self.redis:
-                if value:
-                    self.redis.set (key, self.serializer.dumps (value))
-            else:
-                self.cache[key] = value
-                path = os.path.join (self.cache_path, key)
-                with open(path, 'wb') as stream:
-                    stream.write (self.serializer.dumps (value))
-    def close (self):
-        self.cache.close ()
-        
 class Rosetta:
     """ Rosetta's translates between semantic domains generically and automatically.
     Based on a configuration file, it builds a directed graph where types are nodes.
@@ -97,13 +32,13 @@ class Rosetta:
     translate a term from one domain to another. It does this by collecting transitions
     from the graph and executing the list of transitions. """
 
-    def __init__(self, greentConf="greent.conf",
+    def __init__(self, greentConf=None,
                  config_file=os.path.join(os.path.dirname(__file__), "rosetta.yml"),
                  override={},
                  delete_type_graph=False,
                  init_db=False,
-                 redis_host="localhost",
-                 redis_port=6379,
+                 redis_host=None,
+                 redis_port=None,
                  debug=False):
 
         """ The constructor loads the config file an prepares the type graph. If the delete_type_graph 
@@ -113,7 +48,10 @@ class Rosetta:
         about and how to transition between them. """
         from greent.core import GreenT
         self.debug = False
-        self.cache_path = 'rosetta_cache'
+        #self.cache_path = 'rosetta_cache'
+
+        if not greentConf:
+            greentConf = "greent.conf"
 
         logger.debug("-- rosetta init.")
         self.core = GreenT(config=greentConf, override=override)
@@ -121,10 +59,13 @@ class Rosetta:
         """ Load configuration. """
         with open(config_file, 'r') as stream:
             self.config = yaml.load(stream)
-        #self.concepts = self.config["@concepts"]
         self.operators = self.config["@operators"]
 
-        self.cache = Cache ()
+        print (f" core {self.core}")
+        redis_conf = self.core.service_context.config.conf.get ("redis", None)
+        self.cache = Cache (            
+            redis_host = redis_host if redis_host else redis_conf.get ("host"),
+            redis_port = redis_port if redis_port else redis_conf.get ("port"))
 
         """ Initialize type graph. """
         self.type_graph = TypeGraph(self.core.service_context, debug=debug)
@@ -186,7 +127,7 @@ class Rosetta:
         logger.debug ("  -+ {} {} link: {} op: {}".format(a_concept, b_concept, link, op))
         try:
             self.type_graph.add_concepts_edge(a_concept, b_concept, predicate=link, op=op)
-        except StatusException:
+        except Exception:
             logger.error(f"Failed to create edge from {a_concept} to {b_concept} with link {link} and op {op}")
             
     def terminate(self, d):
@@ -234,25 +175,29 @@ class Rosetta:
                     try:
                         results = None
                         log_text = "  -- {0}({1})".format(operator['op'], edge_node[1].identifier)
-                        source_node = edge_node[1]
-                        with requests_cache.enabled("rosetta_cache"):
+                        source_node = edge_node[1]                        
+                        key =  f"{operator['op']}({edge_node[1].identifier})"
+                        logger.debug (f"  --op: {key}")
+                        results = self.cache.get (key)
+                        if not results:
                             results = op(source_node)
-                        for r in results:
-                            print (f"--- result --- {r}")
-                            edge = r[0]
-                            if isinstance(edge, KEdge):
-                                edge.predicate = operator['link']
-                                edge.source_node = source_node
-                                self.synonymizer.synonymize(r[1])
-                                edge.target_node = r[1]
-                                linked_result.append(edge)
-                        logger.debug("{0} => {1}".format(log_text, Text.short(results)))
-                        for r in results:
-                            if index < len(program) - 1:
-                                if not r[1].identifier.startswith(program[index + 1]['node_type']):
-                                    logger.debug(
-                                        "Operator {0} wired to return type: {1} returned node with id: {2}".format(
-                                            operator, program[index + 1]['node_type'], r[1].identifier))
+                            for r in results:
+                                print (f"--- result --- {r}")
+                                edge = r[0]
+                                if isinstance(edge, KEdge):
+                                    edge.predicate = operator['link']
+                                    edge.source_node = source_node
+                                    self.synonymizer.synonymize(r[1])
+                                    edge.target_node = r[1]
+                                    linked_result.append(edge)
+                            logger.debug("{0} => {1}".format(log_text, Text.short(results)))
+                            for r in results:
+                                if index < len(program) - 1:
+                                    if not r[1].identifier.startswith(program[index + 1]['node_type']):
+                                        logger.debug(
+                                            "Operator {0} wired to return type: {1} returned node with id: {2}".format(
+                                                operator, program[index + 1]['node_type'], r[1].identifier))
+                            self.cache.set (key, results)
                         collector += results
                     except Exception as e:
                         traceback.print_exc()
@@ -286,7 +231,6 @@ class Rosetta:
             return result
         logger.info (f"program> {program}")
         result = []
-        threshold = 50000000
         
         """ Each frame's name is a concept. We use the top frame's as a key to index the arguments. """
         top_frame = program[0]
@@ -301,23 +245,18 @@ class Rosetta:
         for index, frame in enumerate(program):
             #logger.debug (f"--inputs: {stack[index].collector}")
             for k, o in frame.ops.items ():                
-                logger.debug(f"  -- frame-index--> {frame} {index} {k}=>{o.op}")
+                logger.debug(f"-- frame-index--> {frame} {index} {k}=>{o.op}")
 
             """ Process each node in the collector. """
             index = 0
             for edge, source_node in stack[index].collector:
-                '''
-                if index > threshold:
-                    break
-                index = index + 1
-                '''
                 """ Process each operator in the frame. """
                 for op_name, operator in frame.ops.items ():
 
                     """ Generate a cache key. """
                     key =  f"{frame.name}->{operator.op}({source_node.identifier})"
                     try:
-                        logger.debug (f"--op: {key}")
+                        logger.debug (f"  --op: {key}")
 
                         """ Load the object from cache. """
                         response = self.cache.get (key)
@@ -325,6 +264,8 @@ class Rosetta:
                             
                             """ Invoke the knowledge source with the given input. """
                             op = self.get_ops(operator.op)
+                            if not op:
+                                raise Exception (f"Unable to find op: {operator.op}")
                             response = op(source_node)
                             for edge, node in response:
                                 
@@ -419,11 +360,41 @@ def test_drug_pathway (rosetta):
     },
     rosetta=rosetta)
 
+def test_double_ended_query(rosetta):
+    b = rosetta.graph (
+        next_nodes=[
+            (None, KNode("D000068877", "chemical_substance"))
+        ],
+        query="""MATCH p=
+        (c0:Concept {name: "chemical_substance" })
+        --
+        (c1:Concept {name: "gene" })
+        --
+        (c2:Concept {name: "biological_process" })
+        --
+        (c3:Concept {name: "cell" })
+        --
+        (c4:Concept {name: "anatomical_entity" })
+        --
+        (c5:Concept {name: "phenotypic_feature" })
+        --
+        (c6:Concept {name: "disease" })
+        FOREACH (n in relationships(p) | SET n.marked = TRUE)
+        WITH p,c0,c6
+        MATCH q=(c0:Concept)-[*0..6 {marked:True}]->()<-[*0..6 {marked:True}]-(c6:Concept)
+        WHERE p=q
+        FOREACH (n in relationships(p) | SET n.marked = FALSE)
+        RETURN p, EXTRACT( r in relationships(p) | startNode(r) )
+        """)
+    print (b)
+    
 def run_test_suite ():
-    test_disease_gene ()
-    test_drug_pathway()
+    rosetta = Rosetta (debug=True)
+    print ("0---")
+    test_disease_gene (rosetta)
+#    test_drug_pathway(rosetta)
 
-if __name__ == "__main__":
+def parse_args (args):
     parser = argparse.ArgumentParser(description='Rosetta.')
     parser.add_argument('--debug', help="Debug", action="store_true", default=False)
     parser.add_argument('--delete-type-graph',
@@ -435,15 +406,17 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--redis-host', help='Redis server hostname.', default=None)
     parser.add_argument('-s', '--redis-port', help='Redis server port.', default=None)
     parser.add_argument('-t', '--test', help='Redis server port.', action="store_true", default=False)
-    args = parser.parse_args()
+    parser.add_argument('-c', '--conf', help='GreenT config file to use.', default=None)
+    return parser.parse_args(args)
 
+if __name__ == "__main__":
+    args = parse_args (sys.argv[1:])
     if args.debug:
-        logger.info ("setting debug log level")
-        #logger.setLevel (logging.DEBUG)
-        logger = LoggingUtil.init_logging(__file__, level=logging.DEBUG)
+        logger.setLevel (logging.DEBUG)
 
     if args.initialize_type_graph or args.delete_type_graph:
-        rosetta = Rosetta(init_db=args.initialize_type_graph,
+        rosetta = Rosetta(greentConf=args.conf,
+                          init_db=args.initialize_type_graph,
                           delete_type_graph=args.delete_type_graph,
                           debug=args.debug)
     if args.test:

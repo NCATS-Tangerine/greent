@@ -57,6 +57,8 @@
         op    : chembio.graph_pubchem_to_ncbigene
       - link  : drug_to_gene
         op    : pharos.drug_get_gene
+      - link  : drug_to_gene
+        op    : ctd.drug_to_gene        
   disease:
     phenotypic_feature:
       - link  : disease_to_phenotype
