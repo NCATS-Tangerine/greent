@@ -92,3 +92,42 @@ To delete specific keys or patterns of keys from the cache:
 $ ~/app/redis-4.0.8/src/redis-cli --raw keys '*' | xargs ~/app/redis-4.0.8/src/redis-cli --raw del
 ```
 
+## Adding Edges
+
+To add a data source to the knowledge map:
+
+### Build a Service
+1. Build a smartAPI interface to your data. 
+2. Publish a public network endpoint to your data.
+3. Register your [smartAPI](https://github.com/NCATS-Tangerine/translator-api-registry) at the Translator Registry.
+4. For the immediate time frame, you'll also need to build a small Python shim to your service. In the future, we'll derive  information from the registry to invoke your service programmatically. For an example, see the [CTD service](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/greent/services/ctd.py). This is a stub for this [smartAPI endpoint](https://ctdapi.renci.org/apidocs/#/default).
+
+### Configure Service Endpoint
+1. Add your service endpoint URL to the configuration files following the CTD pattern.
+   * Add to [greent.conf](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/greent/greent.conf) used for local development.
+   * And [greent-dev.conf](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/greent/greent-dev.conf) used in the continuous integration environment.
+
+### Instantiate The Service
+Instantiate your service, following the lazy loading pattern, in [core.py](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/greent/core.py)
+
+
+### Edit the Configuration
+This YAML file links types in the biolink-model. Each link includes a predicate and the name of an operation.
+Operations are named:
+```
+<objectName>.<methodName>
+```
+where <objectName> is a member of core.py, the central service manager.
+         
+1. Find the "@operators" tag in the configuration file.
+2. Find the biolink-model element for the source type to your service.
+3. Follow the pattern in the configuration to enter your predicate (link) and operator (op)
+
+### Rebuild the Knowledge Map
+```
+$ PYTHONPATH=$PWD/.. rosetta.py --delete-type-graph --initialize-type-graph --debug
+```
+
+
+
+
