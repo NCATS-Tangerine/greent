@@ -37,8 +37,8 @@ class Rosetta:
                  override={},
                  delete_type_graph=False,
                  init_db=False,
-                 redis_host="localhost",
-                 redis_port=6379,
+                 redis_host=None,
+                 redis_port=None,
                  debug=False):
 
         """ The constructor loads the config file an prepares the type graph. If the delete_type_graph 
@@ -61,7 +61,11 @@ class Rosetta:
             self.config = yaml.load(stream)
         self.operators = self.config["@operators"]
 
-        self.cache = Cache ()
+        print (f" core {self.core}")
+        redis_conf = self.core.service_context.config.conf.get ("redis", None)
+        self.cache = Cache (            
+            redis_host = redis_host if redis_host else redis_conf.get ("host"),
+            redis_port = redis_port if redis_port else redis_conf.get ("port"))
 
         """ Initialize type graph. """
         self.type_graph = TypeGraph(self.core.service_context, debug=debug)

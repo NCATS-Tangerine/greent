@@ -45,7 +45,7 @@ class Cache:
         self.cache_path = cache_path
         if not os.path.exists (self.cache_path):
             os.makedirs (self.cache_path)
-        self.cache = LRU (1000) #{}
+        self.cache = LRU (1000) 
         self.serializer = serializer ()
         
     def get(self, key):
@@ -74,8 +74,8 @@ class Cache:
                     self.redis.set (key, self.serializer.dumps (value))
                     self.cache[key] = value
             else:
-                self.cache[key] = value
                 path = os.path.join (self.cache_path, key)
                 with open(path, 'wb') as stream:
                     stream.write (self.serializer.dumps (value))
+                self.cache[key] = value
                     

@@ -48,6 +48,9 @@ class GreenT:
             "unichem"          : lambda :  UniChem(self.self.service_context)
         }
         
+    def get_config_val(self, key):
+        print (f"{self.service_context.config}")
+        return self.service_context.config.conf.get (key, None)
     def __getattribute__(self, attr):
         """ Intercept all attribute accesses. Instantiate services on demand. """
         value = None
