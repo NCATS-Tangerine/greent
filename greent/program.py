@@ -88,23 +88,24 @@ class Program:
             try:
                 results = self.rosetta.cache.get (key)
                 if results is not None:
-                    logger.info (f"cache hit: {key}")
+                    logger.info (f"cache hit: {key} size:{len(results)}")
                 else:
                     logger.info (f"exec op: {key}")
                     op = self.rosetta.get_ops(op_name)
                     results = op(source_node)
-                    newnodes = []
-                    for r in results:
-                        edge = r[0]
-                        if isinstance(edge, KEdge):
-                            edge.predicate = link['link']
-                            edge.source_node = source_node
-                            edge.target_node = r[1]
-                            logger.debug('     {}'.format(edge.target_node.identifier))
-                            self.linked_results.append(edge)
-                            newnodes.append(r[1])
                     self.rosetta.cache.set (key, results)
-                    self.add_instance_nodes(newnodes,next_context)
+                newnodes = []
+                for r in results:
+                    edge = r[0]
+                    if isinstance(edge, KEdge):
+                        edge.predicate = link['link']
+                        edge.source_node = source_node
+                        edge.target_node = r[1]
+                        logger.debug('     {}'.format(edge.target_node.identifier))
+                        self.linked_results.append(edge)
+                        newnodes.append(r[1])
+                print (f"cache.set-> {key} length:{len(results)}")
+                self.add_instance_nodes(newnodes,next_context)
             except Exception as e:
                 traceback.print_exc()
                 logger.error("Error invoking> {0}".format(log_text))

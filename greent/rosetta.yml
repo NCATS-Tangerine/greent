@@ -1,7 +1,7 @@
 
 #########################################################################
 ##
-##  Define concepts, types, and transitions between types.
+##  Define concepts and operators
 ##    * Concepts are connected to a list of instance types.
 ##    * Link semantics augment the Translator Registry
 ##    * Transitions between types with semantics are defined by curie.
@@ -39,7 +39,12 @@
 #    DRUGBANK:
 #      op: chembio.get_drugs_by_condition_graph
 
-
+#
+#
+#
+#
+#
+#
 '@operators':
   cell:
     anatomical_entity:
@@ -122,185 +127,3 @@
     anatomical_entity:
       - link  : phenotype_to_anatomy
         op    : uberongraph.get_anatomy_by_phenotype_graph
-
-'@transitions':
-  NAME.DISEASE:
-    DOID:
-      link: name_to_id
-      op:   tkba.name_to_doid
-    MESH.DISEASE:
-      link: name_to_id
-      op:   tkba.name_to_mesh_disease
-    EFO:
-      link: name_to_id
-      op:   tkba.name_to_efo
-  NAME.DRUG:
-    DRUGBANK:
-      link: name_to_id
-      op:   tkba.name_to_drugbank
-    PUBCHEM:
-      link: drugname_to_pubchem
-      op:   chembio.graph_drugname_to_pubchem
-    PHAROS.DRUG:
-      link: drugname_to_pharos
-      op:   pharos.drugname_to_pharos
-    CTD:
-      link: drugname_to_ctd
-      op:   ctd.drugname_to_ctd
-#  EFO:
-#    DOID:
-#      link: synonym
-#      op:   oxo.efo_to_doid
-#    UMLS:
-#      link: synonym
-#      op:   oxo.umls_to_doid
-  UMLS:
-#    PHAROS.DISEASE:
-#      link: synonym
-#      op:   disease_ontology.doid_or_umls_to_pharos
-    HP:
-      link: disease_to_phenotype
-      op:   biolink.disease_get_phenotype
-  DOID:
-#    MESH.DISEASE:
-#      link: synonym
-#      op: disease_ontology.graph_doid_to_mesh
-#    PHAROS.DISEASE:
-#      link: synonym
-#      op:   disease_ontology.doid_or_umls_to_pharos
-#TODO: I Don't think that this is correct.  It's producing a phenotype->anatomy link at the concept level...
-#    UBERON:
-#      link: phenotype
-#      op:   hetio.disease_to_phenotype
-    ORPHANET.GENETIC_CONDITION:
-      link: genetic_condition
-      op:   mondo.doid_get_genetic_condition
-    HP:
-      link: disease_to_phenotype
-      op:   biolink.disease_get_phenotype
-  HGNC:
-    DOID:
-      link: gene_to_disease
-      op: biolink.gene_get_disease
-    DOID.GENETIC_CONDITION:
-      link: gene_to_genetic_condition
-      op: biolink.gene_get_genetic_condition
-#    UNIPROTKB:
-#      link: synonym
-#      op:   hgnc.hgnc_to_uniprotkb
-    REACT:
-      link: gene_to_pathway
-      op:   biolink.gene_get_pathways
-    KEGG-path:
-      link: gene_to_pathway
-      op:   biolink.gene_get_pathways
-  REACT:
-    HGNC:
-      link: pathway_to_gene
-      op:   biolink.pathway_get_gene
-  KEGG-path:
-    HGNC:
-      link: pathway_to_gene
-      op:   biolink.pathway_get_gene
-  HGNC.SYMBOL:
-    UBERON:
-      link: anatomy
-      op:   hetio.gene_to_anatomy
-    GO.CELLULAR_COMPONENT:
-      link: cellcomponent
-      op:   hetio.gene_to_cell
-    DOID:
-      link: gene_to_disease
-      op:   hetio.gene_to_disease
-  CTD:
-    NCBIGENE:
-      link: drug_to_gene
-      op:   ctd.drug_to_gene
-  PUBCHEM:
-    NCBIGENE:
-      link: targets
-      op:   chembio.graph_pubchem_to_ncbigene
-#  DRUGBANK:
-#    UNIPROT:
-#      link: targets
-#      op:   chembio.graph_drugbank_to_uniprot
-  NCBIGENE:
-#    UNIPROTKB:
-#      link: synonym
-#      op:   hgnc.ncbigene_to_uniprotkb
-    CTD:
-      link: gene_to_drug
-      op:   ctd.gene_to_drug
-  MESH:
-    ROOT:
-      op: oxo.mesh_to_other
-    DRUGBANK:
-      op: chembio.get_drugs_by_condition_graph
-  PHAROS.DISEASE:
-    HGNC:
-      link: disease_gene
-      op:   pharos.disease_get_gene
-  PHAROS.DRUG:
-    HGNC:
-      link: disease_gene
-      op:   pharos.drug_get_gene
-# IS this actually getting returned?
-#    HGNC.SYMBOL:
-#      link: disease_gene
-#      op:   pharos.disease_get_gene
-  UNIPROT:
-#    HGNC.SYMBOL:
-#      link: synonym
-#      op:   chembio.graph_uniprot_to_hgnc
-    KEGG:
-      link: gene_pathway
-      op:   chembio.graph_get_pathways_by_gene
-  UNIPROTKB:
-    GO.MOLECULAR_FUNCTION:
-      link: molecular_function
-      op: biolink.gene_get_function
-    GO.BIOLOGICAL_PROCESS:
-      link: biological_process
-      op: biolink.gene_get_process
-  GO.BIOLOGICAL_PROCESS:
-    CL:
-      link: bio_process_cell_type
-      op: quickgo.go_term_xontology_relationships
-    CL:
-      link: bio_process_cell_type
-      op: quickgo.go_term_annotation_extensions
-#  NCIT:
-#    HP:
-#      link: synonym
-#      op: oxo.NCIT_to_HP
-  HP:
-    UBERON:
-      link: phenotype_anatomy
-      op: uberongraph.get_anatomy_by_phenotype_graph
-  CL:
-    UBERON:
-      link: cell_anatomy
-      op: uberongraph.get_anatomy_by_cell_graph
-
-# Locally defined curies.
-'@vocab':
-  DOID.GENETIC_CONDITION:     http://identifiers.org/doid/gentic_condition
-#  DRUGBANK.NAME:              http://identifiers.org/drugbank/name
-  GO.CELLULAR_COMPONENT:      http://identifier.org/go/cellcomponent
-  GO.BIOLOGICAL_PROCESS:      http://identifier.org/go/biologicalprocess
-  GO.MOLECULAR_FUNCTION:      http://identifier.org/go/molecularfunction
-  MESH.DISEASE:               http://identifiers.org/mesh/disease/name
-  MESH.DRUG:                  http://identifiers.org/mesh/drug/name
-  NAME:                       http://identifiers.org/name
-  NAME.DISEASE:               http://identifiers.org/name/disease
-  NAME.DRUG:                  http://identifiers.org/name/drug
-  ORPHANET.GENETIC_CONDITION: http://identifiers.org/orphanet/gentic_condition
-  PHAROS.DISEASE:             http://pharos.nih.gov/identifier/disease
-  PHAROS.DRUG:                http://pharos.nih.gov/identifier/drug
-  ROOT:                       http://identifiers.org/doi
-  UNIPROTKB:                  http://identifiers.org/uniprotkb
-  PUBCHEM:                    http://identifiers.org/pubchem/drug/id
-  CTD:                        http://identifiers.org/ctd
-  #TODO These are here just to make stuff run - need to figure out the right IRI
-  REACT:                      http://identifiers.org/react
-  KEGG-path:                  http://identifiers.org/kegg-path

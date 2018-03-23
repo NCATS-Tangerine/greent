@@ -222,11 +222,14 @@ class TypeGraph(Service):
             nodes = {}
             transitions = {}
             path = row[0]
+            node_id = { node.id : i for i, node in enumerate (path.nodes) }
             node_map = { node.id : node.properties['name'] for i, node in enumerate (path.nodes) }
+            for n in path.nodes:
+                print (n)
             for i, element in enumerate(path):
-                logger.debug (f"pathelement {i}> {element}")
-                from_node = i
-                to_node = i+1
+                logger.debug (f"relationship {i}> {element}")
+                from_node = node_id[element.start]
+                to_node = node_id[element.end]
                 nodes[from_node] = node_map[element.start]
                 nodes[to_node] = node_map[element.end]
                 transitions[from_node] = {
