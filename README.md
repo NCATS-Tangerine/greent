@@ -1,6 +1,6 @@
 # Rosetta
 
-Rosetta is the data access layer of the Gamma reasoner.
+Rosetta is the knowledge map and service invocation tier of the Gamma reasoner.
 
 Rosetta coordinates semantically annotated data sources into a metadata graph. That graph can be queried to generate programs to perform complex data retrieval tasks. It looks like this:
 ![rosetta](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/rosetta.png)
