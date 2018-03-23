@@ -17,10 +17,12 @@ jsobject==0.10.2
 jsonpath-rw==1.4.0
 jsonref==0.1
 jsonschema==2.6.0
+lru-dict==1.1.6
 MarkupSafe==1.0
 marshmallow==2.15.0
 mistune==0.8.3
 msgpack-python==0.5.6
+neo4j-driver==1.5.3
 neo4jrestclient==2.1.1
 networkx==1.11
 numpy==1.14.2

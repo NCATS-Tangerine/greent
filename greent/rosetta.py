@@ -1,6 +1,6 @@
 import argparse
-import logging
 import json
+import logging
 import operator
 import os
 import pytest
@@ -8,88 +8,22 @@ import re
 import sys
 import traceback
 import yaml
-import requests_cache
-from requests_cache.backends.redis import RedisCache
-import redis
-import pickle
-
 from collections import defaultdict
-from greent.transreg import TranslatorRegistry
+from greent.cache import Cache
+from greent.graph import Frame
+from greent.graph import Operator
+from greent.graph import TypeGraph
+from greent.graph_components import KNode, KEdge, elements_to_json
 from greent.identifiers import Identifiers
+from greent.synonymization import Synonymizer
+from greent.transreg import TranslatorRegistry
+from greent.util import DataStructure
 from greent.util import LoggingUtil
 from greent.util import Resource
 from greent.util import Text
-from greent.util import DataStructure
-from greent.graph import TypeGraph
-from greent.graph import Operator
-from greent.graph import Frame
-from greent.graph_components import KNode, KEdge, elements_to_json
-from greent.synonymization import Synonymizer
-from neo4jrestclient.exceptions import StatusException
 
 logger = LoggingUtil.init_logging(__file__, level=logging.INFO)
 
-class CacheSerializer:
-    """ Generic serializer. """
-    def __init__(self):
-        pass
-class PickleSerializer(CacheSerializer):
-    """ Use Python's default serialization. """
-    def __init__(self):
-        pass
-    def dumps(self, obj):
-        return pickle.dumps (obj)
-    def loads(self, str):
-        return pickle.loads (str)
-
-class Cache:
-    """ Cache objects by various means. """
-    def __init__(self, cache_path="cache",
-                 serializer=PickleSerializer,
-                 redis_host="localhost", redis_port=6379,
-                 enabled=True):
-        """ Connect to cache. """
-        self.enabled = enabled
-        try:
-            self.redis = redis.StrictRedis(host=redis_host, port=redis_port, db=0)
-            self.redis.get ('x')
-            logger.info ("Cache connected to Redis.")
-        except:
-            self.redis = None
-            logger.error ("Failed to connect to redis. Is the server running?")
-        self.cache_path = cache_path
-        if not os.path.exists (self.cache_path):
-            os.makedirs (self.cache_path)
-        self.cache = {}
-        self.serializer = serializer ()
-    def get(self, key):
-        result = None
-        if self.enabled:
-            if self.redis:
-                rec = self.redis.get (key)
-                result = self.serializer.loads (rec) if rec else None
-            elif key in self.cache:
-                result = self.cache[key]
-            else:
-                path = os.path.join (self.cache_path, key)
-                if os.path.exists (path):
-                    with open(path, 'rb') as stream:
-                        result = self.serializer.loads (stream.read ())
-                        self.cache[key] = result
-        return result
-    def set(self, key, value):
-        if self.enabled:
-            if self.redis:
-                if value:
-                    self.redis.set (key, self.serializer.dumps (value))
-            else:
-                self.cache[key] = value
-                path = os.path.join (self.cache_path, key)
-                with open(path, 'wb') as stream:
-                    stream.write (self.serializer.dumps (value))
-    def close (self):
-        self.cache.close ()
-        
 class Rosetta:
     """ Rosetta's translates between semantic domains generically and automatically.
     Based on a configuration file, it builds a directed graph where types are nodes.
@@ -114,7 +48,7 @@ class Rosetta:
         about and how to transition between them. """
         from greent.core import GreenT
         self.debug = False
-        self.cache_path = 'rosetta_cache'
+        #self.cache_path = 'rosetta_cache'
 
         if not greentConf:
             greentConf = "greent.conf"
@@ -189,7 +123,7 @@ class Rosetta:
         logger.debug ("  -+ {} {} link: {} op: {}".format(a_concept, b_concept, link, op))
         try:
             self.type_graph.add_concepts_edge(a_concept, b_concept, predicate=link, op=op)
-        except StatusException:
+        except Exception:
             logger.error(f"Failed to create edge from {a_concept} to {b_concept} with link {link} and op {op}")
             
     def terminate(self, d):
@@ -237,25 +171,29 @@ class Rosetta:
                     try:
                         results = None
                         log_text = "  -- {0}({1})".format(operator['op'], edge_node[1].identifier)
-                        source_node = edge_node[1]
-                        with requests_cache.enabled("rosetta_cache"):
+                        source_node = edge_node[1]                        
+                        key =  f"{operator['op']}({edge_node[1].identifier})"
+                        logger.debug (f"  --op: {key}")
+                        results = self.cache.get (key)
+                        if not results:
                             results = op(source_node)
-                        for r in results:
-                            print (f"--- result --- {r}")
-                            edge = r[0]
-                            if isinstance(edge, KEdge):
-                                edge.predicate = operator['link']
-                                edge.source_node = source_node
-                                self.synonymizer.synonymize(r[1])
-                                edge.target_node = r[1]
-                                linked_result.append(edge)
-                        logger.debug("{0} => {1}".format(log_text, Text.short(results)))
-                        for r in results:
-                            if index < len(program) - 1:
-                                if not r[1].identifier.startswith(program[index + 1]['node_type']):
-                                    logger.debug(
-                                        "Operator {0} wired to return type: {1} returned node with id: {2}".format(
-                                            operator, program[index + 1]['node_type'], r[1].identifier))
+                            for r in results:
+                                print (f"--- result --- {r}")
+                                edge = r[0]
+                                if isinstance(edge, KEdge):
+                                    edge.predicate = operator['link']
+                                    edge.source_node = source_node
+                                    self.synonymizer.synonymize(r[1])
+                                    edge.target_node = r[1]
+                                    linked_result.append(edge)
+                            logger.debug("{0} => {1}".format(log_text, Text.short(results)))
+                            for r in results:
+                                if index < len(program) - 1:
+                                    if not r[1].identifier.startswith(program[index + 1]['node_type']):
+                                        logger.debug(
+                                            "Operator {0} wired to return type: {1} returned node with id: {2}".format(
+                                                operator, program[index + 1]['node_type'], r[1].identifier))
+                            self.cache.set (key, results)
                         collector += results
                     except Exception as e:
                         traceback.print_exc()
@@ -289,7 +227,6 @@ class Rosetta:
             return result
         logger.info (f"program> {program}")
         result = []
-        threshold = 50000000
         
         """ Each frame's name is a concept. We use the top frame's as a key to index the arguments. """
         top_frame = program[0]
@@ -309,11 +246,6 @@ class Rosetta:
             """ Process each node in the collector. """
             index = 0
             for edge, source_node in stack[index].collector:
-                '''
-                if index > threshold:
-                    break
-                index = index + 1
-                '''
                 """ Process each operator in the frame. """
                 for op_name, operator in frame.ops.items ():
 

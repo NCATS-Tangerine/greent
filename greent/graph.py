@@ -235,8 +235,8 @@ class TypeGraph(Service):
                     'to'   : to_node
                 }
             logger.debug (f"""
-            nodes> {json.dumps (nodes, indent=2)}
-            transitions> {json.dumps (transitions, indent=2)}""")
+            nodes={json.dumps (nodes, indent=2)}
+            transitions>={json.dumps (transitions, indent=2)}""")
             graphs.append( (nodes, transitions) )
         return graphs
 
@@ -310,25 +310,6 @@ class TypeGraph(Service):
             programs.append (list(program.values ()))
             for p in programs:
                 print (f"  list {p}")
-
-            '''
-            for path in row:
-                """ One path corresponds to one program, or stack of frames. """
-                program = defaultdict(Frame)
-                node_map = { node.id : node.properties for i, node in enumerate(path.nodes) }
-                for i, relationship in enumerate(path):
-                    logger.debug (f"  -+ adding frame {element['name']}")
-                    start_node_name = node_map[relationship.start]['name']
-                    frame = program[start_node_name]
-                    frame.name = start_node_name
-                    print (f" props: {relationship.properties}")
-                    if 'op' in element.properties:
-                        frame.add_operator (op = relationship.properties['op'],
-                                            predicate = relationship.properties['predicate'])
-                programs.append (list(program.values ()))
-                for p in programs:
-                    print (f"  list {p}")
-            '''
         return programs
 
 class Operator:
