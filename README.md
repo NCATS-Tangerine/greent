@@ -113,7 +113,7 @@ Instantiate your service, following the lazy loading pattern, in [core.py](https
 
 
 #### Edit the Configuration
-This YAML file links types in the biolink-model. Each link includes a predicate and the name of an operation.
+This [YAML file](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/greent/rosetta.yml) links types in the biolink-model. Each link includes a predicate and the name of an operation.
 Operations are named:
 ```
 <objectName>.<methodName>
@@ -121,7 +121,7 @@ Operations are named:
 where <objectName> is a member of core.py, the central service manager.
          
 1. Find the "@operators" tag in the configuration file.
-2. Find the biolink-model element for the source type to your service.
+2. Find the [biolink-model element](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/greent/conf/biolink-model.yaml) for the source type to your service.
 3. Follow the pattern in the configuration to enter your predicate (link) and operator (op)
 
 #### Rebuild the Knowledge Map
