@@ -10,6 +10,7 @@ import traceback
 import yaml
 from collections import defaultdict
 from greent.cache import Cache
+from greent.core import GreenT
 from greent.graph import Frame
 from greent.graph import Operator
 from greent.graph import TypeGraph
@@ -41,20 +42,17 @@ class Rosetta:
                  redis_port=None,
                  debug=False):
 
-        """ The constructor loads the config file an prepares the type graph. If the delete_type_graph 
-        flag is true, the graph is deleted entirely. If the init_db flag is true, the type_graph will
-        be loaded from the config file. """
-        """ Load the config file and set up a DiGraph representing the types we know 
-        about and how to transition between them. """
-        from greent.core import GreenT
+        """ The constructor loads the config file an prepares the type graph.
+        If delete_type_graph flag is true, the graph is deleted entirely. 
+        If the init_db flag is true, the type_graph will be loaded from the config file. """
+        
         self.debug = False
-        #self.cache_path = 'rosetta_cache'
-
-        logger.info (f"-----------> {greentConf}")
-        if not greentConf:
-            greentConf = "greent.conf"
 
         logger.debug("-- rosetta init.")
+
+        logger.info (f"Loading configuration: {greentConf}")
+        if not greentConf:
+            greentConf = "greent.conf"
         self.core = GreenT(config=greentConf, override=override)
 
         """ Load configuration. """
@@ -159,7 +157,6 @@ class Rosetta:
         return result
 
     def graph_inner(self, next_nodes, program):
-        #=import json
         if not program or len(program) == 0:
             return []
         logger.info (program)
