@@ -98,10 +98,10 @@ $ ~/app/redis-4.0.8/src/redis-cli --raw keys '*' | xargs ~/app/redis-4.0.8/src/r
 To add a data source to the knowledge map:
 
 #### Build a Service
-1. Build a smartAPI interface to your data. 
-2. Publish a public network endpoint to your data.
-3. Register your [smartAPI](https://github.com/NCATS-Tangerine/translator-api-registry) at the Translator Registry.
-4. For the immediate time frame, you'll also need to build a small Python shim to your service. In the future, we'll derive  information from the registry to invoke your service programmatically. For an example, see the [CTD service](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/greent/services/ctd.py). This is a stub for this [smartAPI endpoint](https://ctdapi.renci.org/apidocs/#/default).
+1. Reuse or develop a smartAPI interface to your data. 
+2. Publish a public network endpoint to the API if none exists.
+3. Register your smartAPI at the [Translator Registry](https://github.com/NCATS-Tangerine/translator-api-registry).
+4. For now, build a Python stub to your service. Soon, we hope to derive this information from the registry to invoke  services programmatically. For an example stub, see the [CTD service](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/greent/services/ctd.py). This is a stub for this [smartAPI endpoint](https://ctdapi.renci.org/apidocs/#/default).
 
 #### Configure Service Endpoint
 1. Add your service endpoint URL to the configuration files following the CTD pattern.
