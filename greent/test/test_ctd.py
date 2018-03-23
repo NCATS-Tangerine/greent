@@ -63,3 +63,12 @@ def test_gene_to_drug_synonym(ctd):
     result_ids = [ node.identifier for edge,node in results]
     assert 'MESH:D000068579' in result_ids #Cox2 for a cox2 inhibitor
 
+def test_artemether_to_gene(ctd):
+    mesh = 'MESH:C032942'
+    input_node = KNode(mesh, node_types.DRUG)
+    results = ctd.drug_to_gene(input_node)
+    for edge,node in results:
+        assert node.node_type == node_types.GENE
+    result_ids = [ node.identifier for edge,node in results]
+    assert 'NCBIGENE:9970' in result_ids #
+
