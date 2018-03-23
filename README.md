@@ -128,3 +128,5 @@ where <objectName> is a member of core.py, the central service manager.
 ```
 $ PYTHONPATH=$PWD/.. rosetta.py --delete-type-graph --initialize-type-graph --debug
 ```
+
+You should now be able to write cypher queries for Rosetta that use the biolink-model names specified in the rosetta.yml config file that are connected by your new service.
