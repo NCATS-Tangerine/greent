@@ -11,12 +11,12 @@ Rosetta coordinates semantically annotated data sources into a metadata graph. T
 ### Graph Database
 Install and start Neo4J 3.2.6.
 ```
-$ <neo4j-install>/bin/neo4j start
+$ <neo4j-install-dir>/bin/neo4j start
 ```
 ### Cache
 Install and start Redis 4.0.8
 ```
-~/app/redis-4.0.8/src/redis-server
+<redis-install-dir>/src/redis-server
 ```
 ### App
 Clone the repository.
