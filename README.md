@@ -10,12 +10,12 @@ Blue nodes are semantic types from the [biolink-model](https://biolink.github.io
 ## Installation
 
 ### Graph Database
-Install and start Neo4J 3.2.6.
+[Download](https://neo4j.com/download/), install, and start Neo4J 3.2.6.
 ```
 $ <neo4j-install-dir>/bin/neo4j start
 ```
 ### Cache
-Install and start Redis 4.0.8
+[Download](http://download.redis.io/releases/redis-4.0.8.tar.gz), install, and start Redis 4.0.8
 ```
 <redis-install-dir>/src/redis-server
 ```
