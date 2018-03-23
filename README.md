@@ -8,12 +8,18 @@ Rosetta coordinates semantically annotated data sources into a metadata graph. T
 
 ## Installation
 
+### Graph Database
 Install and start Neo4J 3.2.6.
 ```
 $ <neo4j-install>/bin/neo4j start
 ```
+### Cache
+Install and start Redis 4.0.8
+```
+~/app/redis-4.0.8/src/redis-server
+```
+### App
 Clone the repository.
-
 ```
 $ git clone <repo>
 $ cd repo/greent
@@ -45,10 +51,17 @@ from greent.rosetta import Rosetta
 ...
 rosetta = Rosetta ()
 ...
-knowledge = get_translator().clinical_outcome_pathway_app(drug=drug,
-                                                              disease=disease)
-result = [ elements_to_json (e) for e in knowledge ]
-return jsonify (result)
+knowledge_graph = rosetta.construct_knowledge_graph(**{
+         "inputs" : {
+            "disease" : [
+               "DOID:2841"
+            ]
+         },            
+         "query" :
+         """MATCH (a:disease),(b:gene), p = allShortestPaths((a)-[*]->(b))
+         WHERE NONE (r IN relationships(p) WHERE type(r) = 'UNKNOWN' OR r.op is null) 
+         RETURN p"""
+      })
 ```
 
 ## Web API
@@ -65,4 +78,18 @@ To start the server. Usage examples coming soon.
 
 Caveat: The repo is undergoing substantial development so please expect delays.
 
+## Caching
+
+We cache in Redis. Objects are serialized using Python's pickle scheme. 
+
+### List cache contents
+To find out what operations(id) combinations are cached:
+```
+$ ~/app/redis-4.0.8/src/redis-cli --raw keys '*ctd*'
+```
+### Delete specific keys
+To delete specific keys or patterns of keys from the cache:
+```
+$ ~/app/redis-4.0.8/src/redis-cli --raw keys '*' | xargs ~/app/redis-4.0.8/src/redis-cli --raw del
+```
 
