@@ -4,6 +4,7 @@ import operator
 import os
 import pickle
 import redis
+import traceback
 from greent.util import LoggingUtil
 from lru import LRU
 
@@ -38,10 +39,11 @@ class Cache:
         try:
             self.redis = redis.StrictRedis(host=redis_host, port=redis_port, db=0)
             self.redis.get ('x')
-            logger.info("Cache connected to Redis.")
+            logger.info(f"Cache connected to redis at {redis_host}:{redis_port}")
         except:
             self.redis = None
-            logger.error("Failed to connect to redis. Is the server running?")
+            logger.debug (traceback.format_exc ())
+            logger.error(f"Failed to connect to redis at {redis_host}:{redis_port}.")
         self.cache_path = cache_path
         if not os.path.exists (self.cache_path):
             os.makedirs (self.cache_path)

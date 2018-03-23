@@ -50,6 +50,7 @@ class Rosetta:
         self.debug = False
         #self.cache_path = 'rosetta_cache'
 
+        logger.info (f"-----------> {greentConf}")
         if not greentConf:
             greentConf = "greent.conf"
 
@@ -61,9 +62,8 @@ class Rosetta:
             self.config = yaml.load(stream)
         self.operators = self.config["@operators"]
 
-        print (f" core {self.core}")
         redis_conf = self.core.service_context.config.conf.get ("redis", None)
-        self.cache = Cache (            
+        self.cache = Cache (
             redis_host = redis_host if redis_host else redis_conf.get ("host"),
             redis_port = redis_port if redis_port else redis_conf.get ("port"))
 
@@ -388,9 +388,7 @@ def test_double_ended_query(rosetta):
         """)
     print (b)
     
-def run_test_suite ():
-    rosetta = Rosetta (debug=True)
-    print ("0---")
+def run_test_suite (rosetta):
     test_disease_gene (rosetta)
 #    test_drug_pathway(rosetta)
 
@@ -420,4 +418,8 @@ if __name__ == "__main__":
                           delete_type_graph=args.delete_type_graph,
                           debug=args.debug)
     if args.test:
-        run_test_suite ()
+        run_test_suite (Rosetta(greentConf=args.conf,
+                                init_db=args.initialize_type_graph,
+                                delete_type_graph=args.delete_type_graph,
+                                debug=args.debug))
+

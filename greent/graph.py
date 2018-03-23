@@ -40,7 +40,7 @@ class TypeGraph(Service):
         config = self.get_config ()
         username = config.get ("username")
         password = config.get ("password")
-        logger.debug("  -+ Connecting to graph database.")
+        logger.debug(f"  -+ Connecting to graph database: {self.url}")
         self.driver = GraphDatabase.driver(self.url)
         self.db = GraphDB (self.driver.session ())
 
