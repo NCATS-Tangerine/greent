@@ -1,20 +1,21 @@
-# GreenT
+# Rosetta
 
-GreenT began as a library of interfaces to biomedical and environmental data services.
+Rosetta is the knowledge map and service invocation tier of the Gamma reasoner.
 
-It is now host to Rosetta, the data access layer of the Gamma reasoner.
+Rosetta coordinates semantically annotated data sources into a metadata graph. That graph can be queried to generate programs to perform complex data retrieval tasks. It looks like this:
+![rosetta](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/rosetta.png)
 
-Rosetta coordinates semantically annotated data sources into a metadata graph. That graph can be queried to generate programs to perform complex data retrieval tasks.
+Blue nodes are semantic types from the [biolink-model](https://biolink.github.io/biolink-model/)
 
 ## Installation
 
 ### Graph Database
-Install and start Neo4J 3.2.6.
+[Download](https://neo4j.com/download/), install, and start Neo4J 3.2.6.
 ```
 $ <neo4j-install-dir>/bin/neo4j start
 ```
 ### Cache
-Install and start Redis 4.0.8
+[Download](http://download.redis.io/releases/redis-4.0.8.tar.gz), install, and start Redis 4.0.8
 ```
 <redis-install-dir>/src/redis-server
 ```
@@ -96,23 +97,23 @@ $ ~/app/redis-4.0.8/src/redis-cli --raw keys '*' | xargs ~/app/redis-4.0.8/src/r
 
 To add a data source to the knowledge map:
 
-### Build a Service
-1. Build a smartAPI interface to your data. 
-2. Publish a public network endpoint to your data.
-3. Register your [smartAPI](https://github.com/NCATS-Tangerine/translator-api-registry) at the Translator Registry.
-4. For the immediate time frame, you'll also need to build a small Python shim to your service. In the future, we'll derive  information from the registry to invoke your service programmatically. For an example, see the [CTD service](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/greent/services/ctd.py). This is a stub for this [smartAPI endpoint](https://ctdapi.renci.org/apidocs/#/default).
+#### Build a Service
+1. Reuse or develop a smartAPI interface to your data. 
+2. Publish a public network endpoint to the API if none exists.
+3. Register your smartAPI at the [Translator Registry](https://github.com/NCATS-Tangerine/translator-api-registry).
+4. For now, build a Python stub to your service. Soon, we hope to derive this information from the registry to invoke  services programmatically. For an example stub, see the [CTD service](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/greent/services/ctd.py). This is a stub for this [smartAPI endpoint](https://ctdapi.renci.org/apidocs/#/default).
 
-### Configure Service Endpoint
+#### Configure Service Endpoint
 1. Add your service endpoint URL to the configuration files following the CTD pattern.
    * Add to [greent.conf](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/greent/greent.conf) used for local development.
    * And [greent-dev.conf](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/greent/greent-dev.conf) used in the continuous integration environment.
 
-### Instantiate The Service
+#### Instantiate The Service
 Instantiate your service, following the lazy loading pattern, in [core.py](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/greent/core.py)
 
 
-### Edit the Configuration
-This YAML file links types in the biolink-model. Each link includes a predicate and the name of an operation.
+#### Edit the Configuration
+This [YAML file](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/greent/rosetta.yml) links types in the biolink-model. Each link includes a predicate and the name of an operation.
 Operations are named:
 ```
 <objectName>.<methodName>
@@ -120,14 +121,12 @@ Operations are named:
 where <objectName> is a member of core.py, the central service manager.
          
 1. Find the "@operators" tag in the configuration file.
-2. Find the biolink-model element for the source type to your service.
+2. Find the [biolink-model element](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/greent/conf/biolink-model.yaml) for the source type to your service.
 3. Follow the pattern in the configuration to enter your predicate (link) and operator (op)
 
-### Rebuild the Knowledge Map
+#### Rebuild the Knowledge Map
 ```
 $ PYTHONPATH=$PWD/.. rosetta.py --delete-type-graph --initialize-type-graph --debug
 ```
 
-
-
-
+You should now be able to write cypher queries for Rosetta that use the biolink-model names specified in the rosetta.yml config file that are connected by your new service.
