@@ -10,7 +10,6 @@ from greent.util import Text
 from greent.graph_components import KEdge, KNode
 from greent import node_types
 from pprint import pprint
-from cachier import cachier
 import datetime
 
 logger = LoggingUtil.init_logging (__file__)

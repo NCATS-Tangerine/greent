@@ -73,6 +73,7 @@ class Rosetta:
 
         """ Merge identifiers.org vocabulary into Rosetta voab. """
         self.identifiers = Identifiers ()
+        
         if delete_type_graph:
             logger.debug("--Deleting type graph")
             self.type_graph.delete_all()
@@ -313,7 +314,9 @@ class Rosetta:
         plans = self.type_graph.get_transitions(query)
         programs = [Program(plan, query_definition=query_definition, rosetta=self, program_number=i) for i, plan in enumerate(plans)]    
         for program in programs:
-            graph += program.run_program()
+            g = program.run_program()
+            graph += g
+            print (elements_to_json (g))
         return graph
     
     def n2chem(self, name):

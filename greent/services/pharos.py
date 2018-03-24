@@ -7,7 +7,6 @@ import sys
 import os
 import traceback
 import datetime
-from cachier import cachier
 from collections import defaultdict
 from collections import namedtuple
 from csv import DictReader
@@ -140,7 +139,6 @@ class Pharos(Service):
             results.append((newedge, newnode))
         return results
 
-    #    @cachier(stale_after=datetime.timedelta(days=8))
     def drug_get_gene(self, subject):
         """ Get a gene from a drug. """
         resolved_edge_nodes = []
@@ -168,7 +166,6 @@ class Pharos(Service):
                             logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
         return resolved_edge_nodes
 
-    #    @cachier(stale_after=datetime.timedelta(days=8))
     def disease_get_gene(self, subject):
         """ Get a gene from a pharos disease id. """
         pharos_ids = self.translate(subject)

@@ -9,7 +9,12 @@ class Identifiers:
         self.curie_to_identifier = defaultdict(lambda:None)
         self.identifier_to_curie = defaultdict(lambda:None)
         
-        uber = Resource.get_resource_obj(os.path.join(os.path.dirname (__file__), "conf", "uber_context.jsonld"))
+        uber = None
+        try:
+            uber = Resource.get_resource_obj(os.path.join(os.path.dirname (__file__), "conf", "uber_context.jsonld"))
+        except:
+            uber['@context'] = {}
+
         """ A convenient repository of curie mappings. """
         context = uber['@context']
         self.terminate(context)

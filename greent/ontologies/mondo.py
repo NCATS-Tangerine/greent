@@ -112,7 +112,6 @@ class Mondo(Service):
         """Checks mondo to find whether the subject has DOID:0050177 as an ancestor"""
         return self.has_ancestor(obj, MONOGENIC_DISEASE)
 
-    #@cachier(stale_after=datetime.timedelta(days=20))
     def doid_get_genetic_condition (self, disease):
         """Given a gene specified as an HGNC curie, return associated genetic conditions.
         A genetic condition is specified as a disease that descends from a ndoe for genetic disease in MONDO."""

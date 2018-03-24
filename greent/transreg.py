@@ -27,7 +27,6 @@ from greent.graph_components import KNode,KEdge
 from greent import node_types
 from jsonpath_rw import jsonpath, parse
 from pyld import jsonld
-import requests_cache
 
 logger = LoggingUtil.init_logging (__name__, level=logging.DEBUG)
 
@@ -248,8 +247,7 @@ class TranslatorRegistry(Service):
 
             """ Parameterize and execute the HTTP request. """
             url = Template (service_metadata.get_url).render (input=input_arg)
-            with requests_cache.enabled("rosetta_cache"):
-                response = requests.get (url).json ()
+            response = requests.get (url).json ()
                 #with open ("a.txt", "w") as stream:
                 #    stream.write (json.dumps (response, indent=2))
 
