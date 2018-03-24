@@ -26,7 +26,10 @@ class Identifiers:
 
         path = os.path.join(os.path.dirname (__file__), "conf", "identifiers.org.json")
         """ Identifiers.org data set. """
-        self.identifiers_org = Resource.get_resource_obj(path)
+        try:
+            self.identifiers_org = Resource.get_resource_obj(path)
+        except:
+            self.identifiers_org = {}
         for module in self.identifiers_org:
             curie = module['prefix'].upper()
             url = module['url']
