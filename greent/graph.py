@@ -224,8 +224,6 @@ class TypeGraph(Service):
             path = row[0]
             node_id = { node.id : i for i, node in enumerate (path.nodes) }
             node_map = { node.id : node.properties['name'] for i, node in enumerate (path.nodes) }
-            for n in path.nodes:
-                print (n)
             for i, element in enumerate(path):
                 logger.debug (f"relationship {i}> {element}")
                 from_node = node_id[element.start]
@@ -237,10 +235,9 @@ class TypeGraph(Service):
                     'op'   : element.properties['op'],
                     'to'   : to_node
                 }
-            logger.debug (f"""
-            nodes={json.dumps (nodes, indent=2)}
-            transitions>={json.dumps (transitions, indent=2)}""")
             graphs.append( (nodes, transitions) )
+        if logger.isEnabledFor (logging.DEBUG):
+            logger.debug (f"{json.dumps(graphs, indent=2)}")
         return graphs
 
     def get_knowledge_map_programs0(self, query):
