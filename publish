@@ -21,13 +21,20 @@ setup(
     packages = [ 'greent' ], # this must be the same as the name above
     package_data={ 'greent' : [
         'greent.conf',
-        'greent-stars.conf',
+        'greent-dev.conf',
+        'greent-compose.conf',
         'rosetta.yml',
-        'identifiers.org.json',
         'requirements.txt',
         'api/*',
+        'conf/*',
         'jsonld/*',
-        'query/*.sparql'
+        'ontologies/*',
+        'query/*.sparql',
+        'registry/layers/biolink/jsonld/*',
+        'services/*.py',
+        'services/*.txt',
+        'synonymizers/*',
+        'test/*'
     ]},
     version = '${version}',
     description = 'Translator API',
