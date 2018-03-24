@@ -146,61 +146,6 @@ class TypeGraph(Service):
             print (query)
             result = None
         return result
-
-    #TODO: There's some potential issues if there are adjacent nodes of the same type (gene-gene interactions or similarities)
-    def get_transitions0(self, query):
-        """ Execute a cypher query and walk the results to build a set of transitions to execute.
-        The query should be such that it returns a path (node0-relation0-node1-relation1-node2), and
-        an array of the relation start nodes.  For the path above, start nodes like (node0,node1) would
-        indicate a unidirectional path, while (node0,node2) would indicate an end-based path meeting in
-        the middle.
-        Each node in the path can be described with an arbitrary node index.  Note that this index does not
-        have to correspond to the order of calling or any structural property of the graph.  It simply points
-        to a particular node in the call map.
-        Returns:
-            nodes: A map from a node index to the concept.
-            transitions: a map from a node index to an (operation, output index) pair
-        """
-        graphs=[]
-        result = self.db.query(query) #, data_contents=True)
-        for row in result.rows:
-            #Each row_set should be a (path, startnodes) pair
-            if len(row) != 2:
-                logger.error("Unexpected number of elements ({})in cypher query return".format(len(row)))
-                logger.error (json.dumps (row, indent=2))
-                raise Exception()
-            nodes = {}
-            transitions = {}
-            path = row[0]
-            start_nodes = row[1]
-            #len(start_nodes) = number of transitions
-            #len(path) = number of transitions + number of nodes = 2*number of transitions + 1
-            if len(path) != 2 * len(start_nodes) + 1:
-                logger.error ("Inconsistent length of path and startnodes")
-                logger.debug (json.dumps (row, indent=2))
-                raise Exception()
-            for i, element in enumerate(path):
-                if i % 2 == 0:
-                    #node
-                    nodenum = int(i / 2)
-                    nodes[nodenum] = element['name']
-                else:
-                    #relationship
-                    predicate=element['predicate']
-                    op = element['op']
-                    relnum = int((i-1)/2)
-                    if start_nodes[relnum] == path[i-1]:
-                        from_node=relnum
-                        to_node = relnum+1
-                    elif start_nodes[relnum] == path[i+1]:
-                        from_node=relnum+1
-                        to_node = relnum
-                    transitions[from_node] = { 'link': predicate,
-                                               'op': op,
-                                               'to': to_node}
-            graphs.append( (nodes, transitions) )
-        return graphs
-
     
     #TODO: There's some potential issues if there are adjacent nodes of the same type (gene-gene interactions or similarities)
     def get_transitions(self, query):
@@ -239,42 +184,6 @@ class TypeGraph(Service):
         if logger.isEnabledFor (logging.DEBUG):
             logger.debug (f"{json.dumps(graphs, indent=2)}")
         return graphs
-
-    def get_knowledge_map_programs0(self, query):
-        """ Execute a cypher query and walk the results to build a set of transitions to execute.
-        The query should be such that it returns a path (node0-relation0-node1-relation1-node2), and
-        an array of the relation start nodes. 
-
-        This algorithm focuses on linear paths.
-
-        Returns:
-            a list of list of Frame.
-        """
-
-        """ A list of possible executable pathways enacting the input query. """
-        programs = []
-
-        """ Query the database for paths. """
-        result = self.db.query(query)
-        for row in result:
-            logger.debug (f"row> {row}")
-            for path in row:
-                """ One path corresponds to one program, or stack of frames. """
-                program = defaultdict(Frame)
-                frame = None
-                for i, element in enumerate(path):
-                    if 'name' in element:
-                        logger.debug (f"  -+ adding frame {element['name']}")
-                        name = element['name']
-                        frame = program[name]
-                        frame.name = name 
-                    elif 'op' in element:
-                        logger.debug (f"  -+ adding op {element['op']} to frame {frame.name}")
-                        frame.add_operator (op = element['op'], predicate = element['predicate'])
-                programs.append (list(program.values ()))
-                for p in programs:
-                    print (f"  list {p}")
-        return programs
 
     def get_knowledge_map_programs(self, query):
         """ Execute a cypher query and walk the results to build a set of transitions to execute.
