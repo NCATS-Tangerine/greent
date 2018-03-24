@@ -69,7 +69,7 @@ class Rosetta:
 
         """ Initialize type graph. """
         self.type_graph = TypeGraph(self.core.service_context, debug=debug)
-        self.synonymizer = Synonymizer( self.type_graph.concept_model, self.core )
+        self.synonymizer = Synonymizer( self.type_graph.concept_model, self )
 
         """ Merge identifiers.org vocabulary into Rosetta voab. """
         self.identifiers = Identifiers ()

@@ -27,14 +27,23 @@ logger = LoggingUtil.init_logging(__file__, level=logging.DEBUG)
 
 class Synonymizer:
 
-    def __init__(self, concepts, core):
-        self.core = core
+    def __init__(self, concepts, rosetta):
+        self.rosetta = rosetta
         self.concepts = concepts
         
     def synonymize(self, node):
         """Given a node, determine its type and dispatch it to the correct synonymizer"""
+        logger.debug('syn {} {}'.format(node.identifier,node.node_type))
         if node.node_type in synonymizers:
-            synonymizers[node.node_type].synonymize(node, self.core)
+            key = f"synonymize({node.identifier})"
+            synonyms = self.rosetta.cache.get (key)
+            if synonyms is not None:
+                logger.info (f"cache hit: {key}")
+            else:
+                logger.info (f"exec op: {key}")
+                synonyms = synonymizers[node.node_type].synonymize(node, self.rosetta.core)
+                self.rosetta.cache.set (key, synonyms)
+            node.add_synonyms(synonyms)
         else:
             logger.warn (f"No synonymizer registered for concept: {node.node_type}")
         self.normalize(node)
