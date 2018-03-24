@@ -5,7 +5,6 @@ import logging
 logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG, format='long')
 
 def synonymize(node, gt):
-    logger.debug("Synonymize: {}".format(node.identifier))
     synonyms = get_synonyms(node,gt)
     # do we have any MeSH ids?   If not, we want to dig deeper and get some so that chemotext will work
     # As we modify our literature diving methods, we might not need this any more.
@@ -16,8 +15,8 @@ def synonymize(node, gt):
         logger.error(e)
     # OK, we're not going to use them all, there's some BS PMIDs that come back...
     synonyms = {s for s in synonyms if not s.startswith('PMID')}
-    node.add_synonyms(synonyms)
-    logger.debug("  Done")
+    #node.add_synonyms(synonyms)
+    return synonyms
 
 def get_synonyms(node, gt, distance=2):
     #OXO doesn't know about every kind of curie.  So let's see if it knows about our node identifier
@@ -53,15 +52,4 @@ def get_particular_synonyms( identifier, prefix, gt, distance ):
     newsyns = get_synonyms_with_curie_check(identifier, gt, distance=distance)
     return set( filter( lambda x: Text.get_curie(x) == prefix, newsyns))
 
-def neuron_test():
-    from greent.graph_components import KNode
-    from greent import node_types
-    node = KNode("CL:0000540", node_types.CELL)
-    from greent.core import GreenT
-    gt = GreenT()
-    synonymize(node,gt)
-    for s in node.synonyms:
-        print(s)
 
-if __name__ == '__main__':
-    neuron_test()

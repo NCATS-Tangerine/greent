@@ -21,20 +21,20 @@ logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG)
 def synonymize(node,gt):
     logger.debug("Synonymize: {}".format(node.identifier))
     curie = Text.get_curie(node.identifier)
+    synonyms = set()
     if curie == 'CHEMBL':
-        synonymize_with_UniChem(node,gt)
-        synonymize_with_OXO(node,gt)
+        synonyms.update(synonymize_with_UniChem(node,gt))
+        synonyms.update(synonymize_with_OXO(node,gt))
         #synonymize_with_CTD(node,gt)
     else:
-        synonymize_with_OXO(node,gt)
-        synonymize_with_UniChem(node,gt)
+        synonyms.update(synonymize_with_OXO(node,gt))
+        synonyms.update(synonymize_with_UniChem(node,gt))
         #synonymize_with_CTD(node,gt)
+    return synonyms
 
 
 def synonymize_with_OXO(node,gt):
-    logger.debug(" OXO: {}".format(node.identifier))
-    oxo_synonymizer.synonymize(node,gt)
-    logger.debug("  updated syns: {}".format( ','.join(list(node.synonyms))))
+    return oxo_synonymizer.synonymize(node,gt)
 
 def synonymize_with_UniChem(node,gt):
     logger.debug(" UniChem: {}".format(node.identifier))
@@ -44,7 +44,6 @@ def synonymize_with_UniChem(node,gt):
         if curie in ('CHEMBL', 'CHEBI', 'DRUGBANK'):
             new_synonyms = gt.unichem.get_synonyms( synonym )
             all_synonyms.update(new_synonyms)
-    node.add_synonyms( all_synonyms )
-    logger.debug("  updated syns: {}".format( ','.join(list(node.synonyms))))
-
+    #node.add_synonyms( all_synonyms )
+    return all_synonyms
 
