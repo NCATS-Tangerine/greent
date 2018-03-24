@@ -15,7 +15,6 @@ from greent.services.quickgo import QuickGo
 from greent.services.tkba import TranslatorKnowledgeBeaconAggregator
 from greent.services.uberongraph import UberonGraphKS
 from greent.services.unichem import UniChem
-
 from greent.service import ServiceContext
 from greent.util import LoggingUtil
 
@@ -45,7 +44,7 @@ class GreenT:
             "hgnc"             : lambda :  HGNC(self.service_context),
             "uberongraph"      : lambda :  UberonGraphKS(self.service_context),
             "ctd"              : lambda :  CTD(self.service_context),
-            "unichem"          : lambda :  UniChem(self.self.service_context)
+            "unichem"          : lambda :  UniChem(self.service_context)
         }
         
     def get_config_val(self, key):

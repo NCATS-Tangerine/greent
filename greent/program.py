@@ -145,37 +145,3 @@ class Program:
             node_num = next
             used.add(node_num)
         return path
-
-    """
-THIS IS ALL GIBBERISH.
-    def get_terminal_concept_nodes(self):
-        ""Terminal concept node identifiers are those that only have one way in or out (it could be either).
-        These are not the same as fixed, because there will be two terminal nodes, even if only one of them is
-        fixed (assuming that paths are linear).  With branching, there is the possibility of loops (.e.g. two
-        different paths specified to the same endpoint.)
-        The main point of this function is to allow finding terminal nodes so that we can find paths along which
-        to calculate support edges.  If we modify when/how support is calculated, then this function may be
-        excised.""
-        nodeset = set(self.concept_nodes.keys())
-        counts = defaultdict(int)
-        for source in self.transitions:
-            counts[source] += 1
-            for trans in self.transitions[source]:
-                counts[trans['to']] += 1
-        tnodes = []
-        for node in self.concept_nodes:
-            if counts[node] == 1:
-                tnodes.append(node)
-        tnodes.sort()
-        return tnodes
-    def get_terminal_instance_nodes(self):
-        "Terminal instance nodes are the instances that are found for the terminal concepts."
-        terminal_concepts = self.get_terminal_concept_nodes()
-        if len(terminal_concepts) != 2:
-            logger.error("We're not yet equipped for non-linear pattern matching")
-            raise Exception("We're not yet equipped for non-linear pattern matching")
-        for inode in self.all_instance_nodes:
-            context = inode.get_context[self.program_number]
-            if terminal_concepts[0] in context:
-                starts.add()
-"""

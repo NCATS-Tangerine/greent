@@ -16,6 +16,8 @@ from greent.graph import Operator
 from greent.graph import TypeGraph
 from greent.graph_components import KNode, KEdge, elements_to_json
 from greent.identifiers import Identifiers
+from greent.program import Program
+from greent.program import QueryDefinition
 from greent.synonymization import Synonymizer
 from greent.transreg import TranslatorRegistry
 from greent.util import DataStructure
@@ -146,6 +148,7 @@ class Rosetta:
             if (text and len(text) > 0) or if_empty:
                 logger.debug("{}".format(text))
 
+    '''
     def graph(self, next_nodes, query):
         """ Given a set of starting nodes and a query, execute the query to get a set of paths.
         Each path reflects a set of transitions from the starting tokens through the graph.
@@ -200,7 +203,8 @@ class Rosetta:
                         traceback.print_exc()
                         logger.error("Error invoking> {0}".format(log_text))
         return linked_result
-
+    '''
+    
     def construct_knowledge_graph (self, inputs, query):
         programs = self.type_graph.get_knowledge_map_programs(query)
         results = []
@@ -251,7 +255,7 @@ class Rosetta:
                 for op_name, operator in frame.ops.items ():
 
                     """ Generate a cache key. """
-                    key =  f"{frame.name}->{operator.op}({source_node.identifier})"
+                    key =  f"{operator.op}({source_node.identifier})"
                     try:
                         logger.debug (f"  --op: {key}")
 
@@ -297,6 +301,18 @@ class Rosetta:
         logger.debug (f"returning {len(result)} values.")
         return result
 
+    def get_knowledge_graph (self, inputs, query):
+        """ Handles two sided queries and direction changes. """
+        graph = []
+        query_definition = QueryDefinition ()
+        query_definition.start_type, query_definition.start_values = next(iter(inputs.items ()))
+        query_definition.end_values   = None
+        plans = self.type_graph.get_transitions(query)
+        programs = [Program(plan, query_definition=query_definition, rosetta=self, program_number=i) for i, plan in enumerate(plans)]    
+        for program in programs:
+            graph += program.run_program()
+        return graph
+    
 def execute_query (args, outputs, rosetta):
     """ Query rosetta. """
     blackboard = rosetta.construct_knowledge_graph(**args)
@@ -358,11 +374,14 @@ def test_drug_pathway (rosetta):
     rosetta=rosetta)
 
 def test_double_ended_query(rosetta):
-    b = rosetta.graph (
-        next_nodes=[
-            (None, KNode("D000068877", "chemical_substance"))
-        ],
-        query="""MATCH p=
+    b = rosetta.get_knowledge_graph (**{
+        "inputs" : {
+            "chemical_substance" : [
+                "MESH:D000068877"
+            ]
+        },
+        "query" : """
+        MATCH p=
         (c0:Concept {name: "chemical_substance" })
         --
         (c1:Concept {name: "gene" })
@@ -370,23 +389,18 @@ def test_double_ended_query(rosetta):
         (c2:Concept {name: "biological_process" })
         --
         (c3:Concept {name: "cell" })
-        --
-        (c4:Concept {name: "anatomical_entity" })
-        --
-        (c5:Concept {name: "phenotypic_feature" })
-        --
-        (c6:Concept {name: "disease" })
         FOREACH (n in relationships(p) | SET n.marked = TRUE)
-        WITH p,c0,c6
-        MATCH q=(c0:Concept)-[*0..6 {marked:True}]->()<-[*0..6 {marked:True}]-(c6:Concept)
+        WITH p,c0,c3
+        MATCH q=(c0:Concept)-[*0..3 {marked:True}]->(c3:Concept)
         WHERE p=q
-        FOREACH (n in relationships(p) | SET n.marked = FALSE)
-        RETURN p, EXTRACT( r in relationships(p) | startNode(r) )
-        """)
+        AND ALL( r in relationships(p) WHERE  EXISTS(r.op) )FOREACH (n in relationships(p) | SET n.marked = FALSE)
+        RETURN p, EXTRACT( r in relationships(p) | startNode(r) )"""
+    })
     print (b)
     
 def run_test_suite (rosetta):
-    test_disease_gene (rosetta)
+    test_double_ended_query (rosetta)
+#    test_disease_gene (rosetta)
 #    test_drug_pathway(rosetta)
 
 def parse_args (args):
