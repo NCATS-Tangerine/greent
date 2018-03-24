@@ -301,18 +301,30 @@ class Rosetta:
         logger.debug (f"returning {len(result)} values.")
         return result
 
-    def get_knowledge_graph (self, inputs, query):
+    def get_knowledge_graph (self, inputs, query, ends=None):
         """ Handles two sided queries and direction changes. """
+        print (query)
+        print (inputs)
         graph = []
         query_definition = QueryDefinition ()
-        query_definition.start_type, query_definition.start_values = next(iter(inputs.items ()))
-        query_definition.end_values   = None
+        query_definition.start_type = inputs["type"]
+        query_definition.start_values = inputs["values"]
+        query_definition.end_values = ends
         plans = self.type_graph.get_transitions(query)
         programs = [Program(plan, query_definition=query_definition, rosetta=self, program_number=i) for i, plan in enumerate(plans)]    
         for program in programs:
             graph += program.run_program()
         return graph
     
+    def n2chem(self, name):
+        return self.core.ctd.drugname_string_to_drug_identifier(name) + \
+            [ x[0] for x in self.core.pharos.drugname_string_to_pharos_info(name) ] + \
+            [ 'PUBCHEM:{}'.format(r['drugID'].split('/')[-1]) for r in self.core.chembio.drugname_to_pubchem(name) ]
+
+    def n2disease(self, name):
+        #This performs a case-insensitive exact match, and also inverts comma-ed names
+        return self.core.mondo.search(name)
+
 def execute_query (args, outputs, rosetta):
     """ Query rosetta. """
     blackboard = rosetta.construct_knowledge_graph(**args)
@@ -355,10 +367,9 @@ def test_drug_pathway (rosetta):
     execute_query (**{
         "args" : {
             "inputs" : {
-                "drug" : [
-                    "MESH:D000068877",
+                "chemical_substance" : [
                     "DRUGBANK:DB00619"
-                ],
+                ]
             },
             "query" :
             """MATCH (a:drug),(b:pathway), p = allShortestPaths((a)-[*]->(b)) 
@@ -373,12 +384,11 @@ def test_drug_pathway (rosetta):
     },
     rosetta=rosetta)
 
-def test_double_ended_query(rosetta):
+def test_fuzzy_query(rosetta):
     b = rosetta.get_knowledge_graph (**{
         "inputs" : {
-            "chemical_substance" : [
-                "MESH:D000068877"
-            ]
+            "type" : "chemical_substance",
+            "values" : [ "MESH:D000068877" ]
         },
         "query" : """
         MATCH p=
@@ -398,8 +408,38 @@ def test_double_ended_query(rosetta):
     })
     print (b)
     
+def test_two_sided_query(rosetta):
+    b = rosetta.get_knowledge_graph (**{
+        "inputs" : {
+            "type"   : "chemical_substance",
+            "values" : rosetta.n2chem("imatinib")
+        },
+        "ends" : rosetta.n2disease("asthma"),
+        "query" : """
+        MATCH p=
+        (c0:Concept {name: "chemical_substance" })
+        --
+        (c1:Concept {name: "gene" })
+        --
+        (c2:Concept {name: "biological_process" })
+        --
+        (c3:Concept {name: "cell" })
+        --
+        (c4:Concept {name: "anatomical_entity" })
+        --
+        (c5:Concept {name: "phenotypic_feature" })
+        --
+        (c6:Concept {name: "disease" })
+        FOREACH (n in relationships(p) | SET n.marked = TRUE)
+        WITH p,c0,c6
+        MATCH q=(c0:Concept)-[*0..6 {marked:True}]->()<-[*0..6 {marked:True}]-(c6:Concept)
+        WHERE p=q
+        AND ALL( r in relationships(p) WHERE  EXISTS(r.op) )FOREACH (n in relationships(p) | SET n.marked = FALSE)
+        RETURN p, EXTRACT( r in relationships(p) | startNode(r) )"""
+    })
+
 def run_test_suite (rosetta):
-    test_double_ended_query (rosetta)
+    test_two_sided_query (rosetta)
 #    test_disease_gene (rosetta)
 #    test_drug_pathway(rosetta)
 
