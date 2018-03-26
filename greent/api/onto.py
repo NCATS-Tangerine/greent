@@ -53,7 +53,7 @@ class Core:
             print (f)
             file_name = os.path.basename (f)
             name = file_name.replace (".obo", "")
-            self.onts[name] = GenericOntology(self.context, file_name) 
+            self.onts[name] = GenericOntology(self.context, f) 
     def ont (self, curie):
         return self.onts[curie.lower()] if curie and curie.lower() in self.onts else None
     
