@@ -232,6 +232,8 @@ def synonyms (curie):
 if __name__ == "__main__":
    parser = argparse.ArgumentParser(description='Rosetta Server')
    parser.add_argument('-p', '--port', type=int, help='Port to run service on.', default=None)
+#   parser.add_argument('-d', '--debug', help="Debug.", default=False)
+   parser.add_argument('-t', '--data', help="Ontology data source.", default=None)
    parser.add_argument('-c', '--conf', help='GreenT config file to use.', default=None)
    args = parser.parse_args ()
    app.config['SWAGGER']['greent_conf'] = args.greent_conf = args.conf
