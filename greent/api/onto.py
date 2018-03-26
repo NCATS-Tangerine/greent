@@ -69,15 +69,16 @@ def get_core (curie=None):
         result = core.ont (curie)
     return result
      
-@app.route('/is_a/<i>/<ancestors>/')
-def is_a (i, ancestors):
+@app.route('/is_a/<curie>/<ancestors>/')
+def is_a (curie, ancestors):
    """ Determine ancestry.
    ---
    parameters:
-     - name: i
+     - name: curie
        in: path
        type: string
        required: true
+       default: GO:2001317
        description: "An identifier from an ontology. eg, GO:2001317"
        x-valueType:
          - http://schema.org/string
@@ -87,6 +88,8 @@ def is_a (i, ancestors):
      - name: ancestors
        in: path
        type: array
+       required: true
+       default: GO:1901362
        items:
          type: string
        description: "A comma separated list of identifiers. eg, GO:1901362"
@@ -99,24 +102,25 @@ def is_a (i, ancestors):
      200:
        description: ...
    """
-   core = get_core ()
-   assert i, "An identifier must be supplied."
+   assert curie, "An identifier must be supplied."
    assert isinstance(ancestors, str), "Ancestors must be one or more identifiers"
+   ont = get_core (curie)
    return jsonify ({
-       "is_a"      : core.go.is_a(i, ancestors),
-       "id"        : i,
+       "is_a"      : ont.is_a(curie, ancestors),
+       "id"        : curie,
        "ancestors" : ancestors
    })
      
-@app.route('/label/<i>/')
-def label (i):
+@app.route('/label/<curie>/')
+def label (curie):
    """ Get ontology term label by id.
    ---
    parameters:
-     - name: i
+     - name: curie
        in: path
        type: string
        required: true
+       default: GO:2001317
        description: "An identifier from an ontology. eg, GO:2001317"
        x-valueType:
          - http://schema.org/string
@@ -130,12 +134,12 @@ def label (i):
    core = get_core ()
    label = None
    for k, v in core.onts.items ():
-       label = v.label (i)
+       label = v.label (curie)
        if label:
            break
    return jsonify ({
        "label"     : label,
-       "id"        : i
+       "id"        : curie
    })
 
 @app.route('/search/<pat>/<regex>')
@@ -147,6 +151,7 @@ def search (pat, regex):
        in: path
        type: string
        required: true
+       default: "kidney"
        description: "Pattern to search for. .*kojic.*"
        x-valueType:
          - http://schema.org/string
@@ -183,6 +188,7 @@ def xrefs (curie):
        in: path
        type: string
        required: true
+       default: "MONDO:0001106"
        description: "Curie designating an ontology. eg, GO:2001317"
        x-valueType:
          - http://schema.org/string
@@ -208,6 +214,7 @@ def synonyms (curie):
        in: path
        type: string
        required: true
+       default: "GO:0000009"
        description: "Curie designating an ontology. eg, GO:0000009"
        x-valueType:
          - http://schema.org/string
