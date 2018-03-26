@@ -25,11 +25,14 @@ class GO2(Service):
         return term in self.ont[identifier].rparents() if identifier in self.ont else False
 
     def xrefs(self, identifier):
-        return self.ont[identifier].xrefs if identifier in self.ont else []
+        result = []
+        if identifier in self.ont:
+            result = self.ont[identifier].other['xref']  if 'xref' in self.ont[identifier].other else []
+        return result
 
-    def synonyms(self, identifier, curie_pattern):
+    def synonyms(self, identifier, curie_pattern=None):
         return \
-            [ x for x in self.ont[identifier].xrefs if x.startswith(curie_pattern) ] + \
+            [ x for x in self.ont[identifier].synonyms if curie_pattern and x.startswith(curie_pattern) ] + \
             [ syn for syn in self.ont[identifier].synonyms ] \
             if identifier in self.ont else []
 
@@ -53,13 +56,15 @@ class GO2(Service):
         return self.has_ancestor(identifier, MOLECULAR_FUNCTION)
 
             
-if __name__ == "__main__":[
+if __name__ == "__main__":
     g = GO2(ServiceContext.create_context ())
-    print (g.get_label ("GO:2001317"))
+    print (g.label ("GO:2001317"))
     print (g.is_a("GO:2001317", "GO:1901362"))
     print (g.search ("kojic acid biosynthetic process"))
     print (g.search ("ko.*c", is_regex=True))
-    print (g.xrefs(
+    print (g.xrefs("GO:2001317"))
+    print (g.synonyms("GO:2001317"))
+    
     x = """
     "GO:2001317": {
         "desc": "The chemical reactions and pathways resulting in the formation of kojic acid.",
