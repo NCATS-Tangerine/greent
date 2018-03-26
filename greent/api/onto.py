@@ -1,4 +1,5 @@
 import argparse
+import glob
 import json
 import os
 import requests
@@ -42,15 +43,17 @@ class Core:
     
     """ Core ontology services. """
     def __init__(self):
-        self.context = service_context = ServiceContext (config=app.config['SWAGGER']['greent_conf'])
-        self.go = GenericOntology(self.context, "go.obo") 
-        self.mondo = GenericOntology(self.context, "mondo.obo")
-        self.hp = GenericOntology(self.context, "hp.obo")
-        self.onts = {
-            "go"    : self.go,
-            "mondo" : self.mondo,
-            "hp"    : self.hp
-        }
+        self.onts = {}
+        self.context = service_context = ServiceContext (
+            config=app.config['SWAGGER']['greent_conf'])
+        data_dir = app.config['onto']['data']
+        data_pattern = os.path.join (data_dir, "*.obo")
+        ontology_files = glob.glob (data_pattern)
+        for f in ontology_files:
+            print (f)
+            file_name = os.path.basename (f)
+            name = file_name.replace (".obo", "")
+            self.onts[name] = GenericOntology(self.context, file_name) 
     def ont (self, curie):
         return self.onts[curie.lower()] if curie and curie.lower() in self.onts else None
     
@@ -231,10 +234,15 @@ def synonyms (curie):
 
 if __name__ == "__main__":
    parser = argparse.ArgumentParser(description='Rosetta Server')
-   parser.add_argument('-p', '--port', type=int, help='Port to run service on.', default=None)
-#   parser.add_argument('-d', '--debug', help="Debug.", default=False)
-   parser.add_argument('-t', '--data', help="Ontology data source.", default=None)
-   parser.add_argument('-c', '--conf', help='GreenT config file to use.', default=None)
+   parser.add_argument('-p', '--port',  type=int, help='Port to run service on.', default=5000)
+   parser.add_argument('-d', '--debug', help="Debug.", default=False)
+   parser.add_argument('-t', '--data',  help="Ontology data source.", default=".")
+   parser.add_argument('-c', '--conf',  help='GreenT config file to use.', default="greent.conf")
    args = parser.parse_args ()
    app.config['SWAGGER']['greent_conf'] = args.greent_conf = args.conf
+   app.config['onto'] = {
+       'config' : args.conf,
+       'data'   : args.data,
+       'debug'  : args.debug
+   }
    app.run(host='0.0.0.0', port=args.port, debug=True, threaded=True)
