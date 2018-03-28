@@ -24,6 +24,8 @@ def synonymize(node,gt):
     synonyms = set()
     if curie == 'CHEMBL':
         synonyms.update(synonymize_with_UniChem(node,gt))
+        #OXO is going to troll the node's synonyms, so we want to add them now
+        node.add_synonyms(synonyms)
         synonyms.update(synonymize_with_OXO(node,gt))
         #synonymize_with_CTD(node,gt)
     else:
