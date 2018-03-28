@@ -1,5 +1,6 @@
 import json
 import pytest
+from greent.conftest import conf
 from greent.graph_components import KNode
 from greent.services.ctd import CTD
 from greent.service import ServiceContext
@@ -7,9 +8,9 @@ from greent import node_types
 from greent.util import Text
 from greent.graph import TypeGraph
 
-@pytest.fixture(scope='module')
-def type_graph():
-    return TypeGraph (ServiceContext.create_context())
+@pytest.fixture()
+def type_graph(conf):
+    return TypeGraph (ServiceContext.create_context(config=conf.get('config', None)))
 
 @pytest.fixture(scope='module')
 def query():
