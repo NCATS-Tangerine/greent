@@ -6,7 +6,9 @@ from greent.rosetta import Rosetta
 @pytest.fixture
 def rosetta (conf):
     """ Rosetta fixture """
-    return Rosetta(debug=True, greentConf=conf.get ("config", "greent.conf"))
+    config = conf.get ("config", "greent.conf")
+    print (f"CONFIG: *** > {config}")
+    return Rosetta(debug=True, greentConf=config)
 
 @pytest.fixture
 def conf():
