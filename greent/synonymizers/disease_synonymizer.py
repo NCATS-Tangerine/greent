@@ -9,6 +9,9 @@ def synonymize(node,gt):
     synonyms = set()
     if curie == 'MONDO':
         synonyms.update(synonymize_with_MONDO(node,gt))
+        #You might think this is wrong,but it is right.  Even though the synonyms will get added to the node
+        #outside, we are also going to add them here so that the OXO synonymizer will find them.
+        node.add_synonyms(synonyms)
     synonyms.update(synonymize_with_OXO(node,gt))
     return synonyms
 

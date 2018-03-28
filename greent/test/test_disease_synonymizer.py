@@ -6,8 +6,9 @@ from greent import node_types
 
 def test_mondo_synonymization(rosetta):
     node = KNode('MONDO:0009757',node_types.DISEASE)
-    synonymize(node,rosetta.core)
-    assert len(node.synonyms) > 10
+    synonyms = synonymize(node,rosetta.core)
+    assert len(synonyms) > 10
+    node.add_synonyms(synonyms)
     doids = node.get_synonyms_by_prefix('DOID')
     assert len(doids) == 1
     assert doids.pop() == 'DOID:14504'
