@@ -4,7 +4,7 @@ from greent.config import Config
 from greent.util import LoggingUtil
 import socket
 
-DEV_HOST="stars-c8.edc.renci.org"
+DEV_HOST="stars-c0.edc.renci.org"
 
 class ServiceContext:
     """ A context for all service objects. Gives us a bit of control over how services behave
