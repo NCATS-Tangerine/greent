@@ -61,6 +61,7 @@ class Rosetta:
         with open(config_file, 'r') as stream:
             self.config = yaml.load(stream)
         self.operators = self.config["@operators"]
+        self.type_checks = self.config["@type_checks"]
 
         redis_conf = self.core.service_context.config.conf.get ("redis", None)
         self.cache = Cache (
@@ -85,6 +86,7 @@ class Rosetta:
                     self.type_graph.find_or_create(k, v)
             self.configure_local_operators ()
             #self.configure_translator_registry ()
+            self.type_graph.cast_edges(self.type_checks)
             
     def configure_local_operators (self):
         logger.debug ("Configure operators in the Rosetta config.")
@@ -230,7 +232,7 @@ class Rosetta:
         """ Validated the input program. """
         if len(program) == 0:
             logger.info (f"No program found for {query}")
-            return result
+            return []
         logger.info (f"program> {program}")
         result = []
         

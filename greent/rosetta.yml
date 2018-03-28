@@ -61,8 +61,6 @@
       - link  : chemical_targets_gene
         op    : chembio.graph_pubchem_to_ncbigene
       - link  : drug_to_gene
-        op    : pharos.drug_get_gene
-      - link  : drug_to_gene
         op    : ctd.drug_to_gene        
   disease:
     phenotypic_feature:
@@ -78,7 +76,7 @@
   drug:
     gene:
       - link  : drug_to_gene
-        op    : ctd.drug_to_gene
+        op    : pharos.drug_to_gene
   gene:
     anatomical_entity:
       - link  : gene_to_anatomy
@@ -127,3 +125,6 @@
     anatomical_entity:
       - link  : phenotype_to_anatomy
         op    : uberongraph.get_anatomy_by_phenotype_graph
+
+'@type_checks':
+  genetic_condition: mondo.disease_is_genetic_condition

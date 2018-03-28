@@ -380,9 +380,28 @@ classes:
       - ORPHANET
       - EFO
       - UMLS
+      - MONDO
     mappings:
       - "MONDO:0000001"
-      
+
+#Added to biolink-model by CB 3/26/2018
+  - name: genetic condition
+    is_a: disease
+    description: >-
+      A disease that is caused by genetic modifications where those modifications are inherited from a parent's genome.
+    mappings:
+      - "MONDO:0003847"
+    id_prefixes:
+      - MESH.DISEASE
+      - DOID
+      - PHAROS.DISEASE
+      - OMIM
+      - ORPHANET
+      - EFO
+      - UMLS
+      - MONDO
+
+
   - name: phenotypic feature
     aliases: ['sign', 'symptom', 'phenotype', 'trait']
     is_a: disease or phenotypic feature
@@ -475,6 +494,7 @@ classes:
     mappings:
       - SIO:010004
 
+#Added to biolink-model
   - name: drug
     is_a: chemical substance
     description: >-
