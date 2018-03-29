@@ -466,8 +466,8 @@ def test_ebola(rosetta):
     })
     
 def run_test_suite (rosetta):
-    test_ebola(rosetta)
-#    test_two_sided_query (rosetta)
+#    test_ebola(rosetta)
+    test_two_sided_query (rosetta)
 #    test_disease_gene (rosetta)
 #    test_drug_pathway(rosetta)
 
