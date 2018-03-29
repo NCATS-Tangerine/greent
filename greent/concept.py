@@ -77,7 +77,7 @@ class ConceptModelLoader:
         if os.path.exists (model_overlay_path):
             model_overlay = Resource.load_yaml (model_overlay_path)
             model_obj.update (model_overlay)
-        print (json.dumps (model_obj, indent=2))
+        #print (json.dumps (model_obj, indent=2))
         
 
         for obj in model_obj["classes"]:
