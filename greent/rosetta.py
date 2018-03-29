@@ -306,8 +306,9 @@ class Rosetta:
 
     def get_knowledge_graph (self, inputs, query, ends=None):
         """ Handles two sided queries and direction changes. """
-        print (query)
-        print (inputs)
+        print (f"query: {query}")
+        print (f"inputs: {inputs}")
+        print (f"ends:   {ends}")
         graph = []
         query_definition = QueryDefinition ()
         query_definition.start_type = inputs["type"]
@@ -443,8 +444,32 @@ def test_two_sided_query(rosetta):
         RETURN p, EXTRACT( r in relationships(p) | startNode(r) )"""
     })
 
+
+def test_ebola(rosetta):
+    b = rosetta.get_knowledge_graph (**{
+        "inputs" : {
+            "type"   : "disease",
+            "values" : rosetta.n2disease("ebola")
+        },
+        "ends" : None,
+        "query" :
+        """MATCH p=
+        (c0:Concept {name: "disease" })
+        --
+        (c1:Concept {name: "gene" })
+        --
+        (c2:Concept {name: "disease" })
+        FOREACH (n in relationships(p) | SET n.marked = TRUE)
+        WITH p,c0,c2
+        MATCH q=(c0:Concept)-[*0..2 {marked:True}]->(c2:Concept)
+        WHERE p=q
+        AND ALL( r in relationships(p) WHERE  EXISTS(r.op) )FOREACH (n in relationships(p) | SET n.marked = FALSE)
+        RETURN p"""
+    })
+    
 def run_test_suite (rosetta):
-    test_two_sided_query (rosetta)
+    test_ebola(rosetta)
+#    test_two_sided_query (rosetta)
 #    test_disease_gene (rosetta)
 #    test_drug_pathway(rosetta)
 

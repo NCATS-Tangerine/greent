@@ -146,7 +146,7 @@ class TypeGraph(Service):
             print (query)
             result = None
         return result
-    
+            
     #TODO: There's some potential issues if there are adjacent nodes of the same type (gene-gene interactions or similarities)
     def get_transitions(self, query):
         """ Execute a cypher query and walk the results to build a set of transitions to execute.
@@ -167,14 +167,48 @@ class TypeGraph(Service):
             nodes = {}
             transitions = {}
             path = row[0]
-            node_id = { node.id : i for i, node in enumerate (path.nodes) }
-            node_map = { node.id : node.properties['name'] for i, node in enumerate (path.nodes) }
+
+            node_num = {}
+            nodes = {}
+            id_to_node = {}
+            for i, n in enumerate(path.nodes):
+                node_num[i] = n.properties['name']
+                id_to_node[n] = i
+                
+            rels = [ Rel(element.start, element.end) for i, element in enumerate(path) ]
+                
+            node_map = { node.id : node.properties for i, node in enumerate(path.nodes) }
             for i, element in enumerate(path):
                 logger.debug (f"relationship {i}> {element}")
-                from_node = node_id[element.start]
-                to_node = node_id[element.end]
-                nodes[from_node] = node_map[element.start]
-                nodes[to_node] = node_map[element.end]
+
+                if i == 0:
+                    if i < len(rels) - 1:
+                        if element.end == rels[i+1].start:
+                            from_node = i
+                            to_node = i + 1
+                        else:
+                            from_node = i + 1
+                            to_node = i
+                    else:
+                        from_node = i
+                        to_node = i + 1
+                else:
+                    if i < len(rels) - 1:
+                        if element.start == rels[i+1].end:
+                            from_node = i + 1
+                            to_node = i
+                        elif element.start == rels[i-1].end:
+                            from_node = i
+                            to_node = i + 1
+                    elif element.end == rels[i-1].start:
+                        from_node = i
+                        to_node = i + 1
+                    else:
+                        from_node = i +1
+                        to_node = i
+                nodes[from_node] = node_num[from_node]
+                nodes[to_node] = node_num[to_node]
+                
                 transitions[from_node] = {
                     'link' : element.properties['predicate'],
                     'op'   : element.properties['op'],
@@ -183,6 +217,7 @@ class TypeGraph(Service):
             graphs.append( (nodes, transitions) )
         if logger.isEnabledFor (logging.DEBUG):
             logger.debug (f"{json.dumps(graphs, indent=2)}")
+
         return graphs
 
     def get_knowledge_map_programs(self, query):
@@ -304,3 +339,8 @@ class GraphDB:
             MATCH (b:{type_b} {{ name: "{name_b}" }})
             CREATE (a)-[:{relname} {{ {rprops} }}]->(b)""")
     
+
+class Rel:
+    def __init__(self,start,end):
+        self.start = start
+        self.end = end
