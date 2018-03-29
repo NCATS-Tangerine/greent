@@ -152,7 +152,6 @@ class TypeGraph(Service):
         #But for now, let's try to keep it in check
         #This is one way to do it, but we could swap it with something more complex
         usable_concepts = self.get_concepts_with_edges()
-        print(usable_concepts)
         children,push_ups = self._push_up(type_check_functions,usable_concepts)
         self._pull_down(children, type_check_functions, push_ups)
 
@@ -169,12 +168,9 @@ class TypeGraph(Service):
                 children[parent].append(concept)
                 next_level.add(parent)
                 if parent.name not in usable_concepts:
-                    # print(' No parents, batman')
                     continue
                 # push up functions that are taking or returning the child concept
                 for edge in self.edges[concept.name]:
-                    print('\nPush up from {} to {}'.format(concept.name, parent.name))
-                    print('  {}'.format(edge))
                     op = edge['op']
                     if not op.startswith('caster.'):
                         op = self.create_caster_op(op)
@@ -182,7 +178,6 @@ class TypeGraph(Service):
                         # returning child concept
                         newop = self.wrap_op('upcast', op, parent.name)
                         newedge = self.add_concepts_edge(edge['source'], parent.name, edge['predicate'], newop)
-                        # print('push 1')
                     elif edge['source'] == concept.name:
                         # taking child concept
                         # if we have a way to filter inputs we can use it, but if not, we can just call
@@ -192,29 +187,22 @@ class TypeGraph(Service):
                         else:
                             newop = self.wrap_op('input_filter', op, concept.name)
                         newedge = self.add_concepts_edge(parent.name, edge['target'], edge['predicate'], newop)
-                        # print('push 2')
                     else:
                         print(edge['source'])
                         print(concept.name)
                         exit()
                     push_ups[str(newedge)].append(concept.name)
             this_level = next_level
-            print('loop around {}'.format(len(this_level)))
         return children,push_ups
 
     def _pull_down(self, children_dict, type_check_functions, push_ups):
         this_level = self.concept_model.get_roots()
         while len(this_level) > 0:
             next_level = set()
-            print( 'This level: {}'.format([ c.name for c in this_level ] ))
             for concept in this_level:
                 children = children_dict[concept]
                 next_level.update(children)
-                print( '  Next level: {}'.format([ c.name for c in next_level ] ))
                 for edge in self.edges[concept.name]:
-                    for child in children:
-                        print('\nPull down from {} to {}'.format(concept.name, child.name))
-                    print('  {} {}'.format(edge, len(self.edges[concept.name])))
                     op = edge['op']
                     if not op.startswith('caster.'):
                         op = self.create_caster_op(op)
@@ -222,12 +210,9 @@ class TypeGraph(Service):
                         if child.name in push_ups[str(edge)]:
                             #Pushed this edge up, now trying to push it right back down
                             continue
-                        else:
-                            print( push_ups[str(edge)], child.name)
                         if edge['target'] == concept.name:
                             # returning parent
                             # Can only do this if I know how to filter.
-                            print('    1. {}'.format(child.name))
                             try:
                                 newop = self.wrap_op('output_filter', op, child.name, type_check_functions[child.name])
                                 self.add_concepts_edge(edge['source'], child.name, edge['predicate'], newop)
@@ -235,7 +220,6 @@ class TypeGraph(Service):
                                 pass
                         elif edge['source'] == concept.name:
                             # taking parent, nothing else really required
-                            print('    2. {}'.format(child.name))
                             edge = self.add_concepts_edge(child.name, edge['target'], edge['predicate'], edge['op'])
             this_level = next_level
 
@@ -246,8 +230,6 @@ class TypeGraph(Service):
             args.append('~'.join(arg2.split('.')))
         argstring = ','.join(args)
         wrapped = '.'.join([p[0], f"{func}({argstring})"])
-        print(func, op, arg1, arg2, '-->')
-        print('   ', wrapped)
         return wrapped
 
     def create_caster_op(self, oldop):
