@@ -61,15 +61,13 @@
       - link  : chemical_targets_gene
         op    : chembio.graph_pubchem_to_ncbigene
       - link  : drug_to_gene
-        op    : ctd.drug_to_gene        
+        op    : ctd.drug_to_gene
   disease:
     phenotypic_feature:
       - link  : disease_to_phenotype
         op    : biolink.disease_get_phenotype
       - link  : disease_to_phenotype
         op    : hetio.disease_to_phenotype
-      - link  : disease_to_genetic_condition
-        op    : mondo.doid_get_genetic_condition
     gene:
       - link  : disease_to_gene
         op    : pharos.disease_get_gene
@@ -81,15 +79,17 @@
     anatomical_entity:
       - link  : gene_to_anatomy
         op    : hetio.gene_to_anatomy
+    cell:
       - link  : gene_to_cell
         op    : hetio.gene_to_cell
     disease:
       - link  : gene_to_disease
         op    : biolink.gene_get_disease
-      - link  : gene_to_genetic_condition
-        op    : biolink.gene_get_genetic_condition
       - link  : gene_to_disease
         op    : hetio.gene_to_disease
+    genetic_condition:
+      - link  : gene_to_genetic_condition
+        op    : biolink.gene_get_genetic_condition
     chemical_substance:
       - link  : gene_to_drug
         op    : ctd.gene_to_drug
@@ -104,19 +104,20 @@
     biological_process:
       - link  : biological_process
         op    : biolink.gene_get_process
-  named_thing :
-    disease :
-      - link  : name_to_disease
-        op    : tkba.name_to_doid
-    chemical_substance    :
-      - link  : name_to_drug
-        op    : tkba.name_to_drugbank
-      - link  : name_to_drug
-        op    : chembio.graph_drugname_to_pubchem
-      - link  : name_to_drug
-        op    : pharos.drugname_to_pharos
-      - link  : name_to_drug
-        op    : ctd.drugname_to_ctd
+#  named_thing != name of thing
+#  named_thing :
+#    disease :
+#      - link  : name_to_disease
+#        op    : tkba.name_to_doid
+#    chemical_substance    :
+#      - link  : name_to_drug
+#        op    : tkba.name_to_drugbank
+#      - link  : name_to_drug
+#        op    : chembio.graph_drugname_to_pubchem
+#      - link  : name_to_drug
+#        op    : pharos.drugname_to_pharos
+#      - link  : name_to_drug
+#        op    : ctd.drugname_to_ctd
   pathway:
     gene:
       - link  : pathway_to_gene

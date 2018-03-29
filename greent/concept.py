@@ -72,11 +72,8 @@ class ConceptModel:
     def get_leaves(self):
         """Return all concepts that are not parents of another concept"""
         leaves = set( self.by_name.values() )
-        for l in leaves:
-            print(l)
         for concept_name, concept in self.by_name.items():
             if concept.is_a is not None:
-                print(' Discarding {}'.format(concept.is_a))
                 leaves.discard(concept.is_a)
         return leaves
 
