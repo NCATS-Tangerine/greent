@@ -2,6 +2,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import requests
 import yaml
 import shutil
@@ -175,8 +176,13 @@ def search (pat, regex):
    """
    core = get_core ()
    vals = []
+   pat = re.compile (regex)
    for k, v in core.onts.items ():
-       vals += v.search (pat, regex)
+       #vals += v.search (pat, regex)
+       for term in v:
+           if re.matches (term.name):
+               vals.append (term.name)
+               
    return jsonify ({ "values" : vals })
      
 @app.route('/xrefs/<curie>')

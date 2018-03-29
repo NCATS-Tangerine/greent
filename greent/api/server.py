@@ -7,7 +7,7 @@ import shutil
 try:
    from smartBag.grok import SemanticCrunch
 except:
-   print ("smartbag not in path")
+   print ("smartbag not in path. skipping import.")
 from greent.rosetta import Rosetta
 from greent import node_types
 from greent.graph_components import KNode,KEdge,elements_to_json
