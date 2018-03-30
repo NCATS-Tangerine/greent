@@ -176,12 +176,9 @@ def search (pat, regex):
        description: ...
    """
    core = get_core ()
-   vals = []
-   if regex:
-       pattern = re.compile (pat, re.IGNORECASE)
-       vals = [ { "id" : term.id, "name" : term.name } for k, v in core.onts.items () for term in v.ont if pattern.search(term.name) ]
-   else:
-       vals = [ { "id" : term.id, "name" : term.name } for k, v in core.onts.items () for term in v.ont if pat in term.name ]
+   regex = regex=='true'
+   vals = [ ont.search(pat, regex) for name, ont in core.onts.items () ]
+   vals = [ term for term_list in vals for term in term_list ] 
    return jsonify ({ "values" : vals })
      
 @app.route('/xrefs/<curie>')
@@ -209,6 +206,31 @@ def xrefs (curie):
        "xrefs"     : [ x.split(' ')[0] if ' ' in x else x for x in ont.xrefs (curie) ]
    } if ont else {})
 
+
+@app.route('/lookup/<curie>')
+def lookup (curie):
+   """ Get ids for which this curie is an external reference.
+   ---
+   parameters:
+     - name: curie
+       in: path
+       type: string
+       required: true
+       default: "MONDO:0001106"
+       description: "Curie designating an external reference."
+       x-valueType:
+         - http://schema.org/string
+       x-requestTemplate:
+         - valueType: http://schema.org/string
+           template: /lookup/{{ curie }}/
+   responses:
+     200:
+       description: ...
+   """
+   core = get_core ()
+   return jsonify ({
+       "refs" : [ ref for name, ont in core.onts.items() for ref in ont.lookup (curie) ]
+   })
      
 @app.route('/synonyms/<curie>/')
 def synonyms (curie):

@@ -40,23 +40,24 @@ class Mondo2(Onto):
         return super(Mondo2,self).get_label(identifier)
     
     def get_mondo_id(self,obj_id):
+        result = []
         label = super(Mondo2,self).get_label(obj_id)
-        """ UNIMPLEMENTED: We need reverse lookup logic in the ont service to fully implement this. """
-        return [ obj_id ] if label is not None else None
+        if label and 'label' in label and lable['label'] is not None:
+            result.append (obj_id)
+        else:
+            result = super(Mondo2,self).lookup(obj_id)
+        return result
     
     def has_ancestor(self,obj, terms):
         """ Is is_a(obj,t) true for any t in terms ? """
         ids = self.get_mondo_id(obj.identifier)        
-        result = [ i for i in ids for candidate_ancestor in terms if super(Mondo2,self).is_a(i, candidate_ancestor) ] \
+        results = [ i for i in ids for candidate_ancestor in terms if super(Mondo2,self).is_a(i, candidate_ancestor) ] \
                  if terms else []
         return len(results) > 0, results
 
     def is_genetic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:630 as an ancestor"""
-        a = self.has_ancestor(obj, GENETIC_DISEASE)
-        print (f" ==============> a {a}")
-        return a
-#        return self.has_ancestor(obj, GENETIC_DISEASE)
+        return self.has_ancestor(obj, GENETIC_DISEASE)
 
     def is_monogenic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:0050177 as an ancestor"""
@@ -89,7 +90,6 @@ class Mondo2(Onto):
         return super(Mondo2,self).search(ciname,synonyms=True,is_regex=True)
 
     def search(self, name):
-        #Exact match 
         results = super(Mondo2,self).search(name)
         if len(results) == 0:
             if ',' in name:
@@ -97,9 +97,8 @@ class Mondo2(Onto):
                 parts.reverse()
                 ps = [p.strip() for p in parts]
                 newname = ' '.join(ps)
-                results = super(Mondo2,self).search(name)
+                results = super(Mondo2,self).search(newname)
         return results
-
 
 def test_both():
     q1in='q1-disease-list.txt'

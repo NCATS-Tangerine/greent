@@ -53,8 +53,8 @@ class Cache:
         
     def get(self, key):
         """ Get a cached item by key. """
-        if "mondo" in key or "MONDO" in key:
-            return None
+        #if any(map(lambda v : v in key.lower(), [ "go:", "mondo:", "hp:" ])):
+        #    return None
         result = None
         if self.enabled:
             if key in self.cache:
