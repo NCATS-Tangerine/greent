@@ -101,10 +101,10 @@ class Program:
                         edge.predicate = link['link']
                         edge.source_node = source_node
                         edge.target_node = r[1]
-                        logger.debug('     {}'.format(edge.target_node.identifier))
                         self.linked_results.append(edge)
                         newnodes.append(r[1])
-                print (f"cache.set-> {key} length:{len(results)}")
+                logger.debug(f"    {newnodes}")
+                logger.debug (f"cache.set-> {key} length:{len(results)}")
                 self.add_instance_nodes(newnodes,next_context)
             except Exception as e:
                 traceback.print_exc()

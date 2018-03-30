@@ -30,7 +30,7 @@ class GreenT:
     def __init__(self, config=None, override={}):
         self.service_context = ServiceContext.create_context (config)
         self.translator_registry = None
-        self.ont_api = self.service_context.config.conf.get("system",{}).get("generic_ontology_service", "false") is "true"
+        self.ont_api = self.service_context.config.conf.get("system",{}).get("generic_ontology_service", "false")
         self.lazy_loader = {
             "chembio"          : lambda :  ChemBioKS (self.service_context),
             "chemotext"        : lambda :  Chemotext (self.service_context),

@@ -10,7 +10,7 @@ from greent import node_types
 logger = LoggingUtil.init_logging (__file__)
 
 #TODO: LOOKUP all the terms that map to this... or use an ancestor call that doesn't require such stuff (i.e. that handles this)
-GENETIC_DISEASE=('DOID:630','http://purl.obolibrary.org/obo/EFO_0000508','MONDO:0003847','http://purl.obolibrary.org/obo/MONDO_0003847')
+GENETIC_DISEASE=('DOID:630', 'EFO:0000508', 'MONDO:0003847')
 MONOGENIC_DISEASE='DOID:0050177'
 
 #class Mondo(Service):
@@ -47,11 +47,10 @@ class Mondo2(Onto):
     def has_ancestor(self,obj, terms):
         """ Is is_a(obj,t) true for any t in terms ? """
         ids = self.get_mondo_id(obj.identifier)        
-        result = [ i for i in ids for candidate_ancestor in terms if self.ont.is_a(i, candidate_ancestor) ] \
+        result = [ i for i in ids for candidate_ancestor in terms if super(Mondo2,self).is_a(i, candidate_ancestor) ] \
                  if terms else []
         return len(results) > 0, results
 
-    
     def is_genetic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:630 as an ancestor"""
         a = self.has_ancestor(obj, GENETIC_DISEASE)
@@ -83,11 +82,11 @@ class Mondo2(Onto):
 
     def substring_search(self,name):
         ciname = '(?i){}'.format(name)
-        results = self.ont.search(ciname,synonyms=True,is_regex=True)
+        results = super(Mondo2,self).search(ciname,synonyms=True,is_regex=True)
 
     def case_insensitive_search(self,name):
         ciname = '(?i)^{}$'.format(name)
-        return self.ont.search(ciname,synonyms=True,is_regex=True)
+        return super(Mondo2,self).search(ciname,synonyms=True,is_regex=True)
 
     def search(self, name):
         #Exact match 

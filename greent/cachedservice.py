@@ -9,14 +9,9 @@ class CachedService(Service):
         super(CachedService,self).__init__(name, context)
         self.punctuation = re.compile('[ ?=\./:{}]+')
     def get(self,url):
-        print (f"url-------> {url}")
-        print (f"url-------> {url}")
-        print (f"url-------> {url}")
-        print (f"url-------> {url}")
-        print (f"url-------> {url}")
-        print (f"url-------> {url}")
-        key = self.punctuation.sub ('', url)            
-        obj = self.context.cache.get(key)
+        key = self.punctuation.sub ('', url)
+        print (f"==================> {url}")
+        obj = None #self.context.cache.get(key)
         if not obj:
             obj = requests.get(url).json ()
             self.context.cache.set(key, obj)

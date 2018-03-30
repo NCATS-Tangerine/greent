@@ -51,7 +51,7 @@ class Core:
         data_pattern = os.path.join (data_dir, "*.obo")
         ontology_files = glob.glob (data_pattern)
         for f in ontology_files:
-            print (f)
+            print (f"loading {f}")
             file_name = os.path.basename (f)
             name = file_name.replace (".obo", "")
             self.onts[name] = GenericOntology(self.context, f) 
@@ -62,6 +62,7 @@ core = None
 def get_core (curie=None):
     global core
     if not core:
+        print (f"initializing core")
         core = Core ()
     result = core
     if curie:
@@ -176,13 +177,11 @@ def search (pat, regex):
    """
    core = get_core ()
    vals = []
-   pat = re.compile (regex)
-   for k, v in core.onts.items ():
-       #vals += v.search (pat, regex)
-       for term in v:
-           if re.matches (term.name):
-               vals.append (term.name)
-               
+   if regex:
+       pattern = re.compile (pat, re.IGNORECASE)
+       vals = [ { "id" : term.id, "name" : term.name } for k, v in core.onts.items () for term in v.ont if pattern.search(term.name) ]
+   else:
+       vals = [ { "id" : term.id, "name" : term.name } for k, v in core.onts.items () for term in v.ont if pat in term.name ]
    return jsonify ({ "values" : vals })
      
 @app.route('/xrefs/<curie>')

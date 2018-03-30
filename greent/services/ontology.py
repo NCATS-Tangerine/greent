@@ -14,7 +14,27 @@ class GenericOntology(Service):
         return self.ont[identifier].name if identifier in self.ont else None
     def is_a(self,identifier, term):
         """Determine whether a term has a particular ancestor"""
-        return term in self.ont[identifier].rparents() if identifier in self.ont else False
+        is_a = False
+        if identifier in self.ont:
+            for ancestor in self.ont[identifier].rparents():
+                ancestor_id = ancestor.id
+                if ' ' in ancestor.id:
+                    ancestor_id = ancestor.id.split(' ')[0]
+                is_a = ancestor_id == term
+                if is_a:
+                    break
+                if 'xref' in ancestor.other:
+                    print (f" other xref: {ancestor.other['xref']}")
+                    for xancestor in ancestor.other['xref']:
+                        print (f" xancestor: {xancestor} {term}")
+                        is_a = xancestor.startswith (term)
+                        if is_a:
+                            break
+                if not is_a:
+                    is_a = self.is_a (ancestor_id, term)
+                if is_a:
+                    break
+        return is_a
     def xrefs(self, identifier):
         """ Get external references. """
         result = []
