@@ -29,12 +29,13 @@ class Onto(CachedService):
             for xref in obj['xrefs']:
                 if filter:
                     for f in filter:
-                        if xref.startswith(f):
-                            result.append (xref)
+                        if 'id' in xref:
+                            if xref['id'].startswith(f):
+                                result.append (xref['id'])
                 else:
                     result.append (xref)
         return result
-    def get_synonyns(self,identifier,curie_pattern=None):
+    def get_synonyms(self,identifier,curie_pattern=None):
         return self.get(f"{self.url}/synonyms/{identifier}/")
     def lookup(self,identifier):
         obj = self.get(f"{self.url}/lookup/{identifier}/")
