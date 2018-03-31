@@ -6,7 +6,6 @@ from greent.util import Munge
 from greent.util import Text
 from greent.graph_components import KEdge, KNode
 from greent import node_types 
-from greent.service import ServiceContext
 
 class HetIO(Neo4JREST):
 
@@ -55,7 +54,8 @@ class HetIO(Neo4JREST):
         return edge_node
     
         #return [ ( self.get_edge ({ 'res' : r }, predicate='affects'), KNode("MESH:{0}".format (r['identifier']), 'PH') ) for r in result ]
-        
+
+'''
 class TestHetIO(unittest.TestCase):
 
     h = HetIO (ServiceContext.create_context ())
@@ -70,13 +70,5 @@ if __name__ == '__main__':
     
     het = HetIO (ServiceContext.create_context ())
     print (het.disease_to_phenotype (KNode('DOID:2841',node_types.DISEASE)))
-    '''
-    with open('hgnc-entrez', 'r') as stream:
-        for line in stream:
-            h, e, u = line.split ('\t')
-            het.gene_to_anatomy (KNode('SOMETHING:{}'.format (e), node_types.GENE))
-    '''
-    #unittest.main ()
-
-
+'''
 #MATCH (g:Gene)-[r]-(c:CellularComponent) WHERE g.name='HGNC:3263' RETURN g, r, c LIMIT 200

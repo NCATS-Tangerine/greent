@@ -1,7 +1,7 @@
 import pytest
 from greent.graph_components import KNode
 from greent.ontologies.go2 import GO2
-from greent.service import ServiceContext
+from greent.servicecontext import ServiceContext
 from greent import node_types
 from greent.util import Text
 

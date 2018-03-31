@@ -3,7 +3,6 @@ import json
 import os
 import logging
 from greent.service import Service
-from greent.service import ServiceContext
 from greent.triplestore import TripleStore
 from greent.util import LoggingUtil
 from greent.util import Text

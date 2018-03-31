@@ -1,6 +1,6 @@
 import pytest
 from greent.ontologies.hpo2 import HPO2
-from greent.service import ServiceContext
+from greent.servicecontext import ServiceContext
 
 @pytest.fixture(scope='module')
 def hpo2():

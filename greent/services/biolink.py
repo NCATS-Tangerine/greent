@@ -1,9 +1,10 @@
 import requests
 import urllib
 from greent.service import Service
-from greent.service import ServiceContext
 from greent.ontologies.mondo import Mondo
 from greent.ontologies.go import GO
+from greent.ontologies.mondo2 import Mondo2
+from greent.ontologies.go2 import GO2
 from greent.util import Text
 from greent.graph_components import KNode, KEdge
 from greent import node_types
@@ -16,9 +17,13 @@ class Biolink(Service):
     def __init__(self, context):
         super(Biolink, self).__init__("biolink", context)
         # TODO, can we just use the Mondo that's in the core already?
-        self.checker = Mondo(ServiceContext.create_context())
-        self.go = GO(ServiceContext.create_context())
-
+        '''
+        self.checker = context.Mondo2(ServiceContext.create_context())
+        self.go = GO2(ServiceContext.create_context())
+        '''
+        self.checker = context.core.mondo
+        self.go = context.core.go
+        
     def process_associations(self, r, predicate, target_node_type, reverse=False):
         """Given a response from biolink, create our edge and node structures.
         Sometimes (as in pathway->Genes) biolink returns the query as the object, rather
@@ -112,7 +117,6 @@ class Biolink(Service):
         """Given a gene specified as an HGNC curie, return associated genetic conditions.
         A genetic condition is specified as a disease that descends from a ndoe for genetic disease in MONDO."""
         disease_relations = self.gene_get_disease(gene)
-        # checker = Mondo(ServiceContext.create_context ())
         relations = []
         for relation, obj in disease_relations:
             is_genetic_condition, new_object_ids = self.checker.is_genetic_disease(obj)

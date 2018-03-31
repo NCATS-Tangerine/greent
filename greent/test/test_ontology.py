@@ -1,6 +1,6 @@
 import os
 from greent.graph_components import KNode
-from greent.service import ServiceContext
+from greent.servicecontext import ServiceContext
 from greent.services.ontology import GenericOntology
 
 '''

@@ -2,7 +2,7 @@ import pytest
 from greent.graph_components import KNode
 from greent.services.biolink import Biolink
 from greent.ontologies.mondo import Mondo
-from greent.service import ServiceContext
+from greent.servicecontext import ServiceContext
 from greent import node_types
 from greent.util import Text
 

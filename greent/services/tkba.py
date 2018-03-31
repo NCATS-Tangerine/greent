@@ -1,7 +1,6 @@
 import requests
 import json
 from greent.service import Service
-from greent.service import ServiceContext
 from greent.util import LoggingUtil
 from greent.util import Text
 from greent.graph_components import KNode,KEdge

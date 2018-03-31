@@ -10,7 +10,8 @@ import traceback
 import yaml
 from collections import defaultdict
 from greent.cache import Cache
-from greent.core import GreenT
+#from greent.core import GreenT
+from greent.servicecontext import ServiceContext
 from greent.graph import Frame
 from greent.graph import Operator
 from greent.graph import TypeGraph
@@ -25,7 +26,7 @@ from greent.util import LoggingUtil
 from greent.util import Resource
 from greent.util import Text
 
-logger = logging.getLogger('rosetta')
+logger = LoggingUtil.init_logging(__file__, level=logging.INFO)
 
 class Rosetta:
     """ Rosetta's translates between semantic domains generically and automatically.
@@ -37,7 +38,6 @@ class Rosetta:
 
     def __init__(self, greentConf=None,
                  config_file=os.path.join(os.path.dirname(__file__), "rosetta.yml"),
-                 override={},
                  delete_type_graph=False,
                  init_db=False,
                  debug=False):
@@ -49,28 +49,26 @@ class Rosetta:
         self.debug = False
 
         logger.debug("-- rosetta init.")
-
+        '''
         logger.info (f"Loading configuration: {greentConf}")
         if not greentConf:
             greentConf = "greent.conf"
         self.core = GreenT(config=greentConf, override=override)
-
+        '''
+        self.service_context = ServiceContext (greentConf)
+        self.core = self.service_context.core
+        
         """ Load configuration. """
         with open(config_file, 'r') as stream:
             self.config = yaml.load(stream)
         self.operators = self.config["@operators"]
 
         # Abbreviation
-        self.cache = self.core.service_context.cache
-        '''
-        redis_conf = self.core.service_context.config.conf.get ("redis", None)
-        self.cache = Cache (
-            redis_host = redis_conf.get ("host"),
-            redis_port = redis_conf.get ("port"))
-        '''
+        self.cache = self.service_context.cache #core.service_context.cache
         
         """ Initialize type graph. """
-        self.type_graph = TypeGraph(self.core.service_context, debug=debug)
+        #self.type_graph = TypeGraph(self.core.service_context, debug=debug)
+        self.type_graph = TypeGraph(self.service_context, debug=debug)
         self.synonymizer = Synonymizer( self.type_graph.concept_model, self )
 
         """ Merge identifiers.org vocabulary into Rosetta voab. """

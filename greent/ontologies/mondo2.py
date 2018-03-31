@@ -1,8 +1,6 @@
 import requests
 from greent.services.onto import Onto
 from greent.service import Service
-from greent.service import ServiceContext
-from ontobio.ontol_factory import OntologyFactory
 from greent.graph_components import KNode, KEdge
 from greent.util import LoggingUtil
 from greent import node_types
@@ -73,7 +71,6 @@ class Mondo2(Onto):
              KNode(ancestor, node_types.GENETIC_CONDITION) ) for ancestor in ancestors
             ] if is_genetic else []
 
-    
     """ No indication anyone ever calls these three. And the fourth is called internally by something we're replacing. """
     def doid_get_orphanet_genetic_condition (self, disease):
         results = self.doid_get_genetic_condition (disease)
