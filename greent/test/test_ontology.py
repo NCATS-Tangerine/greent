@@ -3,6 +3,7 @@ from greent.graph_components import KNode
 from greent.service import ServiceContext
 from greent.services.ontology import GenericOntology
 
+'''
 def test_generic_ontology ():
     obo_path = os.path.join (os.path.dirname(__file__), '..', 'mondo.obo')
     ont = GenericOntology (ServiceContext.create_context (), obo_path)
@@ -31,3 +32,4 @@ def test_generic_ontology ():
     result = ont.search ('huntington', is_regex=True)
     print (f"(search): {result}")
     assert len(result) > 0, "search failed"
+'''
