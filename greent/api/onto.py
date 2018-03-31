@@ -216,7 +216,7 @@ def lookup (curie):
        in: path
        type: string
        required: true
-       default: "MONDO:0001106"
+       default: "OMIM:143100"
        description: "Curie designating an external reference."
        x-valueType:
          - http://schema.org/string
