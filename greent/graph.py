@@ -9,7 +9,7 @@ from greent.service import Service
 from greent.util import LoggingUtil
 from neo4j.v1 import GraphDatabase
 
-logger = LoggingUtil.init_logging(__file__, level=logging.INFO)
+logger = logging.getLogger('type_graph')
 
 class TypeGraph(Service):
     """ A graph of 
@@ -146,8 +146,7 @@ class TypeGraph(Service):
             print (query)
             result = None
         return result
-            
-    #TODO: There's some potential issues if there are adjacent nodes of the same type (gene-gene interactions or similarities)
+    
     def get_transitions(self, query):
         """ Execute a cypher query and walk the results to build a set of transitions to execute.
         The query should be such that it returns a path (node0-relation0-node1-relation1-node2), and
@@ -162,62 +161,45 @@ class TypeGraph(Service):
             transitions: a map from a node index to an (operation, output index) pair
         """
         graphs=[]
-        result = self.db.query(query)
+        result = self.db.query(query)        
         for row in result:
             nodes = {}
             transitions = {}
             path = row[0]
-
-            node_num = {}
-            nodes = {}
-            id_to_node = {}
-            for i, n in enumerate(path.nodes):
-                node_num[i] = n.properties['name']
-                id_to_node[n] = i
-                
-            rels = [ Rel(element.start, element.end) for i, element in enumerate(path) ]
-                
-            node_map = { node.id : node.properties for i, node in enumerate(path.nodes) }
+            result_rows = []
+            nodes = { i : n for i, n in enumerate(path.nodes) }
             for i, element in enumerate(path):
-                logger.debug (f"relationship {i}> {element}")
+                result_rows.append (nodes[i])
+                result_rows.append (element)
+                if i == len(path) - 1:
+                    result_rows.append (nodes[i+1])
 
-                if i == 0:
-                    if i < len(rels) - 1:
-                        if element.end == rels[i+1].start:
-                            from_node = i
-                            to_node = i + 1
-                        else:
-                            from_node = i + 1
-                            to_node = i
-                    else:
-                        from_node = i
-                        to_node = i + 1
+            for i, element in enumerate(result_rows):
+                if i % 2 == 0:
+                    #node
+                    nodenum = int(i / 2)
+                    if logger.isEnabledFor (logging.DEBUG):
+                        logger.debug (f"|| Node ||> i:{i} id:{element.id} props:{element.properties}")
+                    nodes[nodenum] = element.properties['name']
                 else:
-                    if i < len(rels) - 1:
-                        if element.start == rels[i+1].end:
-                            from_node = i + 1
-                            to_node = i
-                        elif element.start == rels[i-1].end:
-                            from_node = i
-                            to_node = i + 1
-                    elif element.end == rels[i-1].start:
-                        from_node = i
-                        to_node = i + 1
-                    else:
-                        from_node = i +1
-                        to_node = i
-                nodes[from_node] = node_num[from_node]
-                nodes[to_node] = node_num[to_node]
-                
-                transitions[from_node] = {
-                    'link' : element.properties['predicate'],
-                    'op'   : element.properties['op'],
-                    'to'   : to_node
-                }
+                    #relationship
+                    relnum = int((i-1)/2)
+                    if logger.isEnabledFor (logging.DEBUG):
+                        logger.debug (f"  <>Rel<> > i:{i} relnum:{relnum} strt:{element.start} end:{element.end} props:{element.properties}")
+                    if element.start == result_rows[i-1].id:
+                        from_node=relnum
+                        to_node = relnum+1
+                    elif element.start == result_rows[i+1].id:
+                        from_node = relnum+1
+                        to_node = relnum
+                    transitions[from_node] = {
+                        'link' : element.properties['predicate'],
+                        'op'   : element.properties['op'],
+                        'to'   : to_node
+                    }                
             graphs.append( (nodes, transitions) )
-        if logger.isEnabledFor (logging.DEBUG):
-            logger.debug (f"{json.dumps(graphs, indent=2)}")
-
+            if logger.isEnabledFor (logging.DEBUG):
+                logger.debug (f"{json.dumps(graphs, indent=2)}")
         return graphs
 
     def get_knowledge_map_programs(self, query):
@@ -344,3 +326,5 @@ class Rel:
     def __init__(self,start,end):
         self.start = start
         self.end = end
+    def __repr__(self):
+        return f"start: {self.start} end: {self.end}"

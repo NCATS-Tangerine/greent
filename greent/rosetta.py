@@ -25,7 +25,7 @@ from greent.util import LoggingUtil
 from greent.util import Resource
 from greent.util import Text
 
-logger = LoggingUtil.init_logging(__file__, level=logging.INFO)
+logger = logging.getLogger('rosetta')
 
 class Rosetta:
     """ Rosetta's translates between semantic domains generically and automatically.
