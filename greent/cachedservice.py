@@ -10,7 +10,7 @@ class CachedService(Service):
         self.punctuation = re.compile('[ ?=\./:{}]+')
     def get(self,url):
         key = self.punctuation.sub ('', url)
-        #print (f"==================> {url}")
+        print (f"==================> {url}")
         obj = self.context.cache.get(key)
         if not obj:
             obj = requests.get(url).json ()
