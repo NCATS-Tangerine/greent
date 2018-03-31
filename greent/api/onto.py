@@ -2,6 +2,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import requests
 import yaml
 import shutil
@@ -50,7 +51,7 @@ class Core:
         data_pattern = os.path.join (data_dir, "*.obo")
         ontology_files = glob.glob (data_pattern)
         for f in ontology_files:
-            print (f)
+            print (f"loading {f}")
             file_name = os.path.basename (f)
             name = file_name.replace (".obo", "")
             self.onts[name] = GenericOntology(self.context, f) 
@@ -61,6 +62,7 @@ core = None
 def get_core (curie=None):
     global core
     if not core:
+        print (f"initializing core")
         core = Core ()
     result = core
     if curie:
@@ -174,9 +176,9 @@ def search (pat, regex):
        description: ...
    """
    core = get_core ()
-   vals = []
-   for k, v in core.onts.items ():
-       vals += v.search (pat, regex)
+   regex = regex=='true'
+   vals = [ ont.search(pat, regex) for name, ont in core.onts.items () ]
+   vals = [ term for term_list in vals for term in term_list ] 
    return jsonify ({ "values" : vals })
      
 @app.route('/xrefs/<curie>')
@@ -204,6 +206,31 @@ def xrefs (curie):
        "xrefs"     : [ x.split(' ')[0] if ' ' in x else x for x in ont.xrefs (curie) ]
    } if ont else {})
 
+
+@app.route('/lookup/<curie>')
+def lookup (curie):
+   """ Get ids for which this curie is an external reference.
+   ---
+   parameters:
+     - name: curie
+       in: path
+       type: string
+       required: true
+       default: "OMIM:143100"
+       description: "Curie designating an external reference."
+       x-valueType:
+         - http://schema.org/string
+       x-requestTemplate:
+         - valueType: http://schema.org/string
+           template: /lookup/{{ curie }}/
+   responses:
+     200:
+       description: ...
+   """
+   core = get_core ()
+   return jsonify ({
+       "refs" : [ ref for name, ont in core.onts.items() for ref in ont.lookup (curie) ]
+   })
      
 @app.route('/synonyms/<curie>/')
 def synonyms (curie):

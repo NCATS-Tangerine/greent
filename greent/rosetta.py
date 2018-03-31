@@ -40,8 +40,6 @@ class Rosetta:
                  override={},
                  delete_type_graph=False,
                  init_db=False,
-                 redis_host=None,
-                 redis_port=None,
                  debug=False):
 
         """ The constructor loads the config file an prepares the type graph.
@@ -62,11 +60,15 @@ class Rosetta:
             self.config = yaml.load(stream)
         self.operators = self.config["@operators"]
 
+        # Abbreviation
+        self.cache = self.core.service_context.cache
+        '''
         redis_conf = self.core.service_context.config.conf.get ("redis", None)
         self.cache = Cache (
-            redis_host = redis_host if redis_host else redis_conf.get ("host"),
-            redis_port = redis_port if redis_port else redis_conf.get ("port"))
-
+            redis_host = redis_conf.get ("host"),
+            redis_port = redis_conf.get ("port"))
+        '''
+        
         """ Initialize type graph. """
         self.type_graph = TypeGraph(self.core.service_context, debug=debug)
         self.synonymizer = Synonymizer( self.type_graph.concept_model, self )
@@ -480,9 +482,7 @@ def parse_args (args):
     parser.add_argument('--initialize-type-graph',
                         help='Build the graph of types and semantic transitions between them.',
                         action="store_true", default=False)
-    parser.add_argument('-d', '--redis-host', help='Redis server hostname.', default=None)
-    parser.add_argument('-s', '--redis-port', help='Redis server port.', default=None)
-    parser.add_argument('-t', '--test', help='Redis server port.', action="store_true", default=False)
+    parser.add_argument('-t', '--test', help='Run tests.', action="store_true", default=False)
     parser.add_argument('-c', '--conf', help='GreenT config file to use.', default=None)
     return parser.parse_args(args)
 
