@@ -87,9 +87,6 @@
         op    : biolink.gene_get_disease
       - link  : gene_to_disease
         op    : hetio.gene_to_disease
-    genetic_condition:
-      - link  : gene_to_genetic_condition
-        op    : biolink.gene_get_genetic_condition
     chemical_substance:
       - link  : gene_to_drug
         op    : ctd.gene_to_drug
@@ -128,4 +125,5 @@
         op    : uberongraph.get_anatomy_by_phenotype_graph
 
 '@type_checks':
-  genetic_condition: mondo.disease_is_genetic_condition
+  genetic_condition: mondo.is_genetic_disease
+  cell: typecheck.is_cell

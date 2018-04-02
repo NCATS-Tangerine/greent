@@ -4,6 +4,7 @@ from greent.ontologies.go import GO
 from greent.ontologies.hpo import HPO
 from greent.ontologies.mondo import Mondo
 from greent.services.biolink import Biolink
+from greent.services.caster import Caster
 from greent.services.chembio import ChemBioKS
 from greent.services.chemotext import Chemotext
 from greent.services.ctd import CTD
@@ -13,6 +14,7 @@ from greent.services.oxo import OXO
 from greent.services.pharos import Pharos
 from greent.services.quickgo import QuickGo
 from greent.services.tkba import TranslatorKnowledgeBeaconAggregator
+from greent.services.typecheck import TypeCheck
 from greent.services.uberongraph import UberonGraphKS
 from greent.services.unichem import UniChem
 from greent.service import ServiceContext
@@ -30,6 +32,7 @@ class GreenT:
         service_context = self.service_context
         self.translator_registry = None
         self.lazy_loader = {
+            "caster"           : lambda :  Caster(self.service_context, self),
             "chembio"          : lambda :  ChemBioKS (self.service_context),
             "chemotext"        : lambda :  Chemotext (self.service_context),
             "pharos"           : lambda :  Pharos (self.service_context),
@@ -44,7 +47,8 @@ class GreenT:
             "hgnc"             : lambda :  HGNC(self.service_context),
             "uberongraph"      : lambda :  UberonGraphKS(self.service_context),
             "ctd"              : lambda :  CTD(self.service_context),
-            "unichem"          : lambda :  UniChem(self.service_context)
+            "unichem"          : lambda :  UniChem(self.service_context),
+            "typecheck"        : lambda :  TypeCheck(self.service_context)
         }
         
     def get_config_val(self, key):
