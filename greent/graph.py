@@ -35,7 +35,9 @@ class TypeGraph(Service):
             logger.setLevel(logging.DEBUG)
         self.initialize_connection()
         self.type_to_concept = {}
-        self.edges = defaultdict(list)
+        self.edges_by_source = defaultdict(list)
+        self.edges_by_target = defaultdict(list)
+        self.base_op_to_concepts = defaultdict(list)
         self.concept_model_name = concept_model_name
         self.set_concept_model()
         self.TYPE = "Type"
@@ -109,7 +111,7 @@ class TypeGraph(Service):
                     name_b=name, type_b=self.TYPE)
         return n
 
-    def add_concepts_edge(self, a, b, predicate, op):
+    def add_concepts_edge(self, a, b, predicate, op, base_op = None):
         """ Add an edge between two concepts. Include the operation to call to effect the transition. """
         a_concept = self.concept_model.get(a)
         b_concept = self.concept_model.get(b)
@@ -125,9 +127,12 @@ class TypeGraph(Service):
                                         "enabled": True
                                     },
                                     name_b=b_concept.name, type_b=self.CONCEPT)
-        edge = {'source': a_concept.name, 'target': b_concept.name, 'predicate': predicate, 'op': op}
-        self.edges[a_concept.name].append(edge)
-        self.edges[b_concept.name].append(edge)
+        if base_op == None:
+            base_op = op
+        edge = {'source': a_concept.name, 'target': b_concept.name, 'predicate': predicate, 'op': op, 'base_op': base_op}
+        self.edges_by_source[a_concept.name].append(edge)
+        self.edges_by_target[b_concept.name].append(edge)
+        self.base_op_to_concepts[base_op].append( (a_concept.name, b_concept.name) )
         return edge
 
     def _find_or_create_concept(self, concept):
@@ -152,13 +157,12 @@ class TypeGraph(Service):
         #But for now, let's try to keep it in check
         #This is one way to do it, but we could swap it with something more complex
         usable_concepts = self.get_concepts_with_edges()
-        children,push_ups = self._push_up(type_check_functions,usable_concepts)
-        self._pull_down(children, type_check_functions, push_ups)
+        children= self._push_up(type_check_functions,usable_concepts)
+        self._pull_down(children, type_check_functions )
 
     def _push_up(self, type_check_functions, usable_concepts):
         this_level = self.concept_model.get_leaves()
         children = defaultdict(list)
-        push_ups = defaultdict(list)
         while len(this_level) > 0:
             next_level = set()
             for concept in this_level:
@@ -170,57 +174,58 @@ class TypeGraph(Service):
                 if parent.name not in usable_concepts:
                     continue
                 # push up functions that are taking or returning the child concept
-                for edge in self.edges[concept.name]:
+                for edge in self.edges_by_source[concept.name]:
                     op = edge['op']
                     if not op.startswith('caster.'):
                         op = self.create_caster_op(op)
-                    if edge['target'] == concept.name:
-                        # returning child concept
-                        newop = self.wrap_op('upcast', op, parent.name)
-                        newedge = self.add_concepts_edge(edge['source'], parent.name, edge['predicate'], newop)
-                    elif edge['source'] == concept.name:
-                        # taking child concept
-                        # if we have a way to filter inputs we can use it, but if not, we can just call
-                        # the function and see if it works...
-                        if concept.name in type_check_functions:
-                            newop = self.wrap_op('input_filter', op, concept.name, type_check_functions[concept.name])
-                        else:
-                            newop = self.wrap_op('input_filter', op, concept.name)
-                        newedge = self.add_concepts_edge(parent.name, edge['target'], edge['predicate'], newop)
+                    if concept.name in type_check_functions:
+                        newop = self.wrap_op('input_filter', op, concept.name, type_check_functions[concept.name])
                     else:
-                        print(edge['source'])
-                        print(concept.name)
-                        exit()
-                    push_ups[str(newedge)].append(concept.name)
+                        newop = self.wrap_op('input_filter', op, concept.name)
+                    if (parent.name, edge['target']) in self.base_op_to_concepts[edge['base_op']]:
+                        continue #already have it, don't need it again
+                    newedge = self.add_concepts_edge(parent.name, edge['target'], edge['predicate'], newop, edge['base_op'])
+                for edge in self.edges_by_target[concept.name]:
+                    op = edge['op']
+                    if not op.startswith('caster.'):
+                        op = self.create_caster_op(op)
+                    newop = self.wrap_op('upcast', op, parent.name)
+                    if (edge['source'],parent.name) in self.base_op_to_concepts[edge['base_op']]:
+                        continue #already have it, don't need it again
+                    newedge = self.add_concepts_edge(edge['source'], parent.name, edge['predicate'], newop, edge['base_op'])
             this_level = next_level
-        return children,push_ups
+        return children
 
-    def _pull_down(self, children_dict, type_check_functions, push_ups):
+    def _pull_down(self, children_dict, type_check_functions):
         this_level = self.concept_model.get_roots()
         while len(this_level) > 0:
             next_level = set()
             for concept in this_level:
                 children = children_dict[concept]
                 next_level.update(children)
-                for edge in self.edges[concept.name]:
+                for edge in self.edges_by_source[concept.name]:
                     op = edge['op']
                     if not op.startswith('caster.'):
                         op = self.create_caster_op(op)
                     for child in children:
-                        if child.name in push_ups[str(edge)]:
-                            #Pushed this edge up, now trying to push it right back down
+                        if child.name == 'cell':
+                            print(f'{child.name}-{edge["target"]} {edge["base_op"]} {self.base_op_to_concepts[edge["base_op"]]}')
+                        if (child.name,edge['target']) in self.base_op_to_concepts[edge['base_op']]:
+                            continue #already have it, don't need it again
+                        # taking parent, nothing else really required
+                        newedge = self.add_concepts_edge(child.name, edge['target'], edge['predicate'], edge['op'], edge['base_op'])
+                for edge in self.edges_by_target[concept.name]:
+                    op = edge['op']
+                    if not op.startswith('caster.'):
+                        op = self.create_caster_op(op)
+                    for child in children:
+                        if (edge['source'],child.name) in self.base_op_to_concepts[edge['base_op']]:
                             continue
-                        if edge['target'] == concept.name:
-                            # returning parent
-                            # Can only do this if I know how to filter.
-                            try:
-                                newop = self.wrap_op('output_filter', op, child.name, type_check_functions[child.name])
-                                self.add_concepts_edge(edge['source'], child.name, edge['predicate'], newop)
-                            except KeyError:
-                                pass
-                        elif edge['source'] == concept.name:
-                            # taking parent, nothing else really required
-                            edge = self.add_concepts_edge(child.name, edge['target'], edge['predicate'], edge['op'])
+                        try:
+                            newop = self.wrap_op('output_filter', op, child.name, type_check_functions[child.name])
+                            self.add_concepts_edge(edge['source'], child.name, edge['predicate'], newop, edge['base_op'])
+                        except KeyError:
+                            pass
             this_level = next_level
 
     def wrap_op(self, func, op, arg1, arg2=None):
@@ -321,7 +326,10 @@ class TypeGraph(Service):
         return programs
 
     def get_concepts_with_edges(self):
-        return list( self.edges.keys() )
+        sedges = set(self.edges_by_source.keys())
+        tedges = set(self.edges_by_target.keys())
+        sedges.update(tedges)
+        return list(sedges)
 
 
 class Operator:
