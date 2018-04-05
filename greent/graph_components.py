@@ -111,6 +111,7 @@ class KNode():
         '''
         for key in self.properties:
             j[key] = self.properties[key]
+        self.properties['id'] = id(self)
         return j
 
     def get_shortname(self):

@@ -1,5 +1,4 @@
 from greent.service import Service
-from greent.service import ServiceContext
 from ontobio.ontol_factory import OntologyFactory
 from greent.graph_components import KNode, KEdge
 from greent.util import LoggingUtil

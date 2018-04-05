@@ -17,7 +17,6 @@ from greent.concept import ConceptModel
 from greent.identifiers import Identifiers
 from greent.node_types import node_types
 from greent.service import Service
-from greent.service import ServiceContext
 from greent.util import LoggingUtil
 from greent.util import Resource
 from greent.util import DataStructure
@@ -333,7 +332,7 @@ class TranslatorRegistry(Service):
         return subscriptions
 
 treg = None
-
+'''
 def test_build_registry ():
     """ Verify we can load the registry and generate subscriptions."""
     global treg
@@ -368,7 +367,9 @@ def test_biolink_disease_gene_doid ():
 if __name__ == "__main__":
     test_biolink_disease_gene_omim ()
     test_biolink_disease_gene_doid ()
-    
+'''
+
+
 '''
 1. [done] Remove rosetta as a dependency.
 2. Implement curie - iri functionality in a common place.

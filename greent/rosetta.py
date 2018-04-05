@@ -10,7 +10,8 @@ import traceback
 import yaml
 from collections import defaultdict
 from greent.cache import Cache
-from greent.core import GreenT
+#from greent.core import GreenT
+from greent.servicecontext import ServiceContext
 from greent.graph import Frame
 from greent.graph import Operator
 from greent.graph import TypeGraph
@@ -37,11 +38,8 @@ class Rosetta:
 
     def __init__(self, greentConf=None,
                  config_file=os.path.join(os.path.dirname(__file__), "rosetta.yml"),
-                 override={},
                  delete_type_graph=False,
                  init_db=False,
-                 redis_host=None,
-                 redis_port=None,
                  debug=False):
 
         """ The constructor loads the config file an prepares the type graph.
@@ -51,25 +49,27 @@ class Rosetta:
         self.debug = False
 
         logger.debug("-- rosetta init.")
-
+        '''
         logger.info (f"Loading configuration: {greentConf}")
         if not greentConf:
             greentConf = "greent.conf"
         self.core = GreenT(config=greentConf, override=override)
-
+        '''
+        self.service_context = ServiceContext (greentConf)
+        self.core = self.service_context.core
+        
         """ Load configuration. """
         with open(config_file, 'r') as stream:
             self.config = yaml.load(stream)
         self.operators = self.config["@operators"]
         self.type_checks = self.config["@type_checks"]
 
-        redis_conf = self.core.service_context.config.conf.get ("redis", None)
-        self.cache = Cache (
-            redis_host = redis_host if redis_host else redis_conf.get ("host"),
-            redis_port = redis_port if redis_port else redis_conf.get ("port"))
-
+        # Abbreviation
+        self.cache = self.service_context.cache #core.service_context.cache
+        
         """ Initialize type graph. """
-        self.type_graph = TypeGraph(self.core.service_context, debug=debug)
+        #self.type_graph = TypeGraph(self.core.service_context, debug=debug)
+        self.type_graph = TypeGraph(self.service_context, debug=debug)
         self.synonymizer = Synonymizer( self.type_graph.concept_model, self )
 
         """ Merge identifiers.org vocabulary into Rosetta voab. """
@@ -307,8 +307,9 @@ class Rosetta:
 
     def get_knowledge_graph (self, inputs, query, ends=None):
         """ Handles two sided queries and direction changes. """
-        print (query)
-        print (inputs)
+        print (f"query: {query}")
+        print (f"inputs: {inputs}")
+        print (f"ends:   {ends}")
         graph = []
         query_definition = QueryDefinition ()
         query_definition.start_type = inputs["type"]
@@ -444,7 +445,31 @@ def test_two_sided_query(rosetta):
         RETURN p, EXTRACT( r in relationships(p) | startNode(r) )"""
     })
 
+
+def test_ebola(rosetta):
+    b = rosetta.get_knowledge_graph (**{
+        "inputs" : {
+            "type"   : "disease",
+            "values" : rosetta.n2disease("ebola")
+        },
+        "ends" : None,
+        "query" :
+        """MATCH p=
+        (c0:Concept {name: "disease" })
+        --
+        (c1:Concept {name: "gene" })
+        --
+        (c2:Concept {name: "disease" })
+        FOREACH (n in relationships(p) | SET n.marked = TRUE)
+        WITH p,c0,c2
+        MATCH q=(c0:Concept)-[*0..2 {marked:True}]->(c2:Concept)
+        WHERE p=q
+        AND ALL( r in relationships(p) WHERE  EXISTS(r.op) )FOREACH (n in relationships(p) | SET n.marked = FALSE)
+        RETURN p"""
+    })
+    
 def run_test_suite (rosetta):
+#    test_ebola(rosetta)
     test_two_sided_query (rosetta)
 #    test_disease_gene (rosetta)
 #    test_drug_pathway(rosetta)
@@ -458,9 +483,7 @@ def parse_args (args):
     parser.add_argument('--initialize-type-graph',
                         help='Build the graph of types and semantic transitions between them.',
                         action="store_true", default=False)
-    parser.add_argument('-d', '--redis-host', help='Redis server hostname.', default=None)
-    parser.add_argument('-s', '--redis-port', help='Redis server port.', default=None)
-    parser.add_argument('-t', '--test', help='Redis server port.', action="store_true", default=False)
+    parser.add_argument('-t', '--test', help='Run tests.', action="store_true", default=False)
     parser.add_argument('-c', '--conf', help='GreenT config file to use.', default=None)
     return parser.parse_args(args)
 

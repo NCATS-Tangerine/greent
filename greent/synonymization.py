@@ -38,9 +38,9 @@ class Synonymizer:
             key = f"synonymize({node.identifier})"
             synonyms = self.rosetta.cache.get (key)
             if synonyms is not None:
-                logger.info (f"cache hit: {key}")
+                logger.debug (f"cache hit: {key}")
             else:
-                logger.info (f"exec op: {key}")
+                logger.debug (f"exec op: {key}")
                 synonyms = synonymizers[node.node_type].synonymize(node, self.rosetta.core)
                 self.rosetta.cache.set (key, synonyms)
             node.add_synonyms(synonyms)

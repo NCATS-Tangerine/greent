@@ -1,8 +1,11 @@
 import json
 
 from greent.ontologies.go import GO
+from greent.ontologies.go2 import GO2
 from greent.ontologies.hpo import HPO
+from greent.ontologies.hpo2 import HPO2
 from greent.ontologies.mondo import Mondo
+from greent.ontologies.mondo2 import Mondo2
 from greent.services.biolink import Biolink
 from greent.services.caster import Caster
 from greent.services.chembio import ChemBioKS
@@ -10,6 +13,7 @@ from greent.services.chemotext import Chemotext
 from greent.services.ctd import CTD
 from greent.services.hetio import HetIO
 from greent.services.hgnc import HGNC
+from greent.services.onto import Onto
 from greent.services.oxo import OXO
 from greent.services.pharos import Pharos
 from greent.services.quickgo import QuickGo
@@ -17,7 +21,7 @@ from greent.services.tkba import TranslatorKnowledgeBeaconAggregator
 from greent.services.typecheck import TypeCheck
 from greent.services.uberongraph import UberonGraphKS
 from greent.services.unichem import UniChem
-from greent.service import ServiceContext
+#from greent.service import ServiceContext
 from greent.util import LoggingUtil
 
 logger = LoggingUtil.init_logging (__file__)
@@ -27,10 +31,16 @@ class GreenT:
     ''' The Green Translator API - a single Python interface aggregating access mechanisms for 
     all Green Translator services. '''
 
-    def __init__(self, config=None, override={}):
+    '''
+    def __init__(self, config=None):
         self.service_context = ServiceContext.create_context (config)
-        service_context = self.service_context
         self.translator_registry = None
+        self.ont_api = self.service_context.config.conf.get("system",{}).get("generic_ontology_service", "false")
+    '''
+    def __init__(self, context):
+        self.translator_registry = None
+        self.ont_api = context.config.conf.get("system",{}).get("generic_ontology_service", "false")
+        self.service_context = context
         self.lazy_loader = {
             "caster"           : lambda :  Caster(self.service_context, self),
             "chembio"          : lambda :  ChemBioKS (self.service_context),
@@ -39,9 +49,9 @@ class GreenT:
             "oxo"              : lambda :  OXO (self.service_context),
             "hetio"            : lambda :  HetIO (self.service_context),
             "biolink"          : lambda :  Biolink (self.service_context),
-            "mondo"            : lambda :  Mondo(self.service_context),
-            "hpo"              : lambda :  HPO (self.service_context),
-            "go"               : lambda :  GO(self.service_context),
+            "mondo"            : lambda :  Mondo2(self.service_context) if self.ont_api else Mondo(self.service_context),
+            "hpo"              : lambda :  HPO2 (self.service_context) if self.ont_api else HPO (self.service_context),
+            "go"               : lambda :  GO2(self.service_context) if self.ont_api else GO(self.service_context),
             "tkba"             : lambda :  TranslatorKnowledgeBeaconAggregator (self.service_context),
             "quickgo"          : lambda :  QuickGo (self.service_context),
             "hgnc"             : lambda :  HGNC(self.service_context),
@@ -51,9 +61,6 @@ class GreenT:
             "typecheck"        : lambda :  TypeCheck(self.service_context)
         }
         
-    def get_config_val(self, key):
-        print (f"{self.service_context.config}")
-        return self.service_context.config.conf.get (key, None)
 
     def __getattribute__(self, attr):
         """ Intercept all attribute accesses. Instantiate services on demand. """

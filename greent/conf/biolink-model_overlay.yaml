@@ -1,0 +1,19 @@
+id: "http://bioentity.io/json-schema/biolink.json"
+name: biolink model (gamma)
+description: Entity and association taxonomy and datamodel for life-sciences data (Gamma Overlay)
+
+slots:
+  
+  - name: test-gamma
+    is_a: anatomical entity
+    id_prefixes:
+      - CL
+    mappings:
+      - "GO:0005623"
+      - "SIO:010001"
+      
+  - name: gross anatomical structure
+    aliases: ['tissue', 'organ']
+    is_a: anatomical entity
+      
+  

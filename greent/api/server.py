@@ -7,7 +7,7 @@ import shutil
 try:
    from smartBag.grok import SemanticCrunch
 except:
-   print ("smartbag not in path")
+   print ("smartbag not in path. skipping import.")
 from greent.rosetta import Rosetta
 from greent import node_types
 from greent.graph_components import KNode,KEdge,elements_to_json
@@ -18,19 +18,17 @@ app = Flask(__name__)
 template = {
   "swagger": "2.0",
   "info": {
-    "title": "X-API",
-    "description": "API for X data",
+    "title": "Rosetta",
+    "description": "A Knowledge Map API",
     "contact": {
-      "responsibleOrganization": "x-org",
-      "responsibleDeveloper": "x-dev",
-      "email": "x@x.org",
-      "url": "www.x.org",
+      "responsibleOrganization": "renci.org",
+      "responsibleDeveloper": "scox@renci.org",
+      "email": "scox@renci.org",
+      "url": "www.renci.org",
     },
-    "termsOfService": "http://x.org/terms",
+    "termsOfService": "http://renci.org/terms",
     "version": "0.0.1"
   },
-#  "host": "host.x",  # overrides localhost:500
-#  "basePath": "/api",  # base bash for blueprint registration
   "schemes": [
     "http",
     "https"
@@ -43,6 +41,44 @@ app.config['SWAGGER'] = {
 
 swagger = Swagger(app, template=template)
 
+def get_associated_disease (name):
+   """ Get identifiers for a disease name. """ 
+   result = []
+   obj = requests.get (f"https://solr.monarchinitiative.org/solr/search/select/?q=%22{name}&rows=20&defType=edismax&hl=true&qt=standard&indent=on&wt=json&hl.simple.pre=%3Cem%20class=%22hilite%22%3E&hl.snippets=1&qf=synonym^1&qf=synonym_std^1&qf=synonym_kw^1&qf=synonym_eng^1").json()
+   docs = obj.get('response',{}).get('docs',[])
+   for doc in docs:
+      if doc.get('prefix',None) in [ 'MONDO', 'DOID', 'OMIM' ]:
+         result.append (doc.get('id_std', None))
+   return result
+
+def node2json (node):
+   return {
+      "identifier" : node.identifier,
+      "type"       : f"blm:{node.node_type}",
+      "id"         : id(node)
+   } if node else None
+
+def render_graph (blackboard):
+   """ Turn a blackboard into json. Work towards a unique key for node. """
+   edges = []
+   nodes = {}
+   for e in blackboard:
+      if not e: # or not e.source_node or not e.target_node:
+         continue
+      if not 'stdprop' in e.properties:
+         e.properties['stdprop'] = {}
+      e.properties['stdprop']['subj'] = id(e.source_node)
+      e.properties['stdprop']['obj'] = id(e.target_node)
+      edges.append (e)
+      #print (f"============> edge: {e}")
+      #print (f"============> node : {e.source_node}")
+      nodes[id(e.source_node)] = e.source_node
+      nodes[id(e.target_node)] = e.target_node
+   return {
+      "edges" : [ elements_to_json(e) for e in blackboard ],
+      "nodes" : [ node2json(n) for n in nodes.values () ]
+   }
+
 rosetta = None
 def get_rosetta ():
    global rosetta
@@ -51,7 +87,7 @@ def get_rosetta ():
       rosetta = Rosetta (debug=True, greentConf=config)
    return rosetta
 
-@app.route('/cop/')
+@app.route('/cop/', methods=['GET'])
 def cop (drug="imatinib", disease="asthma"):
    """ Get service metadata 
    ---
@@ -80,30 +116,39 @@ def cop (drug="imatinib", disease="asthma"):
      200:
        description: ...
    """
-   return jsonify (
-      get_rosetta().construct_knowledge_graph(**{
+
+   rosetta = get_rosetta ()
+   drug_id = rosetta.n2chem(drug)
+   disease_id = get_associated_disease(disease)
+   g = {}
+   key = f"cop-drug({drug})-disease({disease})"
+   g = rosetta.service_context.cache.get (key)
+   if not g:
+      blackboard = rosetta.get_knowledge_graph(**{
          "inputs" : {
-            "disease" : [
-               disease
-            ]
-         },            
-         "query" :
-         """MATCH (a:disease),(b:gene), p = allShortestPaths((a)-[*]->(b))
-         WHERE NONE (r IN relationships(p) WHERE type(r) = 'UNKNOWN' OR r.op is null) 
-         RETURN p"""
-      }) +
-      get_rosetta().construct_knowledge_graph(**{
-         "inputs" : {
-            "drug" : [
-               drug
-            ]
-         },            
-         "query" :
-         """MATCH (a:drug),(b:gene), p = allShortestPaths((a)-[*]->(b))
-         WHERE NONE (r IN relationships(p) WHERE type(r) = 'UNKNOWN' OR r.op is null) 
-         RETURN p"""
+            "type" : "chemical_substance",
+            "values" : drug_id
+         },
+         "ends" : disease_id,
+         "query" : """
+         MATCH p=
+         (c0:Concept {name: "chemical_substance" })--
+         (c1:Concept {name: "gene" })--
+         (c2:Concept {name: "biological_process" })--
+         (c3:Concept {name: "cell" })--
+         (c4:Concept {name: "anatomical_entity" })--
+         (c5:Concept {name: "phenotypic_feature" })--
+         (c6:Concept {name: "disease" })
+         FOREACH (n in relationships(p) | SET n.marked = TRUE)
+         WITH p,c0,c6
+         MATCH q=(c0:Concept)-[*0..6 {marked:True}]->()<-[*0..6 {marked:True}]-(c6:Concept)
+         WHERE p=q
+         AND ALL( r in relationships(p) WHERE  EXISTS(r.op) )FOREACH (n in relationships(p) | SET n.marked = FALSE)
+         RETURN p, EXTRACT( r in relationships(p) | startNode(r) )"""
       })
-   )
+      g = render_graph(blackboard)
+      rosetta.service_context.cache.set (key, g)
+   return jsonify (g)
 
 @app.route('/query/<inputs>/<query>')
 def query (inputs, query):
@@ -123,14 +168,17 @@ def query (inputs, query):
            template: /query?inputs={{ input }}
      - name: query
        in: path
-       type: string
+       type: array
        required: true
+       items:
+         type: string
        description: A cypher query over the biolink-model concept space returning a shortest path.
        default: >
          MATCH (a:drug),(b:pathway), p = allShortestPaths((a)-[*]->(b)) 
          WHERE NONE (r IN relationships(p)
-         WHERE type(r)=UNKNOWN OR r.op is null)
-         RETURN p'
+         WHERE type(r)="UNKNOWN"
+         OR r.op is null)
+         RETURN p
        x-valueType:
          - http://schema.org/string
        x-requestTemplate:
@@ -146,33 +194,15 @@ def query (inputs, query):
       raise ValueError ("Inputs must be key value of concept=<comma separated ids>")   
    concept, items =inputs.split ("=")
    query = query.replace ("UNKNOWN", "'UNKNOWN'")
-   args = {
-         "inputs" : {
-            concept : items.split (",")
-         },
-         "query"  : query
-   }
-   print (f" args => {json.dumps (args, indent=2)}")
-   blackboard = get_rosetta().construct_knowledge_graph(**args)
-   
-   nodes = set([ e.target_node for e in blackboard ] + [ e.source_node for e in blackboard ])
-   ''' Do we really need different ids here?
-   node_ids = {}
-   for i, n in enumerate(nodes):
-      node_ids[n.identifier] = i
-   '''
-   # propagate this back to an edge standard.
-   for e in blackboard:
-      if not 'stdprop' in e.properties:
-         e.properties['stdprop'] = {}
-      e.properties['stdprop']['src'] = e.source_node.identifier
-      e.properties['stdprop']['dst'] = e.target_node.identifier
-
-   return jsonify ({
-      "edges" : [ elements_to_json(e) for e in blackboard ],
-      "nodes" : [ elements_to_json(e) for e in nodes ]
+   blackboard = get_rosetta().construct_knowledge_graph(**{
+      "inputs" : {
+         concept : items.split (",")
+      },
+      "query"  : query
    })
-    
+   return jsonify(render_graph(blackboard))
+
+'''
 @app.route('/smartbag/compile/<bag_url>/')
 def smartbag_compile (bag_url):
    """ Given a smartBag URL, fetch the bag and compile it to a smartAPI.
@@ -219,6 +249,7 @@ def smartbag_compile (bag_url):
       output_dir=out_dir,
       title="TODO-Title")
    return jsonify(manifest)
+'''
 
 if __name__ == "__main__":
    print ("""

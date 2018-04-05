@@ -27,17 +27,7 @@ class LoggingUtil(object):
         logger.addHandler(handler)
         logger.setLevel(level)
         return logger
-    
-        '''
-        logger = None
-        global loggers
-        if name in loggers:
-            logger = loggers[name]
-        else:
-            loggers[name] = logger
-        return logger
-        '''
-        
+
 class Munge(object):
     @staticmethod
     def gene (gene):

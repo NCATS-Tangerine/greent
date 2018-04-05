@@ -16,6 +16,7 @@ def synonymize(node,gt):
     return synonyms
 
 def synonymize_with_MONDO(node,gt):
+    print (f" class of mondo: {type(gt.mondo)}")
     syns = set(gt.mondo.mondo_get_doid( node.identifier ))
     syns.update( set(gt.mondo.mondo_get_umls( node.identifier )))
     syns.update( set(gt.mondo.mondo_get_efo( node.identifier )))

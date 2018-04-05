@@ -1,7 +1,6 @@
 import requests
 import json
 from greent.service import Service
-from greent.service import ServiceContext
 
 class Neo4JREST(Service):
     """ Speak to Neo4J via REST. """

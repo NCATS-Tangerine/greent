@@ -3,6 +3,7 @@ import logging
 import operator
 import os
 import pickle
+import requests
 import redis
 import traceback
 from greent.util import LoggingUtil
@@ -42,7 +43,7 @@ class Cache:
             logger.info(f"Cache connected to redis at {redis_host}:{redis_port}")
         except:
             self.redis = None
-            logger.debug (traceback.format_exc ())
+            #logger.debug (traceback.format_exc ())
             logger.error(f"Failed to connect to redis at {redis_host}:{redis_port}.")
         self.cache_path = cache_path
         if not os.path.exists (self.cache_path):
@@ -52,6 +53,8 @@ class Cache:
         
     def get(self, key):
         """ Get a cached item by key. """
+        #if any(map(lambda v : v in key.lower(), [ "go:", "mondo:", "hp:" ])):
+        #    return None
         result = None
         if self.enabled:
             if key in self.cache:
@@ -80,4 +83,3 @@ class Cache:
                 with open(path, 'wb') as stream:
                     stream.write (self.serializer.dumps (value))
                 self.cache[key] = value
-                    

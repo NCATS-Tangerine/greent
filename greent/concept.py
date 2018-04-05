@@ -89,6 +89,15 @@ class ConceptModelLoader:
         self.model = concept_model
         model_path = os.path.join (os.path.dirname (__file__), "conf", f"{self.name}.yaml")
         model_obj = Resource.load_yaml (model_path)
+
+
+        model_overlay_path = model_path.replace (".yaml", "_overlay.yaml")
+        if os.path.exists (model_overlay_path):
+            model_overlay = Resource.load_yaml (model_overlay_path)
+            model_obj.update (model_overlay)
+        #print (json.dumps (model_obj, indent=2))
+        
+
         for obj in model_obj["classes"]:
             concept = self.parse_item (obj)
             self.model.add_item (concept)
