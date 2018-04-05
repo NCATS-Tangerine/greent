@@ -175,21 +175,17 @@ class TypeGraph(Service):
                     continue
                 # push up functions that are taking or returning the child concept
                 for edge in self.edges_by_source[concept.name]:
-                    op = edge['op']
-                    if not op.startswith('caster.'):
-                        op = self.create_caster_op(op)
+                    cop = self.create_caster_op(edge['op'])
                     if concept.name in type_check_functions:
-                        newop = self.wrap_op('input_filter', op, concept.name, type_check_functions[concept.name])
+                        newop = self.wrap_op('input_filter', cop, concept.name, type_check_functions[concept.name])
                     else:
-                        newop = self.wrap_op('input_filter', op, concept.name)
+                        newop = self.wrap_op('input_filter', cop, concept.name)
                     if (parent.name, edge['target']) in self.base_op_to_concepts[edge['base_op']]:
                         continue #already have it, don't need it again
                     newedge = self.add_concepts_edge(parent.name, edge['target'], edge['predicate'], newop, edge['base_op'])
                 for edge in self.edges_by_target[concept.name]:
-                    op = edge['op']
-                    if not op.startswith('caster.'):
-                        op = self.create_caster_op(op)
-                    newop = self.wrap_op('upcast', op, parent.name)
+                    cop = self.create_caster_op(edge['op'])
+                    newop = self.wrap_op('upcast', cop, parent.name)
                     if (edge['source'],parent.name) in self.base_op_to_concepts[edge['base_op']]:
                         continue #already have it, don't need it again
                     newedge = self.add_concepts_edge(edge['source'], parent.name, edge['predicate'], newop, edge['base_op'])
@@ -204,25 +200,18 @@ class TypeGraph(Service):
                 children = children_dict[concept]
                 next_level.update(children)
                 for edge in self.edges_by_source[concept.name]:
-                    op = edge['op']
-                    if not op.startswith('caster.'):
-                        op = self.create_caster_op(op)
                     for child in children:
-                        if child.name == 'cell':
-                            print(f'{child.name}-{edge["target"]} {edge["base_op"]} {self.base_op_to_concepts[edge["base_op"]]}')
                         if (child.name,edge['target']) in self.base_op_to_concepts[edge['base_op']]:
                             continue #already have it, don't need it again
                         # taking parent, nothing else really required
                         newedge = self.add_concepts_edge(child.name, edge['target'], edge['predicate'], edge['op'], edge['base_op'])
                 for edge in self.edges_by_target[concept.name]:
-                    op = edge['op']
-                    if not op.startswith('caster.'):
-                        op = self.create_caster_op(op)
+                    cop = self.create_caster_op(edge['op'])
                     for child in children:
                         if (edge['source'],child.name) in self.base_op_to_concepts[edge['base_op']]:
                             continue
                         try:
-                            newop = self.wrap_op('output_filter', op, child.name, type_check_functions[child.name])
+                            newop = self.wrap_op('output_filter', cop, child.name, type_check_functions[child.name])
                             self.add_concepts_edge(edge['source'], child.name, edge['predicate'], newop, edge['base_op'])
                         except KeyError:
                             pass
@@ -238,6 +227,8 @@ class TypeGraph(Service):
         return wrapped
 
     def create_caster_op(self, oldop):
+        if oldop.startswith('caster'):
+            return oldop
         return 'caster.{}'.format('~'.join(oldop.split('.')))
 
     def run_cypher_query(self, query):
