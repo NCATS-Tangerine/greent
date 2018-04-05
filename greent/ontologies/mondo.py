@@ -103,9 +103,12 @@ class Mondo(Service):
                     return_objects.append( obj_id )
         return len(return_objects) > 0, return_objects
 
+#    def disease_is_genetic_condition(self, node):
+#        return self.is_genetic_disease(node.identifier)
+
     def is_genetic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:630 as an ancestor"""
-        return self.has_ancestor(obj, GENETIC_DISEASE)
+        return self.has_ancestor(obj, GENETIC_DISEASE)[0]
 
     def is_monogenic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:0050177 as an ancestor"""

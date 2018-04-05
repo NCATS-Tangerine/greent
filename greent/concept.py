@@ -3,16 +3,21 @@ import os
 from greent.util import Resource
 from collections import defaultdict
 
+#TODO: should all of this be done with some sort of canned semantic tools?
 class Concept:
     """ A semantic type or concept. A high level idea comprising one or more identifier namespace.
     Provides rudimentary notion of specialization via is_a. """
     def __init__(self, name, is_a, id_prefixes):
         self.name = name
+        #Only a single parent?
         self.is_a = is_a
         is_a_name = is_a.name if is_a else None
         self.id_prefixes = [] if id_prefixes is None else id_prefixes
     def __repr__(self):
         return f"Concept(name={self.name},is_a={self.is_a is not None},id_prefixes={self.id_prefixes})"
+        #return f"Concept(name={self.name},is_a={self.is_a},id_prefixes={self.id_prefixes})"
+
+
 class ConceptModel:
     """ A grouping of concepts.
     Should ultimately be generalizable to different concept models. We begin with the biolink-model. """
@@ -64,6 +69,19 @@ class ConceptModel:
         ordered = sorted(possible_concepts.items (), key=lambda item: item[1])
         return ordered[0][0] if len(ordered) > 0 else None
 
+    def get_leaves(self):
+        """Return all concepts that are not parents of another concept"""
+        leaves = set( self.by_name.values() )
+        for concept_name, concept in self.by_name.items():
+            if concept.is_a is not None:
+                leaves.discard(concept.is_a)
+        return leaves
+
+    def get_roots(self):
+        """Return all concepts that are parents but do not have parents"""
+        parents = set( [concept.is_a for name,concept in self.by_name.items()] )
+        return list(filter( lambda x: x is not None and x.is_a is None, parents))
+
 class ConceptModelLoader:
 
     def __init__(self, name, concept_model):
@@ -97,6 +115,3 @@ class BiolinkConceptModelLoader (ConceptModelLoader):
         id_prefixes = obj["id_prefixes"] if "id_prefixes" in obj else []
         parent = self.model.by_name [is_a] if is_a in self.model.by_name else None
         return Concept (name = name, is_a = parent, id_prefixes = id_prefixes)
-
-
-    

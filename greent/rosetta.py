@@ -62,6 +62,7 @@ class Rosetta:
         with open(config_file, 'r') as stream:
             self.config = yaml.load(stream)
         self.operators = self.config["@operators"]
+        self.type_checks = self.config["@type_checks"]
 
         # Abbreviation
         self.cache = self.service_context.cache #core.service_context.cache
@@ -85,6 +86,7 @@ class Rosetta:
                     self.type_graph.find_or_create(k, v)
             self.configure_local_operators ()
             #self.configure_translator_registry ()
+            self.type_graph.cast_edges(self.type_checks)
             
     def configure_local_operators (self):
         logger.debug ("Configure operators in the Rosetta config.")
@@ -128,8 +130,9 @@ class Rosetta:
         logger.debug ("  -+ {} {} link: {} op: {}".format(a_concept, b_concept, link, op))
         try:
             self.type_graph.add_concepts_edge(a_concept, b_concept, predicate=link, op=op)
-        except Exception:
+        except Exception as e:
             logger.error(f"Failed to create edge from {a_concept} to {b_concept} with link {link} and op {op}")
+            logger.error(e)
             
     def terminate(self, d):
         for k, v in d.items():
@@ -230,7 +233,7 @@ class Rosetta:
         """ Validated the input program. """
         if len(program) == 0:
             logger.info (f"No program found for {query}")
-            return result
+            return []
         logger.info (f"program> {program}")
         result = []
         
