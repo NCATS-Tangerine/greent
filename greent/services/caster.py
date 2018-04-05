@@ -1,7 +1,6 @@
 from greent.service import Service
 import operator
 import functools
-from greent.service import ServiceContext
 from greent.util import Text, LoggingUtil
 from greent.graph_components import KNode, KEdge
 from greent import node_types
@@ -77,13 +76,3 @@ class Caster(Service):
         logger.debug("getattr: {}".format(attr))
         return self.create_function(attr)
 
-#    def __getattribute__(self, attr):
-#        """ Intercept all attribute accesses. Instantiate functions on demand. """
-#        logger.debug("HIII ",attr)
-#        value = None
-#        __dict__ = super(Caster, self).__getattribute__('__dict__')
-#        if attr in __dict__:
-#            value = super(Caster, self).__getattribute__(attr)
-#        else:
-#            value = self.create_function(attr)
-#        return value
