@@ -15,7 +15,7 @@ def synonymize(node, gt):
         logger.error(e)
     # OK, we're not going to use them all, there's some BS PMIDs that come back...
     synonyms = {s for s in synonyms if not s.startswith('PMID')}
-    #node.add_synonyms(synonyms)
+    node.add_synonyms(synonyms)
     return synonyms
 
 def get_synonyms(node, gt, distance=2):
