@@ -44,7 +44,7 @@ swagger = Swagger(app, template=template)
 def get_associated_disease (name):
    """ Get identifiers for a disease name. """ 
    result = []
-   obj = requests.get (f"https://solr.monarchinitiative.org/solr/search/select/?q=frequenc%20infections+%22{name}&rows=20&defType=edismax&hl=true&qt=standard&indent=on&wt=json&hl.simple.pre=%3Cem%20class=%22hilite%22%3E&hl.snippets=1&qf=synonym^1&qf=synonym_std^1&qf=synonym_kw^1&qf=synonym_eng^1").json()
+   obj = requests.get (f"https://solr.monarchinitiative.org/solr/search/select/?q=%22{name}&rows=20&defType=edismax&hl=true&qt=standard&indent=on&wt=json&hl.simple.pre=%3Cem%20class=%22hilite%22%3E&hl.snippets=1&qf=synonym^1&qf=synonym_std^1&qf=synonym_kw^1&qf=synonym_eng^1").json()
    docs = obj.get('response',{}).get('docs',[])
    for doc in docs:
       if doc.get('prefix',None) in [ 'MONDO', 'DOID', 'OMIM' ]:
