@@ -58,6 +58,8 @@ def node2json (node):
       "id"         : id(node)
    } if node else None
 
+def edge2json(edge):
+   
 def render_graph (blackboard):
    """ Turn a blackboard into json. Work towards a unique key for node. """
    edges = []
@@ -174,10 +176,9 @@ def query (inputs, query):
          type: string
        description: A cypher query over the biolink-model concept space returning a shortest path.
        default: >
-         MATCH (a:drug),(b:pathway), p = allShortestPaths((a)-[*]->(b)) 
-         WHERE NONE (r IN relationships(p)
-         WHERE type(r)="UNKNOWN"
-         OR r.op is null)
+         MATCH (a:drug),(b:pathway), p = allShortestPaths((a)-[*]->(b))
+         WHERE NONE (r IN relationships(p) WHERE type(r)="UNKNOWN" OR r.op is null) and 
+         a:Concept and b:Concept
          RETURN p
        x-valueType:
          - http://schema.org/string

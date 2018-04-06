@@ -30,16 +30,10 @@ class GreenT:
 
     ''' The Green Translator API - a single Python interface aggregating access mechanisms for 
     all Green Translator services. '''
-
-    '''
-    def __init__(self, config=None):
-        self.service_context = ServiceContext.create_context (config)
-        self.translator_registry = None
-        self.ont_api = self.service_context.config.conf.get("system",{}).get("generic_ontology_service", "false")
-    '''
     def __init__(self, context):
         self.translator_registry = None
-        self.ont_api = context.config.conf.get("system",{}).get("generic_ontology_service", "false")
+        #self.ont_api = context.config.conf.get("system",{}).get("generic_ontology_service", "false")
+        self.ont_api = True
         self.service_context = context
         self.lazy_loader = {
             "caster"           : lambda :  Caster(self.service_context, self),
@@ -60,7 +54,6 @@ class GreenT:
             "unichem"          : lambda :  UniChem(self.service_context),
             "typecheck"        : lambda :  TypeCheck(self.service_context)
         }
-        
 
     def __getattribute__(self, attr):
         """ Intercept all attribute accesses. Instantiate services on demand. """
