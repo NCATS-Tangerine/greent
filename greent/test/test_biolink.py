@@ -27,14 +27,6 @@ def test_gene_to_disease(biolink):
     #Sickle cell should be in there.
     assert 'MONDO:0011382' in identifiers
 
-def test_gc(biolink,mondo):
-    gene = KNode('HGNC:4827', node_type=node_types.GENE)
-    original_results = biolink.gene_get_disease(gene)
-    gc_results = biolink.gene_get_genetic_condition(gene)
-    disease_identifiers = set([node.identifier for r,node in original_results])
-    for e, k in gc_results:
-        assert k.identifier in disease_identifiers
-        assert k.node_type == node_types.GENETIC_CONDITION
 
 def test_gene_to_process(biolink):
     KIT_protein = KNode('UniProtKB:P10721', node_types.GENE)

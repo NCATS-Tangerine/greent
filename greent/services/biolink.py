@@ -113,16 +113,17 @@ class Biolink(Service):
         response = requests.get(url).json()
         return self.process_associations(response, 'pathway_get_genes', node_types.GENE, reverse=True)
 
-    def gene_get_genetic_condition(self, gene):
-        """Given a gene specified as an HGNC curie, return associated genetic conditions.
-        A genetic condition is specified as a disease that descends from a ndoe for genetic disease in MONDO."""
-        disease_relations = self.gene_get_disease(gene)
-        relations = []
-        for relation, obj in disease_relations:
-            is_genetic_condition, new_object_ids = self.checker.is_genetic_disease(obj)
-            if is_genetic_condition:
-                obj.properties['mondo_identifiers'] = new_object_ids
-                obj.node_type = node_types.GENETIC_CONDITION
-                relations.append((relation, obj))
-        # print (" biolink relations %s" % relations)
-        return relations
+#THis function has been replaced with caster + gene_get_disease
+#    def gene_get_genetic_condition(self, gene):
+#        """Given a gene specified as an HGNC curie, return associated genetic conditions.
+#        A genetic condition is specified as a disease that descends from a ndoe for genetic disease in MONDO."""
+#        disease_relations = self.gene_get_disease(gene)
+#        relations = []
+#        for relation, obj in disease_relations:
+#            is_genetic_condition, new_object_ids = self.checker.is_genetic_disease(obj)
+#            if is_genetic_condition:
+#                obj.properties['mondo_identifiers'] = new_object_ids
+#                obj.node_type = node_types.GENETIC_CONDITION
+#                relations.append((relation, obj))
+#        # print (" biolink relations %s" % relations)
+#        return relations

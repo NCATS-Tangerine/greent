@@ -8,7 +8,7 @@ from greent import node_types
 logger = LoggingUtil.init_logging (__file__)
 
 #TODO: LOOKUP all the terms that map to this... or use an ancestor call that doesn't require such stuff (i.e. that handles this)
-GENETIC_DISEASE=('DOID:630','http://purl.obolibrary.org/obo/EFO_0000508','MONDO:0003847','http://purl.obolibrary.org/obo/MONDO_0003847')
+GENETIC_DISEASE=('MONDO:0021198', 'DOID:630','http://purl.obolibrary.org/obo/EFO_0000508','MONDO:0003847','http://purl.obolibrary.org/obo/MONDO_0003847')
 MONOGENIC_DISEASE='DOID:0050177'
 
 class Mondo(Service):
@@ -169,6 +169,7 @@ def test_both():
     test_one(q2in, q2out, q2field)
     
 def test_one(infname,outfname,fieldnum):
+    from greent.servicecontext import ServiceContext
     m = Mondo (ServiceContext.create_context ())
     n_good = 0
     n_bad = 0
