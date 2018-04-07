@@ -37,7 +37,6 @@ class CTD(Service):
                 obj = requests.get (f"{self.url}/CTD_chem_gene_ixns_ChemicalID/{Text.un_curie(identifier)}/").json ()
                 output += [ ( self.get_edge(props=r, pmids=r['PubMedIDs']),
                               KNode(f"NCBIGENE:{r['GeneID']}", node_types.GENE) ) for r in obj ]
-        print (f" =====>>>> output: {output}")
         return output
 
     def gene_to_drug(self, subject):

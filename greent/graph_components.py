@@ -145,7 +145,14 @@ class KEdge():
         if properties is not None:
             self.properties = properties
         else:
-            self.properties = {}
+            self.properties = {
+                "stdprop" : {
+                    "subj"  : None,
+                    "pred"  : None,
+                    "obj"   : None,
+                    "pmids" : []
+                }
+            }
         self.is_synonym = is_synonym
         self.is_support = is_support
 

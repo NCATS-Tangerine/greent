@@ -26,9 +26,8 @@ class Service:
 
         # Add a predicate describing the connection between subject and object.
         # Pass up pmids for provenance and confidence scoring.
-#        print (pmids)
         props['stdprop'] = {
-            'predicate' : predicate,
-            'pmids'     : pmids
+            'pred'  : predicate,
+            'pmids' : pmids
         }
         return KEdge (self.name, predicate, props, is_synonym = (predicate=='synonym'))

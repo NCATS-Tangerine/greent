@@ -42,7 +42,8 @@ app.config['SWAGGER'] = {
 swagger = Swagger(app, template=template)
 
 def get_associated_disease (name):
-   """ Get identifiers for a disease name. """ 
+   """ Get identifiers for a disease name. """
+   """ TODO: Move this down into or nearer the core. """
    result = []
    obj = requests.get (f"https://solr.monarchinitiative.org/solr/search/select/?q=%22{name}&rows=20&defType=edismax&hl=true&qt=standard&indent=on&wt=json&hl.simple.pre=%3Cem%20class=%22hilite%22%3E&hl.snippets=1&qf=synonym^1&qf=synonym_std^1&qf=synonym_kw^1&qf=synonym_eng^1").json()
    docs = obj.get('response',{}).get('docs',[])
@@ -58,8 +59,17 @@ def node2json (node):
       "id"         : id(node)
    } if node else None
 
-def edge2json(edge):
-   
+def edge2json(e):
+   stdprop = e.properties.get ('stdprop', {})
+   stdprop['subj'] = id(e.source_node)
+   stdprop['pred'] = stdprop['predicate'] if 'predicate' in e.properties else None
+   stdprop['obj']  = id(e.target_node)
+   stdprop['pmids'] = stdprop['pmids'] if 'pmids' in stdprop else []
+   if 'stdprop' in e.properties:
+      del e.properties['stdprop']
+   stdprop['other'] = e.properties
+   return stdprop
+
 def render_graph (blackboard):
    """ Turn a blackboard into json. Work towards a unique key for node. """
    edges = []
@@ -77,7 +87,7 @@ def render_graph (blackboard):
       nodes[id(e.source_node)] = e.source_node
       nodes[id(e.target_node)] = e.target_node
    return {
-      "edges" : [ elements_to_json(e) for e in blackboard ],
+      "edges" : [ edge2json(e) for e in blackboard ],
       "nodes" : [ node2json(n) for n in nodes.values () ]
    }
 
