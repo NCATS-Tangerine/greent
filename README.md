@@ -47,13 +47,22 @@ The web API presents two endpoints:
 
 ### Clinical Outcome Pathway: /cop
 Given a drug name and a disease name, it returns a knowledge graph of the clinical outcome pathway.
+#### Edge:
 Each edge includes:
-* **subj** : A subject
-* **pred** : A predicate indicating the relation of the subject to the object.
-* **obj**  : An object of the relation.
-* **pmids** : One or more PubMed identifiers relevant to the statement.
-
-Caveat: The repo is undergoing substantial development so please expect delays.
+  * **subj** : A subject
+  * **pred** : A predicate indicating the relation of the subject to the object.
+  * **obj**  : An object of the relation.
+  * **pmids** : One or more PubMed identifiers relevant to the statement.
+#### Node:
+Each node includes:
+  * **id** : A numeric identifier used as a link to edges in the same graph.
+  * **identifier** : A curie identifying an instance in an ontology.
+  * **type** : A biolink-model type for the object.
+  
+### Query: /query
+Given inputs and a Cypher query representing a shortest path between two concepts, generate a graph of items. More complex graphs can be composed by iteratively invoking this endpoint.
+  * **inputs** : A key value pair where the key is a biolink-model concept and the value is a comma separated list of curies. eg, concept=curie:id[,curie:id]
+  * **query** : A cypher query returning a path. 
 
 ## Python API
 
