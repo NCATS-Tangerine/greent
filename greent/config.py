@@ -1,5 +1,6 @@
 import os
 import yaml
+import re
 from greent.util import Resource
 
 class Config(dict):
@@ -40,7 +41,8 @@ class Config(dict):
         This will be overridden by an environment variable by the name of PERSON_ADDRESS_STREET,
         e.g. export PERSON_ADDRESS_STREET=Gregson
         '''
-        name = self.prefix+'_'+key if self.prefix else key
+        key_var = re.sub('[\W]', '', key)
+        name = self.prefix+'_'+key_var if self.prefix else key_var
         try:
             env_name = name.upper()
             return os.environ[env_name]
