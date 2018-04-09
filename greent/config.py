@@ -21,6 +21,8 @@ class Config(dict):
         return self['translator']['services'][service]
     def __setitem__(self, key, val):
         raise TypeError("Setting configuration is not allowed.")
+    def __str__(self):
+        return "Config with keys: "+', '.join(list(self.conf.keys()))
     def get(self, key, default=None):
         try:
             return self.__getitem__(key)
