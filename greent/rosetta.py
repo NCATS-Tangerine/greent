@@ -62,7 +62,7 @@ class Rosetta:
             self.config = yaml.load(stream)
         self.operators = self.config["@operators"]
 
-        redis_conf = self.core.service_context.config.conf.get ("redis", None)
+        redis_conf = self.core.service_context.config.get ("redis", None)
         self.cache = Cache (
             redis_host = redis_host if redis_host else redis_conf.get ("host"),
             redis_port = redis_port if redis_port else redis_conf.get ("port"))
