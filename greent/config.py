@@ -2,7 +2,7 @@ import os
 import yaml
 from greent.util import Resource
 
-class Config:
+class Config(dict):
     def __init__(self, config, prefix=''):
         '''
         if not config.startswith (os.sep):
@@ -18,8 +18,15 @@ class Config:
             raise ValueError
         self.prefix = prefix
     def get_service (self, service):
-        return self.conf['translator']['services'][service]
-    def get(self, *args):
+        return self['translator']['services'][service]
+    def __setitem__(self, key, val):
+        raise TypeError("Setting configuration is not allowed.")
+    def get(self, key, default=None):
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return default
+    def __getitem__(self, key):
         '''
         Use this accessor instead of getting conf directly in order to permit overloading with environment variables.
         Imagine you have a config file of the form
@@ -31,12 +38,12 @@ class Config:
         This will be overridden by an environment variable by the name of PERSON_ADDRESS_STREET,
         e.g. export PERSON_ADDRESS_STREET=Gregson
         '''
-        name = self.prefix+'_'+args[0] if self.prefix else args[0]
+        name = self.prefix+'_'+key if self.prefix else key
         try:
             env_name = name.upper()
             return os.environ[env_name]
         except KeyError:
-            value = self.conf.get(*args)
+            value = self.conf[key]
             if isinstance(value, dict):
                 return Config(value, prefix=name)
             else:
