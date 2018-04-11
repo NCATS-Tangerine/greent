@@ -75,21 +75,21 @@ def render_graph (blackboard):
    edges = []
    nodes = {}
    for e in blackboard:
-      if not e: # or not e.source_node or not e.target_node:
+      if not e:
          continue
-      if not 'stdprop' in e.properties:
-         e.properties['stdprop'] = {}
-      e.properties['stdprop']['subj'] = id(e.source_node)
-      e.properties['stdprop']['obj'] = id(e.target_node)
       edges.append (e)
-      #print (f"============> edge: {e}")
-      #print (f"============> node : {e.source_node}")
       nodes[id(e.source_node)] = e.source_node
       nodes[id(e.target_node)] = e.target_node
    return {
       "edges" : [ edge2json(e) for e in blackboard ],
       "nodes" : [ node2json(n) for n in nodes.values () ]
    }
+
+def validate_cypher(query):
+   assert query is not None, "Valid query required."
+   query_lower = query.lower ()
+   if 'delete' in query_lower or 'detach' in query_lower or 'create' in query_lower:
+      raise ValueError ("not")
 
 rosetta = None
 def get_rosetta ():
@@ -99,7 +99,7 @@ def get_rosetta ():
       rosetta = Rosetta (debug=True, greentConf=config)
    return rosetta
 
-@app.route('/cop/', methods=['GET'])
+@app.route('/cop/<drug>/<disease>/', methods=['GET'])
 def cop (drug="imatinib", disease="asthma"):
    """ Get service metadata 
    ---
@@ -128,7 +128,6 @@ def cop (drug="imatinib", disease="asthma"):
      200:
        description: ...
    """
-
    rosetta = get_rosetta ()
    drug_id = rosetta.n2chem(drug)
    disease_id = get_associated_disease(disease)
@@ -201,10 +200,11 @@ def query (inputs, query):
    """
 
    """ Validate input ids structure is <concept>=<id>[,<id>]* """
+   validate_cypher (query)
    if '=' not in inputs:
-      raise ValueError ("Inputs must be key value of concept=<comma separated ids>")   
+      raise ValueError ("Inputs must be key value of concept=<comma separated ids>")
    concept, items =inputs.split ("=")
-   query = query.replace ("UNKNOWN", "'UNKNOWN'")
+#   query = query.replace ("UNKNOWN", "'UNKNOWN'")
    blackboard = get_rosetta().construct_knowledge_graph(**{
       "inputs" : {
          concept : items.split (",")
