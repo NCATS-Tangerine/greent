@@ -41,6 +41,29 @@ MATCH (n:named_thing)-[a]->(d:disease)-[b]->(g:gene) RETURN *
 ```
 In the returned graph, nodes are biolink-model concepts and edges contain attributes indicating the service to invoke. 
 
+## Web API
+
+The web API presents two endpoints:
+
+### Clinical Outcome Pathway: /cop
+Given a drug name and a disease name, it returns a knowledge graph of the clinical outcome pathway.
+#### Edge:
+Each edge includes:
+  * **subj** : A subject
+  * **pred** : A predicate indicating the relation of the subject to the object.
+  * **obj**  : An object of the relation.
+  * **pmids** : One or more PubMed identifiers relevant to the statement.
+#### Node:
+Each node includes:
+  * **id** : A numeric identifier used as a link to edges in the same graph.
+  * **identifier** : A curie identifying an instance in an ontology.
+  * **type** : A biolink-model type for the object.
+  
+### Query: /query
+Given inputs and a Cypher query representing a shortest path between two concepts, generate a graph of items. More complex graphs can be composed by iteratively invoking this endpoint.
+  * **inputs** : A key value pair where the key is a biolink-model concept and the value is a comma separated list of curies. eg, concept=curie:id[,curie:id]
+  * **query** : A cypher query returning a path. 
+
 ## Python API
 
 This simple snippet demonstrates usage via the Python API:
@@ -63,20 +86,6 @@ knowledge_graph = rosetta.construct_knowledge_graph(**{
          RETURN p"""
       })
 ```
-
-## Web API
-
-We will be publshing an OpenAPI interface to the graph. 
-
-For now, run 
-```
-$ git clone https://github.com/NCATS-Tangerine/smartBag
-$ cd robokop-interfaces/greent
-$ PYTHONPATH=$PWD/..:$PWD/../.. python api/server.py
-```
-To start the server. Usage examples coming soon.
-
-Caveat: The repo is undergoing substantial development so please expect delays.
 
 ## Caching
 
