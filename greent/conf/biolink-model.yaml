@@ -373,14 +373,14 @@ classes:
     aliases: ['condition', 'disorder']
     is_a: disease or phenotypic feature
     id_prefixes:
-      - MESH.DISEASE
+      - MONDO
       - DOID
-      - PHAROS.DISEASE
       - OMIM
       - ORPHANET
       - EFO
       - UMLS
-      - MONDO
+      - MESH.DISEASE
+      - PHAROS.DISEASE
     mappings:
       - "MONDO:0000001"
 
@@ -392,14 +392,14 @@ classes:
     mappings:
       - "MONDO:0003847"
     id_prefixes:
-      - MESH.DISEASE
+      - MONDO
       - DOID
-      - PHAROS.DISEASE
       - OMIM
       - ORPHANET
       - EFO
       - UMLS
-      - MONDO
+      - MESH.DISEASE
+      - PHAROS.DISEASE
 
 
   - name: phenotypic feature
