@@ -36,7 +36,8 @@ template = {
 }
 app.config['SWAGGER'] = {
    'title': 'Rosetta Service',
-   'bag_source' : '/.'
+   'bag_source'  : '/.',
+   'greent_conf' : "greent-api.conf"
 }
 
 swagger = Swagger(app, template=template)
@@ -274,8 +275,8 @@ if __name__ == "__main__":
    parser = argparse.ArgumentParser(description='Rosetta Server')
    parser.add_argument('-s', '--bag-source', help='Filesystem path or URL serving bags.', default='.')
    parser.add_argument('-p', '--port', type=int, help='Port to run service on.', default=None)
-   parser.add_argument('-c', '--conf', help='GreenT config file to use.', default=None)
+   parser.add_argument('-c', '--conf', help='GreenT config file to use.', default="greent-api.conf")
    args = parser.parse_args ()
    app.config['SWAGGER']['bag_source'] = args.bag_source
-   app.config['SWAGGER']['greent_conf'] = args.greent_conf = args.conf
+   app.config['SWAGGER']['greent_conf'] = args.conf if args.conf else "greent-api.conf"
    app.run(host='0.0.0.0', port=args.port, debug=True, threaded=True)
