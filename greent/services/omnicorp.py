@@ -67,7 +67,16 @@ class OmniCorp(Service):
     def get_shared_pmids (self, node1, node2):
         id1 = self.get_omni_identifier(node1)
         id2 = self.get_omni_identifier(node2)
-        pmids = self.sparql_get_shared_pmids (id1, id2)
+        done = False
+        ntries = 0
+        while not done and ntries < 10:
+            try:
+                pmids = self.sparql_get_shared_pmids (id1, id2)
+                done = True
+            except:
+                ntries += 1
+        if not done:
+            return []
         return [ p['pubmed'] for p in pmids ]
     
 
