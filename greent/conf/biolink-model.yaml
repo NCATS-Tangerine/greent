@@ -479,17 +479,18 @@ classes:
       material with multiple chemical entities as part
     subclass_of: "CHEBI:24431"
     id_prefixes:
+      - CHEBI
+      - CHEMBL
       - DRUGBANK
-      - DRUG.INTERACTION
+      - PUBCHEM
+      - MESH
       - INCHI
       - INCHIKEY
-      - PUBCHEM
-      - CHEMBL
-      - CHEBI
       - PUBCHEM.COMPOUND
       - KEGG.COMPOUND
       - KEGG.DRUG
       - PHAROS.DRUG
+      - DRUG.INTERACTION
       - CTD
     mappings:
       - SIO:010004
@@ -599,10 +600,9 @@ classes:
     is_a: gene or gene product
     aliases: ['locus']
     id_prefixes:
+      - HGNC
       - NCBIGENE
       - ENSEMBL
-      - HGNC
-      - HGNC.SYMBOL
       - MGI
       - ZFIN
     mappings:

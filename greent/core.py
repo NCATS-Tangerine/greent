@@ -14,6 +14,7 @@ from greent.services.ctd import CTD
 from greent.services.hetio import HetIO
 from greent.services.hgnc import HGNC
 from greent.services.onto import Onto
+from greent.services.omnicorp import OmniCorp
 from greent.services.oxo import OXO
 from greent.services.pharos import Pharos
 from greent.services.quickgo import QuickGo
@@ -36,23 +37,24 @@ class GreenT:
         self.ont_api = True
         self.service_context = context
         self.lazy_loader = {
+            "biolink"          : lambda :  Biolink (self.service_context),
             "caster"           : lambda :  Caster(self.service_context, self),
             "chembio"          : lambda :  ChemBioKS (self.service_context),
             "chemotext"        : lambda :  Chemotext (self.service_context),
-            "pharos"           : lambda :  Pharos (self.service_context),
-            "oxo"              : lambda :  OXO (self.service_context),
-            "hetio"            : lambda :  HetIO (self.service_context),
-            "biolink"          : lambda :  Biolink (self.service_context),
-            "mondo"            : lambda :  Mondo2(self.service_context) if self.ont_api else Mondo(self.service_context),
-            "hpo"              : lambda :  HPO2 (self.service_context) if self.ont_api else HPO (self.service_context),
-            "go"               : lambda :  GO2(self.service_context) if self.ont_api else GO(self.service_context),
-            "tkba"             : lambda :  TranslatorKnowledgeBeaconAggregator (self.service_context),
-            "quickgo"          : lambda :  QuickGo (self.service_context),
-            "hgnc"             : lambda :  HGNC(self.service_context),
-            "uberongraph"      : lambda :  UberonGraphKS(self.service_context),
             "ctd"              : lambda :  CTD(self.service_context),
-            "unichem"          : lambda :  UniChem(self.service_context),
-            "typecheck"        : lambda :  TypeCheck(self.service_context)
+            "go"               : lambda :  GO2(self.service_context) if self.ont_api else GO(self.service_context),
+            "hetio"            : lambda :  HetIO (self.service_context),
+            "hgnc"             : lambda :  HGNC(self.service_context),
+            "hpo"              : lambda :  HPO2 (self.service_context) if self.ont_api else HPO (self.service_context),
+            "mondo"            : lambda :  Mondo2(self.service_context) if self.ont_api else Mondo(self.service_context),
+            "omnicorp"         : lambda :  OmniCorp (self.service_context),
+            "oxo"              : lambda :  OXO (self.service_context),
+            "pharos"           : lambda :  Pharos (self.service_context),
+            "quickgo"          : lambda :  QuickGo (self.service_context),
+            "tkba"             : lambda :  TranslatorKnowledgeBeaconAggregator (self.service_context),
+            "typecheck"        : lambda :  TypeCheck(self.service_context),
+            "uberongraph"      : lambda :  UberonGraphKS(self.service_context),
+            "unichem"          : lambda :  UniChem(self.service_context)
         }
 
     def __getattribute__(self, attr):
