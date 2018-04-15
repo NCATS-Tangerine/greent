@@ -35,6 +35,7 @@ class KNodeDecoder(GenericJSONDecoder):
 class KEdgeEncoder(GenericJSONEncoder):
     pass
 
+
 class KNode():
     """Used as the node object in KnowledgeGraph.
     
@@ -120,44 +121,45 @@ class KNode():
             return '%s (%s)' % (self.label, self.identifier)
         return self.identifier
 
-    def get_exportable(self):
-        """Returns information to make a simpler node in networkx.  Helps with finicky graphml writer"""
-        export_properties = {'identifier': self.identifier, \
-                             'node_type': self.node_type, \
-                             'layer_number': self.layer_number}
-        if self.label is not None:
-            export_properties['label'] = self.label
-        for key in self.properties:
-            export_properties[key] = 'See JSON for details'
-        return self.get_shortname(), export_properties
-
-
 class KEdge():
     """Used as the edge object in KnowledgeGraph.
 
     Instances of this class should be returned from greenT"""
 
-    def __init__(self, edge_source, edge_function, properties=None, is_synonym=False, is_support=False):
+    def __init__(self, edge_source, ctime, predicate_id, predicate_label, input_id, standard_predicate_id, standard_predicate_label, publications = None, url=None, properties=None, is_support=False):
+        """Definitions of the parameters:
+        edge_function: the python function called to produce this edge
+        ctime: When the external call to produce this edge was made.  If the edge comes from a cache, this
+               will be the original time, not the cache retrieval time.
+        predicate_id: The identifier for the predicate as returned from the knowledge source
+        predicate_label: The label for the predicate as returned from the knowledge source
+        input_id: The actual identifier used as input to the knowledge service
+        standard_predicate_id: The identifier for the predicate as converted into a shared standard (e.g. biolink)
+        standard_predicate_label: The label for the predicate as converted into a shared standard (e.g. biolink)
+        publications: a list of pubmed id curies that provide evidence for or create this edge.
+        url: the url that actually created the edge (for calls that can be so coded.). Optional
+        properties: A map of any other information about the edge that we may want to persist.  Default None.
+        is_support: Whether or not the edge is a support edge. Default False.
+        """
         self.edge_source = edge_source
         self.source_node = None
         self.target_node = None
-        self.edge_function = edge_function
+        self.ctime = ctime
+        self.predicate_id = predicate_id
+        self.predicate_label = predicate_label
+        self.input_id = input_id
+        self.standard_predicate_id = standard_predicate_id
+        self.standard_predicate_label = standard_predicate_label
+        self.publications = publications
+        validate(self.publications)
         if properties is not None:
             self.properties = properties
         else:
-            self.properties = {
-                "stdprop" : {
-                    "subj"  : None,
-                    "pred"  : None,
-                    "obj"   : None,
-                    "pmids" : []
-                }
-            }
-        self.is_synonym = is_synonym
+            self.properties = {}
         self.is_support = is_support
 
     def __key(self):
-        return (self.source_node, self.target_node, self.edge_source, self.edge_function)
+        return (self.source_node, self.target_node, self.edge_source)
 
     def __eq__(x, y):
         return x.__key() == y.__key()
@@ -169,13 +171,6 @@ class KEdge():
         return "E(src={0},type={1},srcn={2},destn={3})".format(self.edge_source, self.edge_function,
                                                                self.source_node, self.target_node)
 
-    def __repr__(self):
-        # return "KEdge(edge_source={0},edge_type={1})".format (self.edge_source, self.edge_type)
-        return self.long_form()
-
-    #        return "E(src={0},type={1})".format (self.edge_source, self.edge_type)
-    def __str__(self):
-        return self.__repr__()
 
     def to_json(self):
         """Used to serialize a node to JSON."""
@@ -186,17 +181,14 @@ class KEdge():
             j[key] = self.properties[key]
         return j
 
-    def get_exportable(self):
-        """Returns information to make a simpler node in networkx.  Helps with finicky graphml writer"""
-        export_properties = {'edge_source': self.edge_source, \
-                             'edge_function': self.edge_function, \
-                             'is_synonym': self.is_synonym}
-        for key in self.properties:
-            export_properties[key] = 'See JSON for details'
-        return export_properties
+    def __repr__(self):
+        # return "KEdge(edge_source={0},edge_type={1})".format (self.edge_source, self.edge_type)
+        return self.long_form()
 
+    #        return "E(src={0},type={1})".format (self.edge_source, self.edge_type)
+    def __str__(self):
+        return self.__repr__()
 
-##
 # We want to be able to serialize our knowledge graph to json.  That means being able to serialize KNode/KEdge.
 # We could sublcass JSONEncoder (and still might), but for now, this set of functions allows the default
 # encoder to find the functions that return serializable versions of KNode and KEdge
