@@ -17,7 +17,8 @@ class Service:
 
     def get_config(self):
         return self.context.config.get_service (self.name)
-    
+
+    #I don't see any reason that this shouldn't just be part of the Edge constructor
     def get_edge (self, props={}, predicate=None, pmids=[]):
         """ Generate graph edges in a standard way, propagating information needed for
         scoring and semantic context above. """

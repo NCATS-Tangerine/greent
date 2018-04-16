@@ -151,7 +151,7 @@ class KEdge():
         self.standard_predicate_id = standard_predicate_id
         self.standard_predicate_label = standard_predicate_label
         self.publications = publications
-        validate(self.publications)
+        self.validate_publications()
         if properties is not None:
             self.properties = properties
         else:
@@ -171,6 +171,14 @@ class KEdge():
         return "E(src={0},type={1},srcn={2},destn={3})".format(self.edge_source, self.edge_function,
                                                                self.source_node, self.target_node)
 
+    def validate_publications(self):
+        if self.publications is None:
+            self.publications = []
+        for publication in self.publications:
+            if not isinstance(publication,str):
+                raise Exception(f"Publication should be a PMID curie: {publication}")
+            if not publication.startswith('PMID:'):
+                raise Exception(f"Publication should be a PMID curie: {publication}")
 
     def to_json(self):
         """Used to serialize a node to JSON."""
