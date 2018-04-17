@@ -19,7 +19,6 @@ def test_output_filter(rosetta):
     assert 'MONDO:0018883' in gc_identifiers
     assert 'MONDO:0019245' in gc_identifiers
     #These are diseases associated with PPARG that are not Genetic Conditions (non-comprehensive)
-    assert 'MONDO:0005066' not in gc_identifiers
     assert 'MONDO:0001106' not in gc_identifiers
 
 def test_upcast(rosetta):
