@@ -2,7 +2,7 @@ id: "http://bioentity.io/json-schema/biolink.json"
 name: biolink model (gamma)
 description: Entity and association taxonomy and datamodel for life-sciences data (Gamma Overlay)
 
-slots:
+classes:
   
   - name: genetic condition
     is_a: disease

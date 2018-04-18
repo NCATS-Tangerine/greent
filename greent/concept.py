@@ -89,14 +89,14 @@ class ConceptModelLoader:
         self.model = concept_model
         model_path = os.path.join (os.path.dirname (__file__), "conf", f"{self.name}.yaml")
         model_obj = Resource.load_yaml (model_path)
-
-
         model_overlay_path = model_path.replace (".yaml", "_overlay.yaml")
         if os.path.exists (model_overlay_path):
             model_overlay = Resource.load_yaml (model_overlay_path)
-            model_obj.update (model_overlay)
-        #print (json.dumps (model_obj, indent=2))
-        
+            #Update only adds/overwrites keys at the top level. Here, it just overwrites "Classes" rather than updating classes.
+            #model_obj.update (model_overlay)
+            #This version recursively updates throughout the hierarchy of dicts, updating lists also
+            Resource.deepupdate(model_obj, model_overlay)
+
 
         for obj in model_obj["classes"]:
             concept = self.parse_item (obj)
@@ -111,6 +111,7 @@ class BiolinkConceptModelLoader (ConceptModelLoader):
                 
     def parse_item (self, obj):
         name = obj["name"].replace (" ", "_")
+        print(name)
         is_a = obj["is_a"].replace (" ", "_") if "is_a" in obj else None
         id_prefixes = obj["id_prefixes"] if "id_prefixes" in obj else []
         parent = self.model.by_name [is_a] if is_a in self.model.by_name else None
