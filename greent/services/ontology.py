@@ -1,3 +1,4 @@
+import json
 import pronto
 import re
 import logging
@@ -50,9 +51,10 @@ class GenericOntology(Service):
         """ Get external references. """
         result = []
         if identifier in self.ont:
-            result = self.ont[identifier].other['xref']  if 'xref' in self.ont[identifier].other else []
+            term = self.ont[identifier]
+            result = term.other['xref']  if 'xref' in term.other else []
         result = [ x.split(' ') if ' ' in x else [x, ''] for x in result ]
-        result = [ { 'id' : x[0], 'desc' : x[1] } for x in result if len(x) == 2 and ':' in x[1] ]
+        result = [ { 'id' : x[0], 'desc' : ' '.join(x[1:]) } for x in result if len(x) > 1 and ':' in x[0] ]
         return result
     def synonyms(self, identifier, curie_pattern=None):
         """ Get synonyms. """

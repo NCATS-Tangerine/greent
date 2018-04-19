@@ -161,7 +161,7 @@ def cop (drug="imatinib", disease="asthma"):
       rosetta.service_context.cache.set (key, g)
    return jsonify (g)
 
-@app.route('/query/<inputs>/<query>')
+@app.route('/query/<inputs>/<query>/', methods=['GET'])
 def query (inputs, query):
    """ Get service metadata 
    ---
@@ -279,3 +279,14 @@ if __name__ == "__main__":
    app.config['SWAGGER']['bag_source'] = args.bag_source
    app.config['SWAGGER']['greent_conf'] = args.greent_conf = args.conf
    app.run(host='0.0.0.0', port=args.port, debug=True, threaded=True)
+
+
+'''
+sudo su - evryscope -c "\
+source /projects/stars/translator/app/rosettaVenv/bin/activate; \
+cd /projects/stars/app/robokop-interfaces; \
+PYTHONPATH=/projects/stars/app/robokop-interfaces gunicorn \
+     --workers 10 \
+     --timeout 3000 \
+     --bind 0.0.0.0:5000 greent.api.server:app "
+'''
