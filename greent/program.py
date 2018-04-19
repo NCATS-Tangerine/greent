@@ -68,6 +68,9 @@ class Program:
         add them to both all_instance_nodes as well as the unused_instance_nodes"""
         for node in nodelist:
             self.rosetta.synonymizer.synonymize(node)
+            if node.identifier.startswith('DOID'):
+                print('hmm {}'.format(node.identifier))
+                exit()
             node.add_context(self.program_number, context)
         self.all_instance_nodes.update(nodelist)
         self.unused_instance_nodes.update([(node, context) for node in nodelist])

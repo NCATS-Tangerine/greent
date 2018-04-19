@@ -40,7 +40,7 @@ class Mondo2(Onto):
     def get_mondo_id(self,obj_id):
         result = []
         label = super(Mondo2,self).get_label(obj_id)
-        if label and 'label' in label and lable['label'] is not None:
+        if label and 'label' in label and label['label'] is not None:
             logger.debug (f"input id {obj_id} is a MONDO id.")
             result.append (obj_id)
         else:
@@ -99,6 +99,7 @@ class Mondo2(Onto):
                 results = super(Mondo2,self).search(newname)
         return results
 
+'''
 def test_both():
     q1in='q1-disease-list.txt'
     q1out='q1_disease_mondo.txt'
@@ -141,4 +142,4 @@ def test_one(infname,outfname,fieldnum):
             outf.write('{}\t{}\t{}\t{}\t{}\n'.format(x, mondos, doids, umlss, efos ))
             print( 'Good: {}   Bad: {}'.format(n_good, n_bad) )
 
-
+'''

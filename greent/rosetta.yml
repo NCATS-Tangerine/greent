@@ -19,7 +19,7 @@
   cellular_component : [ 'GO.CELLULAR_COMPONENT' ]
   disease            : [ 'MONDO', 'DOID', 'PHAROS.DISEASE', 'OMIM', 'MESH.DISEASE', 'ORPHANET' , 'EFO', 'UMLS']
   gene               : [ 'HGNC', 'NCBIGENE', 'HGNC.SYMBOL', 'ENTREZ',  'ENSEMBL', 'ENSEMBL.TRANSCRIPT', 'UNIPROTKB' , 'UNIPROT', 'MGI', 'ZFIN']
-  genetic_condition  : [ 'MONDO.GENETIC_CONDITION', 'DOID.GENETIC_CONDITION', 'ORPHANET.GENETIC_CONDITION' ]
+  genetic_condition  : [ 'MONDO', 'DOID', 'OMIM', 'UMLS', 'EFO']
   molecular_function : [ 'GO.MOLECULAR_FUNCTION' ]
   Name               : [ 'NAME.DRUG', 'NAME.DISEASE', 'NAME.SYMPTOM', 'NAME.ANATOMY', 'DISEASE_NAME', 'MESH.NAME', 'NAME.PHENOTYPE' ]
   pathway            : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY', 'KEGG.PATHWAY', 'REACT', 'KEGG-path' ]

@@ -24,6 +24,7 @@ def synonymize_with_MONDO(node,gt):
     return syns
 
 def synonymize_with_OXO(node,gt):
-    return oxo_synonymizer.synonymize(node,gt)
+    synonyms =  oxo_synonymizer.synonymize(node,gt)
+    return synonyms
 
 

@@ -83,3 +83,4 @@ class Cache:
                 with open(path, 'wb') as stream:
                     stream.write (self.serializer.dumps (value))
                 self.cache[key] = value
+
