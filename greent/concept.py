@@ -111,7 +111,6 @@ class BiolinkConceptModelLoader (ConceptModelLoader):
                 
     def parse_item (self, obj):
         name = obj["name"].replace (" ", "_")
-        print(name)
         is_a = obj["is_a"].replace (" ", "_") if "is_a" in obj else None
         id_prefixes = obj["id_prefixes"] if "id_prefixes" in obj else []
         parent = self.model.by_name [is_a] if is_a in self.model.by_name else None

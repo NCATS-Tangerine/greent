@@ -20,6 +20,17 @@ def test_mondo_synonymization(rosetta):
     assert 'MeSH:D052556' in meshes
     assert Text.get_curie(node.identifier) == 'MONDO'
 
+def test_mondo_synonymization_2(rosetta):
+    node = KNode('MONDO:0005737',node_types.DISEASE)
+    synonyms = synonymize(node,rosetta.core)
+    assert len(synonyms) > 1
+    node.add_synonyms(synonyms)
+    doids = node.get_synonyms_by_prefix('DOID')
+    assert len(doids) == 1
+    meshes = node.get_synonyms_by_prefix('MESH')
+    assert len(meshes) > 1
+    assert Text.get_curie(node.identifier) == 'MONDO'
+
 #This test doesn't currently pass because OXO hasn't integrated MONDO yet
 def future_test_disease_normalization(rosetta):
     node = KNode('DOID:4325', node_types.DISEASE)
