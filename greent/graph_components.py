@@ -151,6 +151,7 @@ class KEdge():
         self.standard_predicate_id = standard_predicate_id
         self.standard_predicate_label = standard_predicate_label
         self.publications = publications
+        self.url = url
         self.validate_publications()
         if properties is not None:
             self.properties = properties
@@ -168,8 +169,7 @@ class KEdge():
         return hash(self.__key())
 
     def long_form(self):
-        return "E(src={0},type={1},srcn={2},destn={3})".format(self.edge_source, self.edge_function,
-                                                               self.source_node, self.target_node)
+        return "E(src={0},srcn={1},destn={2})".format(self.edge_source, self.source_node, self.target_node)
 
     def validate_publications(self):
         if self.publications is None:

@@ -1,19 +1,23 @@
 import pytest
 from greent.graph_components import KNode
-from greent.services.biolink import Biolink
-from greent.ontologies.mondo import Mondo
-from greent.servicecontext import ServiceContext
+#from greent.services.biolink import Biolink
+#from greent.ontologies.mondo import Mondo
+#from greent.servicecontext import ServiceContext
 from greent import node_types
 from greent.util import Text
+from greent.conftest import rosetta
 
-@pytest.fixture(scope='module')
-def biolink():
-    biolink = Biolink(ServiceContext.create_context())
+
+@pytest.fixture()
+def biolink(rosetta):
+    #biolink = Biolink(ServiceContext.create_context())
+    biolink = rosetta.core.biolink
     return biolink
 
-@pytest.fixture(scope='module')
-def mondo():
-    checker = Mondo(ServiceContext.create_context())
+@pytest.fixture()
+def mondo(rosetta):
+    #checker = Mondo(ServiceContext.create_context())
+    checker = rosetta.core.checker
     return checker
 
 def test_gene_to_disease(biolink):

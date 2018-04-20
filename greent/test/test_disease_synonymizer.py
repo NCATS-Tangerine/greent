@@ -28,7 +28,7 @@ def test_mondo_synonymization_2(rosetta):
     doids = node.get_synonyms_by_prefix('DOID')
     assert len(doids) == 1
     meshes = node.get_synonyms_by_prefix('MESH')
-    assert len(meshes) > 1
+    assert len(meshes) > 0
     assert Text.get_curie(node.identifier) == 'MONDO'
 
 #This test doesn't currently pass because OXO hasn't integrated MONDO yet

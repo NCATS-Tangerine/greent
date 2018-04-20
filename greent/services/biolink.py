@@ -24,6 +24,7 @@ class Biolink(Service):
         '''
         self.checker = context.core.mondo
         self.go = context.core.go
+        self.concept_model = getattr(context, 'rosetta-graph').concept_model
         
     def process_associations(self, r, function, target_node_type, input_identifier, url, reverse=False):
         """Given a response from biolink, create our edge and node structures.
@@ -43,16 +44,18 @@ class Biolink(Service):
                 obj = KNode(association['subject']['id'], target_node_type, association['subject']['label'])
             else:
                 obj = KNode(association['object']['id'], target_node_type, association['object']['label'])
-            predicate_id = association['relation']['id'] 
+            predicate_id = association['relation']['id']
             predicate_label = association['relation']['label']
+            if predicate_id == None:
+                predicate_id = f'biolink:{function}'
+                predicate_label = f'biolink:{function}'
             standard_id, standard_label = self.standardize_predicate(predicate_id, predicate_label)
             edge = KEdge(f'biolink.{function}', dt.now(), predicate_id, predicate_label, input_identifier, standard_id, standard_label, publications = pubs, url = url)
             edge_nodes.append((edge, obj))
         return edge_nodes
 
-    #TODO: Map to biolink model...
     def standardize_predicate(self, predicate_id, predicate_label):
-        return predicate_id, predicate_label
+        return self.concept_model.standardize_relationship(predicate_id)
 
     def gene_get_disease(self, gene_node):
         """Given a gene specified as a curie, return associated diseases."""

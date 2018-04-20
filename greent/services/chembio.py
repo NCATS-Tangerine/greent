@@ -15,6 +15,7 @@ class ChemBioKS(Service):
     def __init__(self, context): #triplestore):
         super(ChemBioKS, self).__init__("chembio", context)
         self.triplestore = TripleStore (self.url)
+        self.concept_model = getattr(context, 'rosetta-graph').concept_model
 
     def query_chembio (self, query):
         """ Execute and return the result of a SPARQL query. """
@@ -25,13 +26,13 @@ class ChemBioKS(Service):
         return KEdge(source, dt.now, predicate_id, predicate_label, input_id, spred, slabel, publications = pmids)
 
     def standardize(self, predicate_id, predicate_label):
-        return predicate_id, predicate_label
+        return self.concept_model.standardize_relationship(predicate_id)
 
     #Used in our lookup stuff
     def graph_drugname_to_pubchem( self, drugname_node):
             drug_name = Text.un_curie (drugname_node.identifier)
             response = self.drugname_to_pubchem(drug_name)
-            return [ (self.build_edge (r, 'chembio.graph_drugname_to_pubchem','ChemBio:6', 'identifies', drugname_node.identifier),
+            return [ (self.build_edge (r, 'chembio.graph_drugname_to_pubchem','rdfs:ID', 'identifies', drugname_node.identifier),
                       KNode( "PUBCHEM:{}".format( r['drugID'].split('/')[-1]), node_types.DRUG, label=r['drugName'])) for r in response  ]
 
     ## GETS
@@ -95,8 +96,8 @@ class ChemBioKS(Service):
         drugs = self.get_drugs_by_condition (conditions.identifier)
         results = []
         for r in drugs:
-            predicate_id="ChemBio:1"
-            predicate_label="is_treated_by"
+            predicate_id="RO:0002302"
+            predicate_label="is_treated_by_substance"
             standard_predicate_id, standard_predicate_label = self.standardize(predicate_id, predicate_label)
             edge = KEdge ('chembio.get_drugs_by_condition_graph', dt.now(), predicate_id, predicate_label, conditions.identifier,
                           standard_predicate_id, standard_predicate_label, publications=r['diseasePMIDS'])
@@ -240,8 +241,8 @@ class ChemBioKS(Service):
         results = []
         for r in response:
             #edge = KEdge ('c2b2r', 'diseaseToGene', { 'keggPath' : r['keggPath'] })
-            predicate_id="ChemBio:2"
-            predicate_label="is_involved"
+            predicate_id="RO:0002326"
+            predicate_label="contributes_to"
             standard_predicate_id, standard_predicate_label = self.standardize(predicate_id, predicate_label)
             edge = KEdge ('chembio.graph_get_genes_by_disease', dt.now(), predicate_id, predicate_label, disease.identifier,
                           standard_predicate_id, standard_predicate_label)
@@ -276,7 +277,7 @@ class ChemBioKS(Service):
             } LIMIT 2000""")
         results = []
         for r in response:
-            predicate_id="ChemBio:3"
+            predicate_id="RO:0000056"
             predicate_label="participates_in"
             standard_predicate_id, standard_predicate_label = self.standardize(predicate_id, predicate_label)
             edge = KEdge ('chembio.graph_get_pathways_by_gene', dt.now(), predicate_id, predicate_label, gene.identifier,
@@ -302,7 +303,7 @@ class ChemBioKS(Service):
                ?ctd_disease ctd:diseaseid               ?diseaseID ;
                             ctd:cid                     ?pubchemCID .
             }""")
-        return [ ( self.build_edge (r, 'chembio.graph_drugbank_to_uniprot','ChemBio:4', 'targets', drugbank.identifier),
+        return [ ( self.build_edge (r, 'chembio.graph_drugbank_to_uniprot','SIO:001257', 'chemical to gene association', drugbank.identifier),
                    KNode ("UNIPROT:{0}".format (r['uniprotGeneID'].split('/')[-1:][0]), node_types.GENE) ) for r in response ]
 
     def graph_diseasename_to_uniprot (self, disease):
@@ -339,7 +340,7 @@ class ChemBioKS(Service):
                 chemPmids = r['chemPmids']
                 disPmids = r['disPmids']
                 pmids = chemPmids + "|" + disPmids
-                edge = self.build_edge (r, 'chembio.graph_diseasename_to_uniprot','ChemBio:5', 'caused_by', disease.identifier,pmids),
+                edge = self.build_edge (r, 'chembio.graph_diseasename_to_uniprot','NCIT:R176', 'disease to gene association', disease.identifier,pmids),
                 node = KNode ("UNIPROT:{0}".format (r['uniprotSym'].split('/')[-1:][0]), node_types.GENE)
                 results.append ( (edge, node) )
         return results
@@ -361,7 +362,7 @@ class ChemBioKS(Service):
                ?ctd_disease ctd:diseaseid               ?diseaseID ;
                             ctd:cid                     ?pubchemCID .
             }""")
-        return [ ( self.build_edge (r, 'chembio.graph_diseaseid_to_uniprot','ChemBio:5', 'causes', drugbank.identifier),
+        return [ ( self.build_edge (r, 'chembio.graph_diseaseid_to_uniprot','NCIT:R176', 'disease to gene association', drugbank.identifier),
                    KNode ("UNIPROT:{0}".format (r['uniprotGeneID'].split('/')[-1:][0]), node_types.GENE) ) for r in response ]
 
 
@@ -381,7 +382,7 @@ class ChemBioKS(Service):
             props['interaction'] = r['interaction']
             props['interactionTypes'] = r['interactionTypes']
             props['publications'] = r['pubmedids'].split('|')
-            retvals.append( ( self.build_edge (r, 'chembio.graph_pubchem_to_ncbigene','ChemBio:4', 'targets', pubchem_node.identifier),
+            retvals.append( ( self.build_edge (r, 'chembio.graph_pubchem_to_ncbigene','SIO:001257', 'chemical to gene association', pubchem_node.identifier),
                              KNode( "NCBIGene:{}".format( r['NCBIGene']), node_types.GENE) ) )
         return retvals
         

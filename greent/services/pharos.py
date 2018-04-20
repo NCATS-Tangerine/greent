@@ -208,7 +208,7 @@ class Pharos(Service):
                         logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
         return resolved_edge_nodes
 
-
+'''
 class AsyncPharos(Pharos):
     """ Prototype asynchronous requests. In general we plan to have asynchronous requests and
     caching to accelerate query responses. """
@@ -287,6 +287,6 @@ def build_disease_translation():
             elif len(doids) == 0:
                 doids.append('')
             pfile.write('%d\t%s\n' % (pharosid, doids[0]))
-
+'''
 
 
