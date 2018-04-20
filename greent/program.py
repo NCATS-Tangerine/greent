@@ -97,6 +97,7 @@ class Program:
                     op = self.rosetta.get_ops(op_name)
                     results = op(source_node)
                     self.rosetta.cache.set (key, results)
+                    logger.debug (f"cache.set-> {key} length:{len(results)}")
                 newnodes = []
                 for r in results:
                     edge = r[0]
@@ -107,7 +108,6 @@ class Program:
                         self.linked_results.append(edge)
                         newnodes.append(r[1])
                 logger.debug(f"    {newnodes}")
-                logger.debug (f"cache.set-> {key} length:{len(results)}")
                 self.add_instance_nodes(newnodes,next_context)
             except Exception as e:
                 traceback.print_exc()

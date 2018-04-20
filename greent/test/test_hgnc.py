@@ -10,6 +10,8 @@ def hgnc():
     hgnc = HGNC(ServiceContext.create_context())
     return hgnc
 
+'''
+The function being tested has been removed.
 def test_ncbi_to_uniprot(hgnc):
     hgnc = HGNC( ServiceContext.create_context() )
     input_knode = KNode( 'NCBIGENE:3815' , node_type = node_types.GENE )
@@ -19,6 +21,7 @@ def test_ncbi_to_uniprot(hgnc):
     assert node.node_type == node_types.GENE
     assert Text.get_curie(node.identifier).upper() == 'UNIPROTKB'
     assert Text.un_curie(node.identifier) == 'P10721'
+    '''
 
 def test_synonym(hgnc):
     ncbigene = 'NCBIGENE:3815'
