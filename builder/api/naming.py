@@ -34,7 +34,7 @@ template = {
   ]
 }
 app.config['SWAGGER'] = {
-   'title': 'Ontology Service'
+   'title': 'BioNames Service'
 }
 
 
