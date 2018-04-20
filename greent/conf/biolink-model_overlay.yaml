@@ -129,11 +129,3 @@ slots:
     mappings:
       - NCIT:R176 #disease_mapped_to_gene/gene_mapped_to_disease
 
-  #Not in the original model
-  - name: condition is treated by
-    comment: >-
-      inverse of "treats condition"
-    domain: disease or phenotypic feature
-    mappings:
-      - RO:0002302
-
