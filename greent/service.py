@@ -8,7 +8,7 @@ class Service:
         """ Initialize the service given a name and an application context. """
         self.context = context
         self.name = name
-        self.url = context.config.get_service (self.name)["url"]
+        self.url = context.config.get_service (self.name).get("url", None)
 
         setattr (self.context, self.name, self)
         
@@ -16,8 +16,16 @@ class Service:
         return self.__class__.__name__
 
     def get_config(self):
-        return self.context.config.get_service (self.name)
-    
+        result = {}
+        try:
+            result = self.context.config.get_service (self.name)
+        except:
+            logger.warn(f"Unable to get config for service: {self.name}")
+            #traceback.print_exc ()
+        return result
+
+    #I don't see any reason that this shouldn't just be part of the Edge constructor
+    '''
     def get_edge (self, props={}, predicate=None, pmids=[]):
         """ Generate graph edges in a standard way, propagating information needed for
         scoring and semantic context above. """
@@ -31,3 +39,4 @@ class Service:
             'pmids' : pmids
         }
         return KEdge (self.name, predicate, props, is_synonym = (predicate=='synonym'))
+        '''

@@ -2,18 +2,138 @@ id: "http://bioentity.io/json-schema/biolink.json"
 name: biolink model (gamma)
 description: Entity and association taxonomy and datamodel for life-sciences data (Gamma Overlay)
 
-slots:
+classes:
   
-  - name: test-gamma
-    is_a: anatomical entity
+  - name: genetic condition
+    is_a: disease
+    description: >-
+      A disease that is caused by genetic modifications where those modifications are inherited from a parent's genome.
+    mappings:
+      - "MONDO:0003847"
+    id_prefixes:
+      - MONDO
+      - DOID
+      - OMIM
+      - ORPHANET
+      - EFO
+      - UMLS
+      - MESH
+      - PHAROS.DISEASE
+
+#The following modifications are to connect biolink concepts to identifier prefixes. 
+#There may be a better place to do this.
+  - name: disease
+    id_prefixes: #Adding identifiers for ROBOKOP
+        - MONDO
+        - DOID
+        - OMIM
+        - ORPHANET
+        - EFO
+        - UMLS
+        - MESH
+        - PHAROS.DISEASE 
+
+  - name: phenotypic feature
+    id_prefixes:
+      - HP
+      - NCIT
+
+  - name: chemical substance
+    id_prefixes:
+      - CHEBI
+      - CHEMBL
+      - DRUGBANK
+      - PUBCHEM
+      - MESH
+      - INCHI
+      - INCHIKEY
+      - PUBCHEM.COMPOUND
+      - KEGG.COMPOUND
+      - KEGG.DRUG
+      - PHAROS.DRUG
+      - DRUG.INTERACTION
+      - CTD
+
+  - name: drug
+    id_prefixes:
+      - CHEBI
+      - CHEMBL
+      - DRUGBANK
+      - PUBCHEM
+      - MESH
+      - INCHI
+      - INCHIKEY
+      - PUBCHEM.COMPOUND
+      - KEGG.COMPOUND
+      - KEGG.DRUG
+      - PHAROS.DRUG
+      - DRUG.INTERACTION
+      - CTD
+
+  - name: anatomical entity
+    id_prefixes:
+      - UBERON
+
+  - name: gene
+    id_prefixes:
+      - HGNC
+      - NCBIGENE
+      - ENSEMBL
+      - MGI
+      - ZFIN
+
+  - name: biological process
+    id_prefixes: 
+      - GO
+
+  - name: cellular component
+    id_prefixes: 
+      - GO
+          
+  - name: pathway
+    id_prefixes: 
+      - KEGG
+      - REACTOME
+      - PHARMGKB.PATHWAYS
+      - WIKIPATHWAYS
+      - BIOCARTA.PATHWAY
+      - KEGG.PATHWAY
+      - REACT
+      - KEGG-path
+
+ 
+  - name: cell
     id_prefixes:
       - CL
+
+slots:
+
+  - name: id
     mappings:
-      - "GO:0005623"
-      - "SIO:010001"
-      
-  - name: gross anatomical structure
-    aliases: ['tissue', 'organ']
-    is_a: anatomical entity
-      
-  
+      - rdfs:ID
+
+  - name: gene to disease association
+    mappings:
+      - RO:0002326   # contributes_to
+      - GENO:0000840 # pathogenic_for_condition
+      - RO:0002607   # is_marker_for
+
+  - name: participates in
+    mappings:
+      - biolink:gene_get_process # This function returns no relation_id
+      - RO:0002331               # involved_in
+
+  #this association is not in the original biolink model
+  - name: disease to gene association
+    is_a: association
+    mappings:
+      - NCIT:R176 #disease_mapped_to_gene/gene_mapped_to_disease
+
+  #Not in the original model
+  - name: condition is treated by
+    comment: >-
+      inverse of "treats condition"
+    domain: disease or phenotypic feature
+    mappings:
+      - RO:0002302
+

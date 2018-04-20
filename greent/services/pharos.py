@@ -6,7 +6,7 @@ import logging
 import sys
 import os
 import traceback
-import datetime
+from datetime import datetime as dt
 from collections import defaultdict
 from collections import namedtuple
 from csv import DictReader
@@ -139,6 +139,10 @@ class Pharos(Service):
             results.append((newedge, newnode))
         return results
 
+
+    def standardize_predicate(self,predicate_id,predicate_label):
+        return predicate_id, predicate_label
+
     def drug_get_gene(self, subject):
         """ Get a gene from a drug. """
         resolved_edge_nodes = []
@@ -146,17 +150,25 @@ class Pharos(Service):
             if Text.get_curie(s) == 'CHEMBL':
                 pharosid = Text.un_curie(s)
                 original_edge_nodes = []
-                r = requests.get('https://pharos.nih.gov/idg/api/v1/ligands(%s)?view=full' % pharosid)
+                url = 'https://pharos.nih.gov/idg/api/v1/ligands(%s)?view=full' % pharosid
+                r = requests.get(url)
                 result = r.json()
                 actions = set()  # for testing
                 for link in result['links']:
                     if link['kind'] == 'ix.idg.models.Target':
+                        import json
+                        print(json.dumps(link, indent=2))
                         pharos_target_id = int(link['refid'])
                         edge_properties = {}
-                        for prop in link['properties']:
-                            if prop['label'] == 'Pharmalogical Action':  # !
-                                actions.add(prop['term'])
-                        pharos_edge = KEdge('pharos', 'drug_get_gene', {'properties': link['properties']})
+                        #for prop in link['properties']:
+                        #    if prop['label'] == 'Pharmalogical Action':  # !
+                        #        actions.add(prop['term'])
+                        predicate_label='is_target'
+                        predicate_id = 'PHAROS:1'
+                        standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id,predicate_label)
+                        #pharos_edge = KEdge('pharos', 'drug_get_gene', {'properties': link['properties']})
+                        pharos_edge = KEdge('pharos.drug_get_gene',dt.now(),predicate_id,predicate_label,pharosid,
+                                            standard_predicate_id, standard_predicate_label,url=url)
                         # Pharos returns target ids in its own numbering system. Collect other names for it.
                         hgnc = self.target_to_hgnc(pharos_target_id)
                         if hgnc is not None:
@@ -175,12 +187,18 @@ class Pharos(Service):
         for pharosid in pharos_ids:
             logging.getLogger('application').debug("Identifier:" + subject.identifier)
             original_edge_nodes = []
-            r = requests.get('https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid)
+            url='https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid
+            r = requests.get(url)
             result = r.json()
             for link in result['links']:
                 if link['kind'] == 'ix.idg.models.Target':
                     pharos_target_id = int(link['refid'])
-                    pharos_edge = KEdge('pharos', 'disease_get_gene', {'properties': link['properties']})
+                    predicate_id = 'PHAROS:2'
+                    predicate_label = 'gene_implicated'
+                    standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id, predicate_label)
+                    pharos_edge = KEdge('pharos.disease_get_gene',dt.now(),predicate_id,predicate_label,pharosid,
+                                            standard_predicate_id, standard_predicate_label,url=url)
+                    #pharos_edge = KEdge('pharos', 'disease_get_gene', {'properties': link['properties']})
                     # Pharos returns target ids in its own numbering system. Collect other names for it.
                     hgnc = self.target_to_hgnc(pharos_target_id)
                     if hgnc is not None:
@@ -190,7 +208,7 @@ class Pharos(Service):
                         logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
         return resolved_edge_nodes
 
-
+'''
 class AsyncPharos(Pharos):
     """ Prototype asynchronous requests. In general we plan to have asynchronous requests and
     caching to accelerate query responses. """
@@ -269,6 +287,6 @@ def build_disease_translation():
             elif len(doids) == 0:
                 doids.append('')
             pfile.write('%d\t%s\n' % (pharosid, doids[0]))
-
+'''
 
 

@@ -1,5 +1,6 @@
 import os
 import yaml
+import traceback
 from greent.util import Resource
 
 class Config:
@@ -12,4 +13,9 @@ class Config:
         with open(config_path, 'r') as f:
             self.conf = yaml.safe_load (f)
     def get_service (self, service):
-        return self.conf['translator']['services'][service]
+        result = {}
+        try:
+            result = self.conf['translator']['services'][service]
+        except:
+            traceback.print_exc()
+        return result

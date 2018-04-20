@@ -95,26 +95,13 @@
         op    : biolink.gene_get_pathways
       - link  : gene_to_pathway
         op    : chembio.graph_get_pathways_by_gene
-    molecular_activity:
-      - link  : molecular_function
-        op    : biolink.gene_get_function
+    #currently fighting with biolink model.
+    #molecular_function:
+    #  - link  : molecular_function
+    #    op    : biolink.gene_get_function
     biological_process:
       - link  : biological_process
         op    : biolink.gene_get_process
-#  named_thing != name of thing
-#  named_thing :
-#    disease :
-#      - link  : name_to_disease
-#        op    : tkba.name_to_doid
-#    chemical_substance    :
-#      - link  : name_to_drug
-#        op    : tkba.name_to_drugbank
-#      - link  : name_to_drug
-#        op    : chembio.graph_drugname_to_pubchem
-#      - link  : name_to_drug
-#        op    : pharos.drugname_to_pharos
-#      - link  : name_to_drug
-#        op    : ctd.drugname_to_ctd
   pathway:
     gene:
       - link  : pathway_to_gene

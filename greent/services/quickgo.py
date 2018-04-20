@@ -1,16 +1,21 @@
 import logging
 import requests
-import pprint
-import urllib
 from greent.service import Service
 from greent.util import Text
 from greent.graph_components import KNode,KEdge
 from greent import node_types
+from datetime import datetime as dt
 
 class QuickGo(Service):
 
     def __init__(self, context):
         super(QuickGo, self).__init__("quickgo", context)
+
+    def standardize_predicate(self,p_id, p_label):
+        return p_id, p_label
+
+    def get_predicate_id(self, p_label):
+        return 'QGO:1'
 
     #TODO: Rename to reflect that this only returns cells?  See what else we can get?
     #Applies also to the annotation_extension functions
@@ -21,10 +26,17 @@ class QuickGo(Service):
         response = requests.get(url).json ()
         results = []
         for r in response['results']:
+            import json
+            print( json.dumps(r,indent=2))
             if 'xRelations' in r:
                 for xrel in r['xRelations']:
                     if xrel['id'].startswith('CL:'):
-                        results.append( ( self.get_edge (r, predicate=xrel['relation']), KNode (xrel['id'], node_types.CELL, label = xrel['term']) ))
+                        predicate_label = xrel['relation']
+                        predicate_id = self.get_predicate_id(predicate_label)
+                        standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id,predicate_label)
+                        edge = KEdge('quickgo.go_term_xontology_relationships',dt.now(),predicate_id,predicate_label,
+                                     node.identifier,standard_predicate_id, standard_predicate_label,url = url)
+                        results.append( ( edge , KNode (xrel['id'], node_types.CELL, label = xrel['term']) ))
         return results
 
     def go_term_annotation_extensions(self,node):
@@ -41,8 +53,12 @@ class QuickGo(Service):
                 for c in e['connectedXrefs']:
                     if c['db'] == 'CL':
                         if c['id'] not in cell_ids:
-                            results.append( (self.get_edge( r, predicate=c['qualifier']), 
-                                KNode( 'CL:{}'.format(c['id']), node_types.CELL ) ) )
+                            predicate_label = c['qualifier']
+                            predicate_id = self.get_predicate_id(predicate_label)
+                            standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id,predicate_label)
+                            edge = KEdge('quickgo.go_term_annotation_extensions',dt.now(),predicate_id,predicate_label,
+                                     node.identifier,standard_predicate_id, standard_predicate_label,url = url)
+                            results.append( (edge, KNode( 'CL:{}'.format(c['id']), node_types.CELL ) ) )
                             cell_ids.add(c['id'])
         return results
 

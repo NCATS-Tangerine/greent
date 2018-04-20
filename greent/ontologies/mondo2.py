@@ -40,7 +40,8 @@ class Mondo2(Onto):
     def get_mondo_id(self,obj_id):
         result = []
         label = super(Mondo2,self).get_label(obj_id)
-        if label and 'label' in label and label['label'] is not None:
+        #if label and 'label' in label and label['label'] is not None:
+        if label is not None:
             logger.debug (f"input id {obj_id} is a MONDO id.")
             result.append (obj_id)
         else:
@@ -57,7 +58,7 @@ class Mondo2(Onto):
 
     def is_genetic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:630 as an ancestor"""
-        return self.has_ancestor(obj, GENETIC_DISEASE)
+        return self.has_ancestor(obj, GENETIC_DISEASE)[0]
 
     def is_monogenic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:0050177 as an ancestor"""
