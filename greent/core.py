@@ -49,6 +49,7 @@ class GreenT:
             "mondo"            : lambda :  Mondo2(self.service_context) if self.ont_api else Mondo(self.service_context),
             "omnicorp"         : lambda :  OmniCorp (self.service_context),
             "oxo"              : lambda :  OXO (self.service_context),
+            "onto"             : lambda :  Onto ("onto", self.service_context),
             "pharos"           : lambda :  Pharos (self.service_context),
             "quickgo"          : lambda :  QuickGo (self.service_context),
             "tkba"             : lambda :  TranslatorKnowledgeBeaconAggregator (self.service_context),
