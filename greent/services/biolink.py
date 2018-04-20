@@ -8,6 +8,7 @@ from greent.ontologies.go2 import GO2
 from greent.util import Text
 from greent.graph_components import KNode, KEdge
 from greent import node_types
+from datetime import datetime as dt
 import logging
 
 
@@ -23,8 +24,9 @@ class Biolink(Service):
         '''
         self.checker = context.core.mondo
         self.go = context.core.go
+        self.concept_model = getattr(context, 'rosetta-graph').concept_model
         
-    def process_associations(self, r, predicate, target_node_type, reverse=False):
+    def process_associations(self, r, function, target_node_type, input_identifier, url, reverse=False):
         """Given a response from biolink, create our edge and node structures.
         Sometimes (as in pathway->Genes) biolink returns the query as the object, rather
         than the subject.  reverse=True will handle this case, bringing back the subject
@@ -42,25 +44,33 @@ class Biolink(Service):
                 obj = KNode(association['subject']['id'], target_node_type, association['subject']['label'])
             else:
                 obj = KNode(association['object']['id'], target_node_type, association['object']['label'])
-            rel = {'typeid': association['relation']['id'], 'label': association['relation']['label']}
-            props = {'publications': pubs, 'relation': rel}
-            edge = KEdge('biolink', predicate, props)
+            predicate_id = association['relation']['id']
+            predicate_label = association['relation']['label']
+            if predicate_id == None:
+                predicate_id = f'biolink:{function}'
+                predicate_label = f'biolink:{function}'
+            standard_id, standard_label = self.standardize_predicate(predicate_id, predicate_label)
+            edge = KEdge(f'biolink.{function}', dt.now(), predicate_id, predicate_label, input_identifier, standard_id, standard_label, publications = pubs, url = url)
             edge_nodes.append((edge, obj))
         return edge_nodes
+
+    def standardize_predicate(self, predicate_id, predicate_label):
+        return self.concept_model.standardize_relationship(predicate_id)
 
     def gene_get_disease(self, gene_node):
         """Given a gene specified as a curie, return associated diseases."""
         #Biolink is pretty forgiving on gene inputs, and our genes should have HGNC as their identifiers nearly always
         ehgnc = urllib.parse.quote_plus(gene_node.identifier)
         logging.getLogger('application').debug('          biolink: %s/bioentity/gene/%s/diseases' % (self.url, ehgnc))
-        r = requests.get('%s/bioentity/gene/%s/diseases' % (self.url, ehgnc)).json()
-        return self.process_associations(r, 'gene_get_disease', node_types.DISEASE)
+        urlcall = '%s/bioentity/gene/%s/diseases' % (self.url, ehgnc)
+        r = requests.get(urlcall).json()
+        return self.process_associations(r, 'gene_get_disease', node_types.DISEASE, ehgnc, urlcall)
 
     def disease_get_phenotype(self, disease):
         #Biolink should understand any of our disease inputs here.
         url = "{0}/bioentity/disease/{1}/phenotypes/".format(self.url, disease.identifier)
         response = requests.get(url).json()
-        return self.process_associations(response, 'disease_get_phenotype', node_types.PHENOTYPE)
+        return self.process_associations(response, 'disease_get_phenotype', node_types.PHENOTYPE, disease.identifier, url)
 
     def gene_get_go(self, gene):
         # this function is very finicky.  gene must be in uniprotkb, and the curie prefix must be correctly capitalized
@@ -74,56 +84,28 @@ class Biolink(Service):
             return []
         url = "{0}/bioentity/gene/UniProtKB:{1}/function/".format(self.url, Text.un_curie(uniprot_id))
         response = requests.get(url).json()
-        # return [ (a['object']['id'] , a['object']['label']) for a in response['associations'] ]
-        return self.process_associations(response, 'gene_get_go', node_types.PROCESS)
+        return response,url,uniprot_id
+        #return self.process_associations(response, 'gene_get_go', node_types.PROCESS, url)
 
     def gene_get_function(self, gene):
-        edges_nodes = self.gene_get_go(gene)
-        process_results = list(filter(lambda x: self.go.is_molecular_function(x[1].identifier), edges_nodes))
-        for edge, node in process_results:
-            edge.predicate = 'gene_get_molecular_function'
-            node.identifier.replace('GO:', 'GO.MOLECULAR_FUNCTION:')
-            node.node_type = node_types.FUNCTION
-        return process_results
+        response,url,input_id = self.gene_get_go(gene)
+        edges_nodes = self.process_associations(response, 'gene_get_function', node_types.FUNCTION, input_id, url)
+        function_results = list(filter(lambda x: self.go.is_molecular_function(x[1].identifier), edges_nodes))
+        return function_results
 
     def gene_get_process(self, gene):
-        edges_nodes = self.gene_get_go(gene)
+        response,url,input_id = self.gene_get_go(gene)
+        edges_nodes = self.process_associations(response, 'gene_get_process', node_types.PROCESS, input_id, url)
         process_results = list(filter(lambda x: self.go.is_biological_process(x[1].identifier), edges_nodes))
-        for edge, node in process_results:
-            edge.predicate = 'gene_get_biological_process'
-            node.identifier.replace('GO:', 'GO.BIOLOGICAL_PROCESS:')
-            node.node_type = node_types.PROCESS
         return process_results
 
     def gene_get_pathways(self, gene):
         url = "{0}/bioentity/gene/{1}/pathways/".format(self.url, gene.identifier)
         response = requests.get(url).json()
-        return self.process_associations(response, 'gene_get_pathways', node_types.PATHWAY)
+        return self.process_associations(response, 'gene_get_pathways', node_types.PATHWAY, gene.identifier, url)
 
-    #def gene_get_react_pathway(self, gene):
-    #    process_results = self.gene_get_pathways(gene)
-    #    return list(filter(lambda en: en[1].identifier.startswith('REACT:'), process_results))
-#
-#    def gene_get_kegg_pathway(self, gene):
-#        process_results = self.gene_get_pathways(gene)
-#        return list(filter(lambda en: en[1].identifier.startswith('KEGG-path:'), process_results))
 
     def pathway_get_gene(self, pathway):
         url = "{0}/bioentity/pathway/{1}/genes/".format(self.url, pathway.identifier)
         response = requests.get(url).json()
-        return self.process_associations(response, 'pathway_get_genes', node_types.GENE, reverse=True)
-
-#THis function has been replaced with caster + gene_get_disease
-#    def gene_get_genetic_condition(self, gene):
-#        """Given a gene specified as an HGNC curie, return associated genetic conditions.
-#        A genetic condition is specified as a disease that descends from a ndoe for genetic disease in MONDO."""
-#        disease_relations = self.gene_get_disease(gene)
-#        relations = []
-#        for relation, obj in disease_relations:
-#            is_genetic_condition, new_object_ids = self.checker.is_genetic_disease(obj)
-#            if is_genetic_condition:
-#                obj.properties['mondo_identifiers'] = new_object_ids
-#                obj.node_type = node_types.GENETIC_CONDITION
-#                relations.append((relation, obj))
-#        # print (" biolink relations %s" % relations)
-#        return relations
+        return self.process_associations(response, 'pathway_get_genes', node_types.GENE, url, pathway.identifier, reverse=True)

@@ -1,4 +1,3 @@
-import json
 import os
 from greent.util import Resource
 from collections import defaultdict
@@ -17,6 +16,33 @@ class Concept:
         return f"Concept(name={self.name},is_a={self.is_a is not None},id_prefixes={self.id_prefixes})"
         #return f"Concept(name={self.name},is_a={self.is_a},id_prefixes={self.id_prefixes})"
 
+class Relationship:
+    """ A semantic type for a relationship (or slot)
+    Provides rudimentary notion of specialization via is_a. """
+    def __init__(self, name, is_a, mappings):
+        self.name = name
+        #Only a single parent?
+        self.is_a = is_a
+        is_a_name = is_a.name if is_a else None
+        self.mappings = [] if mappings is None else mappings
+        self.identifier = self.mint_identifier()
+    def mint_identifier(self):
+        """Find out what we are going to use as an identifier.
+        If we don't have any mappings, mint one based on the name.
+        Otherwise, prefer a set of curies from the mappings.  Failing anything else,
+        use the first mapping."""
+        if len(self.mappings) == 0:
+            return f'BIOLINK:{self.name}'
+        favorites=['RO','SIO','BFO','GENO','SEMMEDDB']
+        for favorite in favorites:
+            for mapped in self.mappings:
+                if mapped.startswith(favorite):
+                    return favorite
+        return self.mappings[0]
+    def __repr__(self):
+        return f"Relation(name={self.name},is_a={self.is_a is not None},mappings={self.mappings})"
+        #return f"Concept(name={self.name},is_a={self.is_a},id_prefixes={self.id_prefixes})"
+
 
 class ConceptModel:
     """ A grouping of concepts.
@@ -26,6 +52,8 @@ class ConceptModel:
         self.name = name
         self.by_name = {} #defaultdict(lambda:None)
         self.by_prefix = defaultdict(lambda:None)
+        self.relations_by_name = defaultdict(lambda:None)
+        self.relations_by_xref = defaultdict(lambda:None)
 
         self.model_loaders = {
             'biolink-model' : lambda : BiolinkConceptModelLoader (name, self)
@@ -52,6 +80,13 @@ class ConceptModel:
         self.by_name [concept.name] = concept
         for prefix in concept.id_prefixes:
             self.by_prefix[prefix] = concept
+
+    def add_relationship(self,relationship):
+        self.relations_by_name[relationship.name] = relationship
+        for mapping in relationship.mappings:
+            if mapping in self.relations_by_xref:
+                raise Exception('Have multiple slots with the same mapping {}'.format(mapping))
+            self.relations_by_xref[mapping] = relationship
 
     def items (self):
         return  self.by_name.items ()
@@ -82,6 +117,13 @@ class ConceptModel:
         parents = set( [concept.is_a for name,concept in self.by_name.items()] )
         return list(filter( lambda x: x is not None and x.is_a is None, parents))
 
+    def standardize_relationship(self,xref):
+        r = self.relations_by_xref[xref]
+        if r is None:
+            raise Exception(f"No such relationship mapped: {xref}")
+        else:
+            return r.identifier, r.name
+
 class ConceptModelLoader:
 
     def __init__(self, name, concept_model):
@@ -89,21 +131,29 @@ class ConceptModelLoader:
         self.model = concept_model
         model_path = os.path.join (os.path.dirname (__file__), "conf", f"{self.name}.yaml")
         model_obj = Resource.load_yaml (model_path)
-
-
         model_overlay_path = model_path.replace (".yaml", "_overlay.yaml")
         if os.path.exists (model_overlay_path):
             model_overlay = Resource.load_yaml (model_overlay_path)
-            model_obj.update (model_overlay)
-        #print (json.dumps (model_obj, indent=2))
-        
+            #Update only adds/overwrites keys at the top level. Here, it just overwrites "Classes" rather than updating classes.
+            #model_obj.update (model_overlay)
+            #This version recursively updates throughout the hierarchy of dicts, updating lists also
+            Resource.deepupdate(model_obj, model_overlay)
+
 
         for obj in model_obj["classes"]:
             concept = self.parse_item (obj)
             self.model.add_item (concept)
 
+        for obj in model_obj['slots']:
+            relationship = self.parse_slot(obj)
+            self.model.add_relationship(relationship)
+
     def parse_item (self, obj):
         raise ValueError ("Not implemented")
+
+    def parse_slot (self, obj):
+        raise ValueError ("Not implemented")
+
 
 class BiolinkConceptModelLoader (ConceptModelLoader):
     def __init__(self, name, concept_model):
@@ -115,3 +165,11 @@ class BiolinkConceptModelLoader (ConceptModelLoader):
         id_prefixes = obj["id_prefixes"] if "id_prefixes" in obj else []
         parent = self.model.by_name [is_a] if is_a in self.model.by_name else None
         return Concept (name = name, is_a = parent, id_prefixes = id_prefixes)
+
+    def parse_slot(self,obj):
+        name = obj["name"].replace (" ", "_")
+        mappings = obj["mappings"] if "mappings" in obj else []
+        is_a = obj["is_a"].replace (" ", "_") if "is_a" in obj else None
+        parent = self.model.relations_by_name [is_a] if is_a in self.model.relations_by_name else None
+        return Relationship (name = name, is_a = parent, mappings = mappings)
+

@@ -69,6 +69,9 @@ class HGNC(Service):
                         synonyms.add(synonym)
         return synonyms
 
+'''
+These are now defunct.  We simply use this as a synonimizer, not an edge producer
+
     #todo, it would probably be straightforward to autogenerate these and have common logic for them
     def ncbigene_to_uniprotkb(self, node):
         """Given a node representing an NCBIGene (or Entrez) identifier, retrieve the UniProtKB identifier"""
@@ -108,3 +111,4 @@ class HGNC(Service):
             #No results back
             return []
 
+'''

@@ -4,14 +4,13 @@ from greent.services.chembio import ChemBioKS
 from greent.servicecontext import ServiceContext
 from greent import node_types
 from greent.util import Text
+from greent.conftest import rosetta
 
-@pytest.fixture(scope='module')
-def chembio():
-    chembio = ChemBioKS(ServiceContext.create_context())
-    return chembio
+@pytest.fixture()
+def chembio(rosetta):
+    return rosetta.core.chembio
 
 def test_name_lookup(chembio):
-    chembio = ChemBioKS(ServiceContext.create_context())
     input_node = KNode("DRUG_NAME:imatinib", node_types.DRUG_NAME)
     results = chembio.graph_drugname_to_pubchem( input_node )
     edge,node = results[0]
