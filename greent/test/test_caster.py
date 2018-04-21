@@ -61,3 +61,9 @@ def test_input_filter(rosetta):
     assert 'UBERON:0001264' in anat_ids #pancreas
     results = func(KNode('UBERON:0001264',node_types.ANATOMY)) #PANCREAS
     assert len(results) == 0
+
+def test_nested(rosetta):
+    """cell->anatomy should be callable even if the input is upcast to an anatomy and we want a cell as output"""
+    fname = 'caster.output_filter(input_filter(uberongraph~get_anatomy_by_cell_graph,cell,typecheck~is_cell),cell,typecheck~is_cell)'
+    #Test that we can actually get a function.  This was failing 4/21
+    func = rosetta.get_ops(fname)
