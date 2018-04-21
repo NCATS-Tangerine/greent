@@ -21,6 +21,15 @@ class Onto(CachedService):
         """ Search ontologies for a term. """
         obj = self.get(f"{self.url}/search/{name}/{'true' if is_regex else 'false'}")
         return [ v['id'] for v in obj['values'] ] if obj and 'values' in obj else []
+    def search(self,name,is_regex=False, full=False):
+        """ Search ontologies for a term. """
+        obj = self.get(f"{self.url}/search/{name}/{'true' if is_regex else 'false'}")
+        results = []
+        if full:
+            results = obj['values'] if 'values' in obj else []
+        else:
+            results = [ v['id'] for v in obj['values'] ] if obj and 'values' in obj else []
+        return results
     def get_xrefs(self,identifier, filter=None):
         """ Get external references. Optionally filter results. """
         obj = self.get(f"{self.url}/xrefs/{identifier}")
