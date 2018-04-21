@@ -93,6 +93,7 @@ class Resource:
         return result
 
     @staticmethod
+    # Modified from:
     # Copyright Ferry Boender, released under the MIT license.
     def deepupdate(target, src):
         """Deep update target dict with src
@@ -101,30 +102,40 @@ class Resource:
         src[k]. If v is a set, target[k] is updated with v, If v is a dict,
         recursively deep-update it.
 
-        Examples:
-        >>> t = {'name': 'Ferry', 'hobbies': ['programming', 'sci-fi']}
-        >>> deepupdate(t, {'hobbies': ['gaming']})
-        >>> print t
-        {'name': 'Ferry', 'hobbies': ['programming', 'sci-fi', 'gaming']}
+        Updated to deal with yaml structure: if you have a list of yaml dicts,
+        want to merge them by "name"
         """
-        for k, v in src.items():
-            if type(v) == list:
-                if not k in target:
-                    target[k] = copy.deepcopy(v)
+        if type(src) == dict:
+            for k, v in src.items():
+                if type(v) == list:
+                    if not k in target:
+                        target[k] = copy.deepcopy(v)
+                    elif type(v[0]) == dict:
+                        Resource.deepupdate(target[k],v)
+                    else:
+                        target[k].extend(v)
+                elif type(v) == dict:
+                    if not k in target:
+                        target[k] = copy.deepcopy(v)
+                    else:
+                        Resource.deepupdate(target[k], v)
+                elif type(v) == set:
+                    if not k in target:
+                        target[k] = v.copy()
+                    else:
+                        target[k].update(v.copy())
                 else:
-                    target[k].extend(v)
-            elif type(v) == dict:
-                if not k in target:
-                    target[k] = copy.deepcopy(v)
+                    target[k] = copy.copy(v)
+        else:
+            #src is a list of dicts, target is a list of dicts, want to merge by name (yikes)
+            src_elements = { x['name']: x for x in src }
+            target_elements = { x['name']: x for x in target }
+            for name in src_elements:
+                if name in target_elements:
+                    Resource.deepupdate(target_elements[name], src_elements[name])
                 else:
-                    Resource.deepupdate(target[k], v)
-            elif type(v) == set:
-                if not k in target:
-                    target[k] = v.copy()
-                else:
-                    target[k].update(v.copy())
-            else:
-                target[k] = copy.copy(v)
+                    target.append( src_elements[name] )
+
 
 class DataStructure:
     @staticmethod

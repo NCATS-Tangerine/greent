@@ -131,6 +131,7 @@ class ConceptModelLoader:
         self.model = concept_model
         model_path = os.path.join (os.path.dirname (__file__), "conf", f"{self.name}.yaml")
         model_obj = Resource.load_yaml (model_path)
+
         model_overlay_path = model_path.replace (".yaml", "_overlay.yaml")
         if os.path.exists (model_overlay_path):
             model_overlay = Resource.load_yaml (model_overlay_path)
@@ -138,7 +139,6 @@ class ConceptModelLoader:
             #model_obj.update (model_overlay)
             #This version recursively updates throughout the hierarchy of dicts, updating lists also
             Resource.deepupdate(model_obj, model_overlay)
-
 
         for obj in model_obj["classes"]:
             concept = self.parse_item (obj)
