@@ -2,6 +2,14 @@ import argparse
 import json
 import os
 import requests
+
+from builder.builder import KnowledgeGraph
+from greent.graph_components import KNode
+from builder.lookup_utils import lookup_disease_by_name, lookup_drug_by_name, lookup_phenotype_by_name
+from greent.userquery import UserQuery
+
+from builder.knowledgeQuery import KnowledgeQuery
+
 import yaml
 import shutil
 try:
@@ -101,6 +109,75 @@ def get_rosetta ():
 
 @app.route('/cop/<drug>/<disease>/', methods=['GET'])
 def cop (drug="imatinib", disease="asthma"):
+   """ Get service metadata 
+   ---
+   parameters:
+     - name: drug
+       in: path
+       type: string
+       required: false
+       default: imatinib
+       x-valueType:
+         - http://schema.org/string
+       x-requestTemplate:
+         - valueType: http://schema.org/string
+           template: /query?drug={{ input }}
+     - name: disease
+       in: path
+       type: string
+       required: false
+       default: asthma
+       x-valueType:
+         - http://schema.org/string
+       x-requestTemplate:
+         - valueType: http://schema.org/string
+           template: /query?disease={{ input }}
+   responses:
+     200:
+       description: ...
+   """
+   rosetta = get_rosetta ()
+   drug_id = rosetta.n2chem(drug)
+   disease_id = get_associated_disease(disease)
+
+
+   knowledge_api = KnowledgeQuery ()
+   knowledge_api.query (
+
+
+   
+   g = {}
+   key = f"cop-drug({drug})-disease({disease})"
+   g = rosetta.service_context.cache.get (key)
+   if not g:
+      blackboard = rosetta.get_knowledge_graph(**{
+         "inputs" : {
+            "type" : "chemical_substance",
+            "values" : drug_id
+         },
+         "ends" : disease_id,
+         "query" : """
+         MATCH p=
+         (c0:Concept {name: "chemical_substance" })--
+         (c1:Concept {name: "gene" })--
+         (c2:Concept {name: "biological_process" })--
+         (c3:Concept {name: "cell" })--
+         (c4:Concept {name: "anatomical_entity" })--
+         (c5:Concept {name: "phenotypic_feature" })--
+         (c6:Concept {name: "disease" })
+         FOREACH (n in relationships(p) | SET n.marked = TRUE)
+         WITH p,c0,c6
+         MATCH q=(c0:Concept)-[*0..6 {marked:True}]->()<-[*0..6 {marked:True}]-(c6:Concept)
+         WHERE p=q
+         AND ALL( r in relationships(p) WHERE  EXISTS(r.op) )FOREACH (n in relationships(p) | SET n.marked = FALSE)
+         RETURN p, EXTRACT( r in relationships(p) | startNode(r) )"""
+      })
+      g = render_graph(blackboard)
+      rosetta.service_context.cache.set (key, g)
+   return jsonify (g)
+
+@app.route('/cop0/<drug>/<disease>/', methods=['GET'])
+def cop0 (drug="imatinib", disease="asthma"):
    """ Get service metadata 
    ---
    parameters:
