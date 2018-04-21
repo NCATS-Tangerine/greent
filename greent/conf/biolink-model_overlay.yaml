@@ -122,18 +122,12 @@ slots:
     mappings:
       - biolink:gene_get_process # This function returns no relation_id
       - RO:0002331               # involved_in
+      - contributes_to           # This is here because sometimes biolink.gene2function returns this as a relationship_id!
+                    
 
   #this association is not in the original biolink model
   - name: disease to gene association
     is_a: association
     mappings:
       - NCIT:R176 #disease_mapped_to_gene/gene_mapped_to_disease
-
-  #Not in the original model
-  - name: condition is treated by
-    comment: >-
-      inverse of "treats condition"
-    domain: disease or phenotypic feature
-    mappings:
-      - RO:0002302
 

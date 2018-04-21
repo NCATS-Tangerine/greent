@@ -44,9 +44,16 @@ class Caster(Service):
         return base_function(node)
 
     def unwrap(self,ftext):
+        """We know that there will only be nested parens in the first argument"""
         l = ftext.index('(')
         fname = ftext[:l]
-        args = ftext[l+1:-1].split(',')
+        argstring = ftext[l+1:-1]
+        if ')' in argstring:
+            r = argstring.rindex(')')
+            arg0 = argstring[:r+1]
+            args = [arg0] + argstring[r+1].split(',')
+        else:
+            args = argstring.split(',')
         return fname,args
 
     def create_function(self,functiontext):
