@@ -84,8 +84,8 @@ class ConceptModel:
     def add_relationship(self,relationship):
         self.relations_by_name[relationship.name] = relationship
         for mapping in relationship.mappings:
-            if mapping in self.relations_by_xref:
-                raise Exception('Have multiple slots with the same mapping {}'.format(mapping))
+#            if mapping in self.relations_by_xref:
+#                raise Exception('Have multiple slots with the same mapping {}'.format(mapping))
             self.relations_by_xref[mapping] = relationship
 
     def items (self):

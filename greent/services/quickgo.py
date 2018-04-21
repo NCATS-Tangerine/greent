@@ -25,6 +25,8 @@ class QuickGo(Service):
         url = "{0}/QuickGO/services/ontology/go/terms/GO:{1}/xontologyrelations".format (self.url, Text.un_curie(node.identifier))
         response = requests.get(url).json ()
         results = []
+        if not 'results' in response:
+            return results
         for r in response['results']:
             import json
             print( json.dumps(r,indent=2))
@@ -48,6 +50,8 @@ class QuickGo(Service):
         response = requests.get(url).json()
         results = []
         cell_ids = set()
+        if not 'results' in response:
+            return results
         for r in response['results']:
             for e in r['extensions']:
                 for c in e['connectedXrefs']:
