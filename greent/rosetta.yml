@@ -74,7 +74,7 @@
   drug:
     gene:
       - link  : drug_to_gene
-        op    : pharos.drug_to_gene
+        op    : pharos.drug_get_gene
   gene:
     anatomical_entity:
       - link  : gene_to_anatomy
