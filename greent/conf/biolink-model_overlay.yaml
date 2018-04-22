@@ -120,9 +120,10 @@ slots:
 
   - name: participates in
     mappings:
-      - biolink:gene_get_process # This function returns no relation_id
+      - biolink:gene_get_process # biolink returns no relation_id or an identifier that is not a curie
       - RO:0002331               # involved_in
-      - contributes_to           # This is here because sometimes biolink.gene2function returns this as a relationship_id!
+    # I'm taking this back out and handling in the service
+    # - contributes_to           # This is here because sometimes biolink.gene_get_process returns this as a relationship_id!
                     
 
   #this association is not in the original biolink model

@@ -46,7 +46,7 @@ class Biolink(Service):
                 obj = KNode(association['object']['id'], target_node_type, association['object']['label'])
             predicate_id = association['relation']['id']
             predicate_label = association['relation']['label']
-            if predicate_id == None:
+            if (predicate_id == None) or (':' not in predicate_id):
                 predicate_id = f'biolink:{function}'
                 predicate_label = f'biolink:{function}'
             standard_id, standard_label = self.standardize_predicate(predicate_id, predicate_label)
