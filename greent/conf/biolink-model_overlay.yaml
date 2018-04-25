@@ -112,11 +112,12 @@ slots:
     mappings:
       - rdfs:ID
 
-  - name: gene to disease association
+  - name: associated with condition
     mappings:
       - RO:0002326   # contributes_to
       - GENO:0000840 # pathogenic_for_condition
       - RO:0002607   # is_marker_for
+      - hetio:ASSOCIATES_DaG
 
   - name: participates in
     mappings:
@@ -124,7 +125,21 @@ slots:
       - RO:0002331               # involved_in
     # I'm taking this back out and handling in the service
     # - contributes_to           # This is here because sometimes biolink.gene_get_process returns this as a relationship_id!
-                    
+
+  - name: expressed in
+    mappings:
+      - hetio:EXPRESSES_AeG
+
+  - name: positively regulates, entity to entity
+    mappings:
+      - hetio:UPREGULATES_AuG
+      - hetio:UPREGULATES_DuG
+
+  - name: negatively regulates, entity to entity
+    mappings:
+      - hetio:DOWNREGULATES_AdG
+      - hetio:DOWNREGULATES_DdG
+
   - name: chemical to gene association
     mappings:
       - CTD:interacts_with
@@ -166,6 +181,9 @@ slots:
       - CTD:increases^stability
       - CTD:increases^transport
 
+  - name: has phenotype
+    mappings:
+      - hetio:PRESENTS_DpS
 
   #this association is not in the original biolink model
   - name: disease to gene association

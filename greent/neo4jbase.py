@@ -52,27 +52,27 @@ class Neo4JREST(Service):
         relationships = []
         for r in response.get('results',[]):
             for d in r.get('data',[]):
-                print ("data---------{}".format (json.dumps (d, indent=2)))
-                print ("d2--------> {}".format (d.get('graph',{}).get('nodes',[])))
+                #print ("data---------{}".format (json.dumps (d, indent=2)))
+                #print ("d2--------> {}".format (d.get('graph',{}).get('nodes',[])))
                 d2 = d.get('graph',{}).get('nodes',[])
-                print ("kinds: {}".format (kinds))
+                #print ("kinds: {}".format (kinds))
                 if kinds == None or 'node' in kinds:
-                    print ("--------> {}".format (d.get('graph',{}).get('nodes',[])))
+                #    print ("--------> {}".format (d.get('graph',{}).get('nodes',[])))
                     for n in d2: #d.get('graph',{}).get('nodes'):
-                        print("_______________GOT ONE")
-                        print (json.dumps (n, indent=2))
+                #        print("_______________GOT ONE")
+                #        print (json.dumps (n, indent=2))
                         if labels != None:
                             if any (map (lambda b : b in n['labels'], labels)):
-                                print (labels)
+                #                print (labels)
                                 if properties:
                                     obj = {}
                                     for prop in properties:
                                         obj[prop] = n['properties'][prop]
                                     nodes.append (obj)
                                 else:
-                                    print ("-----------")
+                #                    print ("-----------")
                                     nodes.append (n['properties'])
-                if 'relationships' in kinds:
+                if 'relationship' in kinds:
                     for r in d['graph']['relationships']:
                         relationships.append (r)
-        return nodes
+        return nodes,relationships
