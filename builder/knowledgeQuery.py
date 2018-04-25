@@ -1,34 +1,43 @@
 from greent.graph_components import KNode
 from greent.rosetta import Rosetta
-from greent.userquery import UserQuery
+from greent import node_types
+from builder.userquery import UserQuery
 from builder.builder import KnowledgeGraph
 from builder.lookup_utils import lookup_disease_by_name, lookup_drug_by_name, lookup_phenotype_by_name
-
+        
 class KnowledgeQuery:
 
     """ KnowledgeGraph query builder interface. """
 
     def type2nametype(self, node_type):
-        name_type = 'NAME.DISEASE' if node_type == 'Disease' or node_type == 'Phenotype' or node_type == 'GeneticCondition'\
-            else 'NAME.DRUG' if node_type == 'Substance'\
-            else None
+        disease_ish = [
+            node_types.DISEASE,
+            node_types.PHENOTYPE,
+            node_types.GENETIC_CONDITION
+        ]
+        name_type = 'NAME.DISEASE' if node_type in disease_ish \
+        else 'NAME.DRUG' if node_type == node_types.DRUG \
+        else None
         if not name_type:
-            raise ValueError('Unsupported named node type.')
+            raise ValueError(f'Unsupported named node type: {node_type}')
         return name_type
 
-    def create_query (self, start_name, start_type, end_name, end_type, intermediate, two_sided):
-        start_name_type = self.type2nametype(start_type)
-        start_name_node = KNode( '{}.{}'.format(start_name_type, start_name), start_name_type)
-        query = UserQuery(ids[0], start_type, start_name_node)
+    def create_query (self, start_name, start_type, end_name, end_type, intermediate, two_sided, end_values):
+        start_node = KNode(f"{start_type}.{start_name}", start_type)
+        query = UserQuery (start_name, start_type)
         for transition in intermediate:
-            query.add_transition(transition['type'].replace(' ', ''),
-                                 min_path_length=transition['leadingEdge']['numNodesMin']+1,
-                                 max_path_length=transition['leadingEdge']['numNodesMax']+1)
+            '''
+            query.add_transition(transition['type'])
+            '''
+            query.add_transition(transition['type'],
+                                 min_path_length=transition['min_path_length'],
+                                 max_path_length=transition['max_path_length'])
+
         if two_sided:
             end_name_type = self.type2nametype(end_type)
             end_name_node = KNode(f"{end_name_type}.{end_name}", end_name_type)
-            query.add_transition(end_type, end_values = ids[-1])
-            query.add_end_lookup_node(end_name_node)
+            query.add_transition(end_type, end_values = end_values)
+            #query.add_end_lookup_node(end_name_node)
         return query
 
     def query (self, query, query_id):
@@ -36,7 +45,7 @@ class KnowledgeQuery:
         kgraph = KnowledgeGraph(query, Rosetta ())
         
         # get construction/source graph
-        sgraph = self._get_source_graph(kgraph)        
+        #sgraph = self._get_source_graph(kgraph)        
         kgraph.execute()
         kgraph.print_types()
         kgraph.prune()

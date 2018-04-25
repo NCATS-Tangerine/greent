@@ -3,6 +3,7 @@ import json
 import os
 import requests
 
+from greent import node_types
 from builder.builder import KnowledgeGraph
 from greent.graph_components import KNode
 from builder.lookup_utils import lookup_disease_by_name, lookup_drug_by_name, lookup_phenotype_by_name
@@ -99,6 +100,29 @@ def validate_cypher(query):
    if 'delete' in query_lower or 'detach' in query_lower or 'create' in query_lower:
       raise ValueError ("not")
 
+class Zeta:
+   
+   def __init__(self):
+      config = app.config['SWAGGER']['greent_conf']
+      self.rosetta = Rosetta (debug=True, greentConf=config)
+      self.knowledge = KnowledgeQuery ()
+   
+   def create_key (self, kind, path):
+      joined_path = "/".join (path)
+      return f"{kind}-{joined_path}".\
+         replace (" ","_").\
+         replace(",","_").\
+         replace("'","").\
+         replace('"',"")
+
+#zeta = Zeta ()
+zeta = None
+def get_zeta ():
+   global zeta
+   if not zeta:
+      zeta = Zeta ()
+   return zeta
+
 rosetta = None
 def get_rosetta ():
    global rosetta
@@ -136,48 +160,39 @@ def cop (drug="imatinib", disease="asthma"):
      200:
        description: ...
    """
-   rosetta = get_rosetta ()
-   drug_id = rosetta.n2chem(drug)
-   disease_id = get_associated_disease(disease)
+   zeta = get_zeta ()
+#   drug_id = zeta.rosetta.n2chem(drug)
+#   disease_id = get_associated_disease(disease)
+   key = zeta.create_key (drug, disease)
+   graph = zeta.rosetta.service_context.cache.get (key)
 
 
-   knowledge_api = KnowledgeQuery ()
-   knowledge_api.query (
-
-
-   
-   g = {}
-   key = f"cop-drug({drug})-disease({disease})"
-   g = rosetta.service_context.cache.get (key)
-   if not g:
-      blackboard = rosetta.get_knowledge_graph(**{
-         "inputs" : {
-            "type" : "chemical_substance",
-            "values" : drug_id
-         },
-         "ends" : disease_id,
-         "query" : """
-         MATCH p=
-         (c0:Concept {name: "chemical_substance" })--
-         (c1:Concept {name: "gene" })--
-         (c2:Concept {name: "biological_process" })--
-         (c3:Concept {name: "cell" })--
-         (c4:Concept {name: "anatomical_entity" })--
-         (c5:Concept {name: "phenotypic_feature" })--
-         (c6:Concept {name: "disease" })
-         FOREACH (n in relationships(p) | SET n.marked = TRUE)
-         WITH p,c0,c6
-         MATCH q=(c0:Concept)-[*0..6 {marked:True}]->()<-[*0..6 {marked:True}]-(c6:Concept)
-         WHERE p=q
-         AND ALL( r in relationships(p) WHERE  EXISTS(r.op) )FOREACH (n in relationships(p) | SET n.marked = FALSE)
-         RETURN p, EXTRACT( r in relationships(p) | startNode(r) )"""
-      })
-      g = render_graph(blackboard)
-      rosetta.service_context.cache.set (key, g)
+   drug_id = drug #['MESH:D000068877', 'CHEMBL:CHEMBL941', 'CHEMBL:CHEMBL1642', 'CHEMBL:CHEMBL1421', 'PUBCHEM:5291']
+   disease_id = disease
+      
+   print (f"{drug_id}")
+   print (f"{disease_id}")
+   if not graph:
+      query = zeta.knowledge.create_query(
+         start_name   = drug_id,
+         start_type   = node_types.DRUG,
+         end_name     = disease_id,
+         end_type     = node_types.DISEASE, 
+         two_sided    = True,
+         intermediate = [
+            { "type" : node_types.GENE,      "min_path_length" : 1, "max_path_length" : 1 },
+            { "type" : node_types.PROCESS,   "min_path_length" : 1, "max_path_length" : 1 },
+            { "type" : node_types.CELL,      "min_path_length" : 1, "max_path_length" : 1 },
+            { "type" : node_types.ANATOMY,   "min_path_length" : 1, "max_path_length" : 1 },
+            { "type" : node_types.PHENOTYPE, "min_path_length" : 1, "max_path_length" : 1 }
+         ],
+         end_values   = ['MONDO:0010940', 'MONDO:0004784', 'MONDO:0004766', 'MONDO:0004979', 'MONDO:0012577', 'MONDO:0012771', 'MONDO:0008834', 'MONDO:0012607', 'MONDO:0012666', 'MONDO:0012379', 'MONDO:0012067', 'MONDO:0011805', 'MONDO:0013180', 'MONDO:0011597', 'MONDO:0008835'])
+      graph = zeta.knowledge.query (query, key)
+      zeta.rosetta.service_context.cache.set (key, graph)
    return jsonify (g)
 
-@app.route('/cop0/<drug>/<disease>/', methods=['GET'])
-def cop0 (drug="imatinib", disease="asthma"):
+@app.route('/cop2/<drug>/<disease>/', methods=['GET'])
+def cop2 (drug="imatinib", disease="asthma"):
    """ Get service metadata 
    ---
    parameters:
@@ -354,7 +369,7 @@ if __name__ == "__main__":
    parser.add_argument('-c', '--conf', help='GreenT config file to use.', default=None)
    args = parser.parse_args ()
    app.config['SWAGGER']['bag_source'] = args.bag_source
-   app.config['SWAGGER']['greent_conf'] = args.greent_conf = args.conf
+   app.config['SWAGGER']['greent_conf'] = args.conf
    app.run(host='0.0.0.0', port=args.port, debug=True, threaded=True)
 
 

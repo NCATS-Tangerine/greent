@@ -120,10 +120,52 @@ slots:
 
   - name: participates in
     mappings:
-      - biolink:gene_get_process # This function returns no relation_id
+      - biolink:gene_get_process # biolink returns no relation_id or an identifier that is not a curie
       - RO:0002331               # involved_in
-      - contributes_to           # This is here because sometimes biolink.gene2function returns this as a relationship_id!
+    # I'm taking this back out and handling in the service
+    # - contributes_to           # This is here because sometimes biolink.gene_get_process returns this as a relationship_id!
                     
+  - name: chemical to gene association
+    mappings:
+      - CTD:interacts_with
+      - CTD:affects^abundance
+      - CTD:affects^activity
+      - CTD:affects^binding
+      - CTD:affects^expression
+      - CTD:affects^folding
+      - CTD:affects^localization
+      - CTD:affects^metabolic process
+      - CTD:affects^mutagenesis
+      - CTD:affects^reaction
+      - CTD:affects^response to substance
+      - CTD:affects^RNA splicing
+      - CTD:affects^stability
+      - CTD:affects^transport
+      - CTD:decreases^abundance
+      - CTD:decreases^activity
+      - CTD:decreases^expression
+      - CTD:decreases^folding
+      - CTD:decreases^localization
+      - CTD:decreases^metabolic process
+      - CTD:decreases^mutagenesis
+      - CTD:decreases^reaction
+      - CTD:decreases^response to substance
+      - CTD:decreases^RNA splicing
+      - CTD:decreases^stability
+      - CTD:decreases^transport
+      - CTD:increases^abundance
+      - CTD:increases^activity
+      - CTD:increases^expression
+      - CTD:increases^folding
+      - CTD:increases^localization
+      - CTD:increases^metabolic process
+      - CTD:increases^mutagenesis
+      - CTD:increases^reaction
+      - CTD:increases^response to substance
+      - CTD:increases^RNA splicing
+      - CTD:increases^stability
+      - CTD:increases^transport
+
 
   #this association is not in the original biolink model
   - name: disease to gene association
