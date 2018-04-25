@@ -17,11 +17,6 @@ class Biolink(Service):
 
     def __init__(self, context):
         super(Biolink, self).__init__("biolink", context)
-        # TODO, can we just use the Mondo that's in the core already?
-        '''
-        self.checker = context.Mondo2(ServiceContext.create_context())
-        self.go = GO2(ServiceContext.create_context())
-        '''
         self.checker = context.core.mondo
         self.go = context.core.go
         self.concept_model = getattr(context, 'rosetta-graph').concept_model

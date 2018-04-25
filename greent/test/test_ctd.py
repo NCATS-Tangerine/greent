@@ -3,11 +3,12 @@ from greent.graph_components import KNode
 from greent.services.ctd import CTD
 from greent.servicecontext import ServiceContext
 from greent import node_types
+from greent.conftest import rosetta
 from greent.util import Text
 
-@pytest.fixture(scope='module')
-def ctd():
-    ctd = CTD(ServiceContext.create_context())
+@pytest.fixture()
+def ctd(rosetta):
+    ctd = rosetta.core.ctd
     return ctd
 
 def test_drugname_to_mesh(ctd):
