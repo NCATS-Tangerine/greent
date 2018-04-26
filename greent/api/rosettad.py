@@ -46,7 +46,8 @@ template = {
 app.config['SWAGGER'] = {
    'title': 'Rosetta Service',
    'bag_source'  : '/.',
-   'greent_conf' : "greent-api.conf"
+   'greent_conf' : "greent-api.conf",
+   'debug'       : True
 }
 
 swagger = Swagger(app, template=template)
@@ -189,7 +190,7 @@ def cop (drug="imatinib", disease="asthma"):
    gamma = get_gamma ()
    key = gamma.create_key ('cop', [drug, disease])
    graph = gamma.rosetta.service_context.cache.get (key)
-   graph = None
+   #graph = None
    if not graph:
       disease_ids = gamma.get_disease_ids (disease, filters=['MONDO'])
       print (f"DID: {disease_ids}")
