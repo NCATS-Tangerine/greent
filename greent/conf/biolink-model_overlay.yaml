@@ -184,10 +184,33 @@ slots:
   - name: has phenotype
     mappings:
       - hetio:PRESENTS_DpS
+      - UPHENO:0000001
 
-  #this association is not in the original biolink model
+  - name: directly interacts with
+    mappings:
+      - PHAROS:drug_targets
+
+  #the following are not in the original biolink model
+  
   - name: disease to gene association
     is_a: association
     mappings:
       - NCIT:R176 #disease_mapped_to_gene/gene_mapped_to_disease
+      - PHAROS:gene_involved
+
+  - name: occurs in
+    description: >-
+      indicates that a process occurs in an anatomical entity
+    domain: process
+    range: anatomical entity #?
+    mappings:
+      - BFO:0000066
+
+  - name: results in motion of
+    domain: process
+    range: entity #?
+    mappings:
+      - RO:0002565
+
+
 

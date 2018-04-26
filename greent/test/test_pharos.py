@@ -4,10 +4,11 @@ from greent.services.pharos import Pharos
 from greent.servicecontext import ServiceContext
 from greent import node_types
 from greent.util import Text
+from greent.conftest import rosetta
 
-@pytest.fixture(scope='module')
-def pharos():
-    pharos = Pharos(ServiceContext.create_context())
+@pytest.fixture()
+def pharos(rosetta):
+    pharos = rosetta.core.pharos
     return pharos
 
 def test_string_to_info(pharos):

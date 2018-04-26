@@ -4,10 +4,11 @@ from greent.services.quickgo import QuickGo
 from greent.servicecontext import ServiceContext
 from greent import node_types
 from greent.util import Text
+from greent.conftest import rosetta
 
-@pytest.fixture(scope='module')
-def quickgo():
-    quickgo = QuickGo(ServiceContext.create_context())
+@pytest.fixture()
+def quickgo(rosetta):
+    quickgo = rosetta.core.quickgo
     return quickgo
 
 def test_xontology_relationships(quickgo):

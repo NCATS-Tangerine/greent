@@ -15,18 +15,15 @@ class ChemBioKS(Service):
     def __init__(self, context): #triplestore):
         super(ChemBioKS, self).__init__("chembio", context)
         self.triplestore = TripleStore (self.url)
-        self.concept_model = getattr(context, 'rosetta-graph').concept_model
 
     def query_chembio (self, query):
         """ Execute and return the result of a SPARQL query. """
         return self.triplestore.execute_query (query)
 
     def build_edge (self, r, source,predicate_id, predicate_label, input_id, pmids = None):
-        spred, slabel = self.standardize(predicate_id, predicate_label)
+        spred, slabel = self.standardize_predicate(predicate_id, predicate_label)
         return KEdge(source, dt.now, predicate_id, predicate_label, input_id, spred, slabel, publications = pmids)
 
-    def standardize(self, predicate_id, predicate_label):
-        return self.concept_model.standardize_relationship(predicate_id)
 
     #Used in our lookup stuff
     def graph_drugname_to_pubchem( self, drugname_node):
@@ -98,7 +95,7 @@ class ChemBioKS(Service):
         for r in drugs:
             predicate_id="RO:0002302"
             predicate_label="is_treated_by_substance"
-            standard_predicate_id, standard_predicate_label = self.standardize(predicate_id, predicate_label)
+            standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id, predicate_label)
             edge = KEdge ('chembio.get_drugs_by_condition_graph', dt.now(), predicate_id, predicate_label, conditions.identifier,
                           standard_predicate_id, standard_predicate_label, publications=r['diseasePMIDS'])
             node = KNode (r['drugID'].split('/')[-1:][0],
@@ -243,7 +240,7 @@ class ChemBioKS(Service):
             #edge = KEdge ('c2b2r', 'diseaseToGene', { 'keggPath' : r['keggPath'] })
             predicate_id="RO:0002326"
             predicate_label="contributes_to"
-            standard_predicate_id, standard_predicate_label = self.standardize(predicate_id, predicate_label)
+            standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id, predicate_label)
             edge = KEdge ('chembio.graph_get_genes_by_disease', dt.now(), predicate_id, predicate_label, disease.identifier,
                           standard_predicate_id, standard_predicate_label)
             node = KNode ("UNIPROT:{0}".format (r['uniprotGene'].split('/')[-1:][0]),  node_types.GENE)
@@ -279,7 +276,7 @@ class ChemBioKS(Service):
         for r in response:
             predicate_id="RO:0000056"
             predicate_label="participates_in"
-            standard_predicate_id, standard_predicate_label = self.standardize(predicate_id, predicate_label)
+            standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id, predicate_label)
             edge = KEdge ('chembio.graph_get_pathways_by_gene', dt.now(), predicate_id, predicate_label, gene.identifier,
                           standard_predicate_id, standard_predicate_label)
             node = KNode ("KEGG:{0}".format (r['keggPath'].split('/')[-1:][0]), node_types.PATHWAY)

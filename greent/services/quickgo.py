@@ -11,11 +11,13 @@ class QuickGo(Service):
     def __init__(self, context):
         super(QuickGo, self).__init__("quickgo", context)
 
-    def standardize_predicate(self,p_id, p_label):
-        return p_id, p_label
-
     def get_predicate_id(self, p_label):
-        return 'QGO:1'
+        if p_label == 'occurs_in':
+            return 'BFO:0000066'
+        if p_label == 'results_in_movement_of':
+            return 'RO:0002565'
+        print(p_label)
+        return f'GO:{p_label}'
 
     #TODO: Rename to reflect that this only returns cells?  See what else we can get?
     #Applies also to the annotation_extension functions

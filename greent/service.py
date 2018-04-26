@@ -9,9 +9,12 @@ class Service:
         self.context = context
         self.name = name
         self.url = context.config.get_service (self.name).get("url", None)
-
+        try:
+            self.concept_model = getattr(context, 'rosetta-graph').concept_model
+        except:
+            pass
         setattr (self.context, self.name, self)
-        
+
     def _type(self):
         return self.__class__.__name__
 
@@ -23,6 +26,10 @@ class Service:
             logger.warn(f"Unable to get config for service: {self.name}")
             #traceback.print_exc ()
         return result
+
+    def standardize_predicate(self, predicate_id, predicate_label):
+        return self.concept_model.standardize_relationship(predicate_id)
+
 
     #I don't see any reason that this shouldn't just be part of the Edge constructor
     '''

@@ -144,9 +144,6 @@ class UberonGraphKS(Service):
         )
         return results
 
-    def standardize_predicate(self, relation_id, relation_label):
-        return relation_id, relation_label
-
 
     def get_anatomy_by_cell_graph (self, cell_node):
         anatomies = self.cell_to_anatomy (cell_node.identifier)
