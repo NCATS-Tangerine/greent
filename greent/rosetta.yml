@@ -79,9 +79,9 @@
     anatomical_entity:
       - link  : gene_to_anatomy
         op    : hetio.gene_to_anatomy
-    cell:
-      - link  : gene_to_cell
-        op    : hetio.gene_to_cell
+    #cellular_component:
+    #  - link  : gene_to_cellular_component
+    #    op    : hetio.gene_to_cellular_component
     disease:
       - link  : gene_to_disease
         op    : biolink.gene_get_disease
