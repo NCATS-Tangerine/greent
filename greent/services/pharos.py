@@ -140,9 +140,6 @@ class Pharos(Service):
         return results
 
 
-    def standardize_predicate(self,predicate_id,predicate_label):
-        return predicate_id, predicate_label
-
     def drug_get_gene(self, subject):
         """ Get a gene from a drug. """
         resolved_edge_nodes = []
@@ -164,7 +161,7 @@ class Pharos(Service):
                         #    if prop['label'] == 'Pharmalogical Action':  # !
                         #        actions.add(prop['term'])
                         predicate_label='is_target'
-                        predicate_id = 'PHAROS:1'
+                        predicate_id = 'PHAROS:drug_targets'
                         standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id,predicate_label)
                         #pharos_edge = KEdge('pharos', 'drug_get_gene', {'properties': link['properties']})
                         pharos_edge = KEdge('pharos.drug_get_gene',dt.now(),predicate_id,predicate_label,pharosid,
@@ -193,8 +190,8 @@ class Pharos(Service):
             for link in result['links']:
                 if link['kind'] == 'ix.idg.models.Target':
                     pharos_target_id = int(link['refid'])
-                    predicate_id = 'PHAROS:2'
-                    predicate_label = 'gene_implicated'
+                    predicate_id = 'PHAROS:gene_involved'
+                    predicate_label = 'gene_involved'
                     standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id, predicate_label)
                     pharos_edge = KEdge('pharos.disease_get_gene',dt.now(),predicate_id,predicate_label,pharosid,
                                             standard_predicate_id, standard_predicate_label,url=url)

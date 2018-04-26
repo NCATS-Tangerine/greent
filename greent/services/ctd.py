@@ -12,7 +12,6 @@ class CTD(Service):
     """ Interface to the Comparative Toxicogenomic Database data set."""
     def __init__(self, context):
         super(CTD, self).__init__("ctd", context)
-        self.concept_model = getattr(context, 'rosetta-graph').concept_model
         self.term_parents = {'abundance': 'abundance',
                             'mutagenesis': 'mutagenesis',
                             'folding': 'folding',
@@ -106,6 +105,7 @@ class CTD(Service):
         return [ KNode(identifier, node_types.DRUG) for identifier in identifiers ]
 
     def standardize_predicate(self, p_id, p_label):
+        """CTD has a little more work to do than the standard service."""
         if '|' not in p_label:
             return self.concept_model.standardize_relationship(p_id)
         parts = p_label.split('|')

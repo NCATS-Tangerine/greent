@@ -4,12 +4,12 @@ from greent.services.uberongraph import UberonGraphKS
 from greent.servicecontext import ServiceContext
 from greent import node_types
 from greent.util import Text
+from greent.conftest import rosetta
 
-@pytest.fixture(scope='module')
-def uberon():
-    uberon = UberonGraphKS(ServiceContext.create_context())
+@pytest.fixture()
+def uberon(rosetta):
+    uberon = rosetta.core.uberongraph
     return uberon
-
 
 def test_name(uberon):
     cn ='CL:0000097'

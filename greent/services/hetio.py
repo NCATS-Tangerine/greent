@@ -21,13 +21,9 @@ class HetIO(Neo4JREST):
 
     def __init__(self, context): #url="https://neo4j.het.io"):
         super (HetIO, self).__init__("hetio", context)
-        self.concept_model = getattr(context, 'rosetta-graph').concept_model
 
     def munge_gene (self, gene):
         return gene.split ("/")[-1:][0] if gene.startswith ("http://") else gene
-
-    def standardize_predicate(self,oid, olabel):
-        return self.concept_model.standardize_relationship(oid)
 
     #TODO: also make an anatomy to gene, check directions
     def gene_to_anatomy (self, gene):
