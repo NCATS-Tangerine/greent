@@ -40,9 +40,9 @@ class KnowledgeQuery:
             #query.add_end_lookup_node(end_name_node)
         return query
 
-    def query (self, query, query_id):
+    def query (self, query, query_id, rosetta):
         # build knowledge graph
-        kgraph = KnowledgeGraph(query, Rosetta ())
+        kgraph = KnowledgeGraph(query, rosetta)
         
         # get construction/source graph
         #sgraph = self._get_source_graph(kgraph)        

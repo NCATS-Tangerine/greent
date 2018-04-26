@@ -205,7 +205,7 @@ def cop (drug="imatinib", disease="asthma"):
             { "type" : node_types.PHENOTYPE, "min_path_length" : 1, "max_path_length" : 1 }
          ],
          end_values   = disease_ids)
-      graph = gamma.knowledge.query (query, key)
+      graph = gamma.knowledge.query (query, key, gamma.rosetta)
       graph = {
          "nodes" : [ node2json(n) for n in graph.graph.nodes () ],
          "edges" : [ edge2json(e) for e in graph.graph.edges (data=True) ]
