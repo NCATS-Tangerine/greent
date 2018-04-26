@@ -1,32 +1,26 @@
 import argparse
 import json
+import ndex2
+import networkx as nx
 import os
 import requests
-
-from greent import node_types
+import shutil
+import yaml
 from builder.builder import KnowledgeGraph
-from greent.graph_components import KNode
-from builder.lookup_utils import lookup_disease_by_name, lookup_drug_by_name, lookup_phenotype_by_name
-from greent.userquery import UserQuery
 from builder.knowledgeQuery import KnowledgeQuery
-
-import ndex2
+from flasgger import Swagger
+from flask import Flask, jsonify, g, Response
+from greent import node_types
+from greent.graph_components import KNode,KEdge
+from greent.rosetta import Rosetta
+from greent.userquery import UserQuery
 from ndex2 import create_nice_cx_from_networkx
 from ndex2.client import Ndex2
 
-import networkx as nx
-
-import yaml
-import shutil
 try:
    from smartBag.grok import SemanticCrunch
 except:
    print ("smartbag not in path. skipping import.")
-from greent.rosetta import Rosetta
-from greent import node_types
-from greent.graph_components import KNode,KEdge,elements_to_json
-from flask import Flask, jsonify, g, Response
-from flasgger import Swagger
 
 app = Flask(__name__)
 
@@ -111,13 +105,14 @@ def render_graph (blackboard):
    }
 
 def validate_cypher(query):
+   """ Reject cypher we don't want to execute. """
    assert query is not None, "Valid query required."
    query_lower = query.lower ()
    if 'delete' in query_lower or 'detach' in query_lower or 'create' in query_lower:
       raise ValueError ("not")
 
 class Gamma:
-   
+   """ A high level interface to the system including knowledge map, cache, reasoner, and NDEx. """
    def __init__(self):
       config = app.config['SWAGGER']['greent_conf']
       self.rosetta = Rosetta (debug=True, greentConf=config)
@@ -131,6 +126,7 @@ class Gamma:
                                      ndex_creds['password'])
             
    def get_disease_ids(self,disease, filters=[]):
+      """ Resolve names to identifiers. """
       obj = requests.get (f"https://bionames.renci.org/lookup/{disease}/disease/").json ()
       results = []
       for n in obj:
@@ -144,6 +140,7 @@ class Gamma:
       return results
       
    def create_key (self, kind, path):
+      """ create consistent cache keys, cleaning special characters. """
       joined_path = "/".join (path)
       return f"{kind}-{joined_path}".\
          replace (" ","_").\
@@ -157,14 +154,6 @@ def get_gamma ():
    if not gamma:
       gamma = Gamma ()
    return gamma
-
-rosetta = None
-def get_rosetta ():
-   global rosetta
-   if not rosetta:
-      config = app.config['SWAGGER']['greent_conf']
-      rosetta = Rosetta (debug=True, greentConf=config)
-   return rosetta
 
 @app.route('/cop/<drug>/<disease>/', methods=['GET'])
 def cop (drug="imatinib", disease="asthma"):
@@ -198,9 +187,6 @@ def cop (drug="imatinib", disease="asthma"):
    gamma = get_gamma ()
    key = gamma.create_key ('cop', [drug, disease])
    graph = gamma.rosetta.service_context.cache.get (key)   
-   print (f"{drug}")
-   print (f"{disease}")
-   graph = None
    if not graph:
       disease_ids = gamma.get_disease_ids (disease, filters=['MONDO'])
       print (f"DID: {disease_ids}")
@@ -271,7 +257,8 @@ def query (inputs, query):
    if '=' not in inputs:
       raise ValueError ("Inputs must be key value of concept=<comma separated ids>")
    concept, items =inputs.split ("=")
-   blackboard = get_rosetta().construct_knowledge_graph(**{
+   gamma = get_gamma ()
+   blackboard = gamma.rosetta.construct_knowledge_graph(**{
       "inputs" : {
          concept : items.split (",")
       },
