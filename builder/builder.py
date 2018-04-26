@@ -1,17 +1,99 @@
 from greent.graph_components import KNode, KEdge
 from greent import node_types
 from greent.rosetta import Rosetta
-from userquery import UserQuery
+from greent.userquery import UserQuery
 import argparse
 import networkx as nx
 import logging
 import sys
 from neo4j.v1 import GraphDatabase
 from importlib import import_module
-from lookup_utils import lookup_identifier
+from builder.lookup_utils import lookup_identifier
 from collections import defaultdict
-from pathlex import tokenize_path
+from builder.pathlex import tokenize_path
+import calendar
 
+def export_edge(edge,session):
+    """The approach of updating edges will be to erase an old one and replace it in whole.   There's no real
+    reason to worry about preserving information from an old edge.
+    What defines the edge are the identifiers of its nodes, and the source.function that created it."""
+    aid = edge[0].identifier
+    bid = edge[1].identifier
+    ke  = edge[2]['object']
+    #Delete any old edge
+    session.run("MATCH (a {id: {aid}})-[r {source:{source}}]-(b {id:{bid}}) DELETE r",
+                {'aid': aid, 'bid': bid, 'source': ke.edge_source} )
+    #Now write the new edge....
+    label=ke.standard_predicate_id
+    if label is None:
+        print(ke)
+        exit()
+    #note that we can't use the CURIE as the label, because the : in the curie screws up the cypher :(
+    session.run (
+        '''MATCH (a), (b) where a.id = {aid} AND b.id={bid} CREATE (a)-[r:%s {edge_source: {source}, ctime:{ctime}, 
+           standard_label:{standard_label}, original_predicate_id:{original_predicate_id}, 
+           original_predicate_label:{original_predicate_label}, publications:{publications}, url: {url},
+           input_identifiers: {input}}]->(b) return r''' % ('_'.join(label.split(':')),),
+        {'aid': aid, 'bid': bid, 'source': ke.edge_source, 'ctime': calendar.timegm(ke.ctime.timetuple()),
+         'standard_label': ke.standard_predicate_label,
+         'original_predicate_id': ke.predicate_id, 'original_predicate_label': ke.predicate_label,
+         'publications': ke.publications, 'url' : ke.url, 'input': ke.input_id}
+    )
+    #if ke.is_support:
+    #    label = 'Support'
+    #elif ke.edge_source == 'lookup':
+    #    #       TODO: make this an edge prop
+    #    label = 'Lookup'
+    #else:
+    #    label = 'Result'
+    #prepare_edge_for_output(ke)
+    '''
+    lets make this all less hinky
+    if ke.edge_source == 'chemotext2':
+        session.run(
+            "MATCH (a), (b) WHERE a.id={aid} AND b.id={bid} CREATE (a)-[r:%s {source: {source}, function: {function}, pmids: {pmids}, onto_relation_id: {ontoid}, onto_relation_label: {ontolabel}, similarity: {sim}, terms:{terms}} ]->(b) return r" %
+            (label,),
+            {"aid": aid, "bid": bid, "source": ke.edge_source, "function": ke.edge_function,
+             "pmids": ke.pmidlist, "ontoid": ke.typed_relation_id, "ontolabel": ke.typed_relation_label,
+             'sim': ke.properties['similarity'], 'terms': ke.properties['terms']})
+    elif ke.edge_source == 'cdw':
+        session.run(
+            "MATCH (a), (b) WHERE a.id={aid} AND b.id={bid} CREATE (a)-[r:%s {source: {source}, function: {function}, pmids: {pmids}, source_counts: {c1}, target_counts: {c2}, shared_counts: {c}, expected_counts: {e}, p_value:{p}} ]->(b) return r" %
+            (label, ),
+            {"aid": aid, "bid": bid, "source": ke.edge_source, "function": ke.edge_function,
+             "pmids": ke.pmidlist, "ontoid": ke.typed_relation_id, "ontolabel": ke.typed_relation_label,
+             'c1': ke.properties['c1'], 'c2': ke.properties['c2'], 'c': ke.properties['c'],
+             'e': ke.properties['e'], 'p': ke.properties['p']})
+    else:
+        session.run(
+            "MATCH (a), (b) WHERE a.id={aid} AND b.id={bid} CREATE (a)-[r:%s {source: {source}, function: {function}, pmids: {pmids}, onto_relation_id: {ontoid}, onto_relation_label: {ontolabel}} ]->(b) return r" %
+            (label, ),
+            {"aid": aid, "bid": bid, "source": ke.edge_source, "function": ke.edge_function,
+             "pmids": ke.pmidlist, "ontoid": ke.typed_relation_id, "ontolabel": ke.typed_relation_label})
+             '''
+
+
+def export_node(node, session):
+    """Utility for writing updated nodes.  Goes in node?"""
+    result = session.run("MATCH (a {id: {id}}) RETURN a", {"id": node.identifier})
+    original_record = result.peek()
+    if not original_record:
+        syns = list(node.synonyms)
+        syns.sort()
+        session.run(
+            "CREATE (a:%s {id: {id}, name: {name}, node_type: {node_type}, equivalent_identifiers: {syn}})"
+            % (node.node_type),
+            {"id": node.identifier, "name": node.label, "node_type": node.node_type, "syn": syns })
+    else:
+        original_node = original_record['a']
+        if node.node_type not in original_node.labels:
+            #Note: You can't use query parameterization on node labels in neo4j - UGH
+            session.run("MATCH (a {id: {identifier} }) SET a:%s" % (node.node_type,), identifier = node.identifier)
+        new_syns = list(node.synonyms)
+        new_syns.sort()
+        if original_node['name'] != node.label or original_node['synonyms'] != new_syns:
+            session.run("MATCH (a {id: {identifier} }) SET a.name = {name}, a.equivalent_identifiers= {synonyms}",
+                        identifier = node.identifier, name = node.label, synonyms = new_syns)
 
 class KnowledgeGraph:
     def __init__(self, userquery, rosetta):
@@ -84,6 +166,7 @@ class KnowledgeGraph:
             if self.node_map[k] == target:
                 self.node_map[k] = source
 
+    '''
     def add_synonymous_edge(self, edge):
         self.logger.error('There should be no add_synonymous_edge anymore')
         raise Exception('Nonnononon')
@@ -104,6 +187,7 @@ class KnowledgeGraph:
             source, target = target, source
         source.add_synonym(edge.target_node)
         self.node_map[edge.target_node.identifier] = source
+    '''
 
     def add_nonsynonymous_edge(self, edge, reverse_edges=False):
         self.logger.debug(' New Nonsynonymous')
@@ -115,6 +199,8 @@ class KnowledgeGraph:
         # Now the nodes are translated to the canonical identifiers, make the edge
         # TODO: YUCK FIX
         if reverse_edges:
+            self.logger.error("No reversing edges any more!")
+            exit(1)
             edge.properties['reversed'] = True
             # We might already have this edge due to multiple "programs" running
             # Because it is a multigraph, graph[node][node] returns a map where the values are the edges
@@ -143,18 +229,18 @@ class KnowledgeGraph:
         """Add a list of edges (and the associated nodes) to the graph."""
         for edge in edge_list:
             self.logger.debug('Edge: {} -> {}'.format(edge.source_node.identifier, edge.target_node.identifier))
-            if edge.is_synonym:
-                self.add_synonymous_edge(edge)
-            else:
-                self.add_nonsynonymous_edge(edge, reverse_edges)
+            self.add_nonsynonymous_edge(edge, reverse_edges)
 
     def find_node(self, node):
         """If node exists in graph, return it, otherwise, return None"""
         if node.identifier in self.node_map:
             return self.node_map[node.identifier]
-        for syn in node.synonyms:
-            if syn in self.node_map:
-                return self.node_map[syn]
+        #We need to be less promiscuous here.   One thing that can happen is that OMIMs can unify what we consider
+        # diseases and what we consider genes.  For now, we'll assume that our synonymization/normalization is working
+        # well and # we don't have to sweat this.
+        #for syn in node.synonyms:
+        #    if syn in self.node_map:
+        #        return self.node_map[syn]
         return None
 
     def add_or_find_node(self, node):
@@ -190,8 +276,6 @@ class KnowledgeGraph:
         keep_types = set()
         keep_types.update(ttypes[0])
         keep_types.update(ttypes[1])
-        keep_types.add(node_types.DISEASE_NAME)
-        keep_types.add(node_types.DRUG_NAME)
         n_pruned = 0
         while removed:
             removed = False
@@ -219,6 +303,10 @@ class KnowledgeGraph:
         # TODO: it probably makes sense to push this stuff into the KNode itself
         self.logger.debug('Enhancing nodes with labels')
         for node in self.graph.nodes():
+            from greent.util import Text
+            if Text.get_curie(node.identifier) == 'DOID':
+                print('NOOO {}'.format(node.identifier))
+                exit()
             prepare_node_for_output(node, self.rosetta.core)
 
     def support(self, support_module_names):
@@ -238,8 +326,8 @@ class KnowledgeGraph:
         #
         # Generate paths, (unique) edges along paths
         self.logger.debug('Building Support')
-        links_to_check = self.generate_links_from_paths()
-        #links_to_check = self.generate_all_links()
+        #links_to_check = self.generate_links_from_paths()
+        links_to_check = self.generate_all_links()
         self.logger.debug('Number of pairs to check: {}'.format(len(links_to_check)))
         if len(links_to_check) == 0:
             self.logger.error('No paths across the data.  Exiting without writing.')
@@ -249,7 +337,15 @@ class KnowledgeGraph:
         for supporter in supporters:
             supporter.prepare(self.graph.nodes())
             for source, target in links_to_check:
-                support_edge = supporter.term_to_term(source, target)
+                key = f"{supporter.__class__.__name__}({source.identifier},{target.identifier})"
+                log_text = "  -- {key}"
+                support_edge = self.rosetta.cache.get (key)
+                if support_edge is not None:
+                    self.logger.info (f"cache hit: {key} {support_edge}")
+                else:
+                    self.logger.info (f"exec op: {key}")
+                    support_edge = supporter.term_to_term(source, target)
+                    self.rosetta.cache.set (key, support_edge)
                 if support_edge is not None:
                     n_supported += 1
                     self.logger.debug('  -Adding support edge from {} to {}'.
@@ -303,59 +399,16 @@ class KnowledgeGraph:
                     links_to_check.add( (key, a) )
         return links_to_check
 
-
-    def export(self, resultname):
+    def export(self):
         """Export to neo4j database."""
-        # Just make sure that resultname is not going to bork up neo4j
-        resultname = ''.join(resultname.split('-'))
-        resultname = ''.join(resultname.split(' '))
-        resultname = ''.join(resultname.split(','))
         # TODO: lots of this should probably go in the KNode and KEdge objects?
-        self.logger.info("Writing to neo4j with label {}".format(resultname))
+        self.logger.info("Writing to neo4j")
         session = self.driver.session()
-        # If we have this query already, overwrite it...
-        session.run('MATCH (a:%s) DETACH DELETE a' % resultname)
         # Now add all the nodes
         for node in self.graph.nodes():
-            type_label = ''.join(node.node_type.split('.'))
-            session.run(
-                "CREATE (a:%s:%s {id: {id}, name: {name}, node_type: {node_type}, synonyms: {syn}, meta: {meta}})"
-                % (resultname, type_label),
-                {"id": node.identifier, "name": node.label, "node_type": node.node_type,
-                 "syn": list(node.synonyms), "meta": ''})
+            export_node(node, session)
         for edge in self.graph.edges(data=True):
-            aid = edge[0].identifier
-            bid = edge[1].identifier
-            ke = edge[2]['object']
-            if ke.is_support:
-                label = 'Support'
-            elif ke.edge_source == 'lookup':
-                #       TODO: make this an edge prop
-                label = 'Lookup'
-            else:
-                label = 'Result'
-            prepare_edge_for_output(ke)
-            if ke.edge_source == 'chemotext2':
-                session.run(
-                    "MATCH (a:%s), (b:%s) WHERE a.id={aid} AND b.id={bid} CREATE (a)-[r:%s {source: {source}, function: {function}, pmids: {pmids}, onto_relation_id: {ontoid}, onto_relation_label: {ontolabel}, similarity: {sim}, terms:{terms}} ]->(b) return r" %
-                    (resultname, resultname, label),
-                    {"aid": aid, "bid": bid, "source": ke.edge_source, "function": ke.edge_function,
-                     "pmids": ke.pmidlist, "ontoid": ke.typed_relation_id, "ontolabel": ke.typed_relation_label,
-                     'sim': ke.properties['similarity'], 'terms': ke.properties['terms']})
-            elif ke.edge_source == 'cdw':
-                session.run(
-                    "MATCH (a:%s), (b:%s) WHERE a.id={aid} AND b.id={bid} CREATE (a)-[r:%s {source: {source}, function: {function}, pmids: {pmids}, source_counts: {c1}, target_counts: {c2}, shared_counts: {c}, expected_counts: {e}, p_value:{p}} ]->(b) return r" %
-                    (resultname, resultname, label),
-                    {"aid": aid, "bid": bid, "source": ke.edge_source, "function": ke.edge_function,
-                     "pmids": ke.pmidlist, "ontoid": ke.typed_relation_id, "ontolabel": ke.typed_relation_label,
-                     'c1': ke.properties['c1'], 'c2': ke.properties['c2'], 'c': ke.properties['c'],
-                     'e': ke.properties['e'], 'p': ke.properties['p']})
-            else:
-                session.run(
-                    "MATCH (a:%s), (b:%s) WHERE a.id={aid} AND b.id={bid} CREATE (a)-[r:%s {source: {source}, function: {function}, pmids: {pmids}, onto_relation_id: {ontoid}, onto_relation_label: {ontolabel}} ]->(b) return r" %
-                    (resultname, resultname, label),
-                    {"aid": aid, "bid": bid, "source": ke.edge_source, "function": ke.edge_function,
-                     "pmids": ke.pmidlist, "ontoid": ke.typed_relation_id, "ontolabel": ke.typed_relation_label})
+            export_edge(edge,session)
         session.close()
         self.logger.info("Wrote {} nodes.".format(len(self.graph.nodes())))
 
@@ -374,9 +427,7 @@ def prepare_node_for_output(node, gt):
             if node.label is None:
                 node.label = node.identifier
     if node.label is None:
-        if node.node_type == node_types.DISEASE_NAME or node.node_type == node_types.DRUG_NAME:
-            node.label = node.identifier.split(':')[-1]
-        elif node.node_type == node_types.GENE and node.identifier.startswith('HGNC:'):
+        if node.node_type == node_types.GENE and node.identifier.startswith('HGNC:'):
             node.label = gt.hgnc.get_name(node)
         elif node.node_type == node_types.GENE and node.identifier.upper().startswith('NCBIGENE:'):
             node.label = gt.hgnc.get_name(node)
@@ -386,7 +437,7 @@ def prepare_node_for_output(node, gt):
             node.label = node.identifier
     logging.getLogger('application').debug(node.label)
 
-
+'''
 # Push to edge...
 def prepare_edge_for_output(edge):
     # We should settle on a format for PMIDs.  Do we always lookup / include e.g. title? Or does UI do that?
@@ -396,6 +447,8 @@ def prepare_edge_for_output(edge):
             # v. brittle. Should be put into the edge creation...
             if 'pmid' in pub:
                 pmidlist.append('PMID:{}'.format(pub['pmid']))
+            elif isinstance(pub,str) and pub.startswith('https://www.ncbi.nlm.nih.gov/pubmed/'):
+                pmidlist.append('PMID:{}'.format(pub.split('/')[-1]))
             elif 'id' in pub:
                 pmidlist.append(pub['id'])
         del edge.properties['publications']
@@ -407,9 +460,10 @@ def prepare_edge_for_output(edge):
         edge.typed_relation_id = ''
         edge.typed_relation_label = ''
     edge.reversed = edge.properties['reversed']
+    '''
 
 
-def run_query(querylist, supports, result_name, rosetta, prune=False):
+def run_query(querylist, supports, rosetta, prune=False):
     """Given a query, create a knowledge graph though querying external data sources.  Export the graph"""
     kgraph = KnowledgeGraph(querylist, rosetta)
     kgraph.execute()
@@ -418,31 +472,22 @@ def run_query(querylist, supports, result_name, rosetta, prune=False):
         kgraph.prune()
     kgraph.enhance()
     kgraph.support(supports)
-    kgraph.export(result_name)
+    kgraph.export()
 
 
-def generate_query(pathway, start_node, start_identifiers, end_node=None, end_identifiers=None):
+def generate_query(pathway, start_identifiers, end_identifiers=None):
     start, middle, end = pathway[0], pathway[1:-1], pathway[-1]
-    query = UserQuery(start_identifiers, start.nodetype, start_node)
+    query = UserQuery(start_identifiers, start.nodetype)
     print(start.nodetype)
     for transition in middle:
         print(transition)
         query.add_transition(transition.nodetype, transition.min_path_length, transition.max_path_length)
     print(end)
     query.add_transition(end.nodetype, end.min_path_length, end.max_path_length, end_values=end_identifiers)
-    if end_node is not None:
-        query.add_end_lookup_node(end_node)
     return query
 
 
-def generate_name_node(name, nodetype):
-    if nodetype == node_types.DRUG:
-        return KNode('{}:{}'.format(node_types.DRUG_NAME, name), node_types.DRUG_NAME)
-    elif nodetype == node_types.DISEASE or nodetype == node_types.PHENOTYPE:
-        return KNode('{}:{}'.format(node_types.DISEASE_NAME, name), node_types.DISEASE_NAME)
-
-
-def run(pathway, start_name, end_name, label, supports, config):
+def run(pathway, start_name, end_name,  supports, config):
     """Programmatic interface.  Pathway defined as in the command-line input.
        Arguments:
          pathway: A string defining the query.  See command line help for details
@@ -458,18 +503,15 @@ def run(pathway, start_name, end_name, label, supports, config):
     start_type = steps[0].nodetype
     rosetta = setup(config)
     start_identifiers = lookup_identifier(start_name, start_type, rosetta.core)
-    start_node = generate_name_node(start_name, start_type)
     if end_name is not None:
         # end_type = node_types.type_codes[pathway[-1]]
         end_type = steps[-1].nodetype
         end_identifiers = lookup_identifier(end_name, end_type, rosetta.core)
-        end_node = generate_name_node(end_name, end_type)
     else:
-        end_node = None
         end_identifiers = None
     print("Start identifiers: " + '..'.join(start_identifiers))
-    query = generate_query(steps, start_node, start_identifiers, end_node, end_identifiers)
-    run_query(query, supports, label, rosetta, prune=False)
+    query = generate_query(steps, start_identifiers, end_identifiers)
+    run_query(query, supports, rosetta, prune=False)
 
 
 def setup(config):
@@ -517,7 +559,8 @@ def main():
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('-s', '--support', help='Name of the support system',
                         action='append',
-                        choices=['chemotext', 'chemotext2', 'cdw'],
+                        #choices=['chemotext', 'chemotext2', 'cdw'],
+                        choices=['omnicorp', 'chemotext', 'cdw'],
                         required=True)
     parser.add_argument('-p', '--pathway', help='Defines the query pathway (see description). Cannot be used with -q',
                         required=False)
@@ -530,8 +573,6 @@ def main():
                         default='greent.conf')
     parser.add_argument('--start', help='Text to initiate query', required=True)
     parser.add_argument('--end', help='Text to finalize query', required=False)
-    parser.add_argument('-l', '--label', help='Label for result in neo4j. Will overwrite.',
-                        required=True)
     args = parser.parse_args()
     pathway = None
     if args.pathway is not None and args.question is not None:
@@ -552,7 +593,7 @@ def main():
                 sys.exit(1)
     else:
         pathway = args.pathway
-    run(pathway, args.start, args.end, args.label, args.support, config=args.config)
+    run(pathway, args.start, args.end, args.support, config=args.config)
 
 
 if __name__ == '__main__':

@@ -10,7 +10,6 @@ import traceback
 import yaml
 from collections import defaultdict
 from greent.cache import Cache
-#from greent.core import GreenT
 from greent.servicecontext import ServiceContext
 from greent.graph import Frame
 from greent.graph import Operator
@@ -49,12 +48,6 @@ class Rosetta:
         self.debug = False
 
         logger.debug("-- rosetta init.")
-        '''
-        logger.info (f"Loading configuration: {greentConf}")
-        if not greentConf:
-            greentConf = "greent.conf"
-        self.core = GreenT(config=greentConf, override=override)
-        '''
         self.service_context = ServiceContext (greentConf)
         self.core = self.service_context.core
         
@@ -68,11 +61,10 @@ class Rosetta:
         self.cache = self.service_context.cache #core.service_context.cache
         
         """ Initialize type graph. """
-        #self.type_graph = TypeGraph(self.core.service_context, debug=debug)
         self.type_graph = TypeGraph(self.service_context, debug=debug)
         self.synonymizer = Synonymizer( self.type_graph.concept_model, self )
 
-        """ Merge identifiers.org vocabulary into Rosetta voab. """
+        """ Merge identifiers.org vocabulary into Rosetta vocab. """
         self.identifiers = Identifiers ()
         
         if delete_type_graph:
@@ -152,63 +144,6 @@ class Rosetta:
             if (text and len(text) > 0) or if_empty:
                 logger.debug("{}".format(text))
 
-    '''
-    def graph(self, next_nodes, query):
-        """ Given a set of starting nodes and a query, execute the query to get a set of paths.
-        Each path reflects a set of transitions from the starting tokens through the graph.
-        Each path is then executed and the resulting links and nodes returned. """
-        programs = self.type_graph.get_transitions(query)
-        result = []
-        for program in programs:
-            result += self.graph_inner(next_nodes, program)
-        return result
-
-    def graph_inner(self, next_nodes, program):
-        if not program or len(program) == 0:
-            return []
-        logger.info (program)
-        primed = [{'collector': next_nodes}] + program
-        linked_result = []
-        for index, level in enumerate(program):
-            logger.debug("--Executing level: {0}".format(level))
-            operators = level['ops']
-            collector = level['collector']
-            for edge_node in primed[index]['collector']:
-                for operator in operators:
-                    op = self.get_ops(operator['op'])
-                    try:
-                        results = None
-                        log_text = "  -- {0}({1})".format(operator['op'], edge_node[1].identifier)
-                        source_node = edge_node[1]                        
-                        key =  f"{operator['op']}({edge_node[1].identifier})"
-                        logger.debug (f"  --op: {key}")
-                        results = self.cache.get (key)
-                        if not results:
-                            results = op(source_node)
-                            for r in results:
-                                print (f"--- result --- {r}")
-                                edge = r[0]
-                                if isinstance(edge, KEdge):
-                                    edge.predicate = operator['link']
-                                    edge.source_node = source_node
-                                    self.synonymizer.synonymize(r[1])
-                                    edge.target_node = r[1]
-                                    linked_result.append(edge)
-                            logger.debug("{0} => {1}".format(log_text, Text.short(results)))
-                            for r in results:
-                                if index < len(program) - 1:
-                                    if not r[1].identifier.startswith(program[index + 1]['node_type']):
-                                        logger.debug(
-                                            "Operator {0} wired to return type: {1} returned node with id: {2}".format(
-                                                operator, program[index + 1]['node_type'], r[1].identifier))
-                            self.cache.set (key, results)
-                        collector += results
-                    except Exception as e:
-                        traceback.print_exc()
-                        logger.error("Error invoking> {0}".format(log_text))
-        return linked_result
-    '''
-    
     def construct_knowledge_graph (self, inputs, query):
         programs = self.type_graph.get_knowledge_map_programs(query)
         results = []

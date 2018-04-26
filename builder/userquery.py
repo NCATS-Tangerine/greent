@@ -1,5 +1,5 @@
 #from program import Program
-from greent.node_types import node_types, DRUG_NAME, DISEASE_NAME, UNSPECIFIED
+from greent.node_types import node_types, UNSPECIFIED
 from greent.util import Text
 from greent.program import Program
 from greent.program import QueryDefinition
@@ -18,8 +18,6 @@ class Transition:
 
     @staticmethod
     def get_fstring(ntype):
-        if ntype == DRUG_NAME or ntype == DISEASE_NAME:
-            return 'n{0}{{name:"{1}"}}'
         if ntype is None:
             return 'n{0}'
         else:
@@ -53,7 +51,7 @@ class QueryDefinition:
 class UserQuery:
     """This is the class that the rest of builder uses to interact with a query."""
 
-    def __init__(self, start_values, start_type, lookup_node):
+    def __init__(self, start_values, start_type):
         """Create an instance of UserQuery. Takes a starting value and the type of that value"""
         self.query = None
         self.definition = QueryDefinition()
@@ -61,8 +59,6 @@ class UserQuery:
         self.definition.start_values = start_values
         self.definition.start_type = start_type
         self.definition.end_values = None
-        # The term used to create the initial point
-        self.definition.start_lookup_node = lookup_node
         # List of user-level types that we must pass through
         self.add_node(start_type)
 
@@ -116,9 +112,6 @@ class UserQuery:
         if end_values is not None:
             self.definition.end_values = end_values
 
-    def add_end_lookup_node(self, lookup_node):
-        self.definition.end_lookup_node = lookup_node
-
     def generate_cypher(self):
         """Generate a cypher query to find paths through the concept-level map."""
         cypherbuffer = ['MATCH p=\n']
@@ -127,16 +120,12 @@ class UserQuery:
             paths_parts.append(transition.generate_concept_cypher_pathstring(t_number))
         cypherbuffer.append( ''.join(paths_parts) )
         last_node_i = len(self.definition.transitions)
-        cypherbuffer.append('FOREACH (n in relationships(p) | SET n.marked = TRUE)\n')
-        cypherbuffer.append(f'WITH p,c0,c{last_node_i}\n')
         if self.definition.end_values is None:
-            cypherbuffer.append(f'MATCH q=(c0:Concept)-[*0..{last_node_i} {{marked:True}}]->(c{last_node_i}:Concept)\n')
+            cypherbuffer.append('WHERE robokop.traversable(nodes(p), relationships(p), [c0])\n')
         else:
-            cypherbuffer.append(f'MATCH q=(c0:Concept)-[*0..{last_node_i} {{marked:True}}]->()<-[*0..{last_node_i} {{marked:True}}]-(c{last_node_i}:Concept)\n')
-        cypherbuffer.append('WHERE p=q\n')
+            cypherbuffer.append(f'WHERE robokop.traversable(nodes(p), relationships(p), [c0,c{last_node_i}])\n')
         #This is to make sure that we don't get caught up in is_a and other funky relations.:
         cypherbuffer.append('AND ALL( r in relationships(p) WHERE  EXISTS(r.op) )')
-        cypherbuffer.append('FOREACH (n in relationships(p) | SET n.marked = FALSE)\n')
         cypherbuffer.append('RETURN p\n')
         return ''.join(cypherbuffer)
 

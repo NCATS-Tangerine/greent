@@ -14,7 +14,6 @@ entrypoints==0.2.3
 Flask==0.12
 Flask-GraphQL==1.4.1
 Flask-Testing==0.6.2
-gnureadline==6.3.3
 graphene==1.4.1
 graphql-core==1.1
 graphql-relay==0.4.5

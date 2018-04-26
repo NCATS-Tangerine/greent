@@ -3,6 +3,7 @@ from greent.graph_components import KEdge
 from greent.util import Text
 from greent import node_types
 from collections import defaultdict
+from datetime import datetime as dt
 
 def get_supporter(greent):
     return ChemotextSupport(greent)
@@ -56,7 +57,11 @@ class ChemotextSupport():
         end = datetime.now()
         logging.getLogger('application').debug('chemotext: {} to {}: {} ({})'.format(meshes_a, meshes_b, len(articles), end-start))
         if len(articles) > 0:
-            ke= KEdge( 'chemotext', 'term_to_term', { 'publications': articles }, is_support = True )
+            #ke= KEdge( 'chemotext', 'term_to_term', { 'publications': articles }, is_support = True )
+            pmids = [f'PMID:{x["pmid"]}' for x in articles]
+            ke = KEdge('chemotext.term_to_term', dt.now(), 'chemotext:1', 'literature_co-occurence',
+                       f'{node_a.identifier},{node_b.identifier}','chemotext:1','literature_co-occurence',publications=pmids,
+                       is_support=True)
             ke.source_node = node_a
             ke.target_node = node_b
             return ke
