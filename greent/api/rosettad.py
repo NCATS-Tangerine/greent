@@ -13,7 +13,7 @@ from flask import Flask, jsonify, g, Response
 from greent import node_types
 from greent.graph_components import KNode,KEdge
 from greent.rosetta import Rosetta
-from greent.userquery import UserQuery
+from builder.userquery import UserQuery
 from ndex2 import create_nice_cx_from_networkx
 from ndex2.client import Ndex2
 
@@ -330,12 +330,9 @@ if __name__ == "__main__":
    parser.add_argument('-p', '--port', type=int, help='Port to run service on.', default=None)
    parser.add_argument('-c', '--conf', help='GreenT config file to use.', default="greent-api.conf")
    args = parser.parse_args ()
+   print (f"--------------------> {args.conf}")
    app.config['SWAGGER']['bag_source'] = args.bag_source
-<<<<<<< HEAD:greent/api/server.py
-   app.config['SWAGGER']['greent_conf'] = args.conf if args.conf else "greent-api.conf"
-=======
    app.config['SWAGGER']['greent_conf'] = args.conf
->>>>>>> e154f23f11a8cd2d3daa34e0964ffac1bde7c16b:greent/api/rosettad.py
    app.run(host='0.0.0.0', port=args.port, debug=True, threaded=True)
 
 

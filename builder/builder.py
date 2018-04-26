@@ -1,7 +1,7 @@
 from greent.graph_components import KNode, KEdge
 from greent import node_types
 from greent.rosetta import Rosetta
-from greent.userquery import UserQuery
+from builder.userquery import UserQuery
 import argparse
 import networkx as nx
 import logging
