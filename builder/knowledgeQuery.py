@@ -48,9 +48,8 @@ class KnowledgeQuery:
         #sgraph = self._get_source_graph(kgraph)        
         kgraph.execute()
         kgraph.print_types()
-        kgraph.prune()
         kgraph.enhance()
-        kgraph.support(supports=['chemotext'])
+        #kgraph.support(support_module_names=['builder.omnicorp'])
         return kgraph
 
     def _get_source_graph(self, kgraph):

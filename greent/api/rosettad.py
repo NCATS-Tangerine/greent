@@ -8,8 +8,13 @@ from builder.builder import KnowledgeGraph
 from greent.graph_components import KNode
 from builder.lookup_utils import lookup_disease_by_name, lookup_drug_by_name, lookup_phenotype_by_name
 from greent.userquery import UserQuery
-
 from builder.knowledgeQuery import KnowledgeQuery
+
+import ndex2
+from ndex2 import create_nice_cx_from_networkx
+from ndex2.client import Ndex2
+
+import networkx as nx
 
 import yaml
 import shutil
@@ -22,6 +27,7 @@ from greent import node_types
 from greent.graph_components import KNode,KEdge,elements_to_json
 from flask import Flask, jsonify, g, Response
 from flasgger import Swagger
+
 app = Flask(__name__)
 
 template = {
@@ -50,43 +56,53 @@ app.config['SWAGGER'] = {
 
 swagger = Swagger(app, template=template)
 
-def get_associated_disease (name):
-   """ Get identifiers for a disease name. """
-   """ TODO: Move this down into or nearer the core. """
-   result = []
-   obj = requests.get (f"https://solr.monarchinitiative.org/solr/search/select/?q=%22{name}&rows=20&defType=edismax&hl=true&qt=standard&indent=on&wt=json&hl.simple.pre=%3Cem%20class=%22hilite%22%3E&hl.snippets=1&qf=synonym^1&qf=synonym_std^1&qf=synonym_kw^1&qf=synonym_eng^1").json()
-   docs = obj.get('response',{}).get('docs',[])
-   for doc in docs:
-      if doc.get('prefix',None) in [ 'MONDO', 'DOID', 'OMIM' ]:
-         result.append (doc.get('id_std', None))
-   return result
+class NDExSession:
+   """ An interface to the NDEx network catalog. """ 
+   def __init__(self, account, password, uri="http://public.ndexbio.org"):
+      self.session = None
+      try:
+         self.session = ndex2.client.Ndex2 (uri, account, password)
+         self.session.update_status()
+         networks = self.session.status.get("networkCount")
+         users = self.session.status.get("userCount")
+         groups = self.session.status.get("groupCount")
+         print(f"session: networks: {networks} users: {users} groups: {groups}")
+      except Exception as inst:
+         print(f"Could not access account {account}")
+         raise inst
+      
+   def save_nx_graph (self, graph):
+      """ Save a networkx graph to NDEx. """
+      nice_cx = create_nice_cx_from_networkx (graph)
+      print (f" connected: {nx.is_connected(graph.to_undirected())} edges: {len(graph.edges())} nodes: {len(graph.nodes())}")
+      print (nice_cx)
+      self.session.save_new_network (nice_cx)
 
 def node2json (node):
+   """ Serialize a node as json. """
    return {
-      "identifier" : node.identifier,
+      "id" : node.identifier,
       "type"       : f"blm:{node.node_type}",
-      "id"         : id(node)
    } if node else None
 
 def edge2json(e):
-   stdprop = e.properties.get ('stdprop', {})
-   stdprop['subj'] = id(e.source_node)
-   stdprop['pred'] = stdprop['predicate'] if 'predicate' in e.properties else None
-   stdprop['obj']  = id(e.target_node)
-   stdprop['pmids'] = stdprop['pmids'] if 'pmids' in stdprop else []
-   if 'stdprop' in e.properties:
-      del e.properties['stdprop']
-   stdprop['other'] = e.properties
-   return stdprop
+   """ Serialize an edge as json. """
+   edge = e[2]['object']
+   return {
+      "ctime"  : edge.ctime,
+      "sub"    : edge.source_node.identifier,
+      "prd"    : edge.predicate_id,
+      "stdprd" : edge.standard_predicate_id,
+      "obj"    : edge.target_node.identifier,
+      "pubs"   : edge.publications
+   }
 
 def render_graph (blackboard):
    """ Turn a blackboard into json. Work towards a unique key for node. """
-   edges = []
    nodes = {}
    for e in blackboard:
       if not e:
          continue
-      edges.append (e)
       nodes[id(e.source_node)] = e.source_node
       nodes[id(e.target_node)] = e.target_node
    return {
@@ -100,13 +116,33 @@ def validate_cypher(query):
    if 'delete' in query_lower or 'detach' in query_lower or 'create' in query_lower:
       raise ValueError ("not")
 
-class Zeta:
+class Gamma:
    
    def __init__(self):
       config = app.config['SWAGGER']['greent_conf']
       self.rosetta = Rosetta (debug=True, greentConf=config)
       self.knowledge = KnowledgeQuery ()
-   
+      self.ndex = None
+      ndex_creds = "~/.ndex"
+      if os.path.exists (ndex_creds):
+         with open(ndex_creds, "r") as stream:
+            ndex_creds = json.loads (stream.read ())
+            self.ndex = NDExSession (ndex_creds['username'],
+                                     ndex_creds['password'])
+            
+   def get_disease_ids(self,disease, filters=[]):
+      obj = requests.get (f"https://bionames.renci.org/lookup/{disease}/disease/").json ()
+      results = []
+      for n in obj:
+         an_id = n['id']
+         if len(filters) > 0:
+            for f in filters:
+               if an_id.startswith(f"{f}:"):
+                  results.append (an_id)
+         else:
+            results.append (an_id)
+      return results
+      
    def create_key (self, kind, path):
       joined_path = "/".join (path)
       return f"{kind}-{joined_path}".\
@@ -115,13 +151,12 @@ class Zeta:
          replace("'","").\
          replace('"',"")
 
-#zeta = Zeta ()
-zeta = None
-def get_zeta ():
-   global zeta
-   if not zeta:
-      zeta = Zeta ()
-   return zeta
+gamma = None
+def get_gamma ():
+   global gamma
+   if not gamma:
+      gamma = Gamma ()
+   return gamma
 
 rosetta = None
 def get_rosetta ():
@@ -160,23 +195,19 @@ def cop (drug="imatinib", disease="asthma"):
      200:
        description: ...
    """
-   zeta = get_zeta ()
-#   drug_id = zeta.rosetta.n2chem(drug)
-#   disease_id = get_associated_disease(disease)
-   key = zeta.create_key (drug, disease)
-   graph = zeta.rosetta.service_context.cache.get (key)
-
-
-   drug_id = drug #['MESH:D000068877', 'CHEMBL:CHEMBL941', 'CHEMBL:CHEMBL1642', 'CHEMBL:CHEMBL1421', 'PUBCHEM:5291']
-   disease_id = disease
-      
-   print (f"{drug_id}")
-   print (f"{disease_id}")
+   gamma = get_gamma ()
+   key = gamma.create_key ('cop', [drug, disease])
+   graph = gamma.rosetta.service_context.cache.get (key)   
+   print (f"{drug}")
+   print (f"{disease}")
+   graph = None
    if not graph:
-      query = zeta.knowledge.create_query(
-         start_name   = drug_id,
+      disease_ids = gamma.get_disease_ids (disease, filters=['MONDO'])
+      print (f"DID: {disease_ids}")
+      query = gamma.knowledge.create_query(
+         start_name   = drug,
          start_type   = node_types.DRUG,
-         end_name     = disease_id,
+         end_name     = disease,
          end_type     = node_types.DISEASE, 
          two_sided    = True,
          intermediate = [
@@ -186,72 +217,16 @@ def cop (drug="imatinib", disease="asthma"):
             { "type" : node_types.ANATOMY,   "min_path_length" : 1, "max_path_length" : 1 },
             { "type" : node_types.PHENOTYPE, "min_path_length" : 1, "max_path_length" : 1 }
          ],
-         end_values   = ['MONDO:0010940', 'MONDO:0004784', 'MONDO:0004766', 'MONDO:0004979', 'MONDO:0012577', 'MONDO:0012771', 'MONDO:0008834', 'MONDO:0012607', 'MONDO:0012666', 'MONDO:0012379', 'MONDO:0012067', 'MONDO:0011805', 'MONDO:0013180', 'MONDO:0011597', 'MONDO:0008835'])
-      graph = zeta.knowledge.query (query, key)
-      zeta.rosetta.service_context.cache.set (key, graph)
-   return jsonify (g)
-
-@app.route('/cop2/<drug>/<disease>/', methods=['GET'])
-def cop2 (drug="imatinib", disease="asthma"):
-   """ Get service metadata 
-   ---
-   parameters:
-     - name: drug
-       in: path
-       type: string
-       required: false
-       default: imatinib
-       x-valueType:
-         - http://schema.org/string
-       x-requestTemplate:
-         - valueType: http://schema.org/string
-           template: /query?drug={{ input }}
-     - name: disease
-       in: path
-       type: string
-       required: false
-       default: asthma
-       x-valueType:
-         - http://schema.org/string
-       x-requestTemplate:
-         - valueType: http://schema.org/string
-           template: /query?disease={{ input }}
-   responses:
-     200:
-       description: ...
-   """
-   rosetta = get_rosetta ()
-   drug_id = rosetta.n2chem(drug)
-   disease_id = get_associated_disease(disease)
-   g = {}
-   key = f"cop-drug({drug})-disease({disease})"
-   g = rosetta.service_context.cache.get (key)
-   if not g:
-      blackboard = rosetta.get_knowledge_graph(**{
-         "inputs" : {
-            "type" : "chemical_substance",
-            "values" : drug_id
-         },
-         "ends" : disease_id,
-         "query" : """
-         MATCH p=
-         (c0:Concept {name: "chemical_substance" })--
-         (c1:Concept {name: "gene" })--
-         (c2:Concept {name: "biological_process" })--
-         (c3:Concept {name: "cell" })--
-         (c4:Concept {name: "anatomical_entity" })--
-         (c5:Concept {name: "phenotypic_feature" })--
-         (c6:Concept {name: "disease" })
-         FOREACH (n in relationships(p) | SET n.marked = TRUE)
-         WITH p,c0,c6
-         MATCH q=(c0:Concept)-[*0..6 {marked:True}]->()<-[*0..6 {marked:True}]-(c6:Concept)
-         WHERE p=q
-         AND ALL( r in relationships(p) WHERE  EXISTS(r.op) )FOREACH (n in relationships(p) | SET n.marked = FALSE)
-         RETURN p, EXTRACT( r in relationships(p) | startNode(r) )"""
-      })
-      g = render_graph(blackboard)
-      rosetta.service_context.cache.set (key, g)
-   return jsonify (g)
+         end_values   = disease_ids)
+      graph = gamma.knowledge.query (query, key)
+      graph = {
+         "nodes" : [ node2json(n) for n in graph.graph.nodes () ],
+         "edges" : [ edge2json(e) for e in graph.graph.edges (data=True) ]
+      }
+      gamma.rosetta.service_context.cache.set (key, graph)
+      if gamma.ndex:
+         gamma.ndex.save_nx_graph (graph.graph)
+   return jsonify (graph)
 
 @app.route('/query/<inputs>/<query>/', methods=['GET'])
 def query (inputs, query):
@@ -296,7 +271,6 @@ def query (inputs, query):
    if '=' not in inputs:
       raise ValueError ("Inputs must be key value of concept=<comma separated ids>")
    concept, items =inputs.split ("=")
-#   query = query.replace ("UNKNOWN", "'UNKNOWN'")
    blackboard = get_rosetta().construct_knowledge_graph(**{
       "inputs" : {
          concept : items.split (",")

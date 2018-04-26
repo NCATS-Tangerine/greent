@@ -1,13 +1,13 @@
 from greent.graph_components import KNode, KEdge
 from greent import node_types
 from greent.rosetta import Rosetta
+from greent.userquery import UserQuery
 import argparse
 import networkx as nx
 import logging
 import sys
 from neo4j.v1 import GraphDatabase
 from importlib import import_module
-from greent.userquery import UserQuery
 from builder.lookup_utils import lookup_identifier
 from collections import defaultdict
 from builder.pathlex import tokenize_path
