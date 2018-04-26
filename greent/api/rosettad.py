@@ -116,7 +116,8 @@ class Gamma:
    """ A high level interface to the system including knowledge map, cache, reasoner, and NDEx. """
    def __init__(self):
       config = app.config['SWAGGER']['greent_conf']
-      self.rosetta = Rosetta (debug=True, greentConf=config)
+      debug = app.config['SWAGGER']['debug']
+      self.rosetta = Rosetta (debug=debug, greentConf=config)
       self.knowledge = KnowledgeQuery ()
       self.ndex = None
       ndex_creds = "~/.ndex"
@@ -187,7 +188,8 @@ def cop (drug="imatinib", disease="asthma"):
    """
    gamma = get_gamma ()
    key = gamma.create_key ('cop', [drug, disease])
-   graph = gamma.rosetta.service_context.cache.get (key)   
+   graph = gamma.rosetta.service_context.cache.get (key)
+   graph = None
    if not graph:
       disease_ids = gamma.get_disease_ids (disease, filters=['MONDO'])
       print (f"DID: {disease_ids}")
@@ -328,11 +330,13 @@ if __name__ == "__main__":
    parser = argparse.ArgumentParser(description='Rosetta Server')
    parser.add_argument('-s', '--bag-source', help='Filesystem path or URL serving bags.', default='.')
    parser.add_argument('-p', '--port', type=int, help='Port to run service on.', default=None)
+   parser.add_argument('-d', '--debug', help="Debug", action="store_true", default=False)
    parser.add_argument('-c', '--conf', help='GreenT config file to use.', default="greent-api.conf")
    args = parser.parse_args ()
    print (f"--------------------> {args.conf}")
    app.config['SWAGGER']['bag_source'] = args.bag_source
    app.config['SWAGGER']['greent_conf'] = args.conf
+   app.config['SWAGGER']['debug'] = args.debug
    app.run(host='0.0.0.0', port=args.port, debug=True, threaded=True)
 
 
