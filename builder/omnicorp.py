@@ -1,5 +1,5 @@
 import logging
-from greent.graph_components import KEdge
+from greent.graph_components import KEdge, LabeledID
 from greent.util import Text
 from greent.util import LoggingUtil
 from greent import node_types
@@ -24,11 +24,9 @@ class OmnicorpSupport():
         if len(articles) > 0:
             #logger.debug(f'    -> {len(articles)}')
             pmids = [f'PMID:{x.split("/")[-1]}' for x in articles]
-            ke = KEdge('omnicorp.term_to_term', dt.now(), 'omnicorp:1', 'literature_co-occurence',
-                       f'{node_a.identifier},{node_b.identifier}','omnicorp:1','literature_co-occurence',publications=pmids,
-                       is_support=True)
-            ke.source_node = node_a
-            ke.target_node = node_b
+            predicate=LabeledID('omnicorp:1', 'literature_co-ocurrence')
+            ke = KEdge(node_a, node_b, 'omnicorp.term_to_term', dt.now(), predicate,predicate,
+                       f'{node_a.identifier},{node_b.identifier}',publications=pmids, is_support=True)
             return ke
         return None
 

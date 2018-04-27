@@ -40,6 +40,7 @@ class OmniCorp(Service):
             logger.error("What kinda tomfoolery is this?")
             logger.error(f"{node.identifier} {node.node_type}")
             logger.error(f"{node.synonyms}")
+            return None
         oident = f'{self.prefix_to_uri[prefix]}{Text.un_curie(node.identifier)}'
         return oident
 
@@ -67,6 +68,8 @@ class OmniCorp(Service):
     def get_shared_pmids (self, node1, node2):
         id1 = self.get_omni_identifier(node1)
         id2 = self.get_omni_identifier(node2)
+        if id1 is None or id2 is None:
+            return []
         done = False
         ntries = 0
         while not done and ntries < 10:
@@ -74,8 +77,10 @@ class OmniCorp(Service):
                 pmids = self.sparql_get_shared_pmids (id1, id2)
                 done = True
             except:
+                logger.warn("OmniCorp error, retrying")
                 ntries += 1
         if not done:
+            logger.error("OmniCorp gave up")
             return []
         return [ p['pubmed'] for p in pmids ]
     
