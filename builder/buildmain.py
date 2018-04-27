@@ -148,7 +148,7 @@ class KnowledgeGraph:
             for i in kedgemap.values():
                 kedge = i['object']
                 # The node being removed is the source in these edges, replace it
-                kedge.source_node = source
+                kedge.subject_node = source
                 self.graph.add_edge(source, s, object=kedge)
         nodes_to_target = self.graph.predecessors(target)
         for p in nodes_to_target:
@@ -192,10 +192,10 @@ class KnowledgeGraph:
     def add_nonsynonymous_edge(self, edge, reverse_edges=False):
         self.logger.debug(' New Nonsynonymous')
         # Found an edge between nodes. Add nodes if needed.
-        source_node = self.add_or_find_node(edge.source_node)
-        target_node = self.add_or_find_node(edge.target_node)
-        edge.source_node = source_node
-        edge.target_node = target_node
+        source_node = self.add_or_find_node(edge.subject_node)
+        target_node = self.add_or_find_node(edge.object_node)
+        edge.subject_node = source_node
+        edge.object_node = target_node
         # Now the nodes are translated to the canonical identifiers, make the edge
         # TODO: YUCK FIX
         if reverse_edges:
@@ -228,7 +228,7 @@ class KnowledgeGraph:
     def add_edges(self, edge_list, reverse_edges=False):
         """Add a list of edges (and the associated nodes) to the graph."""
         for edge in edge_list:
-            self.logger.debug('Edge: {} -> {}'.format(edge.source_node.identifier, edge.target_node.identifier))
+            self.logger.debug('Edge: {} -> {}'.format(edge.subject_node.identifier, edge.object_node.identifier))
             self.add_nonsynonymous_edge(edge, reverse_edges)
 
     def find_node(self, node):
