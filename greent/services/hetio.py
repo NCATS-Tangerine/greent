@@ -4,7 +4,7 @@ from pprint import pprint
 from greent.neo4jbase import Neo4JREST
 from greent.util import Munge
 from greent.util import Text
-from greent.graph_components import KEdge, KNode
+from greent.graph_components import KEdge, KNode, LabeledID
 from greent import node_types
 from datetime import datetime as dt
 
@@ -25,7 +25,7 @@ class HetIO(Neo4JREST):
     def munge_gene (self, gene):
         return gene.split ("/")[-1:][0] if gene.startswith ("http://") else gene
 
-    #TODO: also make an anatomy to gene, check directions
+    #TODO: also make an anatomy to gene
     def gene_to_anatomy (self, gene):
         gene_identifiers = list(gene.get_synonyms_by_prefix('NCBIGENE'))
         gene_identifier = Text.un_curie(gene_identifiers[0])
@@ -35,11 +35,11 @@ class HetIO(Neo4JREST):
         edge_ids = [ edge['type'] for edge in edges ]
         results = []
         for node_id, predicate_label in zip(node_ids,edge_ids):
-            predicate_id = f'hetio:{predicate_label}'
-            standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id, predicate_label)
-            results.append( (KEdge('hetio.gene_to_anatomy',dt.now(),predicate_id,predicate_label,gene_identifier,
-                             standard_predicate_id, standard_predicate_label),
-                             KNode(node_id, node_types.ANATOMY) ) )
+            predicate = LabeledID(f'hetio:{predicate_label}', predicate_label)
+            anatomy = KNode(node_id, node_types.ANATOMY) 
+            #These edges all go from anatomy to gene
+            edge = self.create_edge(anatomy, gene,'hetio.gene_to_anatomy',gene_identifier,predicate)
+            results.append((edge, anatomy))
         return results
 
     #TODO: this is not to a cell, but a cellular component.  REmoving it from the yaml until we can fix it up
@@ -61,12 +61,12 @@ class HetIO(Neo4JREST):
         node_ids = [ node['identifier'] for node in nodes ]
         edge_ids = [ edge['type'] for edge in edges ]
         results = []
+        #These edges all go from disease to gene
         for node_id, predicate_label in zip(node_ids,edge_ids):
-            predicate_id = f'hetio:{predicate_label}'
-            standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id, predicate_label)
-            results.append( (KEdge('hetio.gene_to_disease',dt.now(),predicate_id,predicate_label,gene_identifier,
-                             standard_predicate_id, standard_predicate_label),
-                             KNode(node_id, node_types.DISEASE) ) )
+            predicate = LabeledID(f'hetio:{predicate_label}', predicate_label)
+            disease = KNode(node_id, node_types.DISEASE) 
+            edge = self.create_edge(disease, gene,'hetio.gene_to_disease',gene_identifier,predicate)
+            results.append( (edge, disease) )
         return results
 
     def disease_to_phenotype (self, disease):
@@ -78,27 +78,9 @@ class HetIO(Neo4JREST):
         edge_ids = [ edge['type'] for edge in edges ]
         results = []
         for node_id, predicate_label in zip(node_ids,edge_ids):
-            predicate_id = f'hetio:{predicate_label}'
-            standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id, predicate_label)
-            results.append( (KEdge('hetio.disease_to_phenotype',dt.now(),predicate_id,predicate_label,disease_identifier,
-                             standard_predicate_id, standard_predicate_label),
-                             KNode(node_id, node_types.PHENOTYPE) ) )
+            predicate = LabeledID(f'hetio:{predicate_label}', predicate_label)
+            phenotype = KNode(node_id, node_types.PHENOTYPE) 
+            edge = self.create_edge(disease, phenotype, 'hetio.disease_to_phenotype', disease_identifier, predicate)
+            results.append( (edge, phenotype) )
         return results
 
-'''
-class TestHetIO(unittest.TestCase):
-
-    h = HetIO (ServiceContext.create_context ())
-    
-    def test_anatomy (self):
-        pprint (self.h.gene_to_anatomy (KNode('HGNC:TP53', node_types.GENE)))
-
-    def test_cell (self):
-        pprint (self.h.gene_to_cell (KNode('HGNC:7121', node_types.GENE)))
-
-if __name__ == '__main__':
-    
-    het = HetIO (ServiceContext.create_context ())
-    print (het.disease_to_phenotype (KNode('DOID:2841',node_types.DISEASE)))
-'''
-#MATCH (g:Gene)-[r]-(c:CellularComponent) WHERE g.name='HGNC:3263' RETURN g, r, c LIMIT 200

@@ -2,9 +2,8 @@ from greent.service import Service
 from greent.triplestore import TripleStore
 from greent.util import LoggingUtil
 from greent.util import Text
-from greent.graph_components import KEdge, KNode
+from greent.graph_components import KEdge, KNode, LabeledID
 from greent import node_types
-from datetime import datetime as dt
 
 logger = LoggingUtil.init_logging (__file__)
 
@@ -20,17 +19,17 @@ class ChemBioKS(Service):
         """ Execute and return the result of a SPARQL query. """
         return self.triplestore.execute_query (query)
 
-    def build_edge (self, r, source,predicate_id, predicate_label, input_id, pmids = None):
-        spred, slabel = self.standardize_predicate(predicate_id, predicate_label)
-        return KEdge(source, dt.now, predicate_id, predicate_label, input_id, spred, slabel, publications = pmids)
-
-
     #Used in our lookup stuff
     def graph_drugname_to_pubchem( self, drugname_node):
             drug_name = Text.un_curie (drugname_node.identifier)
             response = self.drugname_to_pubchem(drug_name)
-            return [ (self.build_edge (r, 'chembio.graph_drugname_to_pubchem','rdfs:ID', 'identifies', drugname_node.identifier),
-                      KNode( "PUBCHEM:{}".format( r['drugID'].split('/')[-1]), node_types.DRUG, label=r['drugName'])) for r in response  ]
+            predicate=LabeledID('rdfs:ID', 'identifies')
+            results = []
+            for r in response:
+                node = KNode( "PUBCHEM:{}".format( r['drugID'].split('/')[-1]), node_types.DRUG, label=r['drugName'])
+                edge = self.create_edge(drugname_node,node,'chembio.graph_drugname_to_pubchem',drugname_node.identifier,predicate)
+                results.append( (edge,node) )
+            return results
 
     ## GETS
 
@@ -92,16 +91,10 @@ class ChemBioKS(Service):
     def get_drugs_by_condition_graph (self, conditions):
         drugs = self.get_drugs_by_condition (conditions.identifier)
         results = []
+        predicate=LabeledID("RO:0002302", "is_treated_by_substance")
         for r in drugs:
-            predicate_id="RO:0002302"
-            predicate_label="is_treated_by_substance"
-            standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id, predicate_label)
-            edge = KEdge ('chembio.get_drugs_by_condition_graph', dt.now(), predicate_id, predicate_label, conditions.identifier,
-                          standard_predicate_id, standard_predicate_label, publications=r['diseasePMIDS'])
-            node = KNode (r['drugID'].split('/')[-1:][0],
-                          #"http://chem2bio2rdf.org/drugbank/resource/drugbank_drug",
-                          node_types.DRUG,
-                          r['drugGenericName'])
+            node = KNode (r['drugID'].split('/')[-1:][0], node_types.DRUG, r['drugGenericName'])
+            edge = self.create_edge(conditions, node, 'chembio.get_drugs_by_condition_graph', conditions.identifier, predicate, publications= r['diseasePMIDS'])
             results.append ( (edge, node) )
         #logger.debug ("chembio drugs by condition: {}".format (results))
         return results
@@ -236,14 +229,10 @@ class ChemBioKS(Service):
         disease = disease.identifier.split (':')[1].lower ()
         response = self.get_genes_pathways_by_disease ([ disease ])
         results = []
+        predicate=LabeledID("RO:0002326","contributes_to")
         for r in response:
-            #edge = KEdge ('c2b2r', 'diseaseToGene', { 'keggPath' : r['keggPath'] })
-            predicate_id="RO:0002326"
-            predicate_label="contributes_to"
-            standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id, predicate_label)
-            edge = KEdge ('chembio.graph_get_genes_by_disease', dt.now(), predicate_id, predicate_label, disease.identifier,
-                          standard_predicate_id, standard_predicate_label)
             node = KNode ("UNIPROT:{0}".format (r['uniprotGene'].split('/')[-1:][0]),  node_types.GENE)
+            edge = self.create_edge (node,disease,'chembio.graph_get_genes_by_disease',disease.identifier, predicate)
             results.append ( (edge, node) )
         return results
 
@@ -273,13 +262,10 @@ class ChemBioKS(Service):
                }
             } LIMIT 2000""")
         results = []
+        predicate=LabeledID('RO:0000056', 'participates_in')
         for r in response:
-            predicate_id="RO:0000056"
-            predicate_label="participates_in"
-            standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id, predicate_label)
-            edge = KEdge ('chembio.graph_get_pathways_by_gene', dt.now(), predicate_id, predicate_label, gene.identifier,
-                          standard_predicate_id, standard_predicate_label)
             node = KNode ("KEGG:{0}".format (r['keggPath'].split('/')[-1:][0]), node_types.PATHWAY)
+            edge = self.create_edge (gene,node,'chembio.graph_get_pathways_by_gene',gene.identifier, predicate)
             results.append ( (edge, node) )
         return results
 
@@ -300,8 +286,13 @@ class ChemBioKS(Service):
                ?ctd_disease ctd:diseaseid               ?diseaseID ;
                             ctd:cid                     ?pubchemCID .
             }""")
-        return [ ( self.build_edge (r, 'chembio.graph_drugbank_to_uniprot','SIO:001257', 'chemical to gene association', drugbank.identifier),
-                   KNode ("UNIPROT:{0}".format (r['uniprotGeneID'].split('/')[-1:][0]), node_types.GENE) ) for r in response ]
+        predicate=LabeledID('SIO:001257', 'chemical to gene association')
+        results = []
+        for r in response:
+            node = KNode ("UNIPROT:{0}".format (r['uniprotGeneID'].split('/')[-1:][0]), node_types.GENE)
+            edge = self.create_edge(drugbank,node,'chembio.graph_drugbank_to_uniprot',predicate, drugbank.identifier)
+            results.append(edge,node)
+        return results
 
     def graph_diseasename_to_uniprot (self, disease):
         results = []
@@ -333,12 +324,14 @@ class ChemBioKS(Service):
                                ctd:pubmedids   ?disPmids.
                   filter regex(lcase(str(?diseaseNameRec)), lcase(?diseaseName))
                 } LIMIT 500""")
+            predicate=LabeledID('NCIT:R176', 'disease to gene association')
             for r in response:
                 chemPmids = r['chemPmids']
                 disPmids = r['disPmids']
                 pmids = chemPmids + "|" + disPmids
-                edge = self.build_edge (r, 'chembio.graph_diseasename_to_uniprot','NCIT:R176', 'disease to gene association', disease.identifier,pmids),
                 node = KNode ("UNIPROT:{0}".format (r['uniprotSym'].split('/')[-1:][0]), node_types.GENE)
+                edge = self.create_edge (disease,node, 'chembio.graph_diseasename_to_uniprot', disease.identifier,predicate,
+                                         publications=pmids)
                 results.append ( (edge, node) )
         return results
 
@@ -359,8 +352,13 @@ class ChemBioKS(Service):
                ?ctd_disease ctd:diseaseid               ?diseaseID ;
                             ctd:cid                     ?pubchemCID .
             }""")
-        return [ ( self.build_edge (r, 'chembio.graph_diseaseid_to_uniprot','NCIT:R176', 'disease to gene association', drugbank.identifier),
-                   KNode ("UNIPROT:{0}".format (r['uniprotGeneID'].split('/')[-1:][0]), node_types.GENE) ) for r in response ]
+        predicate=LabeledID('NCIT:R176', 'disease to gene association')
+        results = []
+        for r in response:
+            node = KNode ("UNIPROT:{0}".format (r['uniprotGeneID'].split('/')[-1:][0]), node_types.GENE)
+            edge = self.create_edge(drugbank,node,'chembio.graph_diseaseid_to_uniprot',drugbank.identifier,predicate)
+            results.append((edge,node))
+        return results
 
 
 
@@ -373,41 +371,16 @@ class ChemBioKS(Service):
         #The compound mesh coming back from here is very out of date.  Ignore.
         pubchemid = Text.un_curie (pubchem_node.identifier)
         response = self.pubchem_to_ncbigene(pubchemid)
+        predicate=LabeledID('SIO:001257', 'chemical to gene association')
         retvals = []
         for r in response:
             props = {}
             props['interaction'] = r['interaction']
             props['interactionTypes'] = r['interactionTypes']
             props['publications'] = r['pubmedids'].split('|')
-            retvals.append( ( self.build_edge (r, 'chembio.graph_pubchem_to_ncbigene','SIO:001257', 'chemical to gene association', pubchem_node.identifier),
-                             KNode( "NCBIGene:{}".format( r['NCBIGene']), node_types.GENE) ) )
+            node = KNode( "NCBIGene:{}".format( r['NCBIGene']), node_types.GENE)
+            edge = self.create_edge(pubchem_node, node,'chembio.graph_pubchem_to_ncbigene',pubchem_node.identifier,
+                                    predicate,publications=r['pubmedids'].split('|'))
+            retvals.append( (edge,node) )
         return retvals
-        
-'''
-    def graph_uniprot_to_hgnc (self, uniprot_symbol):
-        result = self.uniprot_to_hgnc (uniprot_symbol)
-        return [ ( #self.get_edge (r, predicate='synonym'),
-                   KNode('HGNC:{0}'.format (r['hgncID'].split(':')[-1]), node_types.GENE)) for r in result ]
-                   
-    def graph_drugname_to_gene_symbol (self, drug_name_node):
-        drug_name = Text.un_curie (drug_name_node.identifier)
-        response = self.drug_name_to_gene_symbol (drug_name)
-        results = []
-        for r in response:
-            #edge = self.get_edge (r, predicate="targets")
-            node = KNode ("UNIPROT:{0}".format (Text.path_last (r['uniprotSym'])), node_types.GENE)
-            results.append ( (edge, node) )
-        return results                  
-        
-    def graph_name_to_drugbank (self, drug_name_node):
-        drug_name = Text.un_curie (drug_name_node.identifier)
-        response = self.drug_name_to_gene_symbol (drug_name)
-        results = []
-        for r in response:
-            #edge = self.get_edge (r, predicate="drugname")
-            node = KNode ("DRUGBANK:{0}".format (Text.path_last (r['drugID'])), \
-                          node_types.DRUG, \
-                          label=r['drugName'])
-            results.append ( (edge, node) )
-        return results
-'''
+

@@ -16,7 +16,7 @@ from greent.service import Service
 from greent.util import LoggingUtil
 from greent.async import AsyncUtil
 from greent.async import Operation
-from greent.graph_components import KEdge, KNode
+from greent.graph_components import KEdge, KNode, LabeledID
 from greent import node_types
 from simplejson.scanner import JSONDecodeError
 
@@ -133,12 +133,12 @@ class Pharos(Service):
         drugname = Text.un_curie(namenode.identifier)
         pharosids = self.drugname_string_to_pharos_info(drugname)
         results = []
+        predicate = LabeledID('RDFS:id', 'identifies')
         for pharosid, pharoslabel in pharosids:
             newnode = KNode(pharosid, node_types.DRUG, label=pharoslabel)
-            newedge = KEdge('pharos', 'drugname_to_pharos', {})
+            newedge = KEdge(namenode, newnode, 'pharos.drugname_to_pharos', namenode.identifier, predicate)
             results.append((newedge, newnode))
         return results
-
 
     def drug_get_gene(self, subject):
         """ Get a gene from a drug. """
@@ -151,26 +151,15 @@ class Pharos(Service):
                 r = requests.get(url)
                 result = r.json()
                 actions = set()  # for testing
+                predicate = LabeledID('PHAROS:drug_targets','is_target')
                 for link in result['links']:
                     if link['kind'] == 'ix.idg.models.Target':
-                        import json
-                        print(json.dumps(link, indent=2))
                         pharos_target_id = int(link['refid'])
-                        edge_properties = {}
-                        #for prop in link['properties']:
-                        #    if prop['label'] == 'Pharmalogical Action':  # !
-                        #        actions.add(prop['term'])
-                        predicate_label='is_target'
-                        predicate_id = 'PHAROS:drug_targets'
-                        standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id,predicate_label)
-                        #pharos_edge = KEdge('pharos', 'drug_get_gene', {'properties': link['properties']})
-                        pharos_edge = KEdge('pharos.drug_get_gene',dt.now(),predicate_id,predicate_label,pharosid,
-                                            standard_predicate_id, standard_predicate_label,url=url)
-                        # Pharos returns target ids in its own numbering system. Collect other names for it.
                         hgnc = self.target_to_hgnc(pharos_target_id)
                         if hgnc is not None:
                             hgnc_node = KNode(hgnc, node_types.GENE)
-                            resolved_edge_nodes.append((pharos_edge, hgnc_node))
+                            edge = self.create_edge(subject,hgnc_node,'pharos.drug_get_gene',pharosid,predicate,url=url)
+                            resolved_edge_nodes.append((edge, hgnc_node))
                         else:
                             logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
         return resolved_edge_nodes
@@ -179,111 +168,23 @@ class Pharos(Service):
         """ Get a gene from a pharos disease id. """
         pharos_ids = self.translate(subject)
         resolved_edge_nodes = []
-        print (f"-------------------- {pharos_ids}")
-
         for pharosid in pharos_ids:
             logging.getLogger('application').debug("Identifier:" + subject.identifier)
             original_edge_nodes = []
             url='https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid
             r = requests.get(url)
             result = r.json()
+            predicate=LabeledID('PHAROS:gene_involved','gene_involved')
             for link in result['links']:
                 if link['kind'] == 'ix.idg.models.Target':
                     pharos_target_id = int(link['refid'])
-                    predicate_id = 'PHAROS:gene_involved'
-                    predicate_label = 'gene_involved'
-                    standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id, predicate_label)
-                    pharos_edge = KEdge('pharos.disease_get_gene',dt.now(),predicate_id,predicate_label,pharosid,
-                                            standard_predicate_id, standard_predicate_label,url=url)
-                    #pharos_edge = KEdge('pharos', 'disease_get_gene', {'properties': link['properties']})
-                    # Pharos returns target ids in its own numbering system. Collect other names for it.
                     hgnc = self.target_to_hgnc(pharos_target_id)
                     if hgnc is not None:
                         hgnc_node = KNode(hgnc, node_types.GENE)
-                        resolved_edge_nodes.append((pharos_edge, hgnc_node))
+                        edge = self.create_edge(subject,hgnc_node,'pharos.disease_get_gene',pharosid,predicate,url=url)
+                        resolved_edge_nodes.append((edge, hgnc_node))
                     else:
                         logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
-        return resolved_edge_nodes
-
-'''
-class AsyncPharos(Pharos):
-    """ Prototype asynchronous requests. In general we plan to have asynchronous requests and
-    caching to accelerate query responses. """
-
-    def __init__(self, context):
-        super(AsyncPharos, self).__init__(context)
-
-    def disease_get_gene(self, subject):
-        pharosids = subject.identifier
-        original_edge_nodes = []
-
-        def process_pharos_response(r):
-            try:
-                result = r.json()
-                for link in result['links']:
-                    if link['kind'] != 'ix.idg.models.Target':
-                        logger.info('Pharos disease returning new kind: %s' % link['kind'])
-                    else:
-                        pharos_target_id = int(link['refid'])
-                        pharos_edge = KEdge('pharos', 'disease_get_gene', {'properties': link['properties']})
-                        original_edge_nodes.append((pharos_edge, pharos_target_id))
-            except JSONDecodeError as e:
-                pass  # logger.error ("got exception %s", e)
-
-        AsyncUtil.execute_parallel_requests(
-            urls=["https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full" % p for p in pharosids],
-            response_processor=process_pharos_response)
-
-        logger.debug("        Getting hgnc ids for pharos id: {}".format(pharosids))
-        resolved_edge_nodes = []
-        HGNCRequest = namedtuple('HGNCRequest', ['pharos_target_id', 'edge'])
-        index = 0
-
-        def process_hgnc_request(request):
-            nonlocal index
-            index += 1
-            url = "https://pharos.nih.gov/idg/api/v1/targets(%s)/synonyms" % request.pharos_target_id
-            if index < 3:
-                logger.debug("      hgnc_url:  {0}".format(url))
-            return (requests.get(url).json(), request.edge)
-
-        def process_hgnc_response(response):
-            result = response[0]
-            edge = response[1]
-            hgnc = None
-            for synonym in result:
-                if synonym['label'] == 'HGNC':
-                    hgnc = synonym['term']
-            if hgnc is not None:
-                hgnc_node = KNode(hgnc, node_types.GENE)
-                resolved_edge_nodes.append((edge, hgnc_node))
-
-        AsyncUtil.execute_parallel_operations(
-            operations=[Operation(process_hgnc_request, HGNCRequest(pharos_target_id, edge)) for edge, pharos_target_id
-                        in original_edge_nodes],
-            # [:1],
-            response_processor=process_hgnc_response)
-
-        return resolved_edge_nodes
-
-
-# Poking around on the website there are about 10800 ( a few less )
-def build_disease_translation():
-    """Write to disk a table mapping Pharos disease ID to DOID (and other?) so we can reverse lookup"""
-    with open('services/pharos.id.all.txt', 'w') as pfile:
-        pfile.write('PharosID\tDOID\n')
-        for pharosid in range(1, 10800):
-            r = requests.get('https://pharos.nih.gov/idg/api/v1/diseases(%d)/synonyms' % pharosid).json()
-            doids = []
-            for synonym in r:
-                # if synonym['label'] == 'DOID':
-                doids.append(synonym['term'])
-            if len(doids) > 1:
-                import json
-                exit()
-            elif len(doids) == 0:
-                doids.append('')
-            pfile.write('%d\t%s\n' % (pharosid, doids[0]))
-'''
+            return resolved_edge_nodes
 
 

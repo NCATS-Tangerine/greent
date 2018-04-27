@@ -19,13 +19,6 @@ def test_xontology_relationships(quickgo):
     #Mast Cells
     assert r[0][1].identifier == 'CL:0000097'
 
-#Do we still want to allow funky go types?
-def test_allow_funky_gotypes(quickgo):
-    r0 = quickgo.go_term_xontology_relationships (KNode("GO:0002551", node_types.PROCESS))
-    r1 = quickgo.go_term_xontology_relationships (KNode("GO.BIOLOGICAL_PROCESS:0002551", node_types.PROCESS))
-    assert len(r0) == len(r1) == 1
-    assert r0[0][0] == r1[0][0]
-    assert r0[0][1] == r1[0][1]
 
 def test_extensions(quickgo):
     #Neurotransmitter secretion

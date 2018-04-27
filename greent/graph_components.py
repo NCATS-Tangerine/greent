@@ -4,6 +4,7 @@ from greent.node_types import node_types
 from greent.util import Text
 from json import JSONEncoder
 from json import JSONDecoder
+from typing import NamedTuple
 
 class GenericJSONEncoder(JSONEncoder):
     def default(self, o):
@@ -121,12 +122,17 @@ class KNode():
             return '%s (%s)' % (self.label, self.identifier)
         return self.identifier
 
+class LabeledID(NamedTuple):
+    """A simple struct for holding identifier/label pairs"""
+    identifier: str
+    label: str
+
 class KEdge():
     """Used as the edge object in KnowledgeGraph.
 
     Instances of this class should be returned from greenT"""
 
-    def __init__(self, edge_source, ctime, predicate_id, predicate_label, input_id, standard_predicate_id, standard_predicate_label, publications = None, url=None, properties=None, is_support=False):
+    def __init__(self, subject_node, object_node, edge_source, ctime, original_predicate, standard_predicate, input_id, publications = None, url=None, properties=None, is_support=False):
         """Definitions of the parameters:
         edge_function: the python function called to produce this edge
         ctime: When the external call to produce this edge was made.  If the edge comes from a cache, this
@@ -141,15 +147,13 @@ class KEdge():
         properties: A map of any other information about the edge that we may want to persist.  Default None.
         is_support: Whether or not the edge is a support edge. Default False.
         """
+        self.subject_node = subject_node
+        self.object_node = object_node
         self.edge_source = edge_source
-        self.source_node = None
-        self.target_node = None
         self.ctime = ctime
-        self.predicate_id = predicate_id
-        self.predicate_label = predicate_label
+        self.original_predicate = original_predicate
+        self.standard_predicate = standard_predicate
         self.input_id = input_id
-        self.standard_predicate_id = standard_predicate_id
-        self.standard_predicate_label = standard_predicate_label
         self.publications = publications
         self.url = url
         self.validate_publications()
@@ -160,7 +164,7 @@ class KEdge():
         self.is_support = is_support
 
     def __key(self):
-        return (self.source_node, self.target_node, self.edge_source)
+        return (self.subject_node, self.object_node, self.edge_source)
 
     def __eq__(x, y):
         return x.__key() == y.__key()
@@ -169,7 +173,7 @@ class KEdge():
         return hash(self.__key())
 
     def long_form(self):
-        return "E(src={0},srcn={1},destn={2})".format(self.edge_source, self.source_node, self.target_node)
+        return "E(src={0},subjn={1},objn={2})".format(self.edge_source, self.subject_node, self.object_node)
 
     def validate_publications(self):
         if self.publications is None:
@@ -182,9 +186,16 @@ class KEdge():
 
     def to_json(self):
         """Used to serialize a node to JSON."""
-        j = {'edge_source': self.edge_source, \
-             'edge_function': self.edge_function, \
-             'is_synonym': self.is_synonym}
+        j = {'edge_source': self.edge_source,
+             'ctime': self.ctime,
+             'predicate_id': self.original_predicate.identifier,
+             'predicate_label': self.original_predicate.label,
+             'standard_predicate_id': self.standard_predicate.identifier,
+             'standard_predicate_label': self.standard_predicate.label,
+             'url': self.url,
+             'input_id': self.input_id,
+             'publications': self.publications,
+             'is_support': self.is_support}
         for key in self.properties:
             j[key] = self.properties[key]
         return j

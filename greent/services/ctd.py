@@ -2,7 +2,7 @@ import logging
 import requests
 from datetime import datetime as dt
 from greent.service import Service
-from greent.graph_components import KNode, KEdge
+from greent.graph_components import KNode, KEdge, LabeledID
 from greent.util import Text, LoggingUtil
 from greent import node_types
 
@@ -12,6 +12,7 @@ class CTD(Service):
     """ Interface to the Comparative Toxicogenomic Database data set."""
     def __init__(self, context):
         super(CTD, self).__init__("ctd", context)
+        self.g2d_strings = ['abundance','response to substance','transport']
         self.term_parents = {'abundance': 'abundance',
                             'mutagenesis': 'mutagenesis',
                             'folding': 'folding',
@@ -71,7 +72,7 @@ class CTD(Service):
                             'degradation': 'metabolic process',
                             'nitrosation': 'metabolic process',
                             'transport': 'transport',
-                            'secretion': 'transport',
+                            'secretion': 'secretion', #most transport is gene->drug, but secretion is usually drug->gene
                             'export': 'transport',
                             'uptake': 'transport',
                             'import': 'transport',
@@ -104,18 +105,18 @@ class CTD(Service):
         identifiers = self.drugname_string_to_drug_identifier(drugname)
         return [ KNode(identifier, node_types.DRUG) for identifier in identifiers ]
 
-    def standardize_predicate(self, p_id, p_label):
+    def standardize_predicate(self, predicate):
         """CTD has a little more work to do than the standard service."""
-        if '|' not in p_label:
-            return self.concept_model.standardize_relationship(p_id)
-        parts = p_label.split('|')
+        if '|' not in predicate.label:
+            return self.concept_model.standardize_relationship(predicate)
+        parts = predicate.label.split('|')
         goodparts = list(filter(lambda p:'reaction' not in p and 'cotreatment' not in p, parts))
         if len(goodparts) != 1:
-            return self.concept_model.standardize_relationship('CTD:interacts_with')
+            return self.concept_model.standardize_relationship(LabeledID('CTD:interacts_with','interacts_with'))
         #Change the modifier to "affects" to deal with the fact that we don't know what the deleted part does.
         thing = self.term_parents[goodparts[0].split('^')[1]]
         new_id = f'CTD:affects^{thing}'
-        return self.concept_model.standardize_relationship(new_id)
+        return self.concept_model.standardize_relationship(LabeledID(identifier=new_id,label=new_id))
 
     def get_ctd_predicate_identifier(self,label):
         chunk = label.split('|')
@@ -123,36 +124,48 @@ class CTD(Service):
         renamed = [ f'{b[0]}^{self.term_parents[b[1]]}' for b in breakups]
         return f'CTD:{"|".join(renamed)}'
 
-    def drug_to_gene(self, subject):
+    def drug_to_gene(self, drug):
         output = []
-        for identifier in subject.synonyms:
+        for identifier in drug.synonyms:
             if Text.get_curie(identifier).upper() == 'MESH':
                 url=f"{self.url}/CTD_chem_gene_ixns_ChemicalID/{Text.un_curie(identifier)}/"
                 obj = requests.get(url).json ()
-                output = []
                 for r in obj:
                     props = {"description": r[ 'Interaction' ]}
                     predicate_label = r['InteractionActions']
-                    predicate_id = self.get_ctd_predicate_identifier(predicate_label)
-                    standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id,predicate_label)
-                    output.append( ( KEdge('ctd.drug_to_gene',dt.now(),predicate_id,predicate_label,identifier,
-                                           standard_predicate_id, standard_predicate_label,[f"PMID:{r['PubMedIDs']}"],url,props),
-                                     KNode(f"NCBIGENE:{r['GeneID']}", node_types.GENE) ) )
+                    predicate = LabeledID(self.get_ctd_predicate_identifier(predicate_label),predicate_label)
+                    gene_node = KNode(f"NCBIGENE:{r['GeneID']}", node_types.GENE)
+                    if sum([s in predicate.identifier for s in self.g2d_strings]) > 0:
+                        subject = gene_node
+                        object = drug
+                    else:
+                        subject = drug
+                        object = gene_node
+                    edge = self.create_edge(subject,object,'ctd.drug_to_gene',identifier,predicate,
+                                            publications=[f"PMID:{r['PubMedIDs']}"],url=url,properties=props)
+                    output.append( (edge,gene_node) )
         return output
 
-    def gene_to_drug(self, subject):
+    def gene_to_drug(self, gene_node):
         output = []
-        for identifier in subject.synonyms:
+        for identifier in gene_node.synonyms:
             if Text.get_curie(identifier).upper() == 'NCBIGENE':
                 url = f"{self.url}/CTD_chem_gene_ixns_GeneID/{Text.un_curie(identifier)}/"
                 obj = requests.get (url).json ()
                 for r in obj:
                     props = {"description": r[ 'Interaction' ]}
                     predicate_label = r['InteractionActions']
-                    predicate_id = self.get_ctd_predicate_identifier(predicate_label)
-                    standard_predicate_id, standard_predicate_label = self.standardize_predicate(predicate_id,predicate_label)
-                    output.append( ( KEdge('ctd.gene_to_drug',dt.now(),predicate_id,predicate_label,identifier,
-                                           standard_predicate_id, standard_predicate_label,[f"PMID:{r['PubMedIDs']}"],url,props),
-                                 KNode(f"MESH:{r['ChemicalID']}", node_types.DRUG) ) )
+                    predicate = LabeledID(self.get_ctd_predicate_identifier(predicate_label),predicate_label)
+                    #Should this be substance?
+                    drug_node = KNode(f"MESH:{r['ChemicalID']}", node_types.DRUG)
+                    if sum([s in predicate.identifier for s in self.g2d_strings]) > 0:
+                        subject = gene_node
+                        obj = drug_node
+                    else:
+                        subject = drug_node
+                        obj = gene_node
+                    edge = self.create_edge(subject,obj,'ctd.gene_to_drug',identifier,predicate,
+                                            publications=[f"PMID:{r['PubMedIDs']}"],url=url,properties=props)
+                    output.append( (edge,drug_node) )
         return output
 

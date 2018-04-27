@@ -1,6 +1,7 @@
 import os
 from greent.graph_components import KEdge, KNode
 from greent.util import LoggingUtil
+from datetime import datetime as dt
     
 class Service:
     """ Basic characteristics of services. """
@@ -23,14 +24,27 @@ class Service:
         try:
             result = self.context.config.get_service (self.name)
         except:
+            logger = LoggingUtil.init_logging(__file__)
             logger.warn(f"Unable to get config for service: {self.name}")
             #traceback.print_exc ()
         return result
 
-    def standardize_predicate(self, predicate_id, predicate_label):
-        return self.concept_model.standardize_relationship(predicate_id)
+    def standardize_predicate(self, predicate):
+        return self.concept_model.standardize_relationship(predicate)
 
-
+    def create_edge(self,source_node,target_node,edge_source,input_id,predicate,publications=None,url=None,properties=None):
+        ctime = dt.now()
+        standard_predicate=self.standardize_predicate(predicate)
+        return KEdge(source_node,
+                     target_node,
+                     edge_source,
+                     ctime,
+                     predicate,
+                     standard_predicate,
+                     input_id,
+                     publications,
+                     url,
+                     properties)
     #I don't see any reason that this shouldn't just be part of the Edge constructor
     '''
     def get_edge (self, props={}, predicate=None, pmids=[]):
