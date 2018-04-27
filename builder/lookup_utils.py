@@ -22,6 +22,8 @@ def lookup_disease_by_name( disease_name, greent ):
     logger=logging.getLogger('application')
     #This performs a case-insensitive exact match, and also inverts comma-ed names
     mondo_ids =  greent.mondo.search( disease_name )
+    #Take out phenotypes...
+    mondo_ids = list( filter( lambda x: not x.startswith('HP'), mondo_ids))
     if len(mondo_ids) == 0:
         logger.error('Could not convert disease name: {}.'.format(disease_name))
     else:
