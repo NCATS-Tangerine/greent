@@ -6,7 +6,7 @@ from greent.service import Service
 from greent.triplestore import TripleStore
 from greent.util import LoggingUtil
 from greent.util import Text
-from greent.graph_components import KEdge, KNode
+from greent.graph_components import KEdge, KNode, LabeledID
 from greent import node_types
 from pprint import pprint
 from datetime import datetime as dt
@@ -148,33 +148,26 @@ class UberonGraphKS(Service):
     def get_anatomy_by_cell_graph (self, cell_node):
         anatomies = self.cell_to_anatomy (cell_node.identifier)
         results = []
-        relation_id = 'BFO:0000050'
-        relation_label = 'has_part'
-        standard_id, standard_label = self.standardize_predicate(relation_id, relation_label)
+        predicate = LabeledID('BFO:0000050', 'has_part')
         for r in anatomies:
-            edge = KEdge ('uberongraph.get_anatomy_by_cell_graph', dt.now(), relation_id, relation_label, cell_node.identifier, standard_id, standard_label)
-            node = KNode (Text.obo_to_curie(r['anatomyID']), \
-                   node_types.ANATOMY )
-            node.label = r['anatomyLabel']
-            results.append ( (edge, node) )
+            anatomy_node = KNode (Text.obo_to_curie(r['anatomyID']), node_types.ANATOMY )
+            edge = self.create_edge(anatomy_node, cell_node, 'uberongraph.get_anatomy_by_cell_graph', cell_node.identifier, predicate)
+            results.append ( (edge, anatomy_node) )
         return results
     
-    def create_phenotype_anatomy_edge(self, node_id, node_label, input_id ):
-        predicate_id = 'UPHENO:0000001'
-        predicate_label = 'has phenotype affecting'
-        standard_id, standard_label = self.standardize_predicate(predicate_id, predicate_label)
-        edge = KEdge ('uberongraph.get_anatomy_by_phenotype_graph', dt.now(), predicate_id, predicate_label,input_id,
-                standard_id, standard_label)
-        node = KNode ( Text.obo_to_curie(node_id), node_types.ANATOMY )
-        node.label = node_label
-        return edge,node
+    def create_phenotype_anatomy_edge(self, node_id, node_label, input_id ,phenotype_node):
+        predicate = LabeledID('UPHENO:0000001','has phenotype affecting')
+        anatomy_node = KNode ( Text.obo_to_curie(node_id), node_types.ANATOMY )
+        edge = self.create_edge(phenotype_node, anatomy_node,'uberongraph.get_anatomy_by_phenotype_graph', input_id, predicate)
+        #node.label = node_label
+        return edge,anatomy_node
 
     def get_anatomy_by_phenotype_graph (self, phenotype_node):
         results = []
         for curie in phenotype_node.get_synonyms_by_prefix('HP'):
             anatomies = self.phenotype_to_anatomy (curie)
             for r in anatomies:
-                edge, node = self.create_phenotype_anatomy_edge(r['anatomy_id'],r['anatomy_label'],curie)
+                edge, node = self.create_phenotype_anatomy_edge(r['anatomy_id'],r['anatomy_label'],curie,phenotype_node)
                 if phenotype_node.label is None:
                     phenotype_node.label = r['input_label']
                 results.append ( (edge, node) )
@@ -185,7 +178,7 @@ class UberonGraphKS(Service):
                 #smartapi and the low-level sparql-vision.
                 part_results = self.get_anatomy_parts( r['anatomy_id'] )
                 for pr in part_results:
-                    pedge, pnode = self.create_phenotype_anatomy_edge(pr['part'],pr['partlabel'],curie)
+                    pedge, pnode = self.create_phenotype_anatomy_edge(pr['part'],pr['partlabel'],curie,phenotype_node)
                     results.append ( (pedge, pnode) )
         return results
 

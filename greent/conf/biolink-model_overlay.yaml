@@ -108,6 +108,7 @@ classes:
 
 slots:
 
+
   - name: id
     mappings:
       - rdfs:ID
@@ -117,18 +118,12 @@ slots:
       - RO:0002326   # contributes_to
       - GENO:0000840 # pathogenic_for_condition
       - RO:0002607   # is_marker_for
-      - hetio:ASSOCIATES_DaG
 
   - name: participates in
     mappings:
       - biolink:gene_get_process # biolink returns no relation_id or an identifier that is not a curie
       - RO:0002331               # involved_in
-    # I'm taking this back out and handling in the service
-    # - contributes_to           # This is here because sometimes biolink.gene_get_process returns this as a relationship_id!
 
-  - name: expressed in
-    mappings:
-      - hetio:EXPRESSES_AeG
 
   - name: positively regulates, entity to entity
     mappings:
@@ -143,7 +138,6 @@ slots:
   - name: chemical to gene association
     mappings:
       - CTD:interacts_with
-      - CTD:affects^abundance
       - CTD:affects^activity
       - CTD:affects^binding
       - CTD:affects^expression
@@ -152,11 +146,9 @@ slots:
       - CTD:affects^metabolic process
       - CTD:affects^mutagenesis
       - CTD:affects^reaction
-      - CTD:affects^response to substance
       - CTD:affects^RNA splicing
       - CTD:affects^stability
-      - CTD:affects^transport
-      - CTD:decreases^abundance
+      - CTD:affects^secretion
       - CTD:decreases^activity
       - CTD:decreases^expression
       - CTD:decreases^folding
@@ -164,11 +156,9 @@ slots:
       - CTD:decreases^metabolic process
       - CTD:decreases^mutagenesis
       - CTD:decreases^reaction
-      - CTD:decreases^response to substance
       - CTD:decreases^RNA splicing
       - CTD:decreases^stability
-      - CTD:decreases^transport
-      - CTD:increases^abundance
+      - CTD:decreases^secretion
       - CTD:increases^activity
       - CTD:increases^expression
       - CTD:increases^folding
@@ -176,10 +166,9 @@ slots:
       - CTD:increases^metabolic process
       - CTD:increases^mutagenesis
       - CTD:increases^reaction
-      - CTD:increases^response to substance
       - CTD:increases^RNA splicing
       - CTD:increases^stability
-      - CTD:increases^transport
+      - CTD:increases^secretion
 
   - name: has phenotype
     mappings:
@@ -189,6 +178,16 @@ slots:
   - name: directly interacts with
     mappings:
       - PHAROS:drug_targets
+      - CTD:affects^response to substance   # I think that these CTD are in the wrong place. Need Matt's view here.
+      - CTD:decreases^response to substance
+      - CTD:increases^response to substance
+      - CTD:affects^abundance
+      - CTD:decreases^abundance
+      - CTD:increases^abundance
+      - CTD:affects^transport
+      - CTD:decreases^transport
+      - CTD:increases^transport
+
 
   #the following are not in the original biolink model
   
@@ -197,6 +196,7 @@ slots:
     mappings:
       - NCIT:R176 #disease_mapped_to_gene/gene_mapped_to_disease
       - PHAROS:gene_involved
+      - hetio:ASSOCIATES_DaG
 
   - name: occurs in
     description: >-
@@ -212,5 +212,31 @@ slots:
     mappings:
       - RO:0002565
 
+  - name: expresses
+    description: >-
+        inverse of expressed in 
+    mappings:
+      - RO:0002292
+      - hetio:EXPRESSES_AeG
 
+  - name: results in developmental progression of
+    mappings:
+      - RO:0002295
+      - RO:0002296   # Probably should handle this some other way...
+      - RO:0002297
+      - RO:0002587
+      - RO:0002588
+      - RO:0002298
+      - RO:0002299
+      - RO:0002315
+      - RO:0002343
+      - RO:0002348
+      - RO:0002349
+      - RO:0002355
+      - RO:0002356
+      - RO:0002357
+      - RO:0002552
+      - RO:0002300
+      - RO:0002301
+      - RO:0002585
 

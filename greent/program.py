@@ -68,9 +68,6 @@ class Program:
         add them to both all_instance_nodes as well as the unused_instance_nodes"""
         for node in nodelist:
             self.rosetta.synonymizer.synonymize(node)
-            if node.identifier.startswith('DOID'):
-                print('hmm {}'.format(node.identifier))
-                exit()
             node.add_context(self.program_number, context)
         self.all_instance_nodes.update(nodelist)
         self.unused_instance_nodes.update([(node, context) for node in nodelist])
@@ -100,13 +97,17 @@ class Program:
                     logger.debug (f"cache.set-> {key} length:{len(results)}")
                 newnodes = []
                 for r in results:
-                    edge = r[0]
+                    #edge = r[0]
+                    self.linked_results.append(r[0])
+                    newnodes.append(r[1])
+                    '''
                     if isinstance(edge, KEdge):
                         edge.predicate = link['link']
                         edge.source_node = source_node
                         edge.target_node = r[1]
                         self.linked_results.append(edge)
                         newnodes.append(r[1])
+                    '''
                 logger.debug(f"    {newnodes}")
                 self.add_instance_nodes(newnodes,next_context)
             except Exception as e:

@@ -1,4 +1,5 @@
 import json
+#import obonet
 import pronto
 import re
 import logging
@@ -14,6 +15,7 @@ class GenericOntology(Service):
         """ Load an obo file. """
         super(GenericOntology, self).__init__("go", context)
         self.ont = pronto.Ontology (obo)
+        #self.obonet = obonet.parse_obo (obo)
     def label(self,identifier):
         """Return the label for an identifier"""
         return self.ont[identifier].name if identifier in self.ont else None

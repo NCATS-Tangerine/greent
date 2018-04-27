@@ -1,5 +1,6 @@
 import os
 from greent.util import Resource
+from greent.graph_components import LabeledID
 from collections import defaultdict
 
 #TODO: should all of this be done with some sort of canned semantic tools?
@@ -117,12 +118,13 @@ class ConceptModel:
         parents = set( [concept.is_a for name,concept in self.by_name.items()] )
         return list(filter( lambda x: x is not None and x.is_a is None, parents))
 
-    def standardize_relationship(self,xref):
+    def standardize_relationship(self,relationship):
+        xref = relationship.identifier
         r = self.relations_by_xref[xref]
         if r is None:
             raise Exception(f"No such relationship mapped: {xref}")
         else:
-            return r.identifier, r.name
+            return LabeledID(identifier =r.identifier, label = r.name)
 
 class ConceptModelLoader:
 
