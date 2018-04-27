@@ -26,9 +26,6 @@ class KnowledgeQuery:
         start_node = KNode(f"{start_type}.{start_name}", start_type)
         query = UserQuery (start_name, start_type)
         for transition in intermediate:
-            '''
-            query.add_transition(transition['type'])
-            '''
             query.add_transition(transition['type'],
                                  min_path_length=transition['min_path_length'],
                                  max_path_length=transition['max_path_length'])
@@ -49,7 +46,7 @@ class KnowledgeQuery:
         kgraph.execute()
         kgraph.print_types()
         kgraph.enhance()
-        #kgraph.support(support_module_names=['builder.omnicorp'])
+        kgraph.support(support_module_names=['builder.omnicorp'])
         return kgraph
 
     def _get_source_graph(self, kgraph):
