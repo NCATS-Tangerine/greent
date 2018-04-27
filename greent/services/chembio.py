@@ -371,7 +371,7 @@ class ChemBioKS(Service):
         #The compound mesh coming back from here is very out of date.  Ignore.
         pubchemid = Text.un_curie (pubchem_node.identifier)
         response = self.pubchem_to_ncbigene(pubchemid)
-        predicate=LabeledID('SIO:001257', 'chemical to gene association')
+        predicate=LabeledID('CTD:interacts_with', 'interacts')
         retvals = []
         for r in response:
             props = {}
@@ -380,7 +380,7 @@ class ChemBioKS(Service):
             props['publications'] = r['pubmedids'].split('|')
             node = KNode( "NCBIGene:{}".format( r['NCBIGene']), node_types.GENE)
             edge = self.create_edge(pubchem_node, node,'chembio.graph_pubchem_to_ncbigene',pubchem_node.identifier,
-                                    predicate,publications=r['pubmedids'].split('|'))
+                                    predicate,publications=[f'{PMID:x}' for x in r['pubmedids'].split('|')])
             retvals.append( (edge,node) )
         return retvals
 

@@ -432,7 +432,11 @@ def prepare_node_for_output(node, gt):
         elif node.node_type == node_types.GENE and node.identifier.upper().startswith('NCBIGENE:'):
             node.label = gt.hgnc.get_name(node)
         elif node.node_type == node_types.CELL and node.identifier.upper().startswith('CL:'):
-            node.label = gt.uberongraph.cell_get_cellname(node.identifier)[0]['cellLabel']
+            try:
+                node.label = gt.uberongraph.cell_get_cellname(node.identifier)[0]['cellLabel']
+            except:
+                logging.getLogger('application').error('Error getting cell label for {}'.format(node.identifier))
+                node.label = node.identifier
         else:
             node.label = node.identifier
     logging.getLogger('application').debug(node.label)

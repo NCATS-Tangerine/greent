@@ -1,10 +1,12 @@
 import logging
 import requests
 from greent.service import Service
-from greent.util import Text
+from greent.util import Text,LoggingUtil
 from greent.graph_components import KNode,LabeledID
 from greent import node_types
 from datetime import datetime as dt
+
+logger = LoggingUtil.init_logging (__file__)
 
 class QuickGo(Service):
 
@@ -33,10 +35,18 @@ class QuickGo(Service):
                 'results in developmental regression of':'RO:0002301',
                 'results in closure of':'RO:0002585',
                 }
-        return LabeledID(labels2identifiers[p_label],p_label)
+        try:
+            return LabeledID(labels2identifiers[p_label],p_label)
+        except:
+            logger.warn(p_label)
+            return LabeledID(f'GO:{p_label}',p_label)
 
-        print(p_label)
-        return LabeledID(f'GO:{p_label}',p_label)
+    def standardize_predicate(self, predicate):
+        """Fall back to a catch-all if we can't find a specific mapping"""
+        try:
+            super(QuickGo, self).standardize_predicate(predicate)
+        except:
+            return super(QuickGo,self).standardize_predicate(self.get_predicate('occurs_in'))
 
     #TODO: Rename to reflect that this only returns cells?  See what else we can get?
     #Applies also to the annotation_extension functions
