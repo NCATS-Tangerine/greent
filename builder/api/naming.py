@@ -92,7 +92,6 @@ if __name__ == "__main__":
    app.config['SWAGGER']['greent_conf'] = args.greent_conf = args.conf
    app.config['onto'] = {
        'config' : args.conf,
-       'data'   : args.data,
        'debug'  : args.debug
    }
    app.run(host='0.0.0.0', port=args.port, debug=True, threaded=True)

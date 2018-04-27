@@ -101,7 +101,6 @@ class KNode():
         return self.identifier.__hash__()
 
     def __eq__(x, y):
-        print (f"----------------- {x} {y}")
         if isinstance(x,int) or isinstance(y,int):
             return False
         return x.identifier == y.identifier
@@ -227,10 +226,9 @@ class KEdge():
         """ Serialize an edge as json. """
         return {
             "ctime"  : str(self.ctime),
-            "sub"    : self.source_node.identifier,
-            "prd"    : self.predicate_id,
-            "stdprd" : self.standard_predicate_id,
-            "obj"    : self.target_node.identifier,
+            "sub"    : self.subject_node.identifier,
+            "pred"   : self.standard_predicate,
+            "obj"    : self.object_node.identifier,
             "pubs"   : str(self.publications)
         }
     
