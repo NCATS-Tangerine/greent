@@ -101,6 +101,9 @@ class KNode():
         return self.identifier.__hash__()
 
     def __eq__(x, y):
+        print (f"----------------- {x} {y}")
+        if isinstance(x,int) or isinstance(y,int):
+            return False
         return x.identifier == y.identifier
 
     def to_json(self):
@@ -121,6 +124,13 @@ class KNode():
         if self.label is not None:
             return '%s (%s)' % (self.label, self.identifier)
         return self.identifier
+
+    def n2json (self):
+        """ Serialize a node as json. """
+        return {
+            "id"   : self.identifier,
+            "type" : f"blm:{self.node_type}",
+        }
 
 class LabeledID(NamedTuple):
     """A simple struct for holding identifier/label pairs"""
@@ -169,6 +179,11 @@ class KEdge():
     def __eq__(x, y):
         return x.__key() == y.__key()
 
+    def __lt__(self, other):
+        return True
+    def __gt__(self, other):
+        return False
+    
     def __hash__(self):
         return hash(self.__key())
 
@@ -207,6 +222,18 @@ class KEdge():
     #        return "E(src={0},type={1})".format (self.edge_source, self.edge_type)
     def __str__(self):
         return self.__repr__()
+
+    def e2json(self):
+        """ Serialize an edge as json. """
+        return {
+            "ctime"  : str(self.ctime),
+            "sub"    : self.source_node.identifier,
+            "prd"    : self.predicate_id,
+            "stdprd" : self.standard_predicate_id,
+            "obj"    : self.target_node.identifier,
+            "pubs"   : str(self.publications)
+        }
+    
 
 # We want to be able to serialize our knowledge graph to json.  That means being able to serialize KNode/KEdge.
 # We could sublcass JSONEncoder (and still might), but for now, this set of functions allows the default
