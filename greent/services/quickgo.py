@@ -12,10 +12,29 @@ class QuickGo(Service):
         super(QuickGo, self).__init__("quickgo", context)
 
     def get_predicate(self, p_label):
-        if p_label == 'occurs_in':
-            return LabeledID('BFO:0000066',p_label)
-        if p_label == 'results_in_movement_of':
-            return LabeledID('RO:0002565',p_label)
+        labels2identifiers={'occurs_in': 'BFO:0000066',
+                'results_in_movement_of': 'RO:0002565',
+                'results in developmental progression of':'RO:0002295',
+                'results in development of':'RO:0002296',
+                'results in formation of':,'RO:0002297',
+                'results in synthesis of':,'RO:0002587',
+                'results in assembly of':,'RO:0002588',
+                'results in morphogenesis of':'RO:0002298',
+                'results in maturation of':'RO:0002299',
+                'results in acquisition of features of':'RO:0002315',
+                'results in growth of':'RO:0002343',
+                'results in commitment to':'RO:0002348',
+                'results in determination of':'RO:0002349',
+                'results in structural organization of':'RO:0002355',
+                'results in specification of':'RO:0002356',
+                'results in developmental induction of':'RO:0002357',
+                'results in ending of':'RO:0002552',
+                'results in disappearance of':'RO:0002300',
+                'results in developmental regression of':'RO:0002301',
+                'results in closure of':'RO:0002585',
+                }
+        return LabeledID(labels2identifiers[p_label],p_label)
+
         print(p_label)
         return LabeledID(f'GO:{p_label}',p_label)
 

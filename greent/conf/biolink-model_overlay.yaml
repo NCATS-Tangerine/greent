@@ -219,4 +219,24 @@ slots:
       - RO:0002292
       - hetio:EXPRESSES_AeG
 
+  - name: results in developmental progression of
+    mappings:
+      - RO:0002295
+      - RO:0002296   # Probably should handle this some other way...
+      - RO:0002297
+      - RO:0002587
+      - RO:0002588
+      - RO:0002298
+      - RO:0002299
+      - RO:0002315
+      - RO:0002343
+      - RO:0002348
+      - RO:0002349
+      - RO:0002355
+      - RO:0002356
+      - RO:0002357
+      - RO:0002552
+      - RO:0002300
+      - RO:0002301
+      - RO:0002585
 
