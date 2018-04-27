@@ -371,7 +371,7 @@ class ChemBioKS(Service):
         #The compound mesh coming back from here is very out of date.  Ignore.
         pubchemid = Text.un_curie (pubchem_node.identifier)
         response = self.pubchem_to_ncbigene(pubchemid)
-        predicate=LabeledID('SIO:001257', 'chemical to gene association')
+        predicate=LabeledID('chembio:interacts', 'interacts')
         retvals = []
         for r in response:
             props = {}

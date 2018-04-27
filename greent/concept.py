@@ -146,6 +146,10 @@ class ConceptModelLoader:
             concept = self.parse_item (obj)
             self.model.add_item (concept)
 
+        #THIS is a hack
+        self.model.get('gene').id_prefixes = ['HGNC','NCBIGENE','ENSEMBL','MGI','ZFIN']
+
+
         for obj in model_obj['slots']:
             relationship = self.parse_slot(obj)
             self.model.add_relationship(relationship)

@@ -52,10 +52,6 @@ class Synonymizer:
         """Given a node, which will have many potential identifiers, choose the best identifier to be the node ID,
         where 'best' is defined by the order in which identifiers appear in the id prefix configurations within the concept model."""
         type_curies = self.concepts.get(node.node_type).id_prefixes
-#        original_curie = Text.get_curie(node.identifier)
-#        if original_curie == type_curies[0]:
-#            #The identifier is already the best curie, so stop doing anything
-#            return
         #Now start looking for the best curies
         synonyms_by_curie = defaultdict(list)
         for s in node.synonyms:

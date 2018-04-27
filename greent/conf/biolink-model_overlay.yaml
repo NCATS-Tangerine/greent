@@ -21,7 +21,9 @@ classes:
       - PHAROS.DISEASE
 
 #The following modifications are to connect biolink concepts to identifier prefixes. 
-#There may be a better place to do this.
+#There needs to be a better place to do this.  The problem is that for e.g. gene,
+# these get put into the main file, in a different order.  When we merge, things get messed
+# up.
   - name: disease
     id_prefixes: #Adding identifiers for ROBOKOP
         - MONDO
@@ -135,8 +137,10 @@ slots:
       - hetio:DOWNREGULATES_AdG
       - hetio:DOWNREGULATES_DdG
 
-  - name: chemical to gene association
+  - name: directly interacts with
     mappings:
+      - SIO:000203 # Connected to (is that really a good mapping?)
+      - chembio:interacts
       - CTD:interacts_with
       - CTD:affects^activity
       - CTD:affects^binding
