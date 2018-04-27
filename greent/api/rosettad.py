@@ -57,7 +57,7 @@ def render_graph (blackboard):
       nodes[id(e.subject_node)] = e.subject_node
       nodes[id(e.target_node)] = e.target_node
    return {
-      "edges" : [ e[2]['object'].e2json() for e in blackboard ],
+      "edges" : [ e.e2json() for e in blackboard ],
       "nodes" : [ n.n2json() for n in nodes.values () ]
    }
 
