@@ -37,7 +37,7 @@ class KnowledgeQuery:
             #query.add_end_lookup_node(end_name_node)
         return query
 
-    def query (self, query, query_id, rosetta):
+    def query (self, query, query_id, support, rosetta):
         # build knowledge graph
         kgraph = KnowledgeGraph(query, rosetta)
         
@@ -46,7 +46,8 @@ class KnowledgeQuery:
         kgraph.execute()
         kgraph.print_types()
         kgraph.enhance()
-        kgraph.support(support_module_names=['builder.omnicorp'])
+        if support:
+            kgraph.support(support_module_names=['builder.omnicorp'])
         return kgraph
 
     def _get_source_graph(self, kgraph):

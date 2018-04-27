@@ -1,11 +1,10 @@
 import argparse
 import json
-import ndex2
-import networkx as nx
 import os
 import requests
 import shutil
 import yaml
+from builder.gamma import Gamma
 from builder.builder import KnowledgeGraph
 from builder.knowledgeQuery import KnowledgeQuery
 from flasgger import Swagger
@@ -14,9 +13,6 @@ from greent import node_types
 from greent.graph_components import KNode,KEdge
 from greent.rosetta import Rosetta
 from builder.userquery import UserQuery
-from ndex2 import create_nice_cx_from_networkx
-from ndex2.client import Ndex2
-
 try:
    from smartBag.grok import SemanticCrunch
 except:
@@ -52,47 +48,6 @@ app.config['SWAGGER'] = {
 
 swagger = Swagger(app, template=template)
 
-class NDExSession:
-   """ An interface to the NDEx network catalog. """ 
-   def __init__(self, account, password, uri="http://public.ndexbio.org"):
-      self.session = None
-      try:
-         self.session = ndex2.client.Ndex2 (uri, account, password)
-         self.session.update_status()
-         networks = self.session.status.get("networkCount")
-         users = self.session.status.get("userCount")
-         groups = self.session.status.get("groupCount")
-         print(f"session: networks: {networks} users: {users} groups: {groups}")
-      except Exception as inst:
-         print(f"Could not access account {account}")
-         raise inst
-      
-   def save_nx_graph (self, graph):
-      """ Save a networkx graph to NDEx. """
-      nice_cx = create_nice_cx_from_networkx (graph)
-      print (f" connected: {nx.is_connected(graph.to_undirected())} edges: {len(graph.edges())} nodes: {len(graph.nodes())}")
-      print (nice_cx)
-      self.session.save_new_network (nice_cx)
-
-def node2json (node):
-   """ Serialize a node as json. """
-   return {
-      "id" : node.identifier,
-      "type"       : f"blm:{node.node_type}",
-   } if node else None
-
-def edge2json(e):
-   """ Serialize an edge as json. """
-   edge = e[2]['object']
-   return {
-      "ctime"  : edge.ctime,
-      "sub"    : edge.source_node.identifier,
-      "prd"    : edge.predicate_id,
-      "stdprd" : edge.standard_predicate_id,
-      "obj"    : edge.target_node.identifier,
-      "pubs"   : edge.publications
-   }
-
 def render_graph (blackboard):
    """ Turn a blackboard into json. Work towards a unique key for node. """
    nodes = {}
@@ -102,8 +57,8 @@ def render_graph (blackboard):
       nodes[id(e.source_node)] = e.source_node
       nodes[id(e.target_node)] = e.target_node
    return {
-      "edges" : [ edge2json(e) for e in blackboard ],
-      "nodes" : [ node2json(n) for n in nodes.values () ]
+      "edges" : [ e[2]['object'].e2json() for e in blackboard ],
+      "nodes" : [ n.n2json() for n in nodes.values () ]
    }
 
 def validate_cypher(query):
@@ -113,61 +68,26 @@ def validate_cypher(query):
    if 'delete' in query_lower or 'detach' in query_lower or 'create' in query_lower:
       raise ValueError ("not")
 
-class Gamma:
-   """ A high level interface to the system including knowledge map, cache, reasoner, and NDEx. """
-   def __init__(self):
-      config = app.config['SWAGGER']['greent_conf']
-      debug = app.config['SWAGGER']['debug']
-      self.rosetta = Rosetta (debug=debug, greentConf=config)
-      self.knowledge = KnowledgeQuery ()
-      self.ndex = None
-      ndex_creds = "~/.ndex"
-      if os.path.exists (ndex_creds):
-         with open(ndex_creds, "r") as stream:
-            ndex_creds = json.loads (stream.read ())
-            self.ndex = NDExSession (ndex_creds['username'],
-                                     ndex_creds['password'])
-            
-   def get_disease_ids(self,disease, filters=[]):
-      """ Resolve names to identifiers. """
-      obj = requests.get (f"https://bionames.renci.org/lookup/{disease}/disease/").json ()
-      results = []
-      for n in obj:
-         an_id = n['id']
-         if len(filters) > 0:
-            for f in filters:
-               if an_id.startswith(f"{f}:"):
-                  results.append (an_id)
-         else:
-            results.append (an_id)
-      return results
-      
-   def create_key (self, kind, path):
-      """ create consistent cache keys, cleaning special characters. """
-      joined_path = "/".join (path)
-      return f"{kind}-{joined_path}".\
-         replace (" ","_").\
-         replace(",","_").\
-         replace("'","").\
-         replace('"',"")
-
 gamma = None
 def get_gamma ():
    global gamma
    if not gamma:
-      gamma = Gamma ()
+      config = app.config['SWAGGER']['greent_conf']
+      debug = app.config['SWAGGER']['debug']
+      gamma = Gamma (config=config, debug=debug)
    return gamma
 
-@app.route('/cop/<drug>/<disease>/', methods=['GET'])
-def cop (drug="imatinib", disease="asthma"):
+@app.route('/cop/<drug>/<disease>/<cache>/<support>/', methods=['GET'])
+def cop (drug="imatinib", disease="asthma", cache=True, support=True):
    """ Get service metadata 
    ---
    parameters:
      - name: drug
        in: path
        type: string
-       required: false
+       required: true
        default: imatinib
+       description: The name of a drug or chemical substance.
        x-valueType:
          - http://schema.org/string
        x-requestTemplate:
@@ -176,24 +96,47 @@ def cop (drug="imatinib", disease="asthma"):
      - name: disease
        in: path
        type: string
-       required: false
+       required: true
        default: asthma
+       description: The name of a disease or condition.
        x-valueType:
          - http://schema.org/string
        x-requestTemplate:
          - valueType: http://schema.org/string
            template: /query?disease={{ input }}
+     - name: cache
+       in: path
+       type: boolean
+       required: true
+       default: true
+       description: Whether or not to use a cached version of the OP if one is available. Independent of this setting, cached components will be used to assemble the OP. This setting controls whethere a cached instance of the entire OP is acceptable.
+       x-valueType:
+          - http://schema.org/boolean
+       x-requestTemplate:
+          - valueType: http://schema.org/boolean
+          - template: /cop/...
+     - name: support
+       in: path
+       type: boolean
+       required: true
+       default: true
+       description: Whether or not to include support edges. Generally desirable but some use cases will prefer a faster result with less detail.
+       x-valueType:
+          - http://schema.org/boolean
+       x-requestTemplate:
+          - valueType: http://schema.org/boolean
+          - template: /cop/...
    responses:
      200:
        description: ...
    """
    gamma = get_gamma ()
+   cache = cache == "true"
+   support = support == "true"
    key = gamma.create_key ('cop', [drug, disease])
-   graph = gamma.rosetta.service_context.cache.get (key)
-   #graph = None
-   if not graph:
+   graph = gamma.rosetta.service_context.cache.get (key) if cache else None
+   if graph is None:
       disease_ids = gamma.get_disease_ids (disease, filters=['MONDO'])
-      print (f"DID: {disease_ids}")
       query = gamma.knowledge.create_query(
          start_name   = drug,
          start_type   = node_types.DRUG,
@@ -208,14 +151,18 @@ def cop (drug="imatinib", disease="asthma"):
             { "type" : node_types.PHENOTYPE, "min_path_length" : 1, "max_path_length" : 1 }
          ],
          end_values   = disease_ids)
-      graph = gamma.knowledge.query (query, key, gamma.rosetta)
+
+      graph = gamma.knowledge.query (query, key, support, gamma.rosetta)
+
+      """ Save the graph to NDEx if it is configured. """
+      gamma.publish (key, graph.graph)
+
       graph = {
-         "nodes" : [ node2json(n) for n in graph.graph.nodes () ],
-         "edges" : [ edge2json(e) for e in graph.graph.edges (data=True) ]
+         "nodes" : [ n.n2json() for n in graph.graph.nodes () ],
+         "edges" : [ e[2]['object'].e2json() for e in graph.graph.edges (data=True) ]
       }
       gamma.rosetta.service_context.cache.set (key, graph)
-      if gamma.ndex:
-         gamma.ndex.save_nx_graph (graph.graph)
+
    return jsonify (graph)
 
 @app.route('/query/<inputs>/<query>/', methods=['GET'])
@@ -334,7 +281,7 @@ if __name__ == "__main__":
    parser.add_argument('-d', '--debug', help="Debug", action="store_true", default=False)
    parser.add_argument('-c', '--conf', help='GreenT config file to use.', default="greent-api.conf")
    args = parser.parse_args ()
-   print (f"--------------------> {args.conf}")
+   
    app.config['SWAGGER']['bag_source'] = args.bag_source
    app.config['SWAGGER']['greent_conf'] = args.conf
    app.config['SWAGGER']['debug'] = args.debug
