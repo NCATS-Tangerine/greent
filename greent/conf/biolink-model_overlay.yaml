@@ -110,7 +110,6 @@ classes:
 
 slots:
 
-
   - name: id
     mappings:
       - rdfs:ID
@@ -139,7 +138,7 @@ slots:
 
   - name: directly interacts with
     mappings:
-      - SIO:000203 # Connected to (is that really a good mapping?)
+      - SIO:000203                # Connected to (is that really a good mapping?)
       - chembio:interacts
       - CTD:interacts_with
       - CTD:affects^activity
@@ -173,16 +172,8 @@ slots:
       - CTD:increases^RNA splicing
       - CTD:increases^stability
       - CTD:increases^secretion
-
-  - name: has phenotype
-    mappings:
-      - hetio:PRESENTS_DpS
-      - UPHENO:0000001
-
-  - name: directly interacts with
-    mappings:
       - PHAROS:drug_targets
-      - CTD:affects^response to substance   # I think that these CTD are in the wrong place. Need Matt's view here.
+      - CTD:affects^response to substance   # I think that these CTD are in the wrong place. Need Matt's view here. These all go gene->drug
       - CTD:decreases^response to substance
       - CTD:increases^response to substance
       - CTD:affects^abundance
@@ -192,6 +183,10 @@ slots:
       - CTD:decreases^transport
       - CTD:increases^transport
 
+  - name: has phenotype
+    mappings:
+      - hetio:PRESENTS_DpS
+      - UPHENO:0000001
 
   #the following are not in the original biolink model
   

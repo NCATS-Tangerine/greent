@@ -38,7 +38,7 @@ class QuickGo(Service):
         try:
             return LabeledID(labels2identifiers[p_label],p_label)
         except:
-            logger(p_label)
+            logger.warn(p_label)
             return LabeledID(f'GO:{p_label}',p_label)
 
     def standardize_predicate(self, predicate):
