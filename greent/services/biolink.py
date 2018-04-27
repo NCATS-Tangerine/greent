@@ -19,6 +19,7 @@ class Biolink(Service):
         super(Biolink, self).__init__("biolink", context)
         self.checker = context.core.mondo
         self.go = context.core.go
+        self.label2id = {'colocalizes_with': 'RO:0002325', 'contributes_to': 'RO:0002326'}
 
         
     def process_associations(self, r, function, target_node_type, input_identifier, url, input_node, reverse=False):
@@ -52,7 +53,11 @@ class Biolink(Service):
             if (predicate_id is None):
                 predicate_id = f'biolink:{function}'
             elif (':' not in predicate_id):
-                predicate_id = f'biolink:{predicate_id}'
+                if predicate_id in self.label2id:
+                    predicate_id = self.label2id[predicate_id]
+                else:
+                    logging.getLogger('application').error(f'Relationship Missing: {predicate_id}')
+                    predicate_id = f'biolink:{function}'
             predicate_label= association['relation']['label']
             if predicate_label is None:
                 predicate_label = f'biolink:{function}'

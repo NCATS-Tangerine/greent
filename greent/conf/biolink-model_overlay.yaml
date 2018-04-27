@@ -218,6 +218,10 @@ slots:
       - RO:0002292
       - hetio:EXPRESSES_AeG
 
+  - name: coexists with
+    mappings:
+      - RO:0002325  # colocalizes_with
+
   - name: results in developmental progression of
     mappings:
       - RO:0002295
