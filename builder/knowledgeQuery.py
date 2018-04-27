@@ -2,7 +2,7 @@ from greent.graph_components import KNode
 from greent.rosetta import Rosetta
 from greent import node_types
 from builder.userquery import UserQuery
-from builder.builder import KnowledgeGraph
+from builder.buildmain import KnowledgeGraph
 from builder.lookup_utils import lookup_disease_by_name, lookup_drug_by_name, lookup_phenotype_by_name
         
 class KnowledgeQuery:

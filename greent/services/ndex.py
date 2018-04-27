@@ -32,8 +32,8 @@ class NDEx:
          g.add_node(n.identifier, attr_dict=n.n2json())
       for e in graph.edges (data=True):
          edge = e[2]['object'] 
-         g.add_edge (edge.source_node.identifier,
-                     edge.target_node.identifier,
+         g.add_edge (edge.subject_node.identifier,
+                     edge.object_node.identifier,
                      attr_dict=e[2]['object'].e2json())
 
       """ Convert to CX network. """

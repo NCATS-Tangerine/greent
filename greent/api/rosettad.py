@@ -5,14 +5,14 @@ import requests
 import shutil
 import yaml
 from builder.gamma import Gamma
-from builder.builder import KnowledgeGraph
+#from builder.builder import KnowledgeGraph
 from builder.knowledgeQuery import KnowledgeQuery
 from flasgger import Swagger
 from flask import Flask, jsonify, g, Response
 from greent import node_types
 from greent.graph_components import KNode,KEdge
 from greent.rosetta import Rosetta
-from builder.userquery import UserQuery
+#from builder.userquery import UserQuery
 try:
    from smartBag.grok import SemanticCrunch
 except:
@@ -54,7 +54,7 @@ def render_graph (blackboard):
    for e in blackboard:
       if not e:
          continue
-      nodes[id(e.source_node)] = e.source_node
+      nodes[id(e.subject_node)] = e.subject_node
       nodes[id(e.target_node)] = e.target_node
    return {
       "edges" : [ e[2]['object'].e2json() for e in blackboard ],
