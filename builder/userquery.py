@@ -101,7 +101,7 @@ class UserQuery:
         # TODO: subclass Exception
         if min_path_length > max_path_length:
             raise Exception('Maximum path length cannot be shorter than minimum path length')
-        if self.definition.end_values is not None:
+        if self.definition.end_values:
             raise Exception('Cannot add more transitions to a path with a terminal node')
         # Add the node to the type list
         self.add_node(next_type)
@@ -109,7 +109,7 @@ class UserQuery:
         t = Transition(self.definition.node_types[-2], next_type, min_path_length, max_path_length)
         self.definition.transitions.append(t)
         # Add the end_value
-        if end_values is not None:
+        if end_values:
             self.definition.end_values = end_values
 
     def generate_cypher(self):
