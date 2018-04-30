@@ -24,7 +24,7 @@ def export_edge(edge,session):
     session.run("MATCH (a {id: {aid}})-[r {source:{source}}]-(b {id:{bid}}) DELETE r",
                 {'aid': aid, 'bid': bid, 'source': ke.edge_source} )
     #Now write the new edge....
-    label=ke.standard_predicate_id
+    label=ke.standard_predicate.identifier
     if label is None:
         print(ke)
         exit()
@@ -35,8 +35,8 @@ def export_edge(edge,session):
            original_predicate_label:{original_predicate_label}, publications:{publications}, url: {url},
            input_identifiers: {input}}]->(b) return r''' % ('_'.join(label.split(':')),),
         {'aid': aid, 'bid': bid, 'source': ke.edge_source, 'ctime': calendar.timegm(ke.ctime.timetuple()),
-         'standard_label': ke.standard_predicate_label,
-         'original_predicate_id': ke.predicate_id, 'original_predicate_label': ke.predicate_label,
+         'standard_label': ke.standard_predicate.label,
+         'original_predicate_id': ke.original_predicate.identifier, 'original_predicate_label': ke.original_predicate.label,
          'publications': ke.publications, 'url' : ke.url, 'input': ke.input_id}
     )
     #if ke.is_support:
