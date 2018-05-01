@@ -38,7 +38,7 @@ class UpdateKG(Resource):
                             type: string
                             description: URL to poll for KG update status
         """
-        # replace parameters with this when OAS 3.0 is fully supported by Swagger UI
+        # replace `parameters`` with this when OAS 3.0 is fully supported by Swagger UI
         # https://github.com/swagger-api/swagger-ui/issues/3641
         """
         requestBody:
