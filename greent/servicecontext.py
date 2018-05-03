@@ -17,10 +17,11 @@ class ServiceContext:
         self.core = GreenT (self)
         
         # Initiaize the cache.
-        redis_conf = self.config.conf.get ("redis", None)
+        redis_conf = self.config["redis"]
         self.cache = Cache (
             redis_host = redis_conf.get ("host"),
-            redis_port = redis_conf.get ("port"))
+            redis_port = redis_conf.get ("port"),
+            redis_db = redis_conf.get ("db"))
         
     @staticmethod
     def create_context (config=None):

@@ -32,19 +32,19 @@ class Cache:
     """ Cache objects by configurable means. """
     def __init__(self, cache_path="cache",
                  serializer=PickleCacheSerializer,
-                 redis_host="localhost", redis_port=6379,
+                 redis_host="localhost", redis_port=6379, redis_db=0,
                  enabled=True):
         
         """ Connect to cache. """
         self.enabled = enabled
         try:
-            self.redis = redis.StrictRedis(host=redis_host, port=redis_port, db=0)
+            self.redis = redis.StrictRedis(host=redis_host, port=redis_port, db=redis_db)
             self.redis.get ('x')
-            logger.info(f"Cache connected to redis at {redis_host}:{redis_port}")
+            logger.info(f"Cache connected to redis at {redis_host}:{redis_port}/{redis_db}")
         except:
             self.redis = None
             #logger.debug (traceback.format_exc ())
-            logger.error(f"Failed to connect to redis at {redis_host}:{redis_port}.")
+            logger.error(f"Failed to connect to redis at {redis_host}:{redis_port}/{redis_db}.")
         self.cache_path = cache_path
         if not os.path.exists (self.cache_path):
             os.makedirs (self.cache_path)

@@ -4,11 +4,13 @@ Tasks for Celery workers
 
 import os
 import sys
+import logging
+
 from celery import Celery
 from celery.utils.log import get_task_logger
 from kombu import Queue
 
-from setup import app
+from builder.api.setup import app
 from builder.question import Question
 
 greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
@@ -18,6 +20,7 @@ from greent import node_types
 from builder.buildmain import run_query, generate_query
 from builder.pathlex import tokenize_path
 from builder.buildmain import setup
+import builder.api.logging_config
 
 rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
 
@@ -35,10 +38,11 @@ def update_kg(self, question_json):
     '''
     Update the shared knowledge graph with respect to a question
     '''
-    logger = get_task_logger(__name__)
+    # logger = get_task_logger(__name__)
 
     self.update_state(state='UPDATING KG')
-    logger.info("Updating the knowledge graph...")
+    logger = logging.getLogger(__name__)
+    logger.info(f"{__name__}: Updating the knowledge graph...")
 
     try:
         question = Question(question_json)
@@ -56,5 +60,5 @@ def update_kg(self, question_json):
         return "You updated the KG!"
 
     except Exception as err:
-        logger.exception("Something went wrong with updating KG.")
+        logger.exception(f"Something went wrong with updating KG: {err}")
         raise err

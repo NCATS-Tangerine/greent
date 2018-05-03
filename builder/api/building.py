@@ -5,14 +5,137 @@
 import os
 import json
 import requests
+import logging
 
 from flask import request
 from flask_restful import Resource, reqparse
 from flasgger import Swagger
 
 from setup import app, api, swagger
-import builder.question
+# from builder.question import Question
 from builder.api.tasks import update_kg
+import builder.api.logging_config
+
+from builder.util import FromDictMixin
+@swagger.definition('Node')
+class Node(FromDictMixin):
+    """
+    Node Object
+    ---
+    schema:
+        id: Node
+        required:
+            - id
+        properties:
+            id:
+                type: string
+                required: true
+            type:
+                type: string
+            identifiers:
+                type: array
+                items:
+                    type: string
+                default: []
+    """
+    def __init__(self, *args, **kwargs):
+        self.id = None
+        self.type = None
+        self.identifiers = []
+
+        super().__init__(*args, **kwargs)
+
+    def dump(self):
+        return {**vars(self)}
+
+@swagger.definition('Edge')
+class Edge(FromDictMixin):
+    """
+    Edge Object
+    ---
+    schema:
+        id: Edge
+        required:
+            - start
+            - end
+        properties:
+            start:
+                type: string
+            end:
+                type: string
+            min_length:
+                type: integer
+                default: 1
+            max_length:
+                type: integer
+                default: 1
+    """
+    def __init__(self, *args, **kwargs):
+        self.start = None
+        self.end = None
+        self.min_length = 1
+        self.max_length = 1
+
+        super().__init__(*args, **kwargs)
+
+    def dump(self):
+        return {**vars(self)}
+
+@swagger.definition('Question')
+class Question(FromDictMixin):
+    """
+    Question Object
+    ---
+    schema:
+        id: Question
+        required:
+          - nodes
+          - edges
+        properties:
+            nodes:
+                type: array
+                items:
+                    $ref: '#/definitions/Node'
+            edges:
+                type: array
+                items:
+                    $ref: '#/definitions/Edge'
+        example:
+            nodes:
+              - id: 0
+                type: disease
+                identifiers: ["MONDO:0008753"]
+              - id: 1
+                type: gene
+              - id: 2
+                type: genetic_condition
+            edges:
+              - start: 0
+                end: 1
+              - start: 1
+                end: 2
+    """
+
+    def __init__(self, *args, **kwargs):
+        '''
+        keyword arguments: id, user, notes, natural_question, nodes, edges
+        q = Question(kw0=value, ...)
+        q = Question(struct, ...)
+        '''
+        # initialize all properties
+        self.nodes = [] # list of nodes
+        self.edges = [] # list of edges
+
+        super().__init__(*args, **kwargs)
+
+    def preprocess(self, key, value):
+        if key == 'nodes':
+            return [Node(n) for n in value]
+        elif key == 'edges':
+            return [Edge(e) for e in value]
+
+    def dump(self):
+        return {**vars(self)}
 
 class UpdateKG(Resource):
     def post(self):
@@ -49,8 +172,10 @@ class UpdateKG(Resource):
                     schema:
                         $ref: '#/definitions/Question'
         """
+        logger = logging.getLogger('builder')
+        logger.info("updating kg...")
         task = update_kg.apply(args=[request.json])
-        polling_url = f'http://{os.environ["FLOWER_ADDRESS"]}:{os.environ["FLOWER_PORT"]}/api/task/result/{task.id}'
+        polling_url = f'http://{os.environ["FLOWER_ADDRESS"]}:{os.environ["BUILDER_FLOWER_PORT"]}/api/task/result/{task.id}'
         return {'poll': polling_url}, 202
 
 api.add_resource(UpdateKG, '/')
@@ -58,7 +183,7 @@ api.add_resource(UpdateKG, '/')
 class TaskStatus(Resource):
     def get(self, task_id):
         """
-        Update the cached knowledge graph 
+        Get the status of a task
         ---
         parameters:
           - in: path
@@ -89,7 +214,7 @@ class TaskStatus(Resource):
                             type: string
                             description: Traceback, in case of task failure
         """
-        polling_url = f'http://{os.environ["FLOWER_ADDRESS"]}:{os.environ["FLOWER_PORT"]}/api/task/result/{task_id}'
+        polling_url = f'http://{os.environ["FLOWER_ADDRESS"]}:{os.environ["BUILDER_FLOWER_PORT"]}/api/task/result/{task_id}'
         response = requests.get(polling_url, auth=(os.environ['FLOWER_USER'], os.environ['FLOWER_PASSWORD']))
         return response.json(), 200
 
@@ -99,7 +224,7 @@ if __name__ == '__main__':
 
     # Get host and port from environmental variables
     server_host = os.environ['ROBOKOP_HOST']
-    server_port = 6011
+    server_port = int(os.environ['ROBOKOP_BUILDER_PORT'])
 
     app.run(host=server_host,\
         port=server_port,\
