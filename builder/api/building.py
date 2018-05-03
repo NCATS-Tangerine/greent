@@ -174,7 +174,7 @@ class UpdateKG(Resource):
         """
         logger = logging.getLogger('builder')
         logger.info("updating kg...")
-        task = update_kg.apply(args=[request.json])
+        task = update_kg.apply_async(args=[request.json])
         polling_url = f'http://{os.environ["FLOWER_ADDRESS"]}:{os.environ["BUILDER_FLOWER_PORT"]}/api/task/result/{task.id}'
         return {'poll': polling_url}, 202
 
