@@ -9,7 +9,7 @@ import json
 import hashlib
 import warnings
 
-from setup import swagger
+from builder.api.setup import swagger
 from builder.util import FromDictMixin
 
 @swagger.definition('Node')
@@ -95,21 +95,6 @@ class Question(FromDictMixin):
                 type: array
                 items:
                     $ref: '#/definitions/Edge'
-        example:
-            nodes:
-              - id: 0
-                type: disease
-                identifiers: ["MONDO:0008753"]
-              - id: 1
-                type: gene
-              - id: 2
-                type: genetic_condition
-            edges:
-              - start: 0
-                end: 1
-              - start: 1
-                end: 2
-
     """
 
     def __init__(self, *args, **kwargs):
