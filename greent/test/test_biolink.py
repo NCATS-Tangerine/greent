@@ -39,6 +39,16 @@ def test_gene_to_process(biolink):
         assert kn.node_type == node_types.PROCESS
         assert Text.get_curie(kn.identifier) == "GO"
 
+def test_gene_to_process2(biolink):
+    KIT_protein = KNode('UniProtKB:Q14994', node_types.GENE)
+    results = biolink.gene_get_process(KIT_protein)
+    for ke, kn in results:
+        assert kn.node_type == node_types.PROCESS
+        assert Text.get_curie(kn.identifier) == "GO"
+        print( kn.identifier )
+    assert 0==1
+
+
 def test_disease_to_phenotypes(biolink):
     asthma = KNode('DOID:2841', node_types.DISEASE)
     results = biolink.disease_get_phenotype(asthma)

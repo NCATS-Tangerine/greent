@@ -58,6 +58,11 @@ class Text:
     def obo_to_curie (text):
         return ':'.join( text.split('/')[-1].split('_') )
 
+    @staticmethod
+    def snakify(text):
+        return '_'.join( text.split() )
+
+
 class Resource:
     @staticmethod
     def get_resource_path(resource_name):

@@ -98,6 +98,8 @@ class Biolink(Service):
         return response,url,uniprot_id
         #return self.process_associations(response, 'gene_get_go', node_types.PROCESS, url)
 
+    #Now I just have the higher-level version, and I can always get to these versions using caster
+    '''
     def gene_get_function(self, gene):
         response,url,input_id = self.gene_get_go(gene)
         edges_nodes = self.process_associations(response, 'gene_get_function', node_types.FUNCTION, input_id, url,gene)
@@ -109,6 +111,14 @@ class Biolink(Service):
         edges_nodes = self.process_associations(response, 'gene_get_process', node_types.PROCESS, input_id, url,gene)
         process_results = list(filter(lambda x: self.go.is_biological_process(x[1].identifier), edges_nodes))
         return process_results
+    '''
+
+    def gene_get_process_or_function(self,gene):
+        response,url,input_id = self.gene_get_go(gene)
+        edges_nodes = self.process_associations(response, 'gene_get_process_or_function', node_types.PROCESS_OR_FUNCTION, input_id, url,gene)
+        process_or_function_results = list(filter(lambda x: self.go.is_biological_process(x[1].identifier) or
+                                                  self.go.is_molecular_function(x[1].identifier), edges_nodes))
+        return process_or_function_results
 
     def gene_get_pathways(self, gene):
         url = "{0}/bioentity/gene/{1}/pathways/".format(self.url, gene.identifier)

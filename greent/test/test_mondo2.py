@@ -24,3 +24,7 @@ def test_xrefs(mondo2):
     print (xref_ids)
     for i in [ "DOID:4325", "EFO:0007243", "ICD10:A98.4", "MedDRA:10014071", "MESH:D019142", "NCIT:C36171", "Orphanet:319218", "SCTID:37109004", "UMLS:C0282687" ]:
         assert i in xref_ids
+
+def test_get_mondoId(mondo2):
+    mondoids = mondo2.get_mondo_id('DOID:9008')
+    assert mondoids[0]== 'MONDO:0011849'

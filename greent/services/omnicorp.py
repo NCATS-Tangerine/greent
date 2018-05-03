@@ -10,6 +10,7 @@ from greent.graph_components import KEdge, KNode
 from greent import node_types
 from pprint import pprint
 import datetime
+from collections import defaultdict
 
 logger = LoggingUtil.init_logging (__file__)
 
@@ -48,6 +49,26 @@ class OmniCorp(Service):
         """ Execute and return the result of a SPARQL query. """
         return self.triplestore.execute_query (query)
 
+    def sparql_get_all_shared_pmids (self, identifier_list):
+        text = """
+        PREFIX dct: <http://purl.org/dc/terms/>
+        SELECT DISTINCT ?pubmed ?term1 ?term2
+        WHERE {
+          VALUES ?term1 $id_list_a
+          VALUES ?term2 $id_list_b
+          ?pubmed dct:references ?term1 .
+          ?pubmed dct:references ?term2 .
+          FILTER(STR(?term1) < STR(?term2))
+        }
+        """
+        results = self.triplestore.query_template(
+                inputs = { 'id_list_a': identifier_list, 'id_list_b': identifier_list },
+            outputs = [ 'term1','term2','pubmed' ],
+            template_text = text,
+            post = True
+        )
+        return results
+
     def sparql_get_shared_pmids (self, identifier_a, identifier_b):
         text = """
         PREFIX dct: <http://purl.org/dc/terms/>
@@ -59,11 +80,29 @@ class OmniCorp(Service):
         """
         logger.debug(text)
         results = self.triplestore.query_template( 
-            inputs = { 'id_a': identifier_a, 'id_b': identifier_b }, \
-            outputs = [ 'pubmed' ], \
-            template_text = text \
+            inputs = { 'id_a': identifier_a, 'id_b': identifier_b },
+            outputs = [ 'pubmed' ],
+            template_text = text,
+            post = True
         )
         return results
+
+    def get_all_shared_pmids (self, nodes):
+        oiddict = {self.get_omni_identifier(n):n for n in nodes}
+        oids = [f'<{x}>' for x in filter(lambda n: n is not None, oiddict.keys())]
+        oidsstring = '{ ' + ' '.join(oids) + '}'
+        results = self.sparql_get_all_shared_pmids(oidsstring)
+        pubmeds = defaultdict( list )
+        for r in results:
+            k = (oiddict[r['term1']],oiddict[r['term2']])
+            pubmeds[k].append(f"PMID:{r['pubmed'].split('/')[-1]}")
+        for i,node_i in enumerate(nodes):
+            for node_j in nodes[:i]:
+                k_ij = (node_i, node_j)
+                k_ji = (node_j, node_i)
+                if k_ij not in pubmeds and k_ji not in pubmeds:
+                    pubmeds[k_ij] = []
+        return pubmeds
 
     def get_shared_pmids (self, node1, node2):
         id1 = self.get_omni_identifier(node1)

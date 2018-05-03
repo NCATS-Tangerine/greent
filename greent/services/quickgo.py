@@ -44,7 +44,7 @@ class QuickGo(Service):
     def standardize_predicate(self, predicate):
         """Fall back to a catch-all if we can't find a specific mapping"""
         try:
-            super(QuickGo, self).standardize_predicate(predicate)
+            return super(QuickGo, self).standardize_predicate(predicate)
         except:
             return super(QuickGo,self).standardize_predicate(self.get_predicate('occurs_in'))
 

@@ -20,6 +20,18 @@ classes:
       - MESH
       - PHAROS.DISEASE
 
+  - name: biological process or molecular activity
+    is_a: biological entity
+    union_of:
+      - biological process
+      - molecular entity
+
+  - name: biological process
+    is_a: biological process or molecular activity
+
+  - name: molecular activity
+    is_a: biological process or molecular activity
+
 #The following modifications are to connect biolink concepts to identifier prefixes. 
 #There needs to be a better place to do this.  The problem is that for e.g. gene,
 # these get put into the main file, in a different order.  When we merge, things get messed
@@ -118,13 +130,15 @@ slots:
     mappings:
       - RO:0002326   # contributes_to
       - GENO:0000840 # pathogenic_for_condition
+      - GENO:0000841 # likely_pathogenic_for_condition
       - RO:0002607   # is_marker_for
 
   - name: participates in
     mappings:
-      - biolink:gene_get_process # biolink returns no relation_id or an identifier that is not a curie
-      - RO:0002331               # involved_in
-
+      - biolink:gene_get_process             # biolink returns no relation_id or an identifier that is not a curie
+      - biolink:gene_get_function            # biolink returns no relation_id or an identifier that is not a curie
+      - biolink:gene_get_process_or_function # biolink returns no relation_id or an identifier that is not a curie
+      - RO:0002331                           # involved_in
 
   - name: positively regulates, entity to entity
     mappings:
@@ -188,6 +202,10 @@ slots:
       - hetio:PRESENTS_DpS
       - UPHENO:0000001
 
+  - name: coexists with
+    mappings:
+      - RO:0002325  # colocalizes_with
+
   #the following are not in the original biolink model
   
   - name: disease to gene association
@@ -218,10 +236,6 @@ slots:
       - RO:0002292
       - hetio:EXPRESSES_AeG
 
-  - name: coexists with
-    mappings:
-      - RO:0002325  # colocalizes_with
-
   - name: results in developmental progression of
     mappings:
       - RO:0002295
@@ -242,4 +256,3 @@ slots:
       - RO:0002300
       - RO:0002301
       - RO:0002585
-

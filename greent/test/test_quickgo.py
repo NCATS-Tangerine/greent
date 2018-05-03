@@ -19,8 +19,24 @@ def test_xontology_relationships(quickgo):
     #Mast Cells
     assert r[0][1].identifier == 'CL:0000097'
 
+def test_xontology_relationships2(quickgo):
+    r = quickgo.go_term_xontology_relationships (KNode("GO:0007165", node_types.PROCESS))
+    assert len(r) == 1
+    assert r[0][1].node_type == node_types.CELL
+    #Macrophage
+    assert r[0][1].identifier == 'CL:0000097'
 
 def test_extensions(quickgo):
+    #Neurotransmitter secretion
+    r = quickgo.go_term_annotation_extensions (KNode("GO:0055085", node_types.PROCESS))
+    types = set([n.node_type for e,n in r])
+    assert len(types) > 0
+    assert node_types.CELL in types
+    myedges = list(filter( lambda en: en[1].identifier=='CL:0002131' , r))
+    assert len(myedges) == 1
+    assert myedges[0][0].standard_predicate is not None
+
+def test_extensions_bp(quickgo):
     #Neurotransmitter secretion
     r = quickgo.go_term_annotation_extensions (KNode("GO.BIOLOGICAL_PROCESS:0007269", node_types.PROCESS))
     types = set([n.node_type for e,n in r])

@@ -65,4 +65,9 @@ class Synonymizer:
                 potential_identifiers.sort()
                 node.identifier = potential_identifiers[0]
                 break
+        if node.identifier.startswith('DOID'):
+            print(node.identifier)
+            print(node.synonyms)
+            print(node.node_type)
+            exit()
 

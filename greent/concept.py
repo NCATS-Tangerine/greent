@@ -38,7 +38,7 @@ class Relationship:
         for favorite in favorites:
             for mapped in self.mappings:
                 if mapped.startswith(favorite):
-                    return favorite
+                    return mapped
         return self.mappings[0]
     def __repr__(self):
         return f"Relation(name={self.name},is_a={self.is_a is not None},mappings={self.mappings})"
@@ -122,7 +122,7 @@ class ConceptModel:
         xref = relationship.identifier
         r = self.relations_by_xref[xref]
         if r is None:
-            raise Exception(f"No such relationship mapped: {xref}")
+            return LabeledID(identifier = "GAMMA:0", label = "Unmapped_Relation")
         else:
             return LabeledID(identifier =r.identifier, label = r.name)
 
