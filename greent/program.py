@@ -44,12 +44,12 @@ class Program:
                      query_definition.start_values]
         self.add_instance_nodes(self.start_nodes, t_node_ids[0])
         if len(t_node_ids) == 1:
-            if query_definition.end_values is not None:
+            if query_definition.end_values:
                 raise Exception(
                     "We only have one set of fixed nodes in the query plan, but multiple sets of fixed instances")
             return
         if len(t_node_ids) == 2:
-            if query_definition.end_values is None:
+            if not query_definition.end_values:
                 raise Exception(
                     "We have multiple fixed nodes in the query plan but only one set of fixed instances")
             self.end_nodes = [KNode(start_identifier, self.concept_nodes[t_node_ids[-1]]) for start_identifier in

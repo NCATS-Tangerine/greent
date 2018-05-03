@@ -35,7 +35,6 @@ def export_edge(tx,edge):
         logger.error('No standard predicate on the edge')
         logger.error(ke)
         print(ke)
-        exit()
     label='_'.join(ke.standard_predicate.identifier.split(':'))
     if label is None:
         print(ke)
