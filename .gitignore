@@ -1,0 +1,8 @@
+.vscode
+*.log
+greent/__pycache__/*
+greent/ontologies/__pycache__/*
+greent/services/__pycache__/*
+greent/synonymizers/__pycache__/*
+builder/__pycache__/*
+builder/api/__pycache__/*
