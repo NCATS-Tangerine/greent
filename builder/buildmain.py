@@ -303,10 +303,10 @@ class KnowledgeGraph:
         # TODO: it probably makes sense to push this stuff into the KNode itself
         self.logger.debug('Enhancing nodes with labels')
         for node in self.graph.nodes():
-            from greent.util import Text
-            if Text.get_curie(node.identifier) == 'DOID':
-                print('NOOO {}'.format(node.identifier))
-                exit()
+            # from greent.util import Text
+            # if Text.get_curie(node.identifier) == 'DOID':
+            #     print('NOOO {}'.format(node.identifier))
+            #     exit()
             prepare_node_for_output(node, self.rosetta.core)
 
     def support(self, support_module_names):
