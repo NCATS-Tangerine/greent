@@ -1,6 +1,6 @@
 version: "3"
 services:
-  robokop-interfaces:
+  interfaces:
     # image: patrickkwang/robokop-interfaces
     build:
       context: ./docker
@@ -10,6 +10,9 @@ services:
       - ROBOKOP_HOME=/home/murphy
       - NEO4J_HOST=neo4j
       - REDIS_HOST=redis
+      - ROBOKOP_HOST=0.0.0.0
+      - FLOWER_ADDRESS=0.0.0.0
+      - SUPERVISOR_HOST=0.0.0.0
       # - TRANSLATOR_SERVICES_ROSETTAGRAPH_URL="bolt://${NEO4J_HOST}:${NEO4J_BOLT_PORT}"
       # - CELERY_BROKER_URL="redis://${REDIS_HOST}:${REDIS_PORT}/${BUILDER_REDIS_DB}"
       # - CELERY_RESULT_BACKEND="redis://${REDIS_HOST}:${REDIS_PORT}/${BUILDER_REDIS_DB}"
@@ -28,4 +31,4 @@ services:
 networks:
   default:
     external:
-      name: robokop_default
+      name: ${COMPOSE_PROJECT_NAME}_default

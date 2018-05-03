@@ -3,7 +3,7 @@
 FROM python:3
 
 LABEL maintainer="patrick@covar.com"
-ENV REFRESHED_AT 2018-05-01
+ENV REFRESHED_AT 2018-05-02
 
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
@@ -24,6 +24,7 @@ WORKDIR /home/murphy
 RUN git clone https://github.com/NCATS-Gamma/robokop-interfaces.git
 
 WORKDIR /home/murphy/robokop-interfaces
+RUN git checkout docker
 
 ## Install all requirements
 RUN pip install -r ./greent/requirements.txt
