@@ -69,6 +69,22 @@ class OmniCorp(Service):
         )
         return results
 
+    def sparql_count_pmids (self, identifier):
+        text = """
+        PREFIX dct: <http://purl.org/dc/terms/>
+        SELECT (COUNT(DISTINCT ?pubmed) as ?count) 
+        WHERE {
+          ?pubmed dct:references <$identifier> .
+        }
+        """
+        logger.debug(text)
+        results = self.triplestore.query_template(
+            inputs = { 'identifier': identifier },
+            outputs = [ 'count' ],
+            template_text = text,
+        )
+        return results
+
     def sparql_get_shared_pmids (self, identifier_a, identifier_b):
         text = """
         PREFIX dct: <http://purl.org/dc/terms/>
@@ -103,6 +119,13 @@ class OmniCorp(Service):
                 if k_ij not in pubmeds and k_ji not in pubmeds:
                     pubmeds[k_ij] = []
         return pubmeds
+
+    def count_pmids(self, node):
+        identifier = self.get_omni_identifier(node)
+        if identifier is None:
+            return 0
+        count = self.sparql_count_pmids(identifier)[0]['count']
+        return count
 
     def get_shared_pmids (self, node1, node2):
         id1 = self.get_omni_identifier(node1)

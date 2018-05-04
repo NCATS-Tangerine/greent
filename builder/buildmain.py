@@ -71,10 +71,17 @@ def export_node(tx,node ):
     if not original_record:
         syns = list(node.synonyms)
         syns.sort()
-        tx.run(
-            "CREATE (a:%s {id: {id}, name: {name}, node_type: {node_type}, equivalent_identifiers: {syn}})"
-            % (node.node_type),
-            {"id": node.identifier, "name": node.label, "node_type": node.node_type, "syn": syns })
+        cstring = "CREATE (a:%s {id: {id}, name: {name}, node_type: {node_type}, equivalent_identifiers: {syn}"
+        if len(node.properties) > 0:
+            pstring = ','.join(['%s: {%s}' % (k,k) for k in node.properties])
+            cstring = cstring + ',%s' % pstring
+        cstring += "})"
+        nodemap = {"id": node.identifier, "name": node.label, "node_type": node.node_type, "syn": syns }
+        nodemap.update(node.properties)
+        #logger.info(cstring)
+        #logger.info(nodemap)
+        tx.run( cstring % (node.node_type),nodemap)
+
     else:
         original_node = original_record['a']
         if node.node_type not in original_node.labels:
@@ -324,9 +331,25 @@ class KnowledgeGraph:
         # Generate paths, (unique) edges along paths
         logger.debug('Building Support')
         for supporter in supporters:
+            self.generate_support_node_information(supporter)
             #n_supported = self.full_support(supporter)
             n_supported = self.path_support(supporter)
-        logger.info('Support Completed.  Added {} edges.'.format(n_supported))
+            logger.info('Support Completed.  Added {} edges.'.format(n_supported))
+
+    def generate_support_node_information(self,supporter):
+        for node in self.graph.nodes():
+            node_id = node.identifier
+            key = f"{supporter.__class__.__name__}({node_id})"
+            log_text = "  -- {key}"
+            support_dict = self.rosetta.cache.get (key)
+            if support_dict is not None:
+                logger.info (f"cache hit: {key} {support_dict}")
+            else:
+                logger.info (f"exec op: {key}")
+                support_dict = supporter.get_node_info(node)
+                self.rosetta.cache.set (key, support_dict)
+            if support_dict is not None:
+                node.properties.update(support_dict)
 
     def generate_all_links(self,nodelist=None):
         links_to_check = set()
@@ -340,6 +363,7 @@ class KnowledgeGraph:
 
     def generate_links_from_paths(self):
         """This is going to assume that the first node is 0, which is bogus, but this is temp until support plan is figured out"""
+        logger.debug("Follow Paths")
         links_to_check = set()
         for program in self.userquery.get_programs():
             ancestors = defaultdict(set)
@@ -375,6 +399,7 @@ class KnowledgeGraph:
                 #logger.debug("Ancestorkey {}".format(key))
                 for a in ancestors[key]:
                     links_to_check.add( (key, a) )
+        logger.debug("Found {} links".format(len(links_to_check)))
         return links_to_check
 
     def export(self):
@@ -393,8 +418,8 @@ class KnowledgeGraph:
 
 # TODO: push to node, ...
 def prepare_node_for_output(node, gt):
-    logging.getLogger('application').debug('Prepare: {}'.format(node.identifier))
-    logging.getLogger('application').debug('  Synonyms: {}'.format(' '.join(list(node.synonyms))))
+    logger.debug('Prepare: {}'.format(node.identifier))
+    #logger.debug('  Synonyms: {}'.format(' '.join(list(node.synonyms))))
     node.synonyms.update([mi['curie'] for mi in node.mesh_identifiers if mi['curie'] != ''])
     if node.node_type == node_types.DISEASE or node.node_type == node_types.GENETIC_CONDITION:
         if 'mondo_identifiers' in node.properties:
@@ -413,11 +438,11 @@ def prepare_node_for_output(node, gt):
             try:
                 node.label = gt.uberongraph.cell_get_cellname(node.identifier)[0]['cellLabel']
             except:
-                logging.getLogger('application').error('Error getting cell label for {}'.format(node.identifier))
+                logger.error('Error getting cell label for {}'.format(node.identifier))
                 node.label = node.identifier
         else:
             node.label = node.identifier
-    logging.getLogger('application').debug(node.label)
+    logger.debug(node.label)
 
 
 def run_query(querylist, supports, rosetta, prune=False):

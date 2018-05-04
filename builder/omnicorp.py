@@ -36,6 +36,11 @@ class OmnicorpSupport():
                   for k,v in results.items()]
         return edges
 
+
+    def get_node_info(self,node):
+        count = self.omnicorp.count_pmids(node)
+        return {'omnicorp_article_count': count}
+
     def prepare(self,nodes):
         goodnodes = list(filter(lambda n: self.omnicorp.get_omni_identifier(n) is not None, nodes))
         return goodnodes
