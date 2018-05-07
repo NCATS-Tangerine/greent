@@ -13,22 +13,15 @@ def quickgo(rosetta):
 
 def test_xontology_relationships(quickgo):
     #Mast Cell Chemotaxis
-    r = quickgo.go_term_xontology_relationships (KNode("GO:0002551", node_types.PROCESS))
+    r = quickgo.go_term_to_cell_xontology_relationships (KNode("GO:0002551", node_types.PROCESS))
     assert len(r) == 1
     assert r[0][1].node_type == node_types.CELL
     #Mast Cells
     assert r[0][1].identifier == 'CL:0000097'
 
-def test_xontology_relationships2(quickgo):
-    r = quickgo.go_term_xontology_relationships (KNode("GO:0007165", node_types.PROCESS))
-    assert len(r) == 1
-    assert r[0][1].node_type == node_types.CELL
-    #Macrophage
-    assert r[0][1].identifier == 'CL:0000097'
-
 def test_extensions(quickgo):
     #Neurotransmitter secretion
-    r = quickgo.go_term_annotation_extensions (KNode("GO:0055085", node_types.PROCESS))
+    r = quickgo.go_term_to_cell_annotation_extensions (KNode("GO:0055085", node_types.PROCESS))
     types = set([n.node_type for e,n in r])
     assert len(types) > 0
     assert node_types.CELL in types
@@ -38,7 +31,7 @@ def test_extensions(quickgo):
 
 def test_extensions_bp(quickgo):
     #Neurotransmitter secretion
-    r = quickgo.go_term_annotation_extensions (KNode("GO.BIOLOGICAL_PROCESS:0007269", node_types.PROCESS))
+    r = quickgo.go_term_to_cell_annotation_extensions (KNode("GO.BIOLOGICAL_PROCESS:0007269", node_types.PROCESS))
     types = set([n.node_type for e,n in r])
     assert len(types) == 1
     assert node_types.CELL in types
@@ -47,5 +40,13 @@ def test_extensions_bp(quickgo):
     assert 'CL:0000700' in identifiers #Dopaminergic neuron
     assert 'CL:0002608' in identifiers #Hippocampal neuron
     assert 'CL:1001571' in identifiers #Hippocampal pyramidal neuron
+
+
+def test_go_to_gene(quickgo):
+    r = quickgo.go_term_to_gene_annotation (KNode("GO:0007165", node_types.PROCESS))
+    for e,k in r:
+        assert k.node_type == node_types.GENE
+    assert len(r) > 25
+
 
 

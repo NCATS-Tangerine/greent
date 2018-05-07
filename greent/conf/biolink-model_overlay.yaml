@@ -256,3 +256,9 @@ slots:
       - RO:0002300
       - RO:0002301
       - RO:0002585
+        
+  - name: causes or contributes to
+    mappings:
+      - RO:0002327   #enables
+
+

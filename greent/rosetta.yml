@@ -32,30 +32,20 @@
 
 # Defines transitions from one vocabulary domain to another including a predicate.
 
-# Not sure how to do this yet
-#  MESH:
-#    ROOT:
-#      op: oxo.mesh_to_other
-#    DRUGBANK:
-#      op: chembio.get_drugs_by_condition_graph
-
-#
-#
-#
-#
-#
-#
 '@operators':
   cell:
     anatomical_entity:
       - link : cell_type_to_anatomy
         op   : uberongraph.get_anatomy_by_cell_graph
   biological_process_or_molecular_activity:
+    gene:
+      - link : bio_process_gene
+        op   : quickgo.go_term_to_gene_annotation
     cell:
       - link : bio_process_cell_type
-        op   : quickgo.go_term_xontology_relationships
+        op   : quickgo.go_term_to_cell_xontology_relationships
       - link : bio_process_cell_type
-        op   : quickgo.go_term_annotation_extensions
+        op   : quickgo.go_term_to_cell_annotation_extensions
   chemical_substance:
     gene:
       - link  : chemical_targets_gene
