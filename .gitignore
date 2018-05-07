@@ -1,0 +1,12 @@
+*.pyc
+chemotext.words.txt
+*.tsv
+*.tsv.gz
+greent/cache/*
+*.log
+*.pid
+*.json
+.pytest_cache/*
+greent/.pytest_cache/*
+greent/test/.pytest_cache/*
+q2-drugandcondition-list.txt
