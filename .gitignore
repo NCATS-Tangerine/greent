@@ -10,3 +10,4 @@ greent/cache/*
 greent/.pytest_cache/*
 greent/test/.pytest_cache/*
 q2-drugandcondition-list.txt
+.vscode
