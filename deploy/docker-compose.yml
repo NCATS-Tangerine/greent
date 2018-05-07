@@ -1,0 +1,27 @@
+version: "3"
+services:
+  interfaces:
+    # image: patrickkwang/robokop-interfaces
+    build:
+      context: .
+    env_file:
+      - ../../shared/robokop.env
+    environment:
+      - DEPLOY=docker
+      - ROBOKOP_HOME=/home/murphy
+      - NEO4J_HOST=neo4j
+      - REDIS_HOST=redis
+    ports:
+      - "${BUILDER_PORT}:${BUILDER_PORT}"
+      - "${BUILDER_FLOWER_PORT}:${BUILDER_FLOWER_PORT}"
+      - "${SUPERVISOR_PORT}:${SUPERVISOR_PORT}"
+    volumes:
+      - ../../shared:/home/murphy/shared
+      - ..:/home/murphy/robokop-interfaces
+    # stdin_open: true
+    # tty: true
+    # command: bash
+networks:
+  default:
+    external:
+      name: ${COMPOSE_PROJECT_NAME}_default

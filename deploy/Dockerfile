@@ -29,18 +29,19 @@ RUN git checkout docker
 ## Install all requirements
 RUN pip install -r ./greent/requirements.txt
 RUN pip install git+https://github.com/Supervisor/supervisor@master
+RUN pip install \
+    celery \
+    flask_restful \
+    flower
 
 ## Finish up
 ENV HOME=/home/murphy
+ENV USER=murphy
 COPY ./startup.sh /home/murphy/startup.sh
 COPY ./supervisord.conf /home/murphy/supervisord.conf
 
 WORKDIR /home/murphy
 RUN rm -r /home/murphy/robokop-interfaces
-RUN pip install \
-    celery \
-    flask_restful \
-    flower
 
 ENTRYPOINT ["./startup.sh"]
 CMD ["supervisord", "-c", "./supervisord.conf"]
