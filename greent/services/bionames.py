@@ -16,9 +16,15 @@ class BioNames(Service):
         """ Construct a bionames object and router for channeling searches. """
         super(BioNames, self).__init__("bionames", context)
         self.router = {
-            "drug" : self._find_drug,
-            "disease" : self._find_disease,
-            "phenotype" : self._find_phenotype
+            "chemical_substance" : self._find_chemical_substance,
+            "disease"            : self._find,
+            "phenotypic_feature" : self._find,
+            "cell"               : self._find,
+            "anatomical_entity"  : self._find,
+            "gene"               : self._find
+        }
+        self.normalize = {
+            "drug" : "chemical_substance"
         }
         
     def lookup(self, q, concept=None):
@@ -26,7 +32,12 @@ class BioNames(Service):
         result = []
         if concept:
             """ Route the search by concept. """
-            result = self.router[concept](q, concept) if concept in self.router else []
+            if concept in self.normalize:
+                concept = self.normalize[concept]
+            if concept in self.router:
+                result = self.router[concept](q, concept) if concept in self.router else []
+            else:
+                raise ValueError (f"Unknown concept {concept} is not a biolink-model concept.")
         else:
             """ Try everything? Union the lot. """
             for route in self.router.items ():
@@ -34,15 +45,24 @@ class BioNames(Service):
         logger.debug (f"search q: {q} results: {result}")
         return result
     
-    def _find_drug(self, q, concept):
+    def _find_chemical_substance(self, q, concept):
         ids = lookup_drug_by_name (q, self.context.core)
         return [ { "id" : i, "desc" : "" } for i in ids ] if ids else []
+    '''
+    def _find_anatomical_entity(self, q, concept=None):
+        return self._search_owlsim(q, concept) + self._search_onto(q)
+    
+    def _find_cell(self, q, concept):
+        return  self._search_owlsim(q, concept) + self._search_onto(q)
     
     def _find_disease(self, q, concept):
         return self._search_onto(q) + self._search_owlsim(q, concept)
 
-    def _find_phenotype(self, q, concept):
-        return self._search_onto(q)
+    def _find_phenotypic_feature(self, q, concept):
+        return self._search_onto(q) + self._search_owlsim(q, concept)
+    '''
+    def _find(self, q, concept):
+        return self._search_onto(q) + self._search_owlsim(q, concept)
     
     def _search_owlsim(self, q, concept):
         result = []

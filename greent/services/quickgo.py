@@ -15,6 +15,8 @@ class QuickGo(Service):
 
     def get_predicate(self, p_label):
         labels2identifiers={'occurs_in': 'BFO:0000066',
+                'enables': 'RO:0002327',
+                'involved_in': 'RO:0002331',
                 'results_in_movement_of': 'RO:0002565',
                 'results in developmental progression of':'RO:0002295',
                 'results in development of':'RO:0002296',
@@ -44,51 +46,76 @@ class QuickGo(Service):
     def standardize_predicate(self, predicate):
         """Fall back to a catch-all if we can't find a specific mapping"""
         try:
-            super(QuickGo, self).standardize_predicate(predicate)
+            return super(QuickGo, self).standardize_predicate(predicate)
         except:
             return super(QuickGo,self).standardize_predicate(self.get_predicate('occurs_in'))
 
-    #TODO: Rename to reflect that this only returns cells?  See what else we can get?
-    #Applies also to the annotation_extension functions
-    def go_term_xontology_relationships(self, go_node):
-        #Many of the nodes coming in will be something like GO.BIOLOGICAL_PROCESS:0042626 and
-        # need to be downgraded to just GO
+    def page_calls(self,url):
+        response = requests.get(url).json()
+        if 'results' not in response:
+            return []
+        allresults = response['results']
+        total_pages = response['pageInfo']['total']
+        for page in range(2,total_pages+1):
+            url_page = url+f'&page={page}'
+            print(url_page)
+            response = requests.get(url_page).json()
+            if 'results' in response:
+                allresults += response['results']
+            print( page, len(allresults) )
+        return allresults
+
+    def go_term_to_cell_xontology_relationships(self, go_node):
+        #This call is not paged!
         url = "{0}/QuickGO/services/ontology/go/terms/GO:{1}/xontologyrelations".format (self.url, Text.un_curie(go_node.identifier))
-        response = requests.get(url).json ()
+        response = requests.get(url).json()
+        if 'results' not in response:
+            return []
         results = []
-        if not 'results' in response:
-            return results
         for r in response['results']:
             if 'xRelations' in r:
                 for xrel in r['xRelations']:
                     if xrel['id'].startswith('CL:'):
                         predicate = self.get_predicate(xrel['relation'])
                         cell_node = KNode (xrel['id'], node_types.CELL, label = xrel['term']) 
-                        edge = self.create_edge(go_node, cell_node,'quickgo.go_term_xontology_relationships',go_node.identifier,predicate,url = url)
+                        edge = self.create_edge(go_node, cell_node,'quickgo.go_term_to_cell_xontology_relationships',go_node.identifier,predicate,url = url)
                         results.append( ( edge , cell_node))
         return results
 
-    def go_term_annotation_extensions(self,go_node):
+    def go_term_to_cell_annotation_extensions(self,go_node):
         """This is playing a little fast and loose with the annotations.  Annotations relate a gene to a go term,
         and they can have an extension like occurs_in(celltype). Technically, that occurs_in only relates to that
         particular gene/go combination.  But it's the only way to traverse from neurotransmitter release to neurons 
         that is currently available"""
         url = '{0}/QuickGO/services/annotation/search?includeFields=goName&goId=GO:{1}&taxonId=9606&extension=occurs_in(CL)'.format( self.url, Text.un_curie(go_node.identifier)) 
-        response = requests.get(url).json()
-        results = []
+        call_results = self.page_calls(url)
         cell_ids = set()
-        if not 'results' in response:
-            return results
-        for r in response['results']:
+        results = []
+        for r in call_results:
+            print(r)
             for e in r['extensions']:
                 for c in e['connectedXrefs']:
                     if c['db'] == 'CL':
                         if c['id'] not in cell_ids:
                             predicate = self.get_predicate(c['qualifier'])
                             cell_node = KNode( 'CL:{}'.format(c['id']), node_types.CELL ) 
-                            edge = self.create_edge(go_node, cell_node, 'quickgo.go_term_annotation_extensions',go_node.identifier,predicate,url = url)
+                            edge = self.create_edge(go_node, cell_node, 'quickgo.go_term_to_cell_annotation_extensions',go_node.identifier,predicate,url = url)
                             results.append( (edge,cell_node ) )
                             cell_ids.add(c['id'])
         return results
 
-
+    def go_term_to_gene_annotation(self,node):
+        go = node.identifier
+        url = f'{self.url}/QuickGO/services/annotation/search?goId={go}&taxonId=9606&goUsage=exact&targetSet=referencegenome'
+        call_results = self.page_calls(url)
+        used = set()
+        results = [] 
+        for r in call_results:
+            uniprotid = r["geneProductId"]
+            if uniprotid not in used:
+                used.add(uniprotid)
+                predicate = self.get_predicate(r['qualifier'])
+                gene_node = KNode( uniprotid, node_types.GENE ) 
+                edge = self.create_edge(node, gene_node, 'quickgo.go_term_to_gene_annotation',node.identifier,predicate,url = url)
+                results.append( (edge,gene_node ) )
+        return results

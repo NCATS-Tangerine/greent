@@ -40,6 +40,27 @@ def test_drug_get_gene(pharos):
     #PTGS2 (COX2) (HGNC:9605) should be in there
     assert 'HGNC:9605' in identifiers
 
+'''
+def test_drug_get_gene_2(pharos):
+    #pharos should find chembl in the synonyms
+    node = KNode('DB:FakeyName',node_type = node_types.DRUG)
+    node.add_synonyms(['CHEMBL:CHEMBL1237051'])
+    results = pharos.drug_get_gene(node)
+    #we get results
+    assert len(results) > 0
+    #They are gene nodes:
+    ntypes = set([n.node_type for e,n in results])
+    assert node_types.GENE in ntypes
+    assert len(ntypes) == 1
+    #All of the ids should be HGNC
+    identifiers = [n.identifier for e,n in results]
+    prefixes = set([ Text.get_curie(i) for i in identifiers])
+    assert 'HGNC' in prefixes
+    assert len(prefixes) == 1
+    '''
+
+
+
 def test_gene_get_drug(pharos):
     #Pharos will find DOIDs or whatever it needs in the synonyms
     node = KNode('MONDO:XXXX', node_types.DISEASE)

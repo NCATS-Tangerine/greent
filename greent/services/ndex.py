@@ -41,7 +41,6 @@ class NDEx:
       nice_cx.set_name (name)
       print (f" connected: {nx.is_connected(graph.to_undirected())} edges: {len(graph.edges())} nodes: {len(graph.nodes())}")
       print (nice_cx)
-      #self.session.save_new_network (nice_cx)
 
       """ Upload to NDEx. """
       upload_message = nice_cx.upload_to(self.uri, self.account, self.password)

@@ -2,7 +2,7 @@ import os
 import traceback
 from greent.util import LoggingUtil
 from pprint import pprint
-from SPARQLWrapper import SPARQLWrapper2, JSON
+from SPARQLWrapper import SPARQLWrapper2, JSON, POSTDIRECTLY, POST
 from string import Template
 
 logger = LoggingUtil.init_logging (__file__)
@@ -29,20 +29,22 @@ class TripleStore(object):
             query = stream.read ()
         return query
     
-    def execute_query (self, query):
+    def execute_query (self, query, post=False):
         """ Execute a SPARQL query.
 
         :param query: A SPARQL query.
         :return: Returns a JSON formatted object.
         """
-        #print (query)
+        if post:
+            self.service.setRequestMethod(POSTDIRECTLY)
+            self.service.setMethod(POST)
         self.service.setQuery (query)
         self.service.setReturnFormat (JSON)
         return self.service.query().convert ()
     
-    def query (self, query_text, outputs, flat=False):
+    def query (self, query_text, outputs, flat=False, post = False):
         """ Execute a fully formed query and return results. """
-        response = self.execute_query (query_text)
+        response = self.execute_query (query_text, post)
         result = None
         if flat:
             result = list(map(lambda b : [ b[val].value for val in outputs ], response.bindings ))
@@ -51,11 +53,11 @@ class TripleStore(object):
         logger.debug ("query result: %s", result)
         return result
 
-    def query_template (self, template_text, outputs, inputs=[]):
+    def query_template (self, template_text, outputs, inputs=[], post = False):
         """ Given template text, inputs, and outputs, execute a query. """
-        return self.query (Template (template_text).safe_substitute (**inputs), outputs)
+        return self.query (Template (template_text).safe_substitute (**inputs), outputs, post= post)
     
     def query_template_file (self, template_file, outputs, inputs=[]):
         """ Given the name of a template file, inputs, and outputs, execute a query. """
-        return self.query (self.get_template_text (template), inputs, outputs)
+        return self.query (self.get_template_text (template_file), inputs, outputs)
 

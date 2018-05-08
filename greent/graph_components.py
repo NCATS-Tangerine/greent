@@ -1,6 +1,6 @@
 from collections import defaultdict
 from functools import singledispatch
-from greent.node_types import node_types
+from greent import node_types
 from greent.util import Text
 from json import JSONEncoder
 from json import JSONDecoder
@@ -64,6 +64,9 @@ class KNode():
 
     def add_context(self, program_id, context):
         self.contexts[program_id].add(context)
+
+    def update_context(self, other_contexts):
+        self.contexts.update(other_contexts)
 
     def get_context(self,program_id):
         return self.contexts[program_id]

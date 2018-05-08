@@ -13,6 +13,7 @@ prefixes_to_hgnc = {
     'OMIM': 'omim_id',
     #UNIPROTKB is not a identifiers.org prefix.  Uniprot is, and uniprot.isoform is.
     'UNIPROTKB': 'uniprot_ids',
+    'UniProtKB': 'uniprot_ids',
     'ENSEMBL': 'ensembl_gene_id'
 }
 

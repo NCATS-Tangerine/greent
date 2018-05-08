@@ -24,6 +24,15 @@ def synonymize_with_MONDO(node,gt):
 
 def synonymize_with_OXO(node,gt):
     synonyms =  oxo_synonymizer.synonymize(node,gt)
+    node.add_synonyms(synonyms)
+    #Now, if we didn't start with a MONDO id, OXO is not going to give us one.
+    #So let's get any doids we have and get a mondo from them
+    mondos = node.get_synonyms_by_prefix('MONDO')
+    if len(mondos) == 0:
+        doids = node.get_synonyms_by_prefix('DOID')
+        for doid in doids:
+            moremondos = gt.mondo.get_mondo_id(doid)
+            synonyms.update(moremondos)
     return synonyms
 
 

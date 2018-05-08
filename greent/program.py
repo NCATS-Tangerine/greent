@@ -3,6 +3,7 @@ import traceback
 from collections import defaultdict
 from greent.graph_components import KNode, KEdge
 from greent.util import LoggingUtil
+from greent import node_types
 
 logger = LoggingUtil.init_logging(__file__, level=logging.DEBUG)
 
@@ -21,6 +22,10 @@ class QueryDefinition:
 class Program:
 
     def __init__(self, plan, query_definition, rosetta, program_number):
+        #Plan comes from typegraph and contains two things:
+        #0: nodes: A map from a node index to the concept.
+        #1: transitions: a map from a node index to an (operation, output index) pair
+        #So the plan does not have to represent a linear query
         self.program_number = program_number
         self.concept_nodes = plan[0]
         self.transitions = plan[1]
@@ -71,6 +76,8 @@ class Program:
             node.add_context(self.program_number, context)
         self.all_instance_nodes.update(nodelist)
         self.unused_instance_nodes.update([(node, context) for node in nodelist])
+        
+    #CAN I SOMEHOW CAPTURE PATHS HERE>>>>
 
     def run_program(self):
         """Loop over unused nodes, send them to the appropriate operator, and collect the results.
@@ -89,6 +96,17 @@ class Program:
                 results = self.rosetta.cache.get (key)
                 if results is not None:
                     logger.info (f"cache hit: {key} size:{len(results)}")
+                    #When we get an edge out of the cache, it stores the old source node in it.
+                    #Because context is in our copy of the source node, this can cause problems
+                    # in support.   So we need to replace the cached source with our source node
+                    for edge,other in results:
+                        if edge.subject_node.identifier == source_node.identifier:
+                            edge.subject_node = source_node
+                        elif edge.object_node.identifier == source_node.identifier:
+                            edge.object_node = source_node
+                        else:
+                            logger.error("Cached edge doesn't have source node in it")
+                            raise Exception("Cached edge doesn't have source node in it")
                 else:
                     logger.info (f"exec op: {key}")
                     op = self.rosetta.get_ops(op_name)
@@ -100,14 +118,6 @@ class Program:
                     #edge = r[0]
                     self.linked_results.append(r[0])
                     newnodes.append(r[1])
-                    '''
-                    if isinstance(edge, KEdge):
-                        edge.predicate = link['link']
-                        edge.source_node = source_node
-                        edge.target_node = r[1]
-                        self.linked_results.append(edge)
-                        newnodes.append(r[1])
-                    '''
                 logger.debug(f"    {newnodes}")
                 self.add_instance_nodes(newnodes,next_context)
             except Exception as e:
