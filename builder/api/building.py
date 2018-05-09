@@ -175,7 +175,7 @@ class UpdateKG(Resource):
                         $ref: '#/definitions/Question'
         """
         logger = logging.getLogger('builder')
-        logger.info("updating kg...")
+        logger.info("Queueing 'KG update' task...")
         task = update_kg.apply_async(args=[request.json])
         return {'task id': task.id}, 202
 
