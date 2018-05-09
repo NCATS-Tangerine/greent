@@ -3,7 +3,7 @@ from greent.cachedservice import CachedService
 from greent.graph_components import KNode, KEdge
 from greent.util import LoggingUtil
 
-logger = LoggingUtil.init_logging (__file__)
+logger = LoggingUtil.init_logging(__name__)
 
 class Onto(CachedService):
     """ An abstraction for generic questions about ontologies. """

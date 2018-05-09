@@ -6,7 +6,7 @@ from greent import node_types
 from collections import defaultdict
 from datetime import datetime as dt
 
-logger = LoggingUtil.init_logging (__file__, logging.DEBUG)
+logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
 def get_supporter(greent):
     return OmnicorpSupport(greent)

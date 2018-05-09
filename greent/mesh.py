@@ -4,7 +4,7 @@ from greent.util import LoggingUtil
 import unittest
 from pprint import pprint
 
-logger = LoggingUtil.init_logging (__file__)
+logger = LoggingUtil.init_logging(__name__)
 
 class MeSH(object):
     def __init__(self, uri="http://id.nlm.nih.gov/mesh/sparql"):

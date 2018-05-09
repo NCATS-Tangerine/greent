@@ -9,7 +9,7 @@ from greent.service import ServiceContext
 from greent.util import LoggingUtil
 from pprint import pformat
 
-logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG)
+logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
 class Chemotext2 (Service):
     """ RENCI used the word2vec machine learning algorithm to compute teh semantic similarity of terms in the public access

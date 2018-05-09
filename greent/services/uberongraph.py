@@ -12,7 +12,7 @@ from pprint import pprint
 from datetime import datetime as dt
 import datetime
 
-logger = LoggingUtil.init_logging (__file__)
+logger = LoggingUtil.init_logging(__name__)
 
 class UberonGraphKS(Service):
     """A knowledge source created by 1) Combining cell ontology, uberon, and

@@ -6,7 +6,7 @@ from greent.graph_components import KNode, KEdge, LabeledID
 from greent.util import Text, LoggingUtil
 from greent import node_types
 
-logger = LoggingUtil.init_logging(__file__, level=logging.DEBUG)
+logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
 class CTD(Service):
     """ Interface to the Comparative Toxicogenomic Database data set."""

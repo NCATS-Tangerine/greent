@@ -25,7 +25,7 @@ from greent.services.unichem import UniChem
 #from greent.service import ServiceContext
 from greent.util import LoggingUtil
 
-logger = LoggingUtil.init_logging (__file__)
+logger = LoggingUtil.init_logging(__name__)
 
 class GreenT:
 
