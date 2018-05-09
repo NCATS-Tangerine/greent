@@ -6,9 +6,12 @@ import os
 import sys
 import logging
 
-from celery import Celery
+from celery import Celery, signals
 from celery.utils.log import get_task_logger
 from kombu import Queue
+
+# setup 'builder' logger first so that we know it's here when setting up children
+import builder.api.logging_config
 
 from builder.api.setup import app
 from builder.question import Question
@@ -20,7 +23,6 @@ from greent import node_types
 from builder.buildmain import run_query, generate_query
 from builder.pathlex import tokenize_path
 from builder.buildmain import setup
-import builder.api.logging_config
 
 rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
 
@@ -32,6 +34,11 @@ celery.conf.update(app.config)
 celery.conf.task_queues = (
     Queue('update', routing_key='update'),
 )
+# Tell celery not to mess with logging at all
+@signals.setup_logging.connect
+def setup_celery_logging(**kwargs):
+    pass
+celery.log.setup()
 
 @celery.task(bind=True, queue='update')
 def update_kg(self, question_json):
@@ -42,7 +49,7 @@ def update_kg(self, question_json):
 
     self.update_state(state='UPDATING KG')
     logger = logging.getLogger(__name__)
-    logger.info(f"{__name__}: Updating the knowledge graph...")
+    logger.info("Updating the knowledge graph...")
 
     try:
         question = Question(question_json)
