@@ -29,3 +29,8 @@ def test_synonyms(oxo):
     assert 'DOID:526' in curieset
     assert 'UMLS:C1858709' in curieset
 
+def test_synonyms_stuff(oxo):
+    all_results = oxo.get_synonyms('EFO:0000764')
+    assert len(all_results) > 0
+    for result in all_results:
+        assert 'label' in result

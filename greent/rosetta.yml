@@ -52,6 +52,9 @@
         op    : chembio.graph_pubchem_to_ncbigene
       - link  : drug_to_gene
         op    : ctd.drug_to_gene
+    disease_or_phenotypic_feature:
+      - link  : adverse_events
+        op    : mychem.get_adverse_events
   disease:
     phenotypic_feature:
       - link  : disease_to_phenotype
@@ -106,6 +109,8 @@
 
 '@type_checks':
   genetic_condition: mondo.is_genetic_disease
-  cell: typecheck.is_cell
   molecular_activity: go.is_molecular_function
   biological_process: go.is_biological_process
+  cell: typecheck.is_cell
+  disease: typecheck.is_disease
+  phenotypic_feature: typecheck.is_phenotypic_feature

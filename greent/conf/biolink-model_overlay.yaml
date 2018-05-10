@@ -45,12 +45,15 @@ classes:
         - EFO
         - UMLS
         - MESH
+        - MEDDRA
         - PHAROS.DISEASE 
 
   - name: phenotypic feature
     id_prefixes:
       - HP
       - NCIT
+      - UMLS
+      - MEDDRA
 
   - name: chemical substance
     id_prefixes:
@@ -259,6 +262,7 @@ slots:
         
   - name: causes or contributes to
     mappings:
+      - RO:0003302   #causes or contributes to
       - RO:0002327   #enables
 
 
