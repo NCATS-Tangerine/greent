@@ -27,7 +27,7 @@ def export_edge(tx,edge):
     #logger.debug(f'{aid},{bid},{ke.standard_predicate.label},{nn}')
 
     #Delete any old edge
-    tx.run("MATCH (a {id: {aid}})-[r {source:{source}}]-(b {id:{bid}}) DELETE r",
+    tx.run("MATCH (a {id: {aid}})-[r {edge_source:{source}}]-(b {id:{bid}}) DELETE r",
                 {'aid': aid, 'bid': bid, 'source': ke.edge_source} )
     #Now write the new edge....
     #note that we can't use the CURIE as the label, because the : in the curie screws up the cypher :(
