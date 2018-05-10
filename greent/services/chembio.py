@@ -5,7 +5,7 @@ from greent.util import Text
 from greent.graph_components import KEdge, KNode, LabeledID
 from greent import node_types
 
-logger = LoggingUtil.init_logging (__file__)
+logger = LoggingUtil.init_logging(__name__)
 
 class ChemBioKS(Service):
     """ Generic service endpoints for medical and bio-chemical data. This set

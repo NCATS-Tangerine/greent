@@ -9,7 +9,7 @@ import traceback
 from greent.util import LoggingUtil
 from lru import LRU
 
-logger = LoggingUtil.init_logging(__file__, level=logging.DEBUG)
+logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
 class CacheSerializer:
     """ Generic serializer. """

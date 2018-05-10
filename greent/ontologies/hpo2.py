@@ -1,7 +1,7 @@
 from greent.services.onto import Onto
 from greent.util import LoggingUtil
 
-logger = LoggingUtil.init_logging (__file__)
+logger = LoggingUtil.init_logging(__name__)
 
 class HPO2(Onto):
     

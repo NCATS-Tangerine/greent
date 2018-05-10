@@ -7,7 +7,7 @@ from greent.util import LoggingUtil
 from greent.service import Service
 from pronto.relationship import Relationship
 
-logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG)
+logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
 class GenericOntology(Service):
     """ Sure, don't just dig around in obo files they say. But when the SPARQL is dry, we will drink straight from the obo if need be. """

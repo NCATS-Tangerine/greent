@@ -5,7 +5,7 @@ from greent.util import LoggingUtil
 from greent import node_types
 
 
-logger = LoggingUtil.init_logging (__file__)
+logger = LoggingUtil.init_logging(__name__)
 
 #TODO: LOOKUP all the terms that map to this... or use an ancestor call that doesn't require such stuff (i.e. that handles this)
 GENETIC_DISEASE=('MONDO:0021198', 'DOID:630','http://purl.obolibrary.org/obo/EFO_0000508','MONDO:0003847','http://purl.obolibrary.org/obo/MONDO_0003847')

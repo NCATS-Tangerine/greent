@@ -5,7 +5,7 @@ from greent.graph_components import KNode, KEdge
 from greent.util import LoggingUtil
 from greent import node_types
 
-logger = LoggingUtil.init_logging(__file__, level=logging.DEBUG)
+logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
 class QueryDefinition:
     """Defines a query"""

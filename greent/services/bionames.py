@@ -7,7 +7,7 @@ from greent.service import Service
 import logging
 from greent.util import LoggingUtil
 
-logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG)
+logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
 class BioNames(Service):
     """ BioNames services. """

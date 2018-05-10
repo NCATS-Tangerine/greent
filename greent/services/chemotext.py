@@ -12,7 +12,7 @@ from pprint import pprint
 from greent.graph_components import KNode
 from greent import node_types
 
-logger = LoggingUtil.init_logging (__file__)
+logger = LoggingUtil.init_logging(__name__)
 
 class Chemotext(Neo4JREST):
     def __init__(self, context): #url="http://chemotext.mml.unc.edu:7474"):

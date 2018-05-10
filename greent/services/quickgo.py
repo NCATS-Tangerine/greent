@@ -6,7 +6,7 @@ from greent.graph_components import KNode,LabeledID
 from greent import node_types
 from datetime import datetime as dt
 
-logger = LoggingUtil.init_logging (__file__)
+logger = LoggingUtil.init_logging(__name__)
 
 class QuickGo(Service):
 

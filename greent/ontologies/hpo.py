@@ -5,7 +5,7 @@ from greent.util import LoggingUtil
 from greent import node_types
 import datetime
 
-logger = LoggingUtil.init_logging (__file__)
+logger = LoggingUtil.init_logging(__name__)
 
 #TODO: move some some of the common stuff between here and Mondo into an ontology class/module.
 class HPO(Service):

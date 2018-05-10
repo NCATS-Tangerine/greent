@@ -2,7 +2,7 @@ from greent.util import Text
 from greent.util import LoggingUtil
 import logging
 
-logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG, format='long')
+logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG, format='long')
 
 def synonymize(node, gt):
     synonyms = get_synonyms(node,gt)

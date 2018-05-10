@@ -24,7 +24,7 @@ class Service:
         try:
             result = self.context.config.get_service (self.name)
         except:
-            logger = LoggingUtil.init_logging(__file__)
+            logger = LoggingUtil.init_logging(__name__)
             logger.warn(f"Unable to get config for service: {self.name}")
             #traceback.print_exc ()
         return result

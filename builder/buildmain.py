@@ -14,7 +14,7 @@ from collections import defaultdict
 from builder.pathlex import tokenize_path
 import calendar
 
-logger = LoggingUtil.init_logging (__file__, logging.DEBUG)
+logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
 def export_edge(tx,edge):
     """The approach of updating edges will be to erase an old one and replace it in whole.   There's no real
@@ -27,7 +27,7 @@ def export_edge(tx,edge):
     #logger.debug(f'{aid},{bid},{ke.standard_predicate.label},{nn}')
 
     #Delete any old edge
-    tx.run("MATCH (a {id: {aid}})-[r {source:{source}}]-(b {id:{bid}}) DELETE r",
+    tx.run("MATCH (a {id: {aid}})-[r {edge_source:{source}}]-(b {id:{bid}}) DELETE r",
                 {'aid': aid, 'bid': bid, 'source': ke.edge_source} )
     #Now write the new edge....
     #note that we can't use the CURIE as the label, because the : in the curie screws up the cypher :(

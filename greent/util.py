@@ -17,6 +17,10 @@ class LoggingUtil(object):
     """ Logging utility controlling format and setting initial logging level """
     @staticmethod
     def init_logging (name, level=logging.INFO, format='short'):
+        logger = logging.getLogger(__name__)
+        if not logger.parent.name == 'root':
+            return logger
+
         FORMAT = {
             "short" : '%(funcName)s: %(message)s',
             "long"  : '%(asctime)-15s %(filename)s %(funcName)s %(levelname)s: %(message)s'

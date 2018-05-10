@@ -3,7 +3,7 @@ from greent.synonymizers import oxo_synonymizer
 from greent.util import LoggingUtil
 import logging
 
-logger = LoggingUtil.init_logging (__file__, level=logging.DEBUG)
+logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
 # Substances are a special case, because the landscape of identifiers is such a mess.
 # Therefore, it's going to take a few different approaches in conjunction to get anywhere.

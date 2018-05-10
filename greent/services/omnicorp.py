@@ -12,7 +12,7 @@ from pprint import pprint
 import datetime
 from collections import defaultdict
 
-logger = LoggingUtil.init_logging (__file__)
+logger = LoggingUtil.init_logging(__name__)
 
 class OmniCorp(Service):
 
