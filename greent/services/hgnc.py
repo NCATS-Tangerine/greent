@@ -1,6 +1,6 @@
 import requests
 from greent import node_types
-from greent.graph_components import KNode, KEdge
+from greent.graph_components import LabeledID
 from greent.service import Service
 
 
@@ -57,6 +57,11 @@ class HGNC(Service):
         docs = r['response']['docs']
         synonyms = set()
         for doc in docs:
+            #hgnc only returns an hgnc label (not eg. an entrez label)
+            try:
+                hgnc_label = doc['symbol']
+            except:
+                hgnc_label = None
             for key in doc:
                 if key in hgnc_to_prefixes:
                     values = doc[key]
@@ -67,49 +72,7 @@ class HGNC(Service):
                         if ':' in value:
                             value = value.split(':')[-1]
                         synonym = f'{prefix}:{value}'
-                        synonyms.add(synonym)
+                        synonyms.add(LabeledID(synonym,hgnc_label))
         return synonyms
 
-'''
-These are now defunct.  We simply use this as a synonimizer, not an edge producer
 
-    #todo, it would probably be straightforward to autogenerate these and have common logic for them
-    def ncbigene_to_uniprotkb(self, node):
-        """Given a node representing an NCBIGene (or Entrez) identifier, retrieve the UniProtKB identifier"""
-        if node.node_type != node_types.GENE:
-            raise ValueError('Node must be a gene')
-        identifier_parts = node.identifier.split(':')
-        if not identifier_parts[0].upper() == 'NCBIGENE':
-            raise ValueError('Node must represent an NCBIGENE identifier.')
-        hgnc_id = identifier_parts[1]
-        headers = {'Accept':'application/json'}
-        r = requests.get('{0}/entrez_id/{1}'.format(self.url, hgnc_id), headers= headers).json()
-        try:
-            uniprots = r['response']['docs'][0]['uniprot_ids']
-            return  [  ( KEdge( 'hgnc', 'ncbigene_to_uniprotkb', is_synonym=True ),\
-                         KNode( identifier='UNIPROTKB:{}'.format(uniprot), node_type = node_types.GENE )) \
-                         for uniprot in uniprots ]
-        except (IndexError, KeyError):
-            #No results back
-            return []
-
-    def hgnc_to_uniprotkb(self, node):
-        """Given a node representing an HGNC retrieve the UniProtKB identifier"""
-        if node.node_type != node_types.GENE:
-            raise ValueError('Node must be a gene')
-        identifier_parts = node.identifier.split(':')
-        if not identifier_parts[0].upper() == 'HGNC':
-            raise ValueError('Node must represent an HGNC identifier.')
-        hgnc_id = identifier_parts[1]
-        headers = {'Accept':'application/json'}
-        r = requests.get('{0}/hgnc_id/{1}'.format(self.url, hgnc_id), headers= headers).json()
-        try:
-            uniprots = r['response']['docs'][0]['uniprot_ids']
-            return  [  ( KEdge( 'hgnc', 'ncbigene_to_uniprotkb', is_synonym=True ),\
-                         KNode( identifier='UNIPROTKB:{}'.format(uniprot), node_type = node_types.GENE )) \
-                         for uniprot in uniprots ]
-        except (IndexError,KeyError):
-            #No results back
-            return []
-
-'''

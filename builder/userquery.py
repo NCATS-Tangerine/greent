@@ -35,30 +35,20 @@ class Transition:
             pstring += '--\n'
         pstring += f'{end}\n'
         return pstring
-'''
-class QueryDefinition:
-    """Defines a query"""
 
-    def __init__(self):
-        self.start_values = None
-        self.start_type = None
-        self.end_values = None
-        self.node_types = []
-        self.transitions = []
-        self.start_lookup_node = None
-        self.end_lookup_node = None
-'''
 class UserQuery:
     """This is the class that the rest of builder uses to interact with a query."""
 
-    def __init__(self, start_values, start_type):
+    def __init__(self, start_values, start_type, start_name):
         """Create an instance of UserQuery. Takes a starting value and the type of that value"""
         self.query = None
         self.definition = QueryDefinition()
         # Value for the original node
         self.definition.start_values = start_values
         self.definition.start_type = start_type
+        self.definition.start_name = start_name
         self.definition.end_values = None
+        self.definition.end_name = None
         # List of user-level types that we must pass through
         self.add_node(start_type)
 
@@ -70,7 +60,7 @@ class UserQuery:
             raise Exception('node type must be one of greent.node_types')
         self.definition.node_types.append(node_type)
 
-    def add_transition(self, next_type, min_path_length=1, max_path_length=1, end_values=None):
+    def add_transition(self, next_type, min_path_length=1, max_path_length=1, end_values=None, end_name=None):
         """Add another required node type to the path.
 
         When a new node is added to the user query, the user is asserting that
@@ -111,6 +101,7 @@ class UserQuery:
         # Add the end_value
         if end_values:
             self.definition.end_values = end_values
+            self.definition.end_name = end_name
 
     def generate_cypher(self):
         """Generate a cypher query to find paths through the concept-level map."""

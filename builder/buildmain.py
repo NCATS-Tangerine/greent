@@ -418,7 +418,7 @@ class KnowledgeGraph:
 
 # TODO: push to node, ...
 def prepare_node_for_output(node, gt):
-    logger.debug('Prepare: {}'.format(node.identifier))
+    logger.debug('Prepare: {} {}'.format(node.identifier, node.label))
     #logger.debug('  Synonyms: {}'.format(' '.join(list(node.synonyms))))
     node.synonyms.update([mi['curie'] for mi in node.mesh_identifiers if mi['curie'] != ''])
     if node.node_type == node_types.DISEASE or node.node_type == node_types.GENETIC_CONDITION:
@@ -442,7 +442,7 @@ def prepare_node_for_output(node, gt):
                 node.label = node.identifier
         else:
             node.label = node.identifier
-    logger.debug(node.label)
+    logger.debug('Prepared: {} {}'.format(node.identifier, node.label))
 
 
 def run_query(querylist, supports, rosetta, prune=False):
@@ -457,15 +457,15 @@ def run_query(querylist, supports, rosetta, prune=False):
     kgraph.export()
 
 
-def generate_query(pathway, start_identifiers, end_identifiers=None):
+def generate_query(pathway, start_identifiers, start_name = None, end_identifiers=None, end_name=None):
     start, middle, end = pathway[0], pathway[1:-1], pathway[-1]
-    query = UserQuery(start_identifiers, start.nodetype)
+    query = UserQuery(start_identifiers, start.nodetype, start_name)
     print(start.nodetype)
     for transition in middle:
         print(transition)
         query.add_transition(transition.nodetype, transition.min_path_length, transition.max_path_length)
     print(end)
-    query.add_transition(end.nodetype, end.min_path_length, end.max_path_length, end_values=end_identifiers)
+    query.add_transition(end.nodetype, end.min_path_length, end.max_path_length, end_values=end_identifiers, end_name=end_name)
     return query
 
 

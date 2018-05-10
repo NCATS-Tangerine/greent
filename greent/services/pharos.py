@@ -143,25 +143,25 @@ class Pharos(Service):
     def drug_get_gene(self, subject):
         """ Get a gene from a drug. """
         resolved_edge_nodes = []
-        for s in subject.synonyms:
-            if Text.get_curie(s) == 'CHEMBL':
-                pharosid = Text.un_curie(s)
-                original_edge_nodes = []
-                url = 'https://pharos.nih.gov/idg/api/v1/ligands(%s)?view=full' % pharosid
-                r = requests.get(url)
-                result = r.json()
-                actions = set()  # for testing
-                predicate = LabeledID('PHAROS:drug_targets','is_target')
-                for link in result['links']:
-                    if link['kind'] == 'ix.idg.models.Target':
-                        pharos_target_id = int(link['refid'])
-                        hgnc = self.target_to_hgnc(pharos_target_id)
-                        if hgnc is not None:
-                            hgnc_node = KNode(hgnc, node_types.GENE)
-                            edge = self.create_edge(subject,hgnc_node,'pharos.drug_get_gene',pharosid,predicate,url=url)
-                            resolved_edge_nodes.append((edge, hgnc_node))
-                        else:
-                            logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
+        identifiers = subject.get_synonyms_by_prefix('CHEMBL')
+        for s in identifiers:
+            pharosid = Text.un_curie(s)
+            original_edge_nodes = []
+            url = 'https://pharos.nih.gov/idg/api/v1/ligands(%s)?view=full' % pharosid
+            r = requests.get(url)
+            result = r.json()
+            actions = set()  # for testing
+            predicate = LabeledID('PHAROS:drug_targets','is_target')
+            for link in result['links']:
+                if link['kind'] == 'ix.idg.models.Target':
+                    pharos_target_id = int(link['refid'])
+                    hgnc = self.target_to_hgnc(pharos_target_id)
+                    if hgnc is not None:
+                        hgnc_node = KNode(hgnc, node_types.GENE)
+                        edge = self.create_edge(subject,hgnc_node,'pharos.drug_get_gene',pharosid,predicate,url=url)
+                        resolved_edge_nodes.append((edge, hgnc_node))
+                    else:
+                        logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
         return resolved_edge_nodes
 
     def disease_get_gene(self, subject):

@@ -1,7 +1,5 @@
 import pytest
-from greent.graph_components import KNode
-from greent.services.pharos import Pharos
-from greent.servicecontext import ServiceContext
+from greent.graph_components import KNode, LabeledID
 from greent import node_types
 from greent.util import Text
 from greent.conftest import rosetta
@@ -24,7 +22,7 @@ def test_string_to_info_wackycap(pharos):
 def test_drug_get_gene(pharos):
     #pharos should find chembl in the synonyms
     node = KNode('DB:FakeyName',node_type = node_types.DRUG)
-    node.add_synonyms(['CHEMBL:CHEMBL118'])
+    node.add_synonyms([LabeledID('CHEMBL:CHEMBL118','blahbalh')])
     results = pharos.drug_get_gene(node)
     #we get results
     assert len(results) > 0

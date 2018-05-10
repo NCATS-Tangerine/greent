@@ -1,5 +1,6 @@
 from greent.util import Text
 from greent.synonymizers import oxo_synonymizer
+from greent.graph_components import  LabeledID
 
 #2/20/2018, OXO doesn't yet understand MONDOs.
 # So: if the identifier is a mondo identifier, pull down doids and whatever from mondo xrefs
@@ -16,9 +17,9 @@ def synonymize(node,gt):
     return synonyms
 
 def synonymize_with_MONDO(node,gt):
-    syns = set(gt.mondo.mondo_get_doid( node.identifier ))
-    syns.update( set(gt.mondo.mondo_get_umls( node.identifier )))
-    syns.update( set(gt.mondo.mondo_get_efo( node.identifier )))
+    syns = set([ LabeledID(x,"") for x in gt.mondo.mondo_get_doid( node.identifier )])
+    syns.update( set( [ LabeledID(x,"") for x in gt.mondo.mondo_get_umls( node.identifier )]) )
+    syns.update( set( [ LabeledID(x, "") for x in gt.mondo.mondo_get_efo( node.identifier )]))
     #node.add_synonyms(syns)
     return syns
 

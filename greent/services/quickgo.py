@@ -98,7 +98,8 @@ class QuickGo(Service):
                     if c['db'] == 'CL':
                         if c['id'] not in cell_ids:
                             predicate = self.get_predicate(c['qualifier'])
-                            cell_node = KNode( 'CL:{}'.format(c['id']), node_types.CELL ) 
+                            #Bummer, don't get a name
+                            cell_node = KNode( 'CL:{}'.format(c['id']), node_types.CELL )
                             edge = self.create_edge(go_node, cell_node, 'quickgo.go_term_to_cell_annotation_extensions',go_node.identifier,predicate,url = url)
                             results.append( (edge,cell_node ) )
                             cell_ids.add(c['id'])

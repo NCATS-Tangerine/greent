@@ -1,10 +1,8 @@
 import pytest
 from greent.graph_components import KNode
-from greent.services.ctd import CTD
-from greent.servicecontext import ServiceContext
 from greent import node_types
+from greent.graph_components import LabeledID
 from greent.conftest import rosetta
-from greent.util import Text
 
 @pytest.fixture()
 def ctd(rosetta):
@@ -47,7 +45,7 @@ def test_drug_to_gene_simple(ctd):
 def test_drug_to_gene_synonym(ctd):
     #Even though the main identifier is drugbank, CTD should find the right synonym in there somewhere.
     input_node = KNode("DB:FakeID", node_types.DRUG)
-    input_node.add_synonyms(set(["MESH:D000068579"]))
+    input_node.add_synonyms(set([LabeledID("MESH:D000068579","blah")]))
     results = ctd.drug_to_gene(input_node)
     for edge,node in results:
         assert node.node_type == node_types.GENE

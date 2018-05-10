@@ -28,3 +28,8 @@ def test_xrefs(mondo2):
 def test_get_mondoId(mondo2):
     mondoids = mondo2.get_mondo_id('DOID:9008')
     assert mondoids[0]== 'MONDO:0011849'
+
+def test_get_doid(mondo2):
+    mondoid = 'MONDO:0009757'
+    doids = mondo2.mondo_get_doid(mondoid)
+    assert len(doids) == 0

@@ -150,14 +150,14 @@ class UberonGraphKS(Service):
         results = []
         predicate = LabeledID('BFO:0000050', 'has_part')
         for r in anatomies:
-            anatomy_node = KNode (Text.obo_to_curie(r['anatomyID']), node_types.ANATOMY )
+            anatomy_node = KNode (Text.obo_to_curie(r['anatomyID']), node_types.ANATOMY, label=r['anatomyLabel'] )
             edge = self.create_edge(anatomy_node, cell_node, 'uberongraph.get_anatomy_by_cell_graph', cell_node.identifier, predicate)
             results.append ( (edge, anatomy_node) )
         return results
     
     def create_phenotype_anatomy_edge(self, node_id, node_label, input_id ,phenotype_node):
         predicate = LabeledID('UPHENO:0000001','has phenotype affecting')
-        anatomy_node = KNode ( Text.obo_to_curie(node_id), node_types.ANATOMY )
+        anatomy_node = KNode ( Text.obo_to_curie(node_id), node_types.ANATOMY , label=node_label)
         edge = self.create_edge(phenotype_node, anatomy_node,'uberongraph.get_anatomy_by_phenotype_graph', input_id, predicate)
         #node.label = node_label
         return edge,anatomy_node

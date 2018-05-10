@@ -26,11 +26,11 @@ def test_ncbi_to_uniprot(hgnc):
 def test_synonym(hgnc):
     ncbigene = 'NCBIGENE:3815'
     syns = hgnc.get_synonyms(ncbigene)
-    curies = [Text.get_curie(s).upper() for s in syns]
+    curies = [Text.get_curie(s.identifier).upper() for s in syns]
     for c in ['NCBIGENE','OMIM','UNIPROTKB','ENSEMBL','HGNC']:
         assert c in curies
 
 def test_uniprot(hgnc):
     uniprot='UniProtKB:Q96RI1'
-    syns = hgnc.get_synonyms(uniprot)
+    syns = [s.identifier for s  in hgnc.get_synonyms(uniprot) ]
     assert 'HGNC:7967' in syns

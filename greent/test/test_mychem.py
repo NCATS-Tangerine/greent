@@ -16,7 +16,8 @@ def test_drug_adverse_events(mychem):
     results = mychem.get_adverse_events(node)
     assert len(results) > 0
 
-def test_with_pheno_filter(rosetta):
+#This test is accurate, but pheno filter is slow, so it doesn't make a good test
+def x_test_with_pheno_filter(rosetta):
     """This will usually get called with a phenotype filter"""
     fname='caster.output_filter(mychem~get_adverse_events,phenotypic_feature,typecheck~is_phenotypic_feature)'
     func = rosetta.get_ops(fname)

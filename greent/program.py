@@ -1,7 +1,7 @@
 import logging
 import traceback
 from collections import defaultdict
-from greent.graph_components import KNode, KEdge
+from greent.graph_components import KNode
 from greent.util import LoggingUtil
 from greent import node_types
 
@@ -18,6 +18,8 @@ class QueryDefinition:
         self.transitions = []
         self.start_lookup_node = None
         self.end_lookup_node = None
+        self.start_name = None
+        self.end_name = None
 
 class Program:
 
@@ -40,8 +42,8 @@ class Program:
     def initialize_instance_nodes(self, query_definition):
         logger.debug("Initializing program {}".format(self.program_number))
         t_node_ids = self.get_fixed_concept_nodes()
-        self.start_nodes = [KNode(start_identifier, self.concept_nodes[t_node_ids[0]]) for start_identifier in
-                     query_definition.start_values]
+        self.start_nodes = [KNode(start_identifier, self.concept_nodes[t_node_ids[0]],label=query_definition.start_name)
+                            for start_identifier in query_definition.start_values]
         self.add_instance_nodes(self.start_nodes, t_node_ids[0])
         if len(t_node_ids) == 1:
             if query_definition.end_values:
@@ -52,8 +54,8 @@ class Program:
             if not query_definition.end_values:
                 raise Exception(
                     "We have multiple fixed nodes in the query plan but only one set of fixed instances")
-            self.end_nodes = [KNode(start_identifier, self.concept_nodes[t_node_ids[-1]]) for start_identifier in
-                         query_definition.end_values]
+            self.end_nodes = [KNode(start_identifier, self.concept_nodes[t_node_ids[-1]], label=query_definition.start_name)
+                              for start_identifier in query_definition.end_values]
             self.add_instance_nodes(self.end_nodes, t_node_ids[-1])
             return
         raise Exception("We don't yet support more than 2 instance-specified nodes")

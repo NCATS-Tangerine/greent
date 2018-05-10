@@ -12,9 +12,9 @@
 #support with chemotext and chemotext2
 #Label in neo4j will be "test2"
 
-PYTHONPATH=.. python buildmain.py -s omnicorp -p "ST" --start "Escitalopram" 
+#PYTHONPATH=.. python buildmain.py -s omnicorp -p "ST" --start "Escitalopram" 
 
-#PYTHONPATH=.. python buildmain.py -s omnicorp -q 2 --start "ARTEMETHER" --end "Malaria" 
+PYTHONPATH=.. python buildmain.py -s omnicorp -q 2 --start "ARTEMETHER" --end "Malaria" 
 #PYTHONPATH=.. python buildmain.py -s omnicorp -q 2 --start "IMATINIB" --end "Asthma" 
 
 #PYTHONPATH=../../robokop-interfaces python builder.py -s chemotext -p SGPC --start "ARTEMETHER" -l test_ARTEMETHER
