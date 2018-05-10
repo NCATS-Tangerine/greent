@@ -13,6 +13,7 @@ from greent.services.chemotext import Chemotext
 from greent.services.ctd import CTD
 from greent.services.hetio import HetIO
 from greent.services.hgnc import HGNC
+from greent.services.mychem import MyChem
 from greent.services.onto import Onto
 from greent.services.omnicorp import OmniCorp
 from greent.services.oxo import OXO
@@ -47,13 +48,14 @@ class GreenT:
             "hgnc"             : lambda :  HGNC(self.service_context),
             "hpo"              : lambda :  HPO2 (self.service_context) if self.ont_api else HPO (self.service_context),
             "mondo"            : lambda :  Mondo2(self.service_context) if self.ont_api else Mondo(self.service_context),
+            "mychem"           : lambda :  MyChem(self.service_context),
             "omnicorp"         : lambda :  OmniCorp (self.service_context),
             "oxo"              : lambda :  OXO (self.service_context),
             "onto"             : lambda :  Onto ("onto", self.service_context),
             "pharos"           : lambda :  Pharos (self.service_context),
             "quickgo"          : lambda :  QuickGo (self.service_context),
             "tkba"             : lambda :  TranslatorKnowledgeBeaconAggregator (self.service_context),
-            "typecheck"        : lambda :  TypeCheck(self.service_context),
+            "typecheck"        : lambda :  TypeCheck(self.service_context, self),
             "uberongraph"      : lambda :  UberonGraphKS(self.service_context),
             "unichem"          : lambda :  UniChem(self.service_context)
         }

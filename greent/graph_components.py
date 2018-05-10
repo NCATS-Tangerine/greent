@@ -7,7 +7,7 @@ from json import JSONDecoder
 from typing import NamedTuple
 
 class GenericJSONEncoder(JSONEncoder):
-    def default(self, o):
+    def default(self, obj):
         d = { '__class__':obj.__class__.__name__, 
               '__module__':obj.__module__,
         }
@@ -19,7 +19,7 @@ class KNodeEncoder(GenericJSONEncoder):
     pass
 class GenericJSONDecoder(JSONDecoder):
     def __init__(self, encoding=None):
-        json.JSONDecoder.__init__(self, object_hook=self.dict_to_object)
+        JSONDecoder.__init__(self, object_hook=self.dict_to_object)
     def dict_to_object(self, d):
         if '__class__' in d:
             class_name = d.pop('__class__')
@@ -52,11 +52,13 @@ class KNode():
         self.node_type = node_type
         self.properties = {}
         self.mesh_identifiers = []
+        #Synonyms is just for CURIEs
         self.synonyms = set()
         self.synonyms.add(identifier)
         self.contexts = defaultdict(set)
 
     def add_synonyms(self, new_synonym_set):
+        """Accepts a collection of either String CURIES or LabeledIDs"""
         self.synonyms.update(new_synonym_set)
 
     def get_synonyms_by_prefix(self, prefix):

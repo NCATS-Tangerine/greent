@@ -54,12 +54,15 @@ def lookup_drug_by_name( drug_name, greent ):
     logger.debug('Looking up drug name: {}'.format(drug_name) )
     #CTD
     ctd_ids = greent.ctd.drugname_string_to_drug_identifier( drug_name )
+    logger.debug(' CTD says: {}'.format(ctd_ids) )
     #PHAROS
     pids_and_labels = greent.pharos.drugname_string_to_pharos_info( drug_name )
     pharos_ids = [x[0] for x in pids_and_labels]
+    logger.debug(' Pharos says: {}'.format(pharos_ids) )
     #PUBCHEM
     pubchem_info = greent.chembio.drugname_to_pubchem( drug_name )
     pubchem_ids = [ 'PUBCHEM:{}'.format(r['drugID'].split('/')[-1]) for r in pubchem_info ]
+    logger.debug(' pubchem says: {}'.format(pubchem_ids))
     #TOTAL:
     drug_ids = ctd_ids + pharos_ids + pubchem_ids
     logger.debug( drug_ids )
