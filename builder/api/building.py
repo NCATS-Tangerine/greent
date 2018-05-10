@@ -11,7 +11,7 @@ from flask import request
 from flask_restful import Resource, reqparse
 from flasgger import Swagger
 
-from setup import app, api, swagger
+from builder.api.setup import app, api, swagger
 # from builder.question import Question
 from builder.api.tasks import update_kg
 import builder.api.logging_config
