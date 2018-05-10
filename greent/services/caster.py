@@ -26,6 +26,7 @@ class Caster(Service):
         for edge,node in results:
             node.node_type = output_type
         return results
+
     def output_filter(self, base_function, output_type, type_check, node):
         results = base_function(node)
         good_results = list(filter(lambda y: type_check(y[1]), results))

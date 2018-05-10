@@ -11,3 +11,11 @@ def test_neuron(rosetta):
     assert len(meshcell) == 1
     mid = list(meshcell)[0]
     assert mid == 'MeSH:D009474'
+
+def test_phenotype(rosetta):
+    node = KNode("MEDDRA:10014408", node_types.PHENOTYPE)
+    synonymize(node,rosetta.core)
+    assert len(node.synonyms) >  10
+    hpsyns = node.get_synonyms_by_prefix("HP")
+    assert len(hpsyns) > 0
+    print(hpsyns)
