@@ -37,14 +37,12 @@ RUN pip install \
 ## Finish up
 ENV HOME=/home/murphy
 ENV USER=murphy
-COPY ./startup.sh /home/murphy/startup.sh
-COPY ./supervisord.conf /home/murphy/supervisord.conf
 
 WORKDIR /home/murphy
 RUN rm -r /home/murphy/robokop-interfaces
 
-ENTRYPOINT ["./startup.sh"]
-CMD ["supervisord", "-c", "./supervisord.conf"]
+ENTRYPOINT ["./robokop-interfaces/deploy/startup.sh"]
+CMD ["supervisord", "-c", "./robokop-interfaces/deploy/supervisord.conf"]
 
 # CMD gets called only if you call `docker run` without extra arguments
 
