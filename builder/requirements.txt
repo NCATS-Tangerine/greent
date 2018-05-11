@@ -76,7 +76,6 @@ PyYAML==3.12
 pyzmq==16.0.2
 qtconsole==4.3.1
 rdflib==4.2.2
-reasoner==0.9
 requests==2.18.1
 requests-kerberos==0.11.0
 requests-toolbelt==0.8.0
