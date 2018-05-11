@@ -3,16 +3,13 @@
 FROM python:3
 
 LABEL maintainer="patrick@covar.com"
-ENV REFRESHED_AT 2018-05-02
+ENV REFRESHED_AT 2018-05-03
 
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
 
-## Upgrade (get out of pre-release)
-RUN apt-get update
-RUN apt-get upgrade -y
-
 ## Install basic tools
+RUN apt-get update
 RUN apt-get install -yq \
     vim
 
@@ -24,15 +21,10 @@ WORKDIR /home/murphy
 RUN git clone https://github.com/NCATS-Gamma/robokop-interfaces.git
 
 WORKDIR /home/murphy/robokop-interfaces
-RUN git checkout docker
 
 ## Install all requirements
-RUN pip install -r ./greent/requirements.txt
-RUN pip install git+https://github.com/Supervisor/supervisor@master
-RUN pip install \
-    celery \
-    flask_restful \
-    flower
+RUN pip install -r ./greent/requirements.txt --src /usr/local/src
+RUN pip install -r ./builder/requirements.txt --src /usr/local/src
 
 ## Finish up
 ENV HOME=/home/murphy
