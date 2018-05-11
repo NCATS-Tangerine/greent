@@ -18,7 +18,6 @@ graphene==1.4.1
 graphql-core==1.1
 graphql-relay==0.4.5
 green==2.11.0
-greent==0.51
 hdijupyterutils==0.12.4
 html5lib==1.0b10
 idna==2.5
