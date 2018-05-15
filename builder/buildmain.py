@@ -17,6 +17,7 @@ import calendar
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
 def export_edge(tx,edge):
+    logger.debug(f'Export {edge}')
     """The approach of updating edges will be to erase an old one and replace it in whole.   There's no real
     reason to worry about preserving information from an old edge.
     What defines the edge are the identifiers of its nodes, and the source.function that created it."""
@@ -66,32 +67,38 @@ def export_edge(tx,edge):
 
 def export_node(tx,node ):
     """Utility for writing updated nodes.  Goes in node?"""
+    logger.debug(f'Export {node}')
     result = tx.run("MATCH (a {id: {id}}) RETURN a", {"id": node.identifier})
     original_record = result.peek()
     if not original_record:
-        syns = list(node.synonyms)
+        logger.debug( ' Not in graph - export whole thing')
+        syns = [s.identifier for s in node.synonyms]
         syns.sort()
         cstring = "CREATE (a:%s {id: {id}, name: {name}, node_type: {node_type}, equivalent_identifiers: {syn}"
         if len(node.properties) > 0:
             pstring = ','.join(['%s: {%s}' % (k,k) for k in node.properties])
             cstring = cstring + ',%s' % pstring
         cstring += "})"
+        logger.debug(f'  {cstring}')
         nodemap = {"id": node.identifier, "name": node.label, "node_type": node.node_type, "syn": syns }
         nodemap.update(node.properties)
         #logger.info(cstring)
         #logger.info(nodemap)
         tx.run( cstring % (node.node_type),nodemap)
-
     else:
+        logger.debug( ' In graph - update')
         original_node = original_record['a']
         if node.node_type not in original_node.labels:
             #Note: You can't use query parameterization on node labels in neo4j - UGH
+            logger.debug(f'  update label')
             tx.run("MATCH (a {id: {identifier} }) SET a:%s" % (node.node_type,), identifier = node.identifier)
-        new_syns = list(node.synonyms)
+        new_syns = [s.identifier for s in node.synonyms]
         new_syns.sort()
         if original_node['name'] != node.label or original_node['synonyms'] != new_syns:
+            logger.debug(f'  update props')
             tx.run("MATCH (a {id: {identifier} }) SET a.name = {name}, a.equivalent_identifiers= {synonyms}",
                         identifier = node.identifier, name = node.label, synonyms = new_syns)
+    logger.debug('ok')
 
 class KnowledgeGraph:
     def __init__(self, userquery, rosetta):
@@ -460,11 +467,9 @@ def run_query(querylist, supports, rosetta, prune=False):
 def generate_query(pathway, start_identifiers, start_name = None, end_identifiers=None, end_name=None):
     start, middle, end = pathway[0], pathway[1:-1], pathway[-1]
     query = UserQuery(start_identifiers, start.nodetype, start_name)
-    print(start.nodetype)
     for transition in middle:
         print(transition)
         query.add_transition(transition.nodetype, transition.min_path_length, transition.max_path_length)
-    print(end)
     query.add_transition(end.nodetype, end.min_path_length, end.max_path_length, end_values=end_identifiers, end_name=end_name)
     return query
 
@@ -492,7 +497,7 @@ def run(pathway, start_name, end_name,  supports, config):
     else:
         end_identifiers = None
     print("Start identifiers: " + '..'.join(start_identifiers))
-    query = generate_query(steps, start_identifiers, end_identifiers)
+    query = generate_query(steps, start_identifiers, start_name, end_identifiers, end_name)
     run_query(query, supports, rosetta, prune=False)
 
 

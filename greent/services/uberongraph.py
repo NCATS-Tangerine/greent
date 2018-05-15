@@ -78,6 +78,35 @@ class UberonGraphKS(Service):
         return results
 
 
+    def anatomy_to_cell (self, anatomy_identifier):
+        """ Identify anatomy terms related to cells.
+
+        :param cell: CL identifier for cell type
+        """
+        text = """
+        prefix UBERON: <http://purl.obolibrary.org/obo/UBERON_>
+        prefix CL: <http://purl.obolibrary.org/obo/CL_>
+        prefix BFO: <http://purl.obolibrary.org/obo/BFO_>
+        select distinct ?cellID ?cellLabel
+        from <http://reasoner.renci.org/nonredundant>
+        from <http://example.org/uberon-hp-cl.ttl>
+        where {
+                  graph <http://reasoner.renci.org/redundant> {
+                    ?cellID rdfs:subClassOf ?super .
+                    ?cellID rdfs:subClassOf CL:0000000 .
+                  }
+                  ?super BFO:0000050 $anatomyID .
+                  ?cellID rdfs:label ?cellLabel .
+              }
+        """
+        results = self.triplestore.query_template(
+            inputs = { 'anatomyID': anatomy_identifier }, \
+            outputs = [ 'cellID', 'cellLabel' ], \
+            template_text = text \
+        )
+        return results
+
+
     def cell_to_anatomy (self, cell_identifier):
         """ Identify anatomy terms related to cells.
 
@@ -154,7 +183,17 @@ class UberonGraphKS(Service):
             edge = self.create_edge(anatomy_node, cell_node, 'uberongraph.get_anatomy_by_cell_graph', cell_node.identifier, predicate)
             results.append ( (edge, anatomy_node) )
         return results
-    
+
+    def get_cell_by_anatomy_graph (self, anatomy_node):
+        cells = self.anatomy_to_cell(anatomy_node.identifier)
+        results = []
+        predicate = LabeledID('BFO:0000050', 'has_part')
+        for r in cells:
+            cell_node = KNode (Text.obo_to_curie(r['cellID']), node_types.CELL, label=r['cellLabel'] )
+            edge = self.create_edge(anatomy_node, cell_node, 'uberongraph.get_cell_by_anatomy_graph', anatomy_node.identifier, predicate)
+            results.append ( (edge, cell_node) )
+        return results
+
     def create_phenotype_anatomy_edge(self, node_id, node_label, input_id ,phenotype_node):
         predicate = LabeledID('UPHENO:0000001','has phenotype affecting')
         anatomy_node = KNode ( Text.obo_to_curie(node_id), node_types.ANATOMY , label=node_label)

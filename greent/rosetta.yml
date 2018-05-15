@@ -33,10 +33,17 @@
 # Defines transitions from one vocabulary domain to another including a predicate.
 
 '@operators':
+  anatomical_entity:
+    cell:
+      - link : anatomy_to_cell_type
+        op   : uberongraph.get_cell_by_anatomy_graph
   cell:
     anatomical_entity:
       - link : cell_type_to_anatomy
         op   : uberongraph.get_anatomy_by_cell_graph
+    biological_process_or_molecular_activity:
+      - link : bio_process_cell_type
+        op   : quickgo.cell_to_go_term_annotation_extensions
   biological_process_or_molecular_activity:
     gene:
       - link : bio_process_gene
@@ -83,6 +90,8 @@
     chemical_substance:
       - link  : gene_to_drug
         op    : ctd.gene_to_drug
+      - link  : gene_get_drug
+        op    : pharos.gene_get_drug
     pathway:
       - link  : gene_to_pathway
         op    : biolink.gene_get_pathways

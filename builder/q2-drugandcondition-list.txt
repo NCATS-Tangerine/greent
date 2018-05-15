@@ -1,4 +1,5 @@
 Drug	Condition
+MIRODENAFIL	Erectile Dysfunction
 BUTYLSCOPOLAMINE	Abdominal Pain
 ADAPALENE	Acne Vulgaris
 NADIFLOXACIN	Acne Vulgaris
@@ -30,6 +31,29 @@ GALANTAMINE	Alzheimer Disease
 PROGESTERONE	Amenorrhea
 GONADORELIN	Amenorrhea
 RILUZOLE	Amyotrophic Lateral Sclerosis
+CEFTRIAXONE	Amyotrophic Lateral Sclerosis
+MEMANTINE	Amyotrophic Lateral Sclerosis
+TALAMPANEL	Amyotrophic Lateral Sclerosis
+CELECOXIB	Amyotrophic Lateral Sclerosis
+ERYTHROPOIETIN	Amyotrophic Lateral Sclerosis
+GLATIRAMER ACETATE	Amyotrophic Lateral Sclerosis
+MINOCYCLINE	Amyotrophic Lateral Sclerosis
+NP001	Amyotrophic Lateral Sclerosis
+PIOGLITAZONE	Amyotrophic Lateral Sclerosis
+VALPROIC ACID	Amyotrophic Lateral Sclerosis
+COENZYME Q10	Amyotrophic Lateral Sclerosis
+CREATINE	Amyotrophic Lateral Sclerosis
+EDARAVONE	Amyotrophic Lateral Sclerosis
+DEXPRAMIPEXOLE	Amyotrophic Lateral Sclerosis
+OLESOXIME	Amyotrophic Lateral Sclerosis
+TCH346	Amyotrophic Lateral Sclerosis
+XALIPRODEN	Amyotrophic Lateral Sclerosis
+BDNF	Amyotrophic Lateral Sclerosis
+CTNF	Amyotrophic Lateral Sclerosis
+IGF-1	Amyotrophic Lateral Sclerosis
+MASITINIB	Amyotrophic Lateral Sclerosis
+LITHIUM	Amyotrophic Lateral Sclerosis
+TIRASEMTIV	Amyotrophic Lateral Sclerosis
 ALFATRADIOL	Alopecia
 FOLIC ACID	Anemia, Megaloblastic
 SEVOFLURANE	Anesthesia, General
@@ -295,7 +319,6 @@ FELBAMATE	Epilepsy
 METHSUXIMIDE	Epilepsy
 BRIVARACETAM	Epilepsy
 VIGABATRIN	Epilepsy
-MIRODENAFIL	Erectile Dysfunction
 SULFOMYXIN	Escherichia coli Infections
 IMIPENEM	Escherichia coli Infections
 CLOPROSTENOL	Estrous Cycle
@@ -420,6 +443,7 @@ LOMITAPIDE	Hypercholesterolemia
 PROBUCOL	Hypercholesterolemia
 FENOFIBRATE	Hypercholesterolemia
 IMATINIB	Hypereosinophilic Syndrome
+IMATINIB	Asthma
 BEZAFIBRATE	Hyperlipidemias
 CIPROFIBRATE	Hyperlipidemias
 ATORVASTATIN	Hyperlipidemias

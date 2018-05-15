@@ -150,6 +150,7 @@ class CTD(Service):
         output = []
         identifiers = gene_node.get_synonyms_by_prefix('NCBIGENE')
         for identifier in identifiers:
+            unique = set()
             url = f"{self.url}/CTD_chem_gene_ixns_GeneID/{Text.un_curie(identifier)}/"
             obj = requests.get (url).json ()
             for r in obj:
@@ -166,6 +167,9 @@ class CTD(Service):
                     obj = gene_node
                 edge = self.create_edge(subject,obj,'ctd.gene_to_drug',identifier,predicate,
                                         publications=[f"PMID:{r['PubMedIDs']}"],url=url,properties=props)
-                output.append( (edge,drug_node) )
+                key = (drug_node.identifier, edge.standard_predicate)
+                if key not in unique:
+                    output.append( (edge,drug_node) )
+                    unique.add(key)
         return output
 

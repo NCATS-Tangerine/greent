@@ -124,7 +124,15 @@ class UserQuery:
         self.cypher = self.generate_cypher()
         print(self.cypher)
         plans = rosetta.type_graph.get_transitions(self.cypher)
-        self.programs = [Program(plan, self.definition, rosetta, i) for i,plan in enumerate(plans)]
+        #self.programs = [Program(plan, self.definition, rosetta, i) for i,plan in enumerate(plans)]
+        self.programs = []
+        for i,plan in enumerate(plans):
+            try:
+                #Some programs are bogus (when you have input to a named node) 
+                #it throws an exception then, and we ignore it.
+                self.programs.append(Program(plan, self.definition, rosetta, i))
+            except:
+                pass
         return len(self.programs) > 0
 
     def get_programs(self):

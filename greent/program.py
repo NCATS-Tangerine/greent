@@ -88,6 +88,7 @@ class Program:
         while len(self.unused_instance_nodes) > 0:
             source_node, context = self.unused_instance_nodes.pop()
             if context not in self.transitions:
+                #Need a comment explaining why this is here.
                 continue
             link = self.transitions[context]
             next_context = link['to']

@@ -19,6 +19,8 @@ synonymizers = {
     #These ones don't do anything, but we should at least pick up MeSH identifiers where we can.
     node_types.PATHWAY:oxo_synonymizer,
     node_types.PROCESS:oxo_synonymizer,
+    node_types.FUNCTION:oxo_synonymizer,
+    node_types.PROCESS_OR_FUNCTION:oxo_synonymizer,
     node_types.CELL:oxo_synonymizer,
     node_types.ANATOMY:oxo_synonymizer,
 }
@@ -55,15 +57,17 @@ class Synonymizer:
         #Now start looking for the best curies
         synonyms_by_curie = defaultdict(list)
         for s in node.synonyms:
-            c = Text.get_curie(s)
+            c = Text.get_curie(s.identifier)
             synonyms_by_curie[c].append(s)
         for type_curie in type_curies:
             potential_identifiers = synonyms_by_curie[type_curie]
             if len(potential_identifiers) > 0:
                 if len(potential_identifiers) > 1:
-                    logger.warn('More than one potential identifier for a node: {}'.format(','.join(potential_identifiers)))
+                    pis = [ f'{pi.identifier}({pi.label})' for pi in potential_identifiers]
+                    logger.warn('More than one potential identifier for a node: {}'.format(','.join(pis)))
                 potential_identifiers.sort()
-                node.identifier = potential_identifiers[0]
+                node.identifier = potential_identifiers[0].identifier
+                node.label = potential_identifiers[0].label
                 break
         if node.identifier.startswith('DOID'):
             print(node.identifier)

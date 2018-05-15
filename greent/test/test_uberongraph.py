@@ -26,6 +26,22 @@ def test_cell_to_anatomy(uberon):
     assert node.node_type  == node_types.ANATOMY
     assert node.identifier == 'UBERON:0002405'
 
+def test_anatomy_to_cell(uberon):
+    k = KNode('UBERON:0002405',node_types.ANATOMY,'Immune system')
+    results = uberon.get_cell_by_anatomy_graph( k )
+    #Mast cells are part of the immune system
+    assert len(results) > 0
+    identifiers = [result[1].identifier for result in results]
+    for identifier in identifiers:
+        assert identifier.startswith('CL:')
+    assert 'CL:0000097' in identifiers
+
+def test_anatomy_to_cell_upcast(uberon):
+    k = KNode('CL:0000192',node_types.ANATOMY,'Smooth Muscle Cell')
+    results = uberon.get_cell_by_anatomy_graph( k )
+    #There's no cell that's part of another cell?
+    assert len(results) == 0
+
 def test_pheno_to_anatomy(uberon):
     #Arrhythmia occurs in...
     k = KNode('HP:0011675',node_types.PHENOTYPE)
