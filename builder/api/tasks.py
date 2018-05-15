@@ -60,7 +60,7 @@ def update_kg(self, question_json):
         end_identifiers = question.nodes[-1].identifiers
 
         steps = tokenize_path(node_string)
-        query = generate_query(steps, start_identifiers, end_identifiers)
+        query = generate_query(steps, start_identifiers, end_identifiers=end_identifiers)
         run_query(query, supports=['builder.omnicorp'], rosetta=rosetta, prune=False)
 
         logger.info("Done updating.")
