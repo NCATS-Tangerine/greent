@@ -1,8 +1,11 @@
+import logging
 #from program import Program
 from greent.node_types import node_types, UNSPECIFIED
 from greent.util import Text
 from greent.program import Program
 from greent.program import QueryDefinition
+
+logger = logging.getLogger(__name__)
 
 class Transition:
     def __init__(self, last_type, next_type, min_path_length, max_path_length):
@@ -122,7 +125,7 @@ class UserQuery:
 
     def compile_query(self, rosetta):
         self.cypher = self.generate_cypher()
-        print(self.cypher)
+        logger.debug(self.cypher)
         plans = rosetta.type_graph.get_transitions(self.cypher)
         #self.programs = [Program(plan, self.definition, rosetta, i) for i,plan in enumerate(plans)]
         self.programs = []
@@ -131,8 +134,8 @@ class UserQuery:
                 #Some programs are bogus (when you have input to a named node) 
                 #it throws an exception then, and we ignore it.
                 self.programs.append(Program(plan, self.definition, rosetta, i))
-            except:
-                pass
+            except Exception as err:
+                logger.exception(err)
         return len(self.programs) > 0
 
     def get_programs(self):
