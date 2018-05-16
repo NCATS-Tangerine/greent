@@ -16,14 +16,14 @@ import builder.api.logging_config
 from builder.api.setup import app
 from builder.question import Question
 
-greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
-sys.path.insert(0, greent_path)
 from greent import node_types
 
 from builder.buildmain import run_query, generate_query
 from builder.pathlex import tokenize_path
 from builder.buildmain import setup
 
+greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
+sys.path.insert(0, greent_path)
 rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
 
 # set up Celery
