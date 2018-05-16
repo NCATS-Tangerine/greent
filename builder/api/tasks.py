@@ -55,7 +55,7 @@ def update_kg(self, question_json):
         question = Question(question_json)
         symbol_lookup = {node_types.type_codes[a]:a for a in node_types.type_codes} # invert this dict
         # assume the nodes are in order
-        node_string = ''.join([symbol_lookup[n.type] for n in question.nodes])
+        node_string = ''.join([symbol_lookup[n.type if not n.type =='biological_process' else 'biological_process_or_molecular_activity'] for n in question.nodes])
         start_identifiers = question.nodes[0].identifiers
         end_identifiers = question.nodes[-1].identifiers
 
