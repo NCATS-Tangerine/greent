@@ -29,6 +29,16 @@ def test_extensions(quickgo):
     assert len(myedges) == 1
     assert myedges[0][0].standard_predicate is not None
 
+def test_reverse_extensions(quickgo):
+    r = quickgo.cell_to_go_term_annotation_extensions(KNode("CL:0002131", node_types.CELL))
+    types = set([n.node_type for e,n in r])
+    assert len(types) == 1
+    assert node_types.PROCESS_OR_FUNCTION in types
+    myedges = list(filter( lambda en: en[1].identifier=='GO:0010628' , r))
+    assert len(myedges) == 1
+    assert myedges[0][0].standard_predicate is not None
+    assert myedges[0][1].label=='positive regulation of gene expression'
+
 def test_extensions_bp(quickgo):
     #Neurotransmitter secretion
     r = quickgo.go_term_to_cell_annotation_extensions (KNode("GO.BIOLOGICAL_PROCESS:0007269", node_types.PROCESS))

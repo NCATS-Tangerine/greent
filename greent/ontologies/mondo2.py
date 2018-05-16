@@ -69,7 +69,7 @@ class Mondo2(Onto):
         is_genetic, ancestors = self.is_genetic_disease(disease)
         return [
             (self.get_edge({}, 'is_gentic_condition'),
-             KNode(ancestor, node_types.GENETIC_CONDITION) ) for ancestor in ancestors
+             KNode(ancestor, node_types.GENETIC_CONDITION, label= super(Mondo2,self).get_label(ancestor) ) ) for ancestor in ancestors
             ] if is_genetic else []
 
     """ No indication anyone ever calls these three. And the fourth is called internally by something we're replacing. """

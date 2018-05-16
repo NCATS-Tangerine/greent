@@ -126,46 +126,50 @@ class CTD(Service):
 
     def drug_to_gene(self, drug):
         output = []
-        for identifier in drug.synonyms:
-            if Text.get_curie(identifier).upper() == 'MESH':
-                url=f"{self.url}/CTD_chem_gene_ixns_ChemicalID/{Text.un_curie(identifier)}/"
-                obj = requests.get(url).json ()
-                for r in obj:
-                    props = {"description": r[ 'Interaction' ]}
-                    predicate_label = r['InteractionActions']
-                    predicate = LabeledID(self.get_ctd_predicate_identifier(predicate_label),predicate_label)
-                    gene_node = KNode(f"NCBIGENE:{r['GeneID']}", node_types.GENE)
-                    if sum([s in predicate.identifier for s in self.g2d_strings]) > 0:
-                        subject = gene_node
-                        object = drug
-                    else:
-                        subject = drug
-                        object = gene_node
-                    edge = self.create_edge(subject,object,'ctd.drug_to_gene',identifier,predicate,
-                                            publications=[f"PMID:{r['PubMedIDs']}"],url=url,properties=props)
-                    output.append( (edge,gene_node) )
+        identifiers = drug.get_synonyms_by_prefix('MESH')
+        for identifier in identifiers:
+            url=f"{self.url}/CTD_chem_gene_ixns_ChemicalID/{Text.un_curie(identifier)}/"
+            obj = requests.get(url).json ()
+            for r in obj:
+                props = {"description": r[ 'Interaction' ]}
+                predicate_label = r['InteractionActions']
+                predicate = LabeledID(self.get_ctd_predicate_identifier(predicate_label),predicate_label)
+                gene_node = KNode(f"NCBIGENE:{r['GeneID']}", node_types.GENE)
+                if sum([s in predicate.identifier for s in self.g2d_strings]) > 0:
+                    subject = gene_node
+                    object = drug
+                else:
+                    subject = drug
+                    object = gene_node
+                edge = self.create_edge(subject,object,'ctd.drug_to_gene',identifier,predicate,
+                                        publications=[f"PMID:{r['PubMedIDs']}"],url=url,properties=props)
+                output.append( (edge,gene_node) )
         return output
 
     def gene_to_drug(self, gene_node):
         output = []
-        for identifier in gene_node.synonyms:
-            if Text.get_curie(identifier).upper() == 'NCBIGENE':
-                url = f"{self.url}/CTD_chem_gene_ixns_GeneID/{Text.un_curie(identifier)}/"
-                obj = requests.get (url).json ()
-                for r in obj:
-                    props = {"description": r[ 'Interaction' ]}
-                    predicate_label = r['InteractionActions']
-                    predicate = LabeledID(self.get_ctd_predicate_identifier(predicate_label),predicate_label)
-                    #Should this be substance?
-                    drug_node = KNode(f"MESH:{r['ChemicalID']}", node_types.DRUG)
-                    if sum([s in predicate.identifier for s in self.g2d_strings]) > 0:
-                        subject = gene_node
-                        obj = drug_node
-                    else:
-                        subject = drug_node
-                        obj = gene_node
-                    edge = self.create_edge(subject,obj,'ctd.gene_to_drug',identifier,predicate,
-                                            publications=[f"PMID:{r['PubMedIDs']}"],url=url,properties=props)
+        identifiers = gene_node.get_synonyms_by_prefix('NCBIGENE')
+        for identifier in identifiers:
+            unique = set()
+            url = f"{self.url}/CTD_chem_gene_ixns_GeneID/{Text.un_curie(identifier)}/"
+            obj = requests.get (url).json ()
+            for r in obj:
+                props = {"description": r[ 'Interaction' ]}
+                predicate_label = r['InteractionActions']
+                predicate = LabeledID(self.get_ctd_predicate_identifier(predicate_label),predicate_label)
+                #Should this be substance?
+                drug_node = KNode(f"MESH:{r['ChemicalID']}", node_types.DRUG)
+                if sum([s in predicate.identifier for s in self.g2d_strings]) > 0:
+                    subject = gene_node
+                    obj = drug_node
+                else:
+                    subject = drug_node
+                    obj = gene_node
+                edge = self.create_edge(subject,obj,'ctd.gene_to_drug',identifier,predicate,
+                                        publications=[f"PMID:{r['PubMedIDs']}"],url=url,properties=props)
+                key = (drug_node.identifier, edge.standard_predicate)
+                if key not in unique:
                     output.append( (edge,drug_node) )
+                    unique.add(key)
         return output
 

@@ -7,5 +7,7 @@ from builder import lookup_utils
 def test_mesh_synonymization(rosetta):
     gt = rosetta.core
     r = lookup_utils.lookup_drug_by_name("FLECAINIDE",gt)
-    print(r)
-    assert 0==1
+    assert len(r) == 3
+    assert 'MESH:D005424' in r
+    assert 'CHEMBL:CHEMBL652' in r
+    assert 'PUBCHEM:3356' in r

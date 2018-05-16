@@ -58,11 +58,9 @@ class QuickGo(Service):
         total_pages = response['pageInfo']['total']
         for page in range(2,total_pages+1):
             url_page = url+f'&page={page}'
-            print(url_page)
             response = requests.get(url_page).json()
             if 'results' in response:
                 allresults += response['results']
-            print( page, len(allresults) )
         return allresults
 
     def go_term_to_cell_xontology_relationships(self, go_node):
@@ -92,17 +90,27 @@ class QuickGo(Service):
         cell_ids = set()
         results = []
         for r in call_results:
-            print(r)
             for e in r['extensions']:
                 for c in e['connectedXrefs']:
                     if c['db'] == 'CL':
                         if c['id'] not in cell_ids:
                             predicate = self.get_predicate(c['qualifier'])
-                            cell_node = KNode( 'CL:{}'.format(c['id']), node_types.CELL ) 
+                            #Bummer, don't get a name
+                            cell_node = KNode( 'CL:{}'.format(c['id']), node_types.CELL )
                             edge = self.create_edge(go_node, cell_node, 'quickgo.go_term_to_cell_annotation_extensions',go_node.identifier,predicate,url = url)
                             results.append( (edge,cell_node ) )
                             cell_ids.add(c['id'])
         return results
+
+    def cell_to_go_term_annotation_extensions(self,cell_node):
+        url=f'{self.url}/QuickGO/services/annotation/search?includeFields=goName&aspect=biological_process,molecular_function&extension={cell_node.identifier}'
+        call_results = self.page_calls(url)
+        go_ids = set([ (r['goId'],r['goName']) for r in call_results ])
+        predicate=self.get_predicate('occurs_in')
+        #Don't get a name for the go term.. there is a goName field, but it's always NULL.
+        nodes = [ KNode( idlabel[0] , node_types.PROCESS_OR_FUNCTION, label=idlabel[1] ) for idlabel in go_ids ]
+        edges = [ self.create_edge(go_node, cell_node, 'quickgo.cell_to_go_term_annotation_extensions', cell_node.identifier, predicate, url = url) for go_node in nodes ] 
+        return list(zip(edges,nodes))
 
     def go_term_to_gene_annotation(self,node):
         go = node.identifier

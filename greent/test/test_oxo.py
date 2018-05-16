@@ -11,12 +11,13 @@ def oxo():
     return oxo
 
 def test_prefixes(oxo):
-    assert oxo.is_valid_curie_prefix("EFO")
-    assert not oxo.is_valid_curie_prefix("NCBIGENE")
-    assert not  oxo.is_valid_curie_prefix("NCBIGene")
-    assert oxo.is_valid_curie_prefix("DOID")
     #do I care about case?  Jim says curie are case sensitive...
-    #assert oxo.is_valid_curie_prefix("DoiD")
+    #But we are going to have to be a little sloppier
+    assert oxo.is_valid_curie_prefix("EFO")
+    assert oxo.is_valid_curie_prefix("NCBIGENE")
+    assert oxo.is_valid_curie_prefix("NCBIGene")
+    assert oxo.is_valid_curie_prefix("DOID")
+    assert oxo.is_valid_curie_prefix("DoiD")
     assert oxo.is_valid_curie_prefix("MESH")
     assert oxo.is_valid_curie_prefix("MeSH")
     assert not oxo.is_valid_curie_prefix("dummy")

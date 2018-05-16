@@ -54,15 +54,23 @@ class KNode():
         self.mesh_identifiers = []
         #Synonyms is just for CURIEs
         self.synonyms = set()
-        self.synonyms.add(identifier)
+        self.synonyms.add(LabeledID(identifier,label))
         self.contexts = defaultdict(set)
 
     def add_synonyms(self, new_synonym_set):
         """Accepts a collection of either String CURIES or LabeledIDs"""
-        self.synonyms.update(new_synonym_set)
+        #Once I am sure that we're only sending in strings, we can dunk this and go back to just using update
+        #self.synonyms.update(new_synonym_set)
+        for newsyn in new_synonym_set:
+            if isinstance(newsyn,str):
+                self.synonyms.add(LabeledID(newsyn,""))
+            else:
+                #Better be a LabeledID
+                self.synonyms.add(newsyn)
 
     def get_synonyms_by_prefix(self, prefix):
-        return set( filter(lambda x: Text.get_curie(x) == prefix, self.synonyms) )
+        """Returns curies (not labeledIDs) for any synonym with the input prefix"""
+        return set( filter(lambda x: Text.get_curie(x).upper() == prefix.upper(), [s.identifier for s in self.synonyms]) )
 
     def add_context(self, program_id, context):
         self.contexts[program_id].add(context)

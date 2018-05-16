@@ -31,12 +31,12 @@ class HetIO(Neo4JREST):
         gene_identifier = Text.un_curie(gene_identifiers[0])
         nodes,edges = self.query ( "MATCH (a:Anatomy)-[ar]-(g:Gene) WHERE g.identifier={0} RETURN a, ar, g LIMIT 200".format (gene_identifier),
                               labels=['Anatomy'], kinds=['node','relationship'])
-        node_ids = [ node['identifier'] for node in nodes ]
+        node_ids = [ LabeledID(node['identifier'],node['name']) for node in nodes ]
         edge_ids = [ edge['type'] for edge in edges ]
         results = []
         for node_id, predicate_label in zip(node_ids,edge_ids):
             predicate = LabeledID(f'hetio:{predicate_label}', predicate_label)
-            anatomy = KNode(node_id, node_types.ANATOMY) 
+            anatomy = KNode(node_id.identifier, node_types.ANATOMY, label=node_id.label)
             #These edges all go from anatomy to gene
             edge = self.create_edge(anatomy, gene,'hetio.gene_to_anatomy',gene_identifier,predicate)
             results.append((edge, anatomy))
@@ -47,9 +47,9 @@ class HetIO(Neo4JREST):
         result = self.query (
             "MATCH (g:Gene)-[r]-(c:CellularComponent) WHERE g.name='{0}' RETURN g, r, c LIMIT 200".format (Text.un_curie (gene.identifier)),
             labels=['CellularComponent'],
-            node_properties=['identifier'])
+            node_properties=['identifier','name'])
         anatomies = []
-        return [ ( self.get_edge ({ 'res' : r }, predicate='affects'), KNode(r['identifier'], node_types.CELLULAR_COMPONENT) ) for r in result ]
+        return [ ( self.get_edge ({ 'res' : r }, predicate='affects'), KNode(r['identifier'], node_types.CELLULAR_COMPONENT,r['name']) ) for r in result ]
 
     #TODO: implement the reverse too
     def gene_to_disease (self, gene):
@@ -58,13 +58,13 @@ class HetIO(Neo4JREST):
         nodes, edges = self.query (
             "MATCH (d:Disease)-[a1]-(g:Gene) WHERE g.identifier={0} RETURN a1,d".format (gene_identifier),
             labels=['Disease'], kinds=['node','relationship'])
-        node_ids = [ node['identifier'] for node in nodes ]
+        node_ids = [ LabeledID(node['identifier'],node['name']) for node in nodes ]
         edge_ids = [ edge['type'] for edge in edges ]
         results = []
         #These edges all go from disease to gene
         for node_id, predicate_label in zip(node_ids,edge_ids):
             predicate = LabeledID(f'hetio:{predicate_label}', predicate_label)
-            disease = KNode(node_id, node_types.DISEASE) 
+            disease = KNode(node_id.identifier, node_types.DISEASE,label=node_id.label)
             edge = self.create_edge(disease, gene,'hetio.gene_to_disease',gene_identifier,predicate)
             results.append( (edge, disease) )
         return results
@@ -74,12 +74,12 @@ class HetIO(Neo4JREST):
         disease_identifier = disease_identifiers[0]
         query = """MATCH (d:Disease{identifier:'%s'})-[r]-(s:Symptom) RETURN d,r,s""" % (disease_identifier)
         nodes,edges = self.query (query, labels=['Symptom'], kinds=['node','relationship'])
-        node_ids = [ f"MESH:{node['identifier']}" for node in nodes ]
+        node_ids = [ LabeledID(f"MESH:{node['identifier']}", node['name']) for node in nodes ]
         edge_ids = [ edge['type'] for edge in edges ]
         results = []
         for node_id, predicate_label in zip(node_ids,edge_ids):
             predicate = LabeledID(f'hetio:{predicate_label}', predicate_label)
-            phenotype = KNode(node_id, node_types.PHENOTYPE) 
+            phenotype = KNode(node_id.identifier, node_types.PHENOTYPE,label=node_id.label)
             edge = self.create_edge(disease, phenotype, 'hetio.disease_to_phenotype', disease_identifier, predicate)
             results.append( (edge, phenotype) )
         return results

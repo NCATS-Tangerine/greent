@@ -6,7 +6,8 @@ from greent.util import Text
 
 
 def test_mondo_synonymization(rosetta):
-    node = KNode('MONDO:0009757',node_types.DISEASE)
+    #Niemann Pick Disease (not type C)
+    node = KNode('MONDO:0001982',node_types.DISEASE)
     synonyms = synonymize(node,rosetta.core)
     assert len(synonyms) > 10
     node.add_synonyms(synonyms)
@@ -15,7 +16,7 @@ def test_mondo_synonymization(rosetta):
     assert doids.pop() == 'DOID:14504'
     meshes = node.get_synonyms_by_prefix('MESH')
     assert len(meshes) == 3
-    assert 'MeSH:C564941' in meshes
+    assert 'MeSH:D052536' in meshes
     assert 'MeSH:D009542' in meshes
     assert 'MeSH:D052556' in meshes
     assert Text.get_curie(node.identifier) == 'MONDO'

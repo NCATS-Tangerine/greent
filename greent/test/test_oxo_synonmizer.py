@@ -7,10 +7,13 @@ def test_neuron(rosetta):
     node = KNode("CL:0000540", node_types.CELL)
     synonymize(node,rosetta.core)
     assert len(node.synonyms) >  10
+    #we're no longer so pathological about trying to get meshIDs so in this case we don't get one
     meshcell = node.get_synonyms_by_prefix("MESH")
-    assert len(meshcell) == 1
-    mid = list(meshcell)[0]
-    assert mid == 'MeSH:D009474'
+    assert len(meshcell) == 0
+    #BUt we should get a UMLS
+    umlscell = node.get_synonyms_by_prefix("UMLS")
+    mid = list(umlscell)[0]
+    assert mid == 'UMLS:C0027882' \
 
 def test_phenotype(rosetta):
     node = KNode("MEDDRA:10014408", node_types.PHENOTYPE)

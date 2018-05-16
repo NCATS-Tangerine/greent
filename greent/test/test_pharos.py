@@ -1,10 +1,9 @@
 import pytest
-from greent.graph_components import KNode
-from greent.services.pharos import Pharos
-from greent.servicecontext import ServiceContext
+from greent.graph_components import KNode, LabeledID
 from greent import node_types
 from greent.util import Text
 from greent.conftest import rosetta
+from greent.synonymizers.hgnc_synonymizer import synonymize
 
 @pytest.fixture()
 def pharos(rosetta):
@@ -24,7 +23,7 @@ def test_string_to_info_wackycap(pharos):
 def test_drug_get_gene(pharos):
     #pharos should find chembl in the synonyms
     node = KNode('DB:FakeyName',node_type = node_types.DRUG)
-    node.add_synonyms(['CHEMBL:CHEMBL118'])
+    node.add_synonyms([LabeledID('CHEMBL:CHEMBL118','blahbalh')])
     results = pharos.drug_get_gene(node)
     #we get results
     assert len(results) > 0
@@ -40,43 +39,11 @@ def test_drug_get_gene(pharos):
     #PTGS2 (COX2) (HGNC:9605) should be in there
     assert 'HGNC:9605' in identifiers
 
-'''
-def test_drug_get_gene_2(pharos):
-    #pharos should find chembl in the synonyms
-    node = KNode('DB:FakeyName',node_type = node_types.DRUG)
-    node.add_synonyms(['CHEMBL:CHEMBL1237051'])
-    results = pharos.drug_get_gene(node)
-    #we get results
-    assert len(results) > 0
-    #They are gene nodes:
-    ntypes = set([n.node_type for e,n in results])
-    assert node_types.GENE in ntypes
-    assert len(ntypes) == 1
-    #All of the ids should be HGNC
-    identifiers = [n.identifier for e,n in results]
-    prefixes = set([ Text.get_curie(i) for i in identifiers])
-    assert 'HGNC' in prefixes
-    assert len(prefixes) == 1
-    '''
-
-
-
-def test_gene_get_drug(pharos):
-    #Pharos will find DOIDs or whatever it needs in the synonyms
-    node = KNode('MONDO:XXXX', node_types.DISEASE)
-    node.add_synonyms(['DOID:4325']) #Ebola
-    results = pharos.disease_get_gene(node)
-    #we get results
-    assert len(results) > 0
-    #They are gene nodes:
-    ntypes = set([n.node_type for e,n in results])
-    assert node_types.GENE in ntypes
-    assert len(ntypes) == 1
-    #All of the ids should be HGNC
-    identifiers = [n.identifier for e,n in results]
-    prefixes = set([ Text.get_curie(i) for i in identifiers])
-    assert 'HGNC' in prefixes
-    assert len(prefixes) == 1
-    #NPC1 (HGNC:7897) should be in there
-    assert 'HGNC:7897' in identifiers
-
+def test_gene_get_drug(pharos,rosetta):
+    gene_node = KNode('HGNC:9605',node_types.GENE)
+    synonyms = synonymize(gene_node,rosetta.core)
+    print(synonyms)
+    gene_node.add_synonyms(synonyms)
+    output = pharos.gene_get_drug(gene_node)
+    identifiers = [ output_i[1].identifier for output_i in output ]
+    assert 'CHEMBL:CHEMBL118'in identifiers
