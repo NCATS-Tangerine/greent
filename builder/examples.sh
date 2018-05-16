@@ -4,7 +4,7 @@
 #Type 1 query (Disease/Gene/GeneticCondition)
 #Start at Ebola, support with chemotext, chemotext2 and cdw
 #Label in neo4j will be "test1"
-#PYTHONPATH=../../robokop-interfaces python builder.py -s chemotext -q 1 --start "Ebola Virus Disease" -l test1_program_x
+PYTHONPATH=.. python buildmain.py -s omnicorp -q 1 --start "Ebola Virus Disease" 
 #PYTHONPATH=../../robokop-interfaces python builder.py -s chemotext -q 1 --start "Ebola Virus Disease" -l test1_syn 
 
 #Type 2 query (Substance/Gene/Process/Cell/Anatomy/Phenotype/Disease)
@@ -14,7 +14,8 @@
 
 #PYTHONPATH=.. python buildmain.py -s omnicorp -p "ST" --start "Escitalopram" 
 
-PYTHONPATH=.. python buildmain.py -s omnicorp -p DTACPGS --start "Malaria" 
+#PYTHONPATH=.. python buildmain.py -s omnicorp -q 2 --start "RILUZOLE" --end "Amyotrophic Lateral Sclerosis" 
+#PYTHONPATH=.. python buildmain.py -s omnicorp -p DTACPGS --start "Amyotrophic Lateral Sclerosis" 
 #PYTHONPATH=.. python buildmain.py -s omnicorp -q 2 --start "ARTEMETHER" --end "Malaria" 
 #PYTHONPATH=.. python buildmain.py -s omnicorp -q 2 --start "IMATINIB" --end "Asthma" 
 

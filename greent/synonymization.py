@@ -65,7 +65,11 @@ class Synonymizer:
                 if len(potential_identifiers) > 1:
                     pis = [ f'{pi.identifier}({pi.label})' for pi in potential_identifiers]
                     logger.warn('More than one potential identifier for a node: {}'.format(','.join(pis)))
-                potential_identifiers.sort()
+                    ids_with_labels = list(filter(lambda x: x.label is not None, potential_identifiers ))
+                    if len(ids_with_labels) > 0:
+                        potential_identifiers = ids_with_labels
+                    potential_identifiers.sort()
+                logger.debug(potential_identifiers)
                 node.identifier = potential_identifiers[0].identifier
                 node.label = potential_identifiers[0].label
                 break
