@@ -61,7 +61,7 @@ def lookup (q, concept):
      - name: concept
        in: path
        type: string
-       required: true
+       required: false
        default: drug
        description: "A biolink-model concept name."
        x-valueType:
