@@ -73,13 +73,18 @@ class Rosetta:
 
         if init_db:
             """ Initialize type graph metadata. """
+            '''
             for k, v in self.identifiers.vocab.items():
                 if isinstance(v, str):
                     self.type_graph.find_or_create(k, v)
-            self.configure_local_operators ()
+            '''
+            self.type_graph.find_or_create_list(self.identifiers.vocab.items())
+            #self.configure_local_operators ()
+            self.type_graph.configure_operators (self.operators.items ())
             #self.configure_translator_registry ()
             self.type_graph.cast_edges(self.type_checks)
-            
+
+    # deprecated
     def configure_local_operators (self):
         logger.debug ("Configure operators in the Rosetta config.")
         for a_concept, transition_list in self.operators.items ():

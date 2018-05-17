@@ -14,7 +14,6 @@ from neo4j.v1 import GraphDatabase
 
 logger = logging.getLogger('type_graph')
 
-
 class TypeGraph(Service):
     """ A graph of 
            * nomenclature systems
@@ -53,9 +52,11 @@ class TypeGraph(Service):
     def delete_all(self):
         """ Delete the type-graph only.  Leave result graphs alone. """
         try:
-            self.db.exec("MATCH (n:Concept) DETACH DELETE n")
-            self.db.exec("MATCH (n:Type) DETACH DELETE n")
-            self.initialize_connection()
+            with self.driver.session() as session:
+                db = GraphDB(session)
+                db.exec("MATCH (n:Concept) DETACH DELETE n")
+                db.exec("MATCH (n:Type) DETACH DELETE n")
+                self.initialize_connection()
         except Exception as e:
             traceback.print_exc()
 
@@ -70,38 +71,46 @@ class TypeGraph(Service):
             for identifier in concept.id_prefixes:
                 self.type_to_concept[identifier] = concept
 
-    def build_concept(self, concept):
+    def build_concept(self, db, concept):
         """ Build a concept and its semantic backstory including is_a hierarcy. """
         if concept:
-            self._find_or_create_concept(concept)
+            self._find_or_create_concept(db, concept)
             if concept.is_a:
                 """ If it has an ancestor, create a node for the ancestor and link the nodes. """
-                base_class = self._find_or_create_concept(concept.is_a)
-                self.db.create_relationship(
+                base_class = self._find_or_create_concept(db, concept.is_a)
+                db.create_relationship(
                     name_a=concept.name, type_a=self.CONCEPT,
                     properties={
                         "name": "is_a"
                     },
                     name_b=concept.is_a.name, type_b=self.CONCEPT)
             """ Recurse. """
-            self.build_concept(concept.is_a)
+            self.build_concept(db, concept.is_a)
 
-    def find_or_create(self, name, iri=None):
+    def find_or_create_list(self, items):
+        with self.driver.session() as session:
+            db = GraphDB(session)
+            for k, v in items:
+                if isinstance(v, str):
+                    self.find_or_create(db, k, v)
+
+    # make private
+    def find_or_create(self, db, name, iri=None):
         """ Find a type node, creating it if necessary. Link it to a concept. """
         properties = {"name": name, "iri": iri}
-        result = self.db.get_node(properties, self.TYPE)
+        result = db.get_node(properties, self.TYPE)
         n = result.peek()
         if not n:
-            n = self.db.create_type(properties)
+            n = db.create_type(properties)
             concept = self.type_to_concept.get(name)
             if concept:
                 logger.debug(f"   adding node {name} to concept {concept.name}")
-                concept_node = self._find_or_create_concept(concept)
-                self.build_concept(concept)
-                self.db.add_label(properties={"name": name},
-                                  node_type=self.TYPE,
-                                  label=concept.name)
-                self.db.create_relationship(
+                concept_node = self._find_or_create_concept(db, concept)
+                self.build_concept(db, concept)
+                db.add_label(properties={"name": name},
+                             node_type=self.TYPE,
+                             label=concept.name)
+                db.create_relationship(
                     name_a=concept.name, type_a=self.CONCEPT,
                     properties={
                         "name": "is_a"
@@ -109,22 +118,43 @@ class TypeGraph(Service):
                     name_b=name, type_b=self.TYPE)
         return n
 
-    def add_concepts_edge(self, a, b, predicate, op, base_op = None):
+    def configure_operators (self, operators):
+        with self.driver.session() as session:
+            db = GraphDB(session)
+            logger.debug ("Configure operators in the Rosetta config.")
+            for a_concept, transition_list in operators:
+                for b_concept, transitions in transition_list.items ():
+                    for transition in transitions:
+                        link = transition['link']
+                        op   = transition['op']
+                        self.create_concept_transition (db, a_concept, b_concept, link, op)
+                    
+    def create_concept_transition (self, db, a_concept, b_concept, link, op):
+        """ Create a link between two concepts in the type graph. """
+        logger.debug ("  -+ {} {} link: {} op: {}".format(a_concept, b_concept, link, op))
+        print (f"  -+ {a_concept} {b_concept} link: {link} op: {op}")
+        try:
+            self.add_concepts_edge(db, a_concept, b_concept, predicate=link, op=op)
+        except Exception as e:
+            logger.error(f"Failed to create edge from {a_concept} to {b_concept} with link {link} and op {op}")
+            logger.error(e)
+            
+    def add_concepts_edge(self, db, a, b, predicate, op, base_op = None):
         """ Add an edge between two concepts. Include the operation to call to effect the transition. """
         a_concept = self.concept_model.get(a)
         b_concept = self.concept_model.get(b)
         assert a_concept, f"Unable to find concept {a}"
         assert b_concept, f"Unable to find concept {b}"
-        a_concept_node = self._find_or_create_concept(a_concept)
-        b_concept_node = self._find_or_create_concept(b_concept)
-        self.db.create_relationship(name_a=a_concept.name, type_a=self.CONCEPT,
-                                    properties={
-                                        "name": predicate,
-                                        "predicate": predicate,
-                                        "op": op,
-                                        "enabled": True
-                                    },
-                                    name_b=b_concept.name, type_b=self.CONCEPT)
+        a_concept_node = self._find_or_create_concept(db, a_concept)
+        b_concept_node = self._find_or_create_concept(db, b_concept)
+        db.create_relationship(name_a=a_concept.name, type_a=self.CONCEPT,
+                               properties={
+                                   "name": predicate,
+                                   "predicate": predicate,
+                                   "op": op,
+                                   "enabled": True
+                               },
+                               name_b=b_concept.name, type_b=self.CONCEPT)
         if base_op == None:
             base_op = op
         edge = {'source': a_concept.name, 'target': b_concept.name, 'predicate': predicate, 'op': op, 'base_op': base_op}
@@ -133,16 +163,16 @@ class TypeGraph(Service):
         self.base_op_to_concepts[base_op].append( (a_concept.name, b_concept.name) )
         return edge
 
-    def _find_or_create_concept(self, concept):
+    def _find_or_create_concept(self, db, concept):
         """ Find or create a concept object which will be linked to member type object. """
         concept_node = None
         try:
             properties = {"name": concept.name}
-            result = self.db.get_node(properties, node_type=self.CONCEPT)
+            result = db.get_node(properties, node_type=self.CONCEPT)
             concept_node = result.peek()
             if not concept_node:
-                concept_node = self.db.create_node(properties, node_type=self.CONCEPT)
-                self.db.add_label(properties, node_type=self.CONCEPT, label=concept.name)
+                concept_node = db.create_node(properties, node_type=self.CONCEPT)
+                db.add_label(properties, node_type=self.CONCEPT, label=concept.name)
         except:
             print("concept-> {}".format(concept.name))
             traceback.print_exc()
@@ -154,11 +184,13 @@ class TypeGraph(Service):
         #This approach generates a lot of edges if we let it.  And that might be the right answer
         #But for now, let's try to keep it in check
         #This is one way to do it, but we could swap it with something more complex
-        usable_concepts = self.get_concepts_with_edges()
-        children= self._push_up(type_check_functions,usable_concepts)
-        self._pull_down(children, type_check_functions )
+        with self.driver.session() as session:
+            db = GraphDB(session)
+            usable_concepts = self.get_concepts_with_edges()
+            children= self._push_up(db, type_check_functions,usable_concepts)
+            self._pull_down(db, children, type_check_functions )
 
-    def _push_up(self, type_check_functions, usable_concepts):
+    def _push_up(self, db, type_check_functions, usable_concepts):
         this_level = self.concept_model.get_leaves()
         children = defaultdict(list)
         while len(this_level) > 0:
@@ -180,17 +212,17 @@ class TypeGraph(Service):
                         newop = self.wrap_op('input_filter', cop, concept.name)
                     if (parent.name, edge['target']) in self.base_op_to_concepts[edge['base_op']]:
                         continue #already have it, don't need it again
-                    newedge = self.add_concepts_edge(parent.name, edge['target'], edge['predicate'], newop, edge['base_op'])
+                    newedge = self.add_concepts_edge(db, parent.name, edge['target'], edge['predicate'], newop, edge['base_op'])
                 for edge in self.edges_by_target[concept.name]:
                     cop = self.create_caster_op(edge['op'])
                     newop = self.wrap_op('upcast', cop, parent.name)
                     if (edge['source'],parent.name) in self.base_op_to_concepts[edge['base_op']]:
                         continue #already have it, don't need it again
-                    newedge = self.add_concepts_edge(edge['source'], parent.name, edge['predicate'], newop, edge['base_op'])
+                    newedge = self.add_concepts_edge(db, edge['source'], parent.name, edge['predicate'], newop, edge['base_op'])
             this_level = next_level
         return children
 
-    def _pull_down(self, children_dict, type_check_functions):
+    def _pull_down(self, db, children_dict, type_check_functions):
         this_level = self.concept_model.get_roots()
         while len(this_level) > 0:
             next_level = set()
@@ -202,7 +234,7 @@ class TypeGraph(Service):
                         if (child.name,edge['target']) in self.base_op_to_concepts[edge['base_op']]:
                             continue #already have it, don't need it again
                         # taking parent, nothing else really required
-                        newedge = self.add_concepts_edge(child.name, edge['target'], edge['predicate'], edge['op'], edge['base_op'])
+                        newedge = self.add_concepts_edge(db, child.name, edge['target'], edge['predicate'], edge['op'], edge['base_op'])
                 for edge in self.edges_by_target[concept.name]:
                     cop = self.create_caster_op(edge['op'])
                     for child in children:
@@ -210,7 +242,7 @@ class TypeGraph(Service):
                             continue
                         try:
                             newop = self.wrap_op('output_filter', cop, child.name, type_check_functions[child.name])
-                            self.add_concepts_edge(edge['source'], child.name, edge['predicate'], newop, edge['base_op'])
+                            self.add_concepts_edge(db, edge['source'], child.name, edge['predicate'], newop, edge['base_op'])
                         except KeyError:
                             pass
             this_level = next_level
@@ -233,7 +265,9 @@ class TypeGraph(Service):
         """ Execute a cypher query and return the result set. """
         result = None
         try:
-            result = self.db.query(query, data_contents=True)
+            with self.driver.session() as session:
+                db = GraphDB(session)
+                result = db.query(query, data_contents=True)
         except TransactionException:
             print("Error Generated by:")
             print(query)
@@ -241,6 +275,12 @@ class TypeGraph(Service):
         return result
 
     def get_transitions(self, query):
+        result = []
+        with self.driver.session() as session:
+            db = GraphDB(session)
+            result = self.get_transitions_actor(db, query)
+        return result
+    def get_transitions_actor(self, db, query):
         """ Execute a cypher query and walk the results to build a set of transitions to execute.
         The query should be such that it returns a path (node0-relation0-node1-relation1-node2), and
         an array of the relation start nodes.  For the path above, start nodes like (node0,node1) would
@@ -254,7 +294,7 @@ class TypeGraph(Service):
             transitions: a map from a node index to an (operation, output index) pair
         """
         graphs=[]
-        result = self.db.query(query)        
+        result = db.query(query)        
         for row in result:
             nodes = {}
             transitions = {}
@@ -295,7 +335,13 @@ class TypeGraph(Service):
                 logger.debug (f"{json.dumps(graphs, indent=2)}")
         return graphs
 
-    def get_knowledge_map_programs(self, query):
+    def get_knowledge_map_programss(self, query):
+        result = []
+        with self.driver.session() as session:
+            db = GraphDB(session)
+            result = self.get_knowledge_map_programs_actor(db, query)
+        return result
+    def get_knowledge_map_programs_actor(self, db, query):
         """ Execute a cypher query and walk the results to build a set of transitions to execute.
         The query should be such that it returns a path (node0-relation0-node1-relation1-node2), and
         an array of the relation start nodes. 
@@ -310,7 +356,7 @@ class TypeGraph(Service):
         programs = []
 
         """ Query the database for paths. """
-        result = self.db.query(query)
+        result = db.query(query)
         for row in result:
             logger.debug(f"row> {row} {type(row)}")
             path = row[0]
@@ -379,6 +425,9 @@ class GraphDB:
 
     def __init__(self, session):
         self.session = session
+        
+    def __del__(self):
+        self.session.close()
 
     def exec(self, command):
         """ Execute a cypher command returning the result. """
