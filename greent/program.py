@@ -94,7 +94,7 @@ class Program:
             next_context = link['to']
             op_name = link['op']
             key = f"{op_name}({source_node.identifier})"
-            log_text = "  -- {key}"
+            log_text = f"  -- {key}"
             try:
                 results = self.rosetta.cache.get (key)
                 if results is not None:
@@ -125,8 +125,8 @@ class Program:
                 self.add_instance_nodes(newnodes,next_context)
             except Exception as e:
                 traceback.print_exc()
-                logger.error("Error invoking> {0}".format(log_text))
-            logger.debug(" {} nodes remaining.".format(len(self.unused_instance_nodes)))
+                logger.error(f"Error invoking> {log_text}")
+            logger.debug(f" {len(self.unused_instance_nodes)} nodes remaining.")
         return self.linked_results
 
     def get_results(self):
