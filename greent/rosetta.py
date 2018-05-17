@@ -236,7 +236,7 @@ class Rosetta:
                         frame.collector += response
                     except Exception as e:
                         traceback.print_exc()
-                        logger.error("Error invoking> {key}")
+                        logger.warning("Error invoking> {key}")
         logger.debug (f"returning {len(result)} values.")
         return result
 

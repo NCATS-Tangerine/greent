@@ -125,7 +125,7 @@ class Program:
                 self.add_instance_nodes(newnodes,next_context)
             except Exception as e:
                 traceback.print_exc()
-                logger.error(f"Error invoking> {log_text}")
+                logger.warning(f"Error invoking> {log_text}")
             logger.debug(f" {len(self.unused_instance_nodes)} nodes remaining.")
         return self.linked_results
 
