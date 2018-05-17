@@ -46,10 +46,8 @@ class TypeGraph(Service):
     def initialize_connection(self):
         """ Connect to the database. """
         config = self.get_config()
-        username = config.get("username")
-        password = config.get("password")
         logger.debug(f"  -+ Connecting to graph database: {self.url}")
-        self.driver = GraphDatabase.driver(self.url, auth=("neo4j", "pword"))
+        self.driver = GraphDatabase.driver(self.url, auth=("neo4j", config['neo4j_password']))
         self.db = GraphDB (self.driver.session ())
 
     def delete_all(self):
