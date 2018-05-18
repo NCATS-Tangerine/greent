@@ -47,7 +47,6 @@ class TypeGraph(Service):
         config = self.get_config()
         logger.debug(f"  -+ Connecting to graph database: {self.url}")
         self.driver = GraphDatabase.driver(self.url, auth=("neo4j", config['neo4j_password']))
-        self.db = GraphDB (self.driver.session ())
 
     def delete_all(self):
         """ Delete the type-graph only.  Leave result graphs alone. """
