@@ -209,3 +209,10 @@ MONDO:0005148	Diabetes Mellitus, Type 2	SQ22	MONDO:0002473	Renal Cyst	disease,ge
 MONDO:0005148	Diabetes Mellitus, Type 2	SQ22	MONDO:0002473	Renal Cyst	disease,gene,biological_process_or_molecular_activity,gene,disease
 UBERON:0002113	Kidney	SQ22	MONDO:0005148	Diabetes Mellitus, Type 2	disease,phenotypic_feature,anatomical_feature
 UBERON:0002113	Kidney	SQ22	MONDO:0005148	Diabetes Mellitus, Type 2	disease,gene,biological_process_or_molecular_activity,cell,anatomical_feature
+MONDO:0005359	Drug-induced liver injury	SQ23	CHEMBL1697738	Augmentin	chemical_substance,gene,biological_process_or_molecular_activity,cell,anatomical_entity,phenotypic_feature,disease
+MONDO:0005359	Drug-induced liver injury	SQ23	CHEBI:2676	Amoxocillin	chemical_substance,gene,biological_process_or_molecular_activity,cell,anatomical_entity,phenotypic_feature,disease
+MONDO:0005359	Drug-induced liver injury	SQ23	CHEBI:6030	Isoniazid	chemical_substance,gene,biological_process_or_molecular_activity,cell,anatomical_entity,phenotypic_feature,disease
+MONDO:0005359	Drug-induced liver injury	SQ23	CHEBI:71415	Nitrofurantoin	chemical_substance,gene,biological_process_or_molecular_activity,cell,anatomical_entity,phenotypic_feature,disease
+MONDO:0005359	Drug-induced liver injury	SQ23	CHEBI:3770	Trimethoprim-sulfamethoxazole	chemical_substance,gene,biological_process_or_molecular_activity,cell,anatomical_entity,phenotypic_feature,disease
+MONDO:0005359	Drug-induced liver injury	SQ23	CHEBI:45924	Trimethoprim	chemical_substance,gene,biological_process_or_molecular_activity,cell,anatomical_entity,phenotypic_feature,disease
+MONDO:0005359	Drug-induced liver injury	SQ23	CHEBI:9332	Sulfamethoxazole	chemical_substance,gene,biological_process_or_molecular_activity,cell,anatomical_entity,phenotypic_feature,disease
