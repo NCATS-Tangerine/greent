@@ -62,7 +62,7 @@ def export_edge(tx,edge):
          'publications': ke.publications[:1000], 'url' : ke.url, 'input': ke.input_id}
     )
     if ke.standard_predicate.identifier == 'GAMMA:0':
-        logger.error(f"Unable to map predicate for edge {ke.original_predicate}  {ke}")
+        logger.warn(f"Unable to map predicate for edge {ke.original_predicate}  {ke}")
 
 
 def export_node(tx,node ):
