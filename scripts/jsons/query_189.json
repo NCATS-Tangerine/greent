@@ -1,0 +1,27 @@
+{
+    "name": "SQ13: severe asthma D-G-D",
+    "natural": "diseases share gene",
+    "notes": "SQ13",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "severe asthma",
+            "meta": {
+                "identifier": "MONDO:0004979"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "disease",
+            "label": "disease",
+            "meta": {}
+        }
+    ]
+}

@@ -1,0 +1,33 @@
+{
+    "name": "SQ5: Amyotrophic Lateral Sclerosis D2C",
+    "natural": "disease to cell via pathway",
+    "notes": "SQ5",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "Amyotrophic Lateral Sclerosis",
+            "meta": {
+                "identifier": "MONDO:0004976"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "biological_process_or_molecular_activity",
+            "label": "biological_process_or_molecular_activity",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "cell",
+            "label": "cell",
+            "meta": {}
+        }
+    ]
+}

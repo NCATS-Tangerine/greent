@@ -1,0 +1,29 @@
+{
+    "name": "SQ22: Renal Cyst-Diabetes Mellitus, Type 2 D-G-D",
+    "natural": "diseases share gene",
+    "notes": "SQ22",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "Renal Cyst",
+            "meta": {
+                "identifier": "MONDO:0002473"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "Diabetes Mellitus, Type 2",
+            "meta": {
+                "identifier": "MONDO:0005148"
+            }
+        }
+    ]
+}

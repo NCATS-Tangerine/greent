@@ -1,0 +1,39 @@
+{
+    "name": "SQ14: severe asthma D-GO-D",
+    "natural": "diseases share process",
+    "notes": "SQ14",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "severe asthma",
+            "meta": {
+                "identifier": "MONDO:0004979"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "biological_process_or_molecular_activity",
+            "label": "biological_process_or_molecular_activity",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "disease",
+            "label": "disease",
+            "meta": {}
+        }
+    ]
+}

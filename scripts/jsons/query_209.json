@@ -1,0 +1,41 @@
+{
+    "name": "SQ22: Diabetes Mellitus, Type 2-Kidney D2A_2",
+    "natural": "disease to anatomy via process",
+    "notes": "SQ22",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "Diabetes Mellitus, Type 2",
+            "meta": {
+                "identifier": "MONDO:0005148"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "biological_process_or_molecular_activity",
+            "label": "biological_process_or_molecular_activity",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "cell",
+            "label": "cell",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Named Node",
+            "type": "anatomical_feature",
+            "label": "Kidney",
+            "meta": {
+                "identifier": "UBERON:0002113"
+            }
+        }
+    ]
+}

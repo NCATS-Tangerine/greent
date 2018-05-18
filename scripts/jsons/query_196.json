@@ -1,0 +1,29 @@
+{
+    "name": "SQ16: COPD-primary ciliary dyskinesia D-G-D",
+    "natural": "diseases share gene",
+    "notes": "SQ16",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "COPD",
+            "meta": {
+                "identifier": "MONDO:0005002"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "primary ciliary dyskinesia",
+            "meta": {
+                "identifier": "MONDO:0016575"
+            }
+        }
+    ]
+}

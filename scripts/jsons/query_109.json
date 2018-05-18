@@ -1,0 +1,29 @@
+{
+    "name": "SQ9: Pregnancy-Ehlers-Danlos Syndrome GO2D_2",
+    "natural": "Process to disease via gene",
+    "notes": "SQ9",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "biological_process_or_molecular_activity",
+            "label": "Pregnancy",
+            "meta": {
+                "identifier": "GO:0007565"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "Ehlers-Danlos Syndrome",
+            "meta": {
+                "identifier": "MONDO:0020066"
+            }
+        }
+    ]
+}

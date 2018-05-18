@@ -1,0 +1,41 @@
+{
+    "name": "SQ18: GLP1-Diarrhea Gene2Pheno",
+    "natural": "Gene to Phenotype clinical pathway",
+    "notes": "SQ18",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "gene",
+            "label": "GLP1",
+            "meta": {
+                "identifier": "HGNC:4191"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "biological_process_or_molecular_activity",
+            "label": "biological_process_or_molecular_activity",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "cell",
+            "label": "cell",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "anatomical_entity",
+            "label": "anatomical_entity",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Named Node",
+            "type": "phenotypic_feature",
+            "label": "Diarrhea",
+            "meta": {
+                "identifier": "HP:0002014"
+            }
+        }
+    ]
+}

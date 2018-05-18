@@ -1,0 +1,27 @@
+{
+    "name": "SQ4: neurotransmitter binding GO2D_2",
+    "natural": "Process to disease via gene",
+    "notes": "SQ4",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "biological_process_or_molecular_activity",
+            "label": "neurotransmitter binding",
+            "meta": {
+                "identifier": "GO:0042165"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "disease",
+            "label": "disease",
+            "meta": {}
+        }
+    ]
+}

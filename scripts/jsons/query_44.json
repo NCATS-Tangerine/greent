@@ -1,0 +1,53 @@
+{
+    "name": "SQ18: ALOGLIPTIN-Diabetes Mellitus, Type 2 COP(D)",
+    "natural": "Clinical Outcome Pathway (disease)",
+    "notes": "SQ18",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "chemical_substance",
+            "label": "ALOGLIPTIN",
+            "meta": {
+                "identifier": "CHEMBL:CHEMBL376359"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "biological_process_or_molecular_activity",
+            "label": "biological_process_or_molecular_activity",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "cell",
+            "label": "cell",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "anatomical_entity",
+            "label": "anatomical_entity",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "phenotypic_feature",
+            "label": "phenotypic_feature",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "Diabetes Mellitus, Type 2",
+            "meta": {
+                "identifier": "MONDO:0005148"
+            }
+        }
+    ]
+}

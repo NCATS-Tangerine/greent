@@ -1,0 +1,41 @@
+{
+    "name": "SQ9: Pregnancy-type 3 Ehlers-Danlos Syndrome GO2D_1",
+    "natural": "Process to disease via anatomy",
+    "notes": "SQ9",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "biological_process_or_molecular_activity",
+            "label": "Pregnancy",
+            "meta": {
+                "identifier": "GO:0007565"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "cell",
+            "label": "cell",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "anatomical_entity",
+            "label": "anatomical_entity",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "phenotypic_feature",
+            "label": "phenotypic_feature",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "type 3 Ehlers-Danlos Syndrome",
+            "meta": {
+                "identifier": "MONDO:0007523"
+            }
+        }
+    ]
+}
