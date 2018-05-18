@@ -1,0 +1,30 @@
+#!/bin/bash
+
+set -x
+
+local () {
+    neo4j_host=localhost
+    neo4j_port=7687
+    redis_host=localhost
+    redis_port=6379
+}
+dev () {
+    neo4j_host=stars-c8.edc.renci.org
+    neo4j_port=7687
+    redis_host=stars-c8.edc.renci.org
+    redis_port=6379
+}
+
+env=$1
+$env
+shift
+
+export TRANSLATOR_SERVICES_ROSETTAGRAPH_NEO4J_PASSWORD=""
+export TRANSLATOR_SERVICES_ROSETTAGRAPH_URL=bolt://${neo4j_host}:${neo4j_port}
+export REDIS_DB=${redis_host}:${redis_port}
+
+export PYTHONPATH=$PWD
+
+python greent/api/rosettad.py --debug $*
+
+exit 0

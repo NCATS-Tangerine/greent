@@ -135,9 +135,11 @@ def cop (drug="imatinib", disease="asthma", cache=True, support=True):
     support = support == "true"
     key = gamma.create_key ('cop', [drug, disease])
     graph = gamma.rosetta.service_context.cache.get (key) if cache else None
+    drug_ids = gamma.rosetta.n2chem(drug)
     if graph is None:
         disease_ids = gamma.get_disease_ids (disease, filters=['MONDO'])
         query = gamma.knowledge.create_query(
+            start_values = drug_ids,
             start_name   = drug,
             start_type   = node_types.DRUG,
             end_name     = disease,
