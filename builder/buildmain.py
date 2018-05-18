@@ -109,8 +109,7 @@ class KnowledgeGraph:
         self.userquery = userquery
         self.rosetta = rosetta
         if not self.userquery.compile_query(self.rosetta):
-            logger.error('Query fails. Exiting.')
-            sys.exit(1)
+            raise RuntimeError('Query fails. Exiting.')
         # node_map is a map from identifiers to the node associated.  It's useful because
         #  we are collapsing nodes along synonym edges, so each node might asked for in
         #  multiple different ways.

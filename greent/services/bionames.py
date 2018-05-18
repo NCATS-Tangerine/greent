@@ -30,7 +30,7 @@ class BioNames(Service):
     def lookup(self, q, concept=None):
         """ Lookup a term with an optional concept. """
         result = []
-        if concept:
+        if concept and not concept=="{concept}":
             """ Route the search by concept. """
             if concept in self.normalize:
                 concept = self.normalize[concept]
@@ -40,7 +40,7 @@ class BioNames(Service):
                 raise ValueError (f"Unknown concept {concept} is not a biolink-model concept.")
         else:
             """ Try everything? Union the lot. """
-            for route in self.router.items ():
+            for route in self.router.values ():
                 result = result + route(q, concept)
         logger.debug (f"search q: {q} results: {result}")
         return result

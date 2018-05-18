@@ -16,14 +16,14 @@ import builder.api.logging_config
 from builder.api.setup import app
 from builder.question import Question
 
-greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
-sys.path.insert(0, greent_path)
 from greent import node_types
 
 from builder.buildmain import run_query, generate_query
 from builder.pathlex import tokenize_path
 from builder.buildmain import setup
 
+greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
+sys.path.insert(0, greent_path)
 rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
 
 # set up Celery
@@ -55,12 +55,12 @@ def update_kg(self, question_json):
         question = Question(question_json)
         symbol_lookup = {node_types.type_codes[a]:a for a in node_types.type_codes} # invert this dict
         # assume the nodes are in order
-        node_string = ''.join([symbol_lookup[n.type] for n in question.nodes])
+        node_string = ''.join([symbol_lookup[n.type if not n.type =='biological_process' else 'biological_process_or_molecular_activity'] for n in question.nodes])
         start_identifiers = question.nodes[0].identifiers
         end_identifiers = question.nodes[-1].identifiers
 
         steps = tokenize_path(node_string)
-        query = generate_query(steps, start_identifiers, end_identifiers)
+        query = generate_query(steps, start_identifiers, end_identifiers=end_identifiers)
         run_query(query, supports=['builder.omnicorp'], rosetta=rosetta, prune=False)
 
         logger.info("Done updating.")
