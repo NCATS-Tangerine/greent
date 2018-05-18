@@ -156,25 +156,27 @@ class Pharos(Service):
         """ Get a drug from a gene. """
         resolved_edge_nodes = []
         identifiers = gene_node.get_synonyms_by_prefix('UNIPROTKB')
-        print(identifiers)
         for s in identifiers:
-            pharosid = Text.un_curie(s)
-            original_edge_nodes = []
-            url = 'https://pharos.nih.gov/idg/api/v1/targets(%s)?view=full' % pharosid
-            r = requests.get(url)
-            result = r.json()
-            actions = set()  # for testing
-            predicate = LabeledID('PHAROS:drug_targets','is_target')
-            chembl_id = None
-            for link in result['links']:
-                if link['kind'] == 'ix.idg.models.Ligand':
-                    pharos_drug_id = link['refid']
-                    chembl_id, label = self.drugid_to_identifiers(pharos_drug_id)
-                    if chembl_id is not None:
-                        drug_node = KNode(chembl_id, node_types.DRUG,label=label)
-                        edge = self.create_edge(drug_node,gene_node, 'pharos.gene_get_drug',
-                                pharosid,predicate, url=url)
-                        resolved_edge_nodes.append( (edge,drug_node) )
+            try:
+                pharosid = Text.un_curie(s)
+                original_edge_nodes = []
+                url = 'https://pharos.nih.gov/idg/api/v1/targets(%s)?view=full' % pharosid
+                r = requests.get(url)
+                result = r.json()
+                actions = set()  # for testing
+                predicate = LabeledID('PHAROS:drug_targets','is_target')
+                chembl_id = None
+                for link in result['links']:
+                    if link['kind'] == 'ix.idg.models.Ligand':
+                        pharos_drug_id = link['refid']
+                        chembl_id, label = self.drugid_to_identifiers(pharos_drug_id)
+                        if chembl_id is not None:
+                            drug_node = KNode(chembl_id, node_types.DRUG,label=label)
+                            edge = self.create_edge(drug_node,gene_node, 'pharos.gene_get_drug',
+                                    pharosid,predicate, url=url)
+                            resolved_edge_nodes.append( (edge,drug_node) )
+            except:
+                logger.debug("Error encountered calling pharos with",identifier)
         return resolved_edge_nodes
 
 
