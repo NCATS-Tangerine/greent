@@ -38,9 +38,9 @@ class OmniCorp(Service):
         identifier = node.identifier
         prefix = Text.get_curie(node.identifier)
         if prefix not in self.prefix_to_uri:
-            logger.error("What kinda tomfoolery is this?")
-            logger.error(f"{node.identifier} {node.node_type}")
-            logger.error(f"{node.synonyms}")
+            logger.warn("What kinda tomfoolery is this?")
+            logger.warn(f"{node.identifier} {node.node_type}")
+            logger.warn(f"{node.synonyms}")
             return None
         oident = f'{self.prefix_to_uri[prefix]}{Text.un_curie(node.identifier)}'
         return oident
