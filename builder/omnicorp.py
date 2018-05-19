@@ -11,6 +11,7 @@ logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 def get_supporter(greent):
     return OmnicorpSupport(greent)
 
+COUNT_KEY= 'omnicorp_article_count'
 
 class OmnicorpSupport():
 
@@ -19,7 +20,16 @@ class OmnicorpSupport():
         self.omnicorp = greent.omnicorp
 
     def term_to_term(self,node_a,node_b):
-        articles = self.omnicorp.get_shared_pmids(node_a, node_b)
+        count_a = 0
+        count_b = 0
+        if COUNT_KEY in node_a.properties:
+            count_a = int(node_a.properties[COUNT_KEY])        
+        if COUNT_KEY in node_b.properties:
+            count_b = int(node_b.properties[COUNT_KEY]) 
+        if (count_a > 0) and (count_b > 0):
+            articles = self.omnicorp.get_shared_pmids(node_a, node_b)
+        else:
+            articles = []
         logger.debug(f'OmniCorp {node_a.identifier} {node_b.identifier} -> {len(articles)}')
         #Even if articles = [], we want to make an edge for the cache. We can decide later to write it or not.
         pmids = [f'PMID:{x.split("/")[-1]}' for x in articles]
@@ -39,7 +49,7 @@ class OmnicorpSupport():
 
     def get_node_info(self,node):
         count = self.omnicorp.count_pmids(node)
-        return {'omnicorp_article_count': count}
+        return {COUNT_KEY: count}
 
     def prepare(self,nodes):
         goodnodes = list(filter(lambda n: self.omnicorp.get_omni_identifier(n) is not None, nodes))
