@@ -135,20 +135,22 @@ def cop (drug="imatinib", disease="asthma", cache=True, support=True):
     support = support == "true"
     key = gamma.create_key ('cop', [drug, disease])
     graph = gamma.rosetta.service_context.cache.get (key) if cache else None
+    drug_ids = gamma.rosetta.n2chem(drug)
     if graph is None:
         disease_ids = gamma.get_disease_ids (disease, filters=['MONDO'])
         query = gamma.knowledge.create_query(
+            start_values = drug_ids,
             start_name   = drug,
             start_type   = node_types.DRUG,
             end_name     = disease,
             end_type     = node_types.DISEASE, 
             two_sided    = True,
             intermediate = [
-                { "type" : node_types.GENE,      "min_path_length" : 1, "max_path_length" : 1 },
-                { "type" : node_types.PROCESS,   "min_path_length" : 1, "max_path_length" : 1 },
-                { "type" : node_types.CELL,      "min_path_length" : 1, "max_path_length" : 1 },
-                { "type" : node_types.ANATOMY,   "min_path_length" : 1, "max_path_length" : 1 },
-                { "type" : node_types.PHENOTYPE, "min_path_length" : 1, "max_path_length" : 1 }
+                { "type" : node_types.GENE,                "min_path_length" : 1, "max_path_length" : 1 },
+                { "type" : node_types.PROCESS_OR_FUNCTION, "min_path_length" : 1, "max_path_length" : 1 },
+                { "type" : node_types.CELL,                "min_path_length" : 1, "max_path_length" : 1 },
+                { "type" : node_types.ANATOMY,             "min_path_length" : 1, "max_path_length" : 1 },                
+                { "type" : node_types.PHENOTYPE,           "min_path_length" : 1, "max_path_length" : 1 }
             ],
             end_values   = disease_ids)
 
