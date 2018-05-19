@@ -19,7 +19,7 @@
         },
         {
             "nodeSpecType": "Named Node",
-            "type": "anatomical_feature",
+            "type": "anatomical_entity",
             "label": "Kidney",
             "meta": {
                 "identifier": "UBERON:0002113"

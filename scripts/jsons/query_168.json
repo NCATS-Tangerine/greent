@@ -19,8 +19,8 @@
         },
         {
             "nodeSpecType": "Node Type",
-            "type": "anatomical_feature",
-            "label": "anatomical_feature",
+            "type": "anatomical_entity",
+            "label": "anatomical_entity",
             "meta": {}
         },
         {
