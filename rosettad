@@ -2,11 +2,19 @@
 
 set -x
 
+export PYTHONPATH=$PWD
+
+env=$1
+shift
+
 local () {
     neo4j_host=localhost
     neo4j_port=7687
     redis_host=localhost
     redis_port=6379
+}
+local_run () {
+    python greent/api/rosettad.py --debug $*
 }
 dev () {
     neo4j_host=stars-c8.edc.renci.org
@@ -14,17 +22,21 @@ dev () {
     redis_host=stars-c8.edc.renci.org
     redis_port=6379
 }
+dev_run () {
+    gunicorn \
+     --workers 20 \
+     --timeout 3000 \
+     --bind 0.0.0.0:5004 greent.api.rosettad:app
+}
 
-env=$1
+config () {
+    export TRANSLATOR_SERVICES_ROSETTAGRAPH_NEO4J_PASSWORD=""
+    export TRANSLATOR_SERVICES_ROSETTAGRAPH_URL=bolt://${neo4j_host}:${neo4j_port}
+    export REDIS_DB=${redis_host}:${redis_port}
+}
+
 $env
-shift
-
-export TRANSLATOR_SERVICES_ROSETTAGRAPH_NEO4J_PASSWORD=""
-export TRANSLATOR_SERVICES_ROSETTAGRAPH_URL=bolt://${neo4j_host}:${neo4j_port}
-export REDIS_DB=${redis_host}:${redis_port}
-
-export PYTHONPATH=$PWD
-
-python greent/api/rosettad.py --debug $*
+config
+${env}_run
 
 exit 0
