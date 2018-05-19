@@ -28,6 +28,7 @@ class KnowledgeQuery:
                            start_type=start_type,
                            start_name=start_name)
         for transition in intermediate:
+            print (f" --------------> {intermediate} ")
             query.add_transition(transition['type'],
                                  min_path_length=transition['min_path_length'],
                                  max_path_length=transition['max_path_length'])

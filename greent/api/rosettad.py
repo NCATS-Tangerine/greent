@@ -147,12 +147,14 @@ def cop (drug="imatinib", disease="asthma", cache=True, support=True):
             two_sided    = True,
             intermediate = [
                 { "type" : node_types.GENE,      "min_path_length" : 1, "max_path_length" : 1 },
-                { "type" : node_types.PROCESS,   "min_path_length" : 1, "max_path_length" : 1 },
+                { "type" : node_types.PROCESS_OR_FUNCTION,   "min_path_length" : 1, "max_path_length" : 1 },
                 { "type" : node_types.CELL,      "min_path_length" : 1, "max_path_length" : 1 },
-                { "type" : node_types.ANATOMY,   "min_path_length" : 1, "max_path_length" : 1 },
+                { "type" : node_types.ANATOMY,   "min_path_length" : 1, "max_path_length" : 1 },                
                 { "type" : node_types.PHENOTYPE, "min_path_length" : 1, "max_path_length" : 1 }
             ],
             end_values   = disease_ids)
+        '''
+        '''
 
     graph = gamma.knowledge.query (query, key, support, gamma.rosetta)
 

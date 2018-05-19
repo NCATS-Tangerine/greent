@@ -23,10 +23,13 @@ dev () {
     redis_port=6379
 }
 dev_run () {
+    local_run
+    f () {
     gunicorn \
      --workers 20 \
      --timeout 3000 \
      --bind 0.0.0.0:5004 greent.api.rosettad:app
+    }
 }
 
 config () {
