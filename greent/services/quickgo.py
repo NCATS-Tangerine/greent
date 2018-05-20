@@ -131,7 +131,7 @@ class QuickGo(Service):
     def go_term_to_gene_annotation(self,node):
         go = node.identifier
         url = f'{self.url}/QuickGO/services/annotation/search?goId={go}&taxonId=9606&goUsage=exact'
-        print(url)
+        #print(url)
         call_results = self.page_calls(url)
         used = set()
         results = [] 
