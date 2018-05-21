@@ -1,0 +1,33 @@
+{
+    "name": "SQ4: Oxidative stress P2D",
+    "natural": "phenotype to disease via gene",
+    "notes": "SQ4",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "phenotypic_feature",
+            "label": "Oxidative stress",
+            "meta": {
+                "identifier": "HP_0025464"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "anatomical_entity",
+            "label": "anatomical_entity",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "disease",
+            "label": "disease",
+            "meta": {}
+        }
+    ]
+}

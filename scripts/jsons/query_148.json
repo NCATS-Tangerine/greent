@@ -1,0 +1,27 @@
+{
+    "name": "SQ2,SQ3: Amyotrophic Lateral Sclerosis DGC",
+    "natural": "disease-gene-chemical",
+    "notes": "SQ2,SQ3",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "Amyotrophic Lateral Sclerosis",
+            "meta": {
+                "identifier": "MONDO:0004976"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "chemical_substance",
+            "label": "chemical_substance",
+            "meta": {}
+        }
+    ]
+}

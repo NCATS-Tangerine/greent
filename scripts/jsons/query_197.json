@@ -1,0 +1,29 @@
+{
+    "name": "SQ16: severe asthma-Cystic Fibrosis D-G-D",
+    "natural": "diseases share gene",
+    "notes": "SQ16",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "severe asthma",
+            "meta": {
+                "identifier": "MONDO:0004979"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "Cystic Fibrosis",
+            "meta": {
+                "identifier": "MONDO:0009061"
+            }
+        }
+    ]
+}

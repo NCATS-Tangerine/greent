@@ -173,6 +173,38 @@ class UberonGraphKS(Service):
         )
         return results
 
+    def anatomy_to_phenotype(self, uberon_id):
+        text="""
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix UBERON: <http://purl.obolibrary.org/obo/UBERON_>
+        prefix HP: <http://purl.obolibrary.org/obo/HP_>
+        prefix part_of: <http://purl.obolibrary.org/obo/BFO_0000050>
+        prefix has_part: <http://purl.obolibrary.org/obo/BFO_0000051>
+        prefix depends_on: <http://purl.obolibrary.org/obo/RO_0002502>
+        prefix phenotype_of: <http://purl.obolibrary.org/obo/UPHENO_0000001>
+        select distinct ?pheno_id ?anatomy_label ?pheno_label
+        from <http://reasoner.renci.org/nonredundant>
+        from <http://example.org/uberon-hp-cl.ttl>
+        where {
+                  $UBERONID rdfs:label ?anatomy_label .
+                  graph <http://reasoner.renci.org/nonredundant> {
+                       ?phenotype phenotype_of: $UBERONID .
+                  }
+                  graph <http://reasoner.renci.org/redundant> {
+                    ?pheno_id rdfs:subClassOf ?phenotype .
+                  }
+                  ?pheno_id rdfs:label ?pheno_label .
+              }
+        """
+        #The subclassof uberon:0001062 ensures that the result
+        #is an anatomical entity.
+        results = self.triplestore.query_template(
+            inputs = { 'UBERONID': uberon_id }, \
+            outputs = [ 'pheno_id', 'anatomy_label', 'pheno_label'],\
+            template_text = text \
+        )
+        return results
+
 
     def get_anatomy_by_cell_graph (self, cell_node):
         anatomies = self.cell_to_anatomy (cell_node.identifier)
@@ -201,6 +233,13 @@ class UberonGraphKS(Service):
         #node.label = node_label
         return edge,anatomy_node
 
+    def create_anatomy_phenotype_edge(self, node_id, node_label, input_id ,anatomy_node):
+        predicate = LabeledID('UPHENO:0000001','has phenotype affecting')
+        phenotype_node = KNode ( Text.obo_to_curie(node_id), node_types.PHENOTYPE , label=node_label)
+        edge = self.create_edge(phenotype_node, anatomy_node,'uberongraph.get_phenotype_by_anatomy_graph', input_id, predicate)
+        #node.label = node_label
+        return edge,phenotype_node
+
     def get_anatomy_by_phenotype_graph (self, phenotype_node):
         results = []
         for curie in phenotype_node.get_synonyms_by_prefix('HP'):
@@ -221,4 +260,13 @@ class UberonGraphKS(Service):
                     results.append ( (pedge, pnode) )
         return results
 
-
+    def get_phenotype_by_anatomy_graph (self, anatomy_node):
+        results = []
+        for curie in anatomy_node.get_synonyms_by_prefix('UBERON'):
+            phenotypes = self.anatomy_to_phenotype (curie)
+            for r in phenotypes:
+                edge, node = self.create_anatomy_phenotype_edge(r['pheno_id'],r['pheno_label'],curie,anatomy_node)
+                if anatomy_node.label is None:
+                    anatomy_node.label = r['anatomy_label']
+                results.append ( (edge, node) )
+        return results

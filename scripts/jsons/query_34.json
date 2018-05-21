@@ -1,0 +1,47 @@
+{
+    "name": "SQ1: EDARAVONE-Amyotrophic Lateral Sclerosis COP(P)",
+    "natural": "Clinical Outcome Pathway (phenotype)",
+    "notes": "SQ1",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "chemical_substance",
+            "label": "EDARAVONE",
+            "meta": {
+                "identifier": "MESH:C005435"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "biological_process_or_molecular_activity",
+            "label": "biological_process_or_molecular_activity",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "cell",
+            "label": "cell",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "anatomical_entity",
+            "label": "anatomical_entity",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Named Node",
+            "type": "phenotypic_feature",
+            "label": "Amyotrophic Lateral Sclerosis",
+            "meta": {
+                "identifier": "HP:0007354"
+            }
+        }
+    ]
+}

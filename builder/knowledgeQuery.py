@@ -22,10 +22,13 @@ class KnowledgeQuery:
             raise ValueError(f'Unsupported named node type: {node_type}')
         return name_type
 
-    def create_query (self, start_name, start_type, end_name, end_type, intermediate, two_sided, end_values):
+    def create_query (self, start_values, start_name, start_type, end_name, end_type, intermediate, two_sided, end_values):
         start_node = KNode(f"{start_type}.{start_name}", start_type)
-        query = UserQuery (start_name, start_type)
+        query = UserQuery (start_values=start_values,
+                           start_type=start_type,
+                           start_name=start_name)
         for transition in intermediate:
+            print (f" --------------> {intermediate} ")
             query.add_transition(transition['type'],
                                  min_path_length=transition['min_path_length'],
                                  max_path_length=transition['max_path_length'])

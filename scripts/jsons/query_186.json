@@ -1,0 +1,27 @@
+{
+    "name": "SQ13: Cystic Fibrosis D-G-D",
+    "natural": "diseases share gene",
+    "notes": "SQ13",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "Cystic Fibrosis",
+            "meta": {
+                "identifier": "MONDO:0009061"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "disease",
+            "label": "disease",
+            "meta": {}
+        }
+    ]
+}

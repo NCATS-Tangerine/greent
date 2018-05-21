@@ -1,0 +1,47 @@
+{
+    "name": "SQ19: Metformin-Diarrhea COP(P)",
+    "natural": "Clinical Outcome Pathway (phenotype)",
+    "notes": "SQ19",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "chemical_substance",
+            "label": "Metformin",
+            "meta": {
+                "identifier": "CHEBI:6801"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "biological_process_or_molecular_activity",
+            "label": "biological_process_or_molecular_activity",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "cell",
+            "label": "cell",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "anatomical_entity",
+            "label": "anatomical_entity",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Named Node",
+            "type": "phenotypic_feature",
+            "label": "Diarrhea",
+            "meta": {
+                "identifier": "HP:0002014"
+            }
+        }
+    ]
+}

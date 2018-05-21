@@ -1,0 +1,27 @@
+{
+    "name": "SQ13: primary ciliary dyskinesia D-G-D",
+    "natural": "diseases share gene",
+    "notes": "SQ13",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "primary ciliary dyskinesia",
+            "meta": {
+                "identifier": "MONDO:0016575"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "disease",
+            "label": "disease",
+            "meta": {}
+        }
+    ]
+}

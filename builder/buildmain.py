@@ -62,7 +62,7 @@ def export_edge(tx,edge):
          'publications': ke.publications[:1000], 'url' : ke.url, 'input': ke.input_id}
     )
     if ke.standard_predicate.identifier == 'GAMMA:0':
-        logger.error(f"Unable to map predicate for edge {ke.original_predicate}  {ke}")
+        logger.warn(f"Unable to map predicate for edge {ke.original_predicate}  {ke}")
 
 
 def export_node(tx,node ):
@@ -473,7 +473,7 @@ def generate_query(pathway, start_identifiers, start_name = None, end_identifier
     return query
 
 
-def run(pathway, start_name, end_name,  supports, config):
+def run(pathway, start_name, start_id, end_name, end_id, supports, config):
     """Programmatic interface.  Pathway defined as in the command-line input.
        Arguments:
          pathway: A string defining the query.  See command line help for details
@@ -488,11 +488,14 @@ def run(pathway, start_name, end_name,  supports, config):
     # start_type = node_types.type_codes[pathway[0]]
     start_type = steps[0].nodetype
     rosetta = setup(config)
-    start_identifiers = lookup_identifier(start_name, start_type, rosetta.core)
+    #start_identifiers = lookup_identifier(start_name, start_type, rosetta.core)
+    #Strip spaces from the id's, which can cause problems down the road
+    start_identifiers=[start_id.strip()]
     if end_name is not None:
         # end_type = node_types.type_codes[pathway[-1]]
         end_type = steps[-1].nodetype
-        end_identifiers = lookup_identifier(end_name, end_type, rosetta.core)
+        #end_identifiers = lookup_identifier(end_name, end_type, rosetta.core)
+        end_identifiers = [end_id.strip()]
     else:
         end_identifiers = None
     print("Start identifiers: " + '..'.join(start_identifiers))
@@ -559,6 +562,8 @@ def main():
                         default='greent.conf')
     parser.add_argument('--start', help='Text to initiate query', required=True)
     parser.add_argument('--end', help='Text to finalize query', required=False)
+    parser.add_argument('--start_id', help='Text to initiate query', required=True)
+    parser.add_argument('--end_id', help='Text to finalize query', required=False)
     args = parser.parse_args()
     pathway = None
     if args.pathway is not None and args.question is not None:
@@ -579,7 +584,7 @@ def main():
                 sys.exit(1)
     else:
         pathway = args.pathway
-    run(pathway, args.start, args.end, args.support, config=args.config)
+    run(pathway, args.start, args.start_id, args.end, args.end_id, args.support, config=args.config)
 
 
 if __name__ == '__main__':

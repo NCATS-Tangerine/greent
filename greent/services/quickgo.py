@@ -112,9 +112,26 @@ class QuickGo(Service):
         edges = [ self.create_edge(go_node, cell_node, 'quickgo.cell_to_go_term_annotation_extensions', cell_node.identifier, predicate, url = url) for go_node in nodes ] 
         return list(zip(edges,nodes))
 
-    def go_term_to_gene_annotation(self,node):
+    def go_term_to_gene_annotation_strict(self,node):
         go = node.identifier
         url = f'{self.url}/QuickGO/services/annotation/search?goId={go}&taxonId=9606&goUsage=exact&targetSet=referencegenome'
+        call_results = self.page_calls(url)
+        used = set()
+        results = [] 
+        for r in call_results:
+            uniprotid = r["geneProductId"]
+            if uniprotid not in used:
+                used.add(uniprotid)
+                predicate = self.get_predicate(r['qualifier'])
+                gene_node = KNode( uniprotid, node_types.GENE ) 
+                edge = self.create_edge(node, gene_node, 'quickgo.go_term_to_gene_annotation',node.identifier,predicate,url = url)
+                results.append( (edge,gene_node ) )
+        return results
+
+    def go_term_to_gene_annotation(self,node):
+        go = node.identifier
+        url = f'{self.url}/QuickGO/services/annotation/search?goId={go}&taxonId=9606&goUsage=exact'
+        #print(url)
         call_results = self.page_calls(url)
         used = set()
         results = [] 

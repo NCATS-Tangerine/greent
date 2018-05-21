@@ -13,6 +13,8 @@ def hetio(rosetta):
     hetio = rosetta.core.hetio
     return hetio
 
+#NOTE THAT in hetio, genes are identified with integers.  These integers are NCBIGENE identifiers, but with no
+# prefix, or url or anything.
 
 def test_gene_to_anatomy(hetio):
     relations = hetio.gene_to_anatomy(KNode('NCBIGENE:83752',node_types.GENE))
@@ -22,6 +24,17 @@ def test_gene_to_anatomy(hetio):
     for ident in identifiers:
         assert Text.get_curie(ident) == 'UBERON'
     assert 'UBERON:0001007' in identifiers
+
+def test_anatomy_to_gene(hetio):
+    relations = hetio.anatomy_to_gene(KNode('UBERON:0001007', node_types.ANATOMY))
+    nts = [node.node_type for r,node in relations]
+    for nt in nts:
+        assert nt == node_types.GENE
+    identifiers = [node.identifier for r,node in relations]
+    for ident in identifiers:
+        assert Text.get_curie(ident) == 'NCBIGENE'
+    assert 'NCBIGENE:83752' in identifiers
+
 
 def test_gene_to_disease(hetio):
     #KRT7 associated with bile duct cancer?

@@ -1,0 +1,53 @@
+{
+    "name": "SQ1: IGF-1-Amyotrophic Lateral Sclerosis COP(D)",
+    "natural": "Clinical Outcome Pathway (disease)",
+    "notes": "SQ1",
+    "machine_question": [
+        {
+            "nodeSpecType": "Named Node",
+            "type": "chemical_substance",
+            "label": "IGF-1",
+            "meta": {
+                "identifier": "CHEMBL:CHEMBL101510"
+            }
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "gene",
+            "label": "gene",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "biological_process_or_molecular_activity",
+            "label": "biological_process_or_molecular_activity",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "cell",
+            "label": "cell",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "anatomical_entity",
+            "label": "anatomical_entity",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Node Type",
+            "type": "phenotypic_feature",
+            "label": "phenotypic_feature",
+            "meta": {}
+        },
+        {
+            "nodeSpecType": "Named Node",
+            "type": "disease",
+            "label": "Amyotrophic Lateral Sclerosis",
+            "meta": {
+                "identifier": "MONDO:0004976"
+            }
+        }
+    ]
+}
