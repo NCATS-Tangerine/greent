@@ -37,6 +37,9 @@
     cell:
       - link : anatomy_to_cell_type
         op   : uberongraph.get_cell_by_anatomy_graph
+    gene:
+      - link : anatomy_to_gene
+        op   : hetio.anatomy_to_gene
   cell:
     anatomical_entity:
       - link : cell_type_to_anatomy
