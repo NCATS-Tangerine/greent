@@ -42,7 +42,7 @@ class HGNC(Service):
             r = requests.get('%s/%s/%s' % (self.url, query_string, hgnc_id), headers= headers).json()
             symbol = r['response']['docs'][0]['symbol']
         except:
-            logger.warn(f"Problem retrieving name for {hgnc_id}")
+            #logger.warn(f"Problem retrieving name for {hgnc_id}")
             symbol = hgnc_id
         return symbol 
 
