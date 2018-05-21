@@ -40,6 +40,9 @@
     gene:
       - link : anatomy_to_gene
         op   : hetio.anatomy_to_gene
+    phenotypic_feature:
+      - link : anatomy_to_phenotype
+        op   : uberongraph.get_phenotype_by_anatomy_graph
   cell:
     anatomical_entity:
       - link : cell_type_to_anatomy
