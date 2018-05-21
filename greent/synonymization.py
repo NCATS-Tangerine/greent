@@ -74,8 +74,8 @@ class Synonymizer:
                 node.label = potential_identifiers[0].label
                 break
         if node.identifier.startswith('DOID'):
-            print(node.identifier)
-            print(node.synonyms)
-            print(node.node_type)
-            exit()
+            logger.warn("We are ending up with a DOID here")
+            logger.warn(node.identifier)
+            logger.warn(node.synonyms)
+            logger.warn(node.node_type)
 

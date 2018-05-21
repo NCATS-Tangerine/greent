@@ -489,12 +489,13 @@ def run(pathway, start_name, start_id, end_name, end_id, supports, config):
     start_type = steps[0].nodetype
     rosetta = setup(config)
     #start_identifiers = lookup_identifier(start_name, start_type, rosetta.core)
-    start_identifiers=[start_id]
+    #Strip spaces from the id's, which can cause problems down the road
+    start_identifiers=[start_id.strip()]
     if end_name is not None:
         # end_type = node_types.type_codes[pathway[-1]]
         end_type = steps[-1].nodetype
         #end_identifiers = lookup_identifier(end_name, end_type, rosetta.core)
-        end_identifiers = [end_id]
+        end_identifiers = [end_id.strip()]
     else:
         end_identifiers = None
     print("Start identifiers: " + '..'.join(start_identifiers))
