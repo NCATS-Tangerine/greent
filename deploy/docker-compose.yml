@@ -10,7 +10,8 @@ services:
       - DEPLOY=docker
       - ROBOKOP_HOME=/home/murphy
       - NEO4J_HOST=neo4j
-      - REDIS_HOST=redis
+      - BROKER_HOST=broker
+      - CACHE_HOST=cache
     ports:
       - "${BUILDER_PORT}:${BUILDER_PORT}"
       - "${FLOWER_PORT}:${FLOWER_PORT}"
