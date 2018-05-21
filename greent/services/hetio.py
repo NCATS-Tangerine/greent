@@ -25,7 +25,6 @@ class HetIO(Neo4JREST):
     def munge_gene (self, gene):
         return gene.split ("/")[-1:][0] if gene.startswith ("http://") else gene
 
-    #TODO: also make an anatomy to gene
     def gene_to_anatomy (self, gene):
         gene_identifiers = list(gene.get_synonyms_by_prefix('NCBIGENE'))
         gene_identifier = Text.un_curie(gene_identifiers[0])
@@ -40,6 +39,22 @@ class HetIO(Neo4JREST):
             #These edges all go from anatomy to gene
             edge = self.create_edge(anatomy, gene,'hetio.gene_to_anatomy',gene_identifier,predicate)
             results.append((edge, anatomy))
+        return results
+
+    def anatomy_to_gene (self, anat):
+        anat_identifiers = list(anat.get_synonyms_by_prefix('UBERON'))
+        anat_identifier = anat_identifiers[0]
+        nodes,edges = self.query ( "MATCH (a:Anatomy)-[ar]-(g:Gene) WHERE a.identifier='{0}' RETURN a, ar, g ".format (anat_identifier),
+                              labels=['Gene'], kinds=['node','relationship'])
+        node_ids = [ LabeledID(f"NCBIGENE:{node['identifier']}",node['name']) for node in nodes ]
+        edge_ids = [ edge['type'] for edge in edges ]
+        results = []
+        for node_id, predicate_label in zip(node_ids,edge_ids):
+            predicate = LabeledID(f'hetio:{predicate_label}', predicate_label)
+            gene = KNode(node_id.identifier, node_types.GENE, label=node_id.label)
+            #These edges all go from anatomy to gene
+            edge = self.create_edge(anat, gene,'hetio.anatomy_to_gene',anat_identifier,predicate)
+            results.append((edge, gene))
         return results
 
     #TODO: this is not to a cell, but a cellular component.  REmoving it from the yaml until we can fix it up
