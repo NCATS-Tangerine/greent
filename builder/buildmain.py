@@ -118,7 +118,7 @@ class KnowledgeGraph:
         #uri = 'bolt://localhost:7687'
         #self.driver = GraphDatabase.driver(uri, encrypted=False)
         # Use the same database connection as the type_graph.
-        self.driver = self.rosetta.type_graph.driver
+        # self.driver = self.rosetta.type_graph.driver
         
     def execute(self):
         """Execute the query that defines the graph"""
@@ -412,7 +412,9 @@ class KnowledgeGraph:
         """Export to neo4j database."""
         # TODO: lots of this should probably go in the KNode and KEdge objects?
         logger.info("Writing to neo4j")
-        session = self.driver.session()
+        config = self.rosetta.type_graph.get_config()
+        driver = GraphDatabase.driver(config['url'], auth=("neo4j", config['neo4j_password']))
+        session = driver.session()
         # Now add all the nodes
         for node in self.graph.nodes():
             session.write_transaction(export_node,node)
