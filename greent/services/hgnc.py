@@ -14,7 +14,8 @@ prefixes_to_hgnc = {
     #UNIPROTKB is not a identifiers.org prefix.  Uniprot is, and uniprot.isoform is.
     'UNIPROTKB': 'uniprot_ids',
     'UniProtKB': 'uniprot_ids',
-    'ENSEMBL': 'ensembl_gene_id'
+    'ENSEMBL': 'ensembl_gene_id',
+    'RNAcentral': 'rna_central_ids'
 }
 
 hgnc_to_prefixes = { v: k for k,v in prefixes_to_hgnc.items()}
@@ -50,7 +51,11 @@ class HGNC(Service):
         identifier_parts = identifier.split(':')
         prefix = identifier_parts[0]
         id = identifier_parts[1]
-        query_type = prefixes_to_hgnc[prefix]
+        try:
+            query_type = prefixes_to_hgnc[prefix]
+        except KeyError:
+            logger.warn(f'HGNC does not handle prefix: {prefix}')
+            return set()
         headers = {'Accept':'application/json'}
         r = requests.get('%s/%s/%s' % (self.url, query_type, id), headers= headers).json()
         docs = r['response']['docs']
