@@ -105,7 +105,7 @@ class CTD(Service):
         identifiers = self.drugname_string_to_drug_identifier(drugname)
         return [ KNode(identifier, node_types.DRUG) for identifier in identifiers ]
 
-    def standardize_predicate(self, predicate):
+    def standardize_predicate(self, predicate, sourcenode=None, targetnode=None):
         """CTD has a little more work to do than the standard service."""
         if '|' not in predicate.label:
             return self.concept_model.standardize_relationship(predicate)
