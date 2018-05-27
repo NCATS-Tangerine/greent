@@ -1,8 +1,6 @@
 import requests
 import urllib
 from greent.service import Service
-#from greent.ontologies.mondo import Mondo
-#from greent.ontologies.go import GO
 from greent.ontologies.mondo2 import Mondo2
 from greent.ontologies.go2 import GO2
 from greent.util import Text

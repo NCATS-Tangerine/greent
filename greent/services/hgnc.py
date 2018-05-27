@@ -15,7 +15,7 @@ prefixes_to_hgnc = {
     'UNIPROTKB': 'uniprot_ids',
     'UniProtKB': 'uniprot_ids',
     'ENSEMBL': 'ensembl_gene_id',
-    'RNAcentral': 'rna_central_ids'
+    #'RNAcentral': 'rna_central_ids' According to the docs, rna_central_ids should be supported but it is not.
 }
 
 hgnc_to_prefixes = { v: k for k,v in prefixes_to_hgnc.items()}

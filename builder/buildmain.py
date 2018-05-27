@@ -64,8 +64,9 @@ def export_edge_chunk(tx,edgelist,edgelabel):
     tx.run(cypher,{'batches': batch})
 
     for edge in edgelist:
-        if edge[2]['object'].standard_predicate.identifier == 'GAMMA:0':
-            logger.warn(f"Unable to map predicate for edge {edge[2]['object'].original_predicate}  {ke}")
+        ke = edge[2]['object']
+        if ke.standard_predicate.identifier == 'GAMMA:0':
+            logger.warn(f"Unable to map predicate for edge {ke.original_predicate}  {ke}")
 
 def sort_nodes_by_label(nodes):
     nl = defaultdict(list)

@@ -121,7 +121,7 @@ class OmniCorp(Service):
                     pubmeds[k_ij] = []
         return pubmeds
 
-    def call_with_retries(fnc,args):
+    def call_with_retries(self,fnc,args):
         done = False
         ntries = 0
         maxtries = 100
@@ -141,7 +141,7 @@ class OmniCorp(Service):
         identifier = self.get_omni_identifier(node)
         if identifier is None:
             return 0
-        res = call_with_retries(self.sparql_count_pmids, [identifier])
+        res = self.call_with_retries(self.sparql_count_pmids, [identifier])
         if res is None:
             return None
         else:
@@ -154,7 +154,7 @@ class OmniCorp(Service):
             return []
         done = False
         ntries = 0
-        pmids = call_with_retries(self.sparql_get_shared_pmids, [id1,id2])
+        pmids = self.call_with_retries(self.sparql_get_shared_pmids, [id1,id2])
         if pmids is None:
             logger.error("OmniCorp gave up")
             return None
