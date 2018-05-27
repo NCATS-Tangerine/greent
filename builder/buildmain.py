@@ -49,7 +49,7 @@ def export_edge_chunk(tx,edgelist,edgelabel):
     batch = [ {'aid': edge[0].identifier,
                'bid': edge[1].identifier,
                'edge_source': edge[2]['object'].edge_source,
-               'database': edge[2]['object'].edge_source.split('.')[0]
+               'database': edge[2]['object'].edge_source.split('.')[0],
                'ctime': calendar.timegm(edge[2]['object'].ctime.timetuple()),
                'standard_label': Text.snakify(edge[2]['object'].standard_predicate.label),
                'standard_id': edge[2]['object'].standard_predicate.identifier,
