@@ -162,7 +162,11 @@ class Pharos(Service):
                 original_edge_nodes = []
                 url = 'https://pharos.nih.gov/idg/api/v1/targets(%s)?view=full' % pharosid
                 r = requests.get(url)
-                result = r.json()
+                try:
+                    result = r.json()
+                except:
+                    #If pharos doesn't know the identifier, it just 404s.  move to the next
+                    continue 
                 actions = set()  # for testing
                 predicate = LabeledID('PHAROS:drug_targets','is_target')
                 chembl_id = None
