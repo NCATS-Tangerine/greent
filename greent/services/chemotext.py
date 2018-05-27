@@ -3,7 +3,7 @@ import os
 import unittest
 from collections import defaultdict
 
-from ontobio.vocabulary import upper
+#from ontobio.vocabulary import upper
 
 from greent.mesh import MeSH
 from greent.neo4jbase import Neo4JREST
