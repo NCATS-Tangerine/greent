@@ -1,10 +1,10 @@
 import json
 
-from greent.ontologies.go import GO
+#from greent.ontologies.go import GO
 from greent.ontologies.go2 import GO2
-from greent.ontologies.hpo import HPO
+#from greent.ontologies.hpo import HPO
 from greent.ontologies.hpo2 import HPO2
-from greent.ontologies.mondo import Mondo
+#from greent.ontologies.mondo import Mondo
 from greent.ontologies.mondo2 import Mondo2
 from greent.services.biolink import Biolink
 from greent.services.caster import Caster
