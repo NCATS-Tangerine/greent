@@ -11,6 +11,7 @@ from greent import node_types
 from pprint import pprint
 import datetime
 from collections import defaultdict
+import time
 
 logger = LoggingUtil.init_logging(__name__)
 
@@ -120,12 +121,31 @@ class OmniCorp(Service):
                     pubmeds[k_ij] = []
         return pubmeds
 
+    def call_with_retries(fnc,args):
+        done = False
+        ntries = 0
+        maxtries = 100
+        rest_time = 10 #seconds
+        while not done and ntries < 100:
+            try:
+                result = fnc(*args)
+                done = True
+            except:
+                logger.warn("OmniCorp error, retrying")
+                time.sleep(rest_time)
+                ntries += 1
+        if not done:
+            return None
+
     def count_pmids(self, node):
         identifier = self.get_omni_identifier(node)
         if identifier is None:
             return 0
-        count = self.sparql_count_pmids(identifier)[0]['count']
-        return count
+        res = call_with_retries(self.sparql_count_pmids, [identifier])
+        if res is None:
+            return None
+        else:
+            return count[0]['count']
 
     def get_shared_pmids (self, node1, node2):
         id1 = self.get_omni_identifier(node1)
@@ -134,16 +154,10 @@ class OmniCorp(Service):
             return []
         done = False
         ntries = 0
-        while not done and ntries < 10:
-            try:
-                pmids = self.sparql_get_shared_pmids (id1, id2)
-                done = True
-            except:
-                logger.warn("OmniCorp error, retrying")
-                ntries += 1
-        if not done:
+        pmids = call_with_retries(self.sparql_get_shared_pmids, [id1,id2])
+        if pmids is None:
             logger.error("OmniCorp gave up")
-            return []
+            return None
         return [ p['pubmed'] for p in pmids ]
     
 
