@@ -85,6 +85,8 @@ classes:
       - HGNC
       - NCBIGENE
       - ENSEMBL
+      - UniProtKB
+      - RNAcentral
       - MGI
       - ZFIN
 
