@@ -380,7 +380,7 @@ class ChemBioKS(Service):
             props['publications'] = r['pubmedids'].split('|')
             node = KNode( "NCBIGene:{}".format( r['NCBIGene']), node_types.GENE)
             edge = self.create_edge(pubchem_node, node,'chembio.graph_pubchem_to_ncbigene',pubchem_node.identifier,
-                                    predicate,publications=[f'{PMID:x}' for x in r['pubmedids'].split('|')])
+                                    predicate,publications=[f'PMID:{x}' for x in r['pubmedids'].split('|')])
             retvals.append( (edge,node) )
         return retvals
 
