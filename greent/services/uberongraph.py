@@ -209,34 +209,34 @@ class UberonGraphKS(Service):
     def get_anatomy_by_cell_graph (self, cell_node):
         anatomies = self.cell_to_anatomy (cell_node.identifier)
         results = []
-        predicate = LabeledID('BFO:0000050', 'has_part')
+        predicate = LabeledID('BFO:0000050', 'part_of')
         for r in anatomies:
             anatomy_node = KNode (Text.obo_to_curie(r['anatomyID']), node_types.ANATOMY, label=r['anatomyLabel'] )
-            edge = self.create_edge(anatomy_node, cell_node, 'uberongraph.get_anatomy_by_cell_graph', cell_node.identifier, predicate)
+            edge = self.create_edge(cell_node, anatomy_node, 'uberongraph.get_anatomy_by_cell_graph', cell_node.identifier, predicate)
             results.append ( (edge, anatomy_node) )
         return results
 
     def get_cell_by_anatomy_graph (self, anatomy_node):
         cells = self.anatomy_to_cell(anatomy_node.identifier)
         results = []
-        predicate = LabeledID('BFO:0000050', 'has_part')
+        predicate = LabeledID('BFO:0000050', 'part_of')
         for r in cells:
             cell_node = KNode (Text.obo_to_curie(r['cellID']), node_types.CELL, label=r['cellLabel'] )
-            edge = self.create_edge(anatomy_node, cell_node, 'uberongraph.get_cell_by_anatomy_graph', anatomy_node.identifier, predicate)
+            edge = self.create_edge(cell_node, anatomy_node, 'uberongraph.get_cell_by_anatomy_graph', anatomy_node.identifier, predicate)
             results.append ( (edge, cell_node) )
         return results
 
     def create_phenotype_anatomy_edge(self, node_id, node_label, input_id ,phenotype_node):
-        predicate = LabeledID('UPHENO:0000001','has phenotype affecting')
+        predicate = LabeledID('GAMMA:0000002','inverse of has phenotype affecting')
         anatomy_node = KNode ( Text.obo_to_curie(node_id), node_types.ANATOMY , label=node_label)
-        edge = self.create_edge(phenotype_node, anatomy_node,'uberongraph.get_anatomy_by_phenotype_graph', input_id, predicate)
+        edge = self.create_edge(anatomy_node, phenotype_node,'uberongraph.get_anatomy_by_phenotype_graph', input_id, predicate)
         #node.label = node_label
         return edge,anatomy_node
 
     def create_anatomy_phenotype_edge(self, node_id, node_label, input_id ,anatomy_node):
-        predicate = LabeledID('UPHENO:0000001','has phenotype affecting')
+        predicate = LabeledID('GAMMA:0000002','inverse of has phenotype affecting')
         phenotype_node = KNode ( Text.obo_to_curie(node_id), node_types.PHENOTYPE , label=node_label)
-        edge = self.create_edge(phenotype_node, anatomy_node,'uberongraph.get_phenotype_by_anatomy_graph', input_id, predicate)
+        edge = self.create_edge(anatomy_node, phenotype_node,'uberongraph.get_phenotype_by_anatomy_graph', input_id, predicate)
         #node.label = node_label
         return edge,phenotype_node
 

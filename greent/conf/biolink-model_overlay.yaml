@@ -4,6 +4,7 @@ description: Entity and association taxonomy and datamodel for life-sciences dat
 
 classes:
   
+    #Not in biolink-model
   - name: genetic condition
     is_a: disease
     description: >-
@@ -19,18 +20,6 @@ classes:
       - UMLS
       - MESH
       - PHAROS.DISEASE
-
-  - name: biological process or molecular activity
-    is_a: biological entity
-    union_of:
-      - biological process
-      - molecular entity
-
-  - name: biological process
-    is_a: biological process or molecular activity
-
-  - name: molecular activity
-    is_a: biological process or molecular activity
 
 #The following modifications are to connect biolink concepts to identifier prefixes. 
 #There needs to be a better place to do this.  The problem is that for e.g. gene,
@@ -99,14 +88,7 @@ classes:
       - MGI
       - ZFIN
 
-  - name: biological process
-    id_prefixes: 
-      - GO
-
-  - name: cellular component
-    id_prefixes: 
-      - GO
-          
+         
   - name: pathway
     id_prefixes: 
       - KEGG
@@ -118,41 +100,41 @@ classes:
       - REACT
       - KEGG-path
 
- 
-  - name: cell
-    id_prefixes:
-      - CL
-
 slots:
 
   - name: id
     mappings:
       - rdfs:ID
 
-  - name: associated with condition
+  - name: gene associated with condition
     mappings:
-      - RO:0002326   # contributes_to
+      - BIOLINK:0000001 # Minting id for this
       - GENO:0000840 # pathogenic_for_condition
       - GENO:0000841 # likely_pathogenic_for_condition
-      - RO:0002607   # is_marker_for
 
-  - name: participates in
+  - name: actively involved in
     mappings:
       - biolink:gene_get_process             # biolink returns no relation_id or an identifier that is not a curie
-      - biolink:gene_get_function            # biolink returns no relation_id or an identifier that is not a curie
       - biolink:gene_get_process_or_function # biolink returns no relation_id or an identifier that is not a curie
-      - RO:0002331                           # involved_in
 
+  - name: capable of
+    mappings:
+      - biolink:gene_get_function            # biolink returns no relation_id or an identifier that is not a curie
+
+
+    #In the model, here for the hetio mappings
   - name: positively regulates, entity to entity
     mappings:
       - hetio:UPREGULATES_AuG
       - hetio:UPREGULATES_DuG
 
+    #In the model, here for the hetio mappings
   - name: negatively regulates, entity to entity
     mappings:
       - hetio:DOWNREGULATES_AdG
       - hetio:DOWNREGULATES_DdG
 
+    #Need to replace
   - name: directly interacts with
     mappings:
       - SIO:000203                # Connected to (is that really a good mapping?)
@@ -200,14 +182,24 @@ slots:
       - CTD:decreases^transport
       - CTD:increases^transport
 
+    # in translator_minimal, here for other mappings
   - name: has phenotype
     mappings:
       - hetio:PRESENTS_DpS
-      - UPHENO:0000001
+      - GAMMA:0000002 # inverse of UPHENO:0000001, which I can't seem to find an inverse of anywhere.
 
+    #In translator_minimal
   - name: coexists with
     mappings:
       - RO:0002325  # colocalizes_with
+
+    #In translator_minimal now, here for hetio
+  - name: expresses
+    description: >-
+        inverse of expressed in 
+    mappings:
+      - RO:0002292
+      - hetio:EXPRESSES_AeG
 
   #the following are not in the original biolink model
   
@@ -218,26 +210,11 @@ slots:
       - PHAROS:gene_involved
       - hetio:ASSOCIATES_DaG
 
-  - name: occurs in
-    description: >-
-      indicates that a process occurs in an anatomical entity
-    domain: process
-    range: anatomical entity #?
-    mappings:
-      - BFO:0000066
-
   - name: results in motion of
     domain: process
     range: entity #?
     mappings:
       - RO:0002565
-
-  - name: expresses
-    description: >-
-        inverse of expressed in 
-    mappings:
-      - RO:0002292
-      - hetio:EXPRESSES_AeG
 
   - name: results in developmental progression of
     mappings:
@@ -259,10 +236,5 @@ slots:
       - RO:0002300
       - RO:0002301
       - RO:0002585
-        
-  - name: causes or contributes to
-    mappings:
-      - RO:0003302   #causes or contributes to
-      - RO:0002327   #enables
 
 

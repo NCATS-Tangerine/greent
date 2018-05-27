@@ -64,6 +64,7 @@ class Biolink(Service):
             #now back to the show
             predicate = LabeledID(identifier=predicate_id,label= predicate_label)
             edge = self.create_edge(source_node, target_node, f'biolink.{function}',  input_identifier, predicate,  publications = pubs, url = url)
+            print(predicate, edge.standard_predicate)
             edge_nodes.append((edge, newnode))
         return edge_nodes
 

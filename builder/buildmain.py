@@ -34,15 +34,14 @@ def export_edge_chunk(tx,edgelist,edgelabel):
     """The approach of updating edges will be to erase an old one and replace it in whole.   There's no real
     reason to worry about preserving information from an old edge.
     What defines the edge are the identifiers of its nodes, and the source.function that created it."""
-    print(edgelabel)
     cypher = """UNWIND {batches} as row
             MATCH (a:%s {id: row.aid}),(b:%s {id: row.bid})
             MERGE (a)-[r:%s {edge_source: row.edge_source}]-(b)
+            set r.source_database=row.database
             set r.ctime=row.ctime 
-            set r.predicate=row.standard_label
             set r.predicate_id=row.standard_id 
-            set r.relation=row.original_predicate_label
-            set r.relation_id=row.original_predicate_id 
+            set r.relation_label=row.original_predicate_label
+            set r.relation=row.original_predicate_id 
             set r.publications=row.publications
             set r.url=row.url
             set r.input_identifiers=row.input
@@ -50,6 +49,7 @@ def export_edge_chunk(tx,edgelist,edgelabel):
     batch = [ {'aid': edge[0].identifier,
                'bid': edge[1].identifier,
                'edge_source': edge[2]['object'].edge_source,
+               'database': edge[2]['object'].edge_source.split('.')[0]
                'ctime': calendar.timegm(edge[2]['object'].ctime.timetuple()),
                'standard_label': Text.snakify(edge[2]['object'].standard_predicate.label),
                'standard_id': edge[2]['object'].standard_predicate.identifier,

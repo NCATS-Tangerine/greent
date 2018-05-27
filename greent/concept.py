@@ -34,7 +34,7 @@ class Relationship:
         use the first mapping."""
         if len(self.mappings) == 0:
             return f'BIOLINK:{self.name}'
-        favorites=['RO','SIO','BFO','GENO','SEMMEDDB']
+        favorites=['BIOLINK','RO','SIO','BFO','GENO','SEMMEDDB']
         for favorite in favorites:
             for mapped in self.mappings:
                 if mapped.startswith(favorite):
@@ -84,7 +84,7 @@ class ConceptModel:
 
     def add_relationship(self,relationship):
         self.relations_by_name[relationship.name] = relationship
-        for mapping in relationship.mappings:
+        for mapping in set(relationship.mappings):
             if mapping in self.relations_by_xref:
                 raise Exception('Have multiple slots with the same mapping {}'.format(mapping))
             self.relations_by_xref[mapping] = relationship

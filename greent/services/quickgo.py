@@ -12,6 +12,7 @@ class QuickGo(Service):
 
     def __init__(self, context):
         super(QuickGo, self).__init__("quickgo", context)
+        self.go = context.core.go
 
     def get_predicate(self, p_label):
         labels2identifiers={'occurs_in': 'BFO:0000066',
@@ -43,12 +44,20 @@ class QuickGo(Service):
             logger.warn(p_label)
             return LabeledID(f'GO:{p_label}',p_label)
 
-    def standardize_predicate(self, predicate):
+    def standardize_predicate(self, predicate, source, target):
         """Fall back to a catch-all if we can't find a specific mapping"""
         try:
             return super(QuickGo, self).standardize_predicate(predicate)
         except:
-            return super(QuickGo,self).standardize_predicate(self.get_predicate('occurs_in'))
+            #If the target is a molecular function, use RO:0002215 capable_of
+            if self.go.is_biological_process(target):
+                return super(QuickGo,self).standardize_predicate(LabeledID('RO:0002215','capable_of'))
+            #If the target is a biological process, use RO:0002331 involved_in
+            if self.go.is_molecular_function(target):
+                return super(QuickGo,self).standardize_predicate(LabeledID('RO:0002331','involved_in'))
+            #If the target is a cell, use 'occurs_in'
+            if target.node_type == node_types.CELL:
+                return super(QuickGo,self).standardize_predicate(self.get_predicate('occurs_in'))
 
     def page_calls(self,url):
         response = requests.get(url).json()
@@ -141,6 +150,6 @@ class QuickGo(Service):
                 used.add(uniprotid)
                 predicate = self.get_predicate(r['qualifier'])
                 gene_node = KNode( uniprotid, node_types.GENE ) 
-                edge = self.create_edge(node, gene_node, 'quickgo.go_term_to_gene_annotation',node.identifier,predicate,url = url)
+                edge = self.create_edge(gene_node, node, 'quickgo.go_term_to_gene_annotation',node.identifier,predicate,url = url)
                 results.append( (edge,gene_node ) )
         return results
