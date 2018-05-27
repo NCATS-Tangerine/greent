@@ -176,7 +176,7 @@ class Pharos(Service):
                                     pharosid,predicate, url=url)
                             resolved_edge_nodes.append( (edge,drug_node) )
             except:
-                logger.debug("Error encountered calling pharos with",identifier)
+                logger.debug("Error encountered calling pharos with",s)
         return resolved_edge_nodes
 
 
