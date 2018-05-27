@@ -86,6 +86,8 @@ class HetIO(Neo4JREST):
 
     def disease_to_phenotype (self, disease):
         disease_identifiers = list(disease.get_synonyms_by_prefix('DOID'))
+        if len(disease_identifiers) == 0:
+            return []
         disease_identifier = disease_identifiers[0]
         query = """MATCH (d:Disease{identifier:'%s'})-[r]-(s:Symptom) RETURN d,r,s""" % (disease_identifier)
         nodes,edges = self.query (query, labels=['Symptom'], kinds=['node','relationship'])
