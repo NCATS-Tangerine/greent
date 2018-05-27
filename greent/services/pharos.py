@@ -189,7 +189,12 @@ class Pharos(Service):
             original_edge_nodes = []
             url = 'https://pharos.nih.gov/idg/api/v1/ligands(%s)?view=full' % pharosid
             r = requests.get(url)
-            result = r.json()
+            try: 
+                result = r.json()
+            except:
+                #Pharos returns a 404 if it doesn't recognize the identifier, which ends up producing
+                # errors in turning into json. Skip to next identifier
+                continue
             actions = set()  # for testing
             predicate = LabeledID('PHAROS:drug_targets','is_target')
             for link in result['links']:
