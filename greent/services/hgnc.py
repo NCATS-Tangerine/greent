@@ -2,6 +2,7 @@ import requests
 from greent import node_types
 from greent.graph_components import LabeledID
 from greent.service import Service
+import time
 
 
 #A map from identifiers.org namespaces (curie prefixes) to how HGNC describes these things
