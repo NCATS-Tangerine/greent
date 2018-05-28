@@ -86,7 +86,7 @@ class Biolink(Service):
         uniprot_id = None
         uniprot_ids = gene.get_synonyms_by_prefix('UNIPROTKB')
         if len(uniprot_ids) == 0:
-            return []
+            return None,None,None
         uniprot_id = list(uniprot_ids)[0]
         url = "{0}/bioentity/gene/UniProtKB:{1}/function/".format(self.url, Text.un_curie(uniprot_id))
         response = requests.get(url).json()
@@ -110,6 +110,8 @@ class Biolink(Service):
 
     def gene_get_process_or_function(self,gene):
         response,url,input_id = self.gene_get_go(gene)
+        if response is None:
+            return []
         edges_nodes = self.process_associations(response, 'gene_get_process_or_function', node_types.PROCESS_OR_FUNCTION, input_id, url,gene)
         process_or_function_results = list(filter(lambda x: self.go.is_biological_process(x[1].identifier) or
                                                   self.go.is_molecular_function(x[1].identifier), edges_nodes))

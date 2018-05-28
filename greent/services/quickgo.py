@@ -146,7 +146,9 @@ class QuickGo(Service):
         results = [] 
         for r in call_results:
             uniprotid = r["geneProductId"]
-            if uniprotid not in used:
+            #quickgo returns all kinda stuff: rna central ids, complex portal ids.  These are good, but we can't do
+            #anything with them, so for now, dump em.
+            if uniprotid not in used and uniprotid.upper().startswith('UNIPROT'):
                 used.add(uniprotid)
                 predicate = self.get_predicate(r['qualifier'])
                 gene_node = KNode( uniprotid, node_types.GENE ) 

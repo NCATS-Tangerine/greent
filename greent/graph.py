@@ -304,6 +304,7 @@ class TypeGraph(Service):
             db = GraphDB(session)
             result = self.get_transitions_actor(db, query)
         return result
+
     def get_transitions_actor(self, db, query):
         """ Execute a cypher query and walk the results to build a set of transitions to execute.
         The query should be such that it returns a path (node0-relation0-node1-relation1-node2), and
@@ -319,7 +320,10 @@ class TypeGraph(Service):
         """
         graphs=[]
         result = db.query(query)        
+        nrow = 0
         for row in result:
+            print('row:',nrow)
+            nrow+=1
             nodes = {}
             transitions = {}
             path = row[0]
@@ -354,6 +358,12 @@ class TypeGraph(Service):
                         'op'   : element.properties['op'],
                         'to'   : to_node
                     }                
+            #This check might not be valid for more general patterns, but it is true for lines.
+            if len(transitions) != (len(nodes) - 1):
+                logger.error('Error',len(transitions), len(nodes)-1)
+                logger.error(nodes)
+                logger.error(transitions)
+                raise Exception("Incorrect number of transitions")
             graphs.append( (nodes, transitions) )
             if logger.isEnabledFor (logging.DEBUG):
                 logger.debug (f"{json.dumps(graphs, indent=2)}")

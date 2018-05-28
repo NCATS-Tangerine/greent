@@ -1,11 +1,11 @@
 import logging
 #from program import Program
 from greent.node_types import node_types, UNSPECIFIED
-from greent.util import Text
+from greent.util import Text, LoggingUtil
 from greent.program import Program
 from greent.program import QueryDefinition
 
-logger = logging.getLogger(__name__)
+logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
 class Transition:
     def __init__(self, last_type, next_type, min_path_length, max_path_length):

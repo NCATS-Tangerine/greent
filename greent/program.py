@@ -38,6 +38,27 @@ class Program:
         self.linked_results = []
         self.start_nodes = []
         self.end_nodes = []
+        self.check_program(query_definition)
+        self.log_program()
+
+    def check_program(self,qd):
+        #Check for lines - need to have outward edges from defined nodes
+        if 0 not in self.transitions:
+            raise Exception("No transition from start node?")
+        if qd.end_values is not None:
+            last_node = len(self.concept_nodes)-1
+            if last_node not in self.transitions:
+                raise Exception("No transition from end node?")
+
+    def log_program(self):
+        logstring = f'Program {self.program_number}\n'
+        logstring += 'Nodes: \n'
+        for i,cn in enumerate(self.concept_nodes):
+            logstring+=f' {i}: {cn}\n'
+        logstring += 'Transitions:\n'
+        for k in self.transitions:
+            logstring+=f' {k}: {self.transitions[k]}\n'
+        logger.debug(logstring)
 
     def initialize_instance_nodes(self, query_definition):
         logger.debug("Initializing program {}".format(self.program_number))
