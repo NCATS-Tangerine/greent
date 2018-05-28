@@ -8,6 +8,7 @@ from greent.graph_components import KNode, KEdge,LabeledID
 from greent import node_types
 from datetime import datetime as dt
 import logging
+import time
 
 
 class Biolink(Service):

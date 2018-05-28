@@ -135,7 +135,7 @@ class UserQuery:
                 #it throws an exception then, and we ignore it.
                 self.programs.append(Program(plan, self.definition, rosetta, i))
             except Exception as err:
-                logger.warn(err)
+                logger.warn(f'WARN: {err}')
         return len(self.programs) > 0
 
     def get_programs(self):

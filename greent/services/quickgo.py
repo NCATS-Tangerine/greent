@@ -5,6 +5,7 @@ from greent.util import Text,LoggingUtil
 from greent.graph_components import KNode,LabeledID
 from greent import node_types
 from datetime import datetime as dt
+import time
 
 logger = LoggingUtil.init_logging(__name__)
 
@@ -59,15 +60,30 @@ class QuickGo(Service):
             if target.node_type == node_types.CELL:
                 return super(QuickGo,self).standardize_predicate(self.get_predicate('occurs_in'))
 
+    #TODO: share the retry logic in Service?
+    def query(self,url):
+        done = False
+        num_tries = 0
+        max_tries = 10
+        wait_time = 5 # seconds
+        while num_tries < max_tries:
+            try:
+                return requests.get(url).json()
+            except:
+                num_tries += 1
+                time.sleep(wait_time)
+        return None
+ 
+
     def page_calls(self,url):
-        response = requests.get(url).json()
+        response = self.query(url)
         if 'results' not in response:
             return []
         allresults = response['results']
         total_pages = response['pageInfo']['total']
         for page in range(2,total_pages+1):
             url_page = url+f'&page={page}'
-            response = requests.get(url_page).json()
+            response = self.query(url_page)
             if 'results' in response:
                 allresults += response['results']
         return allresults
@@ -75,7 +91,7 @@ class QuickGo(Service):
     def go_term_to_cell_xontology_relationships(self, go_node):
         #This call is not paged!
         url = "{0}/QuickGO/services/ontology/go/terms/GO:{1}/xontologyrelations".format (self.url, Text.un_curie(go_node.identifier))
-        response = requests.get(url).json()
+        response = self.query(url)
         if 'results' not in response:
             return []
         results = []
