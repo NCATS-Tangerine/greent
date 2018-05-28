@@ -26,6 +26,21 @@ class HGNC(Service):
     def __init__(self, context): 
         super(HGNC, self).__init__("hgnc", context)
 
+    #TODO: share the retry logic in Service?
+    def query(self,url,headers):
+        done = False
+        num_tries = 0
+        max_tries = 10
+        wait_time = 5 # seconds
+        while num_tries < max_tries:
+            try:
+                return requests.get(url , headers= headers).json()
+            except:
+                num_tries += 1
+                time.sleep(wait_time)
+        return None
+        
+
     def  get_name(self, node):
         """Given a node for an hgnc, return the name for that id"""
         if node.node_type != node_types.GENE:
@@ -40,7 +55,7 @@ class HGNC(Service):
         hgnc_id = identifier_parts[1]
         headers = {'Accept':'application/json'}
         try:
-            r = requests.get('%s/%s/%s' % (self.url, query_string, hgnc_id), headers= headers).json()
+            r = self.query('%s/%s/%s' % (self.url, query_string, hgnc_id), headers= headers)
             symbol = r['response']['docs'][0]['symbol']
         except:
             #logger.warn(f"Problem retrieving name for {hgnc_id}")
@@ -57,7 +72,7 @@ class HGNC(Service):
             logger.warn(f'HGNC does not handle prefix: {prefix}')
             return set()
         headers = {'Accept':'application/json'}
-        r = requests.get('%s/%s/%s' % (self.url, query_type, id), headers= headers).json()
+        r = self.query('%s/%s/%s' % (self.url, query_type, id), headers= headers)
         docs = r['response']['docs']
         synonyms = set()
         for doc in docs:

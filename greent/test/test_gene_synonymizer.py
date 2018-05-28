@@ -12,4 +12,10 @@ def test_uniprot(rosetta):
     assert hgnc.pop() == 'HGNC:8856'
     assert node.identifier == 'HGNC:8856'
 
+def test_hgnc(rosetta):
+    """Observed an error for this id, is it transient?"""
+    node = KNode('HGNC:8599', node_types.GENE)
+    rosetta.synonymizer.synonymize(node)
+    hgnc = node.get_synonyms_by_prefix('HGNC')
+    assert node.label == 'PANX1'
 
