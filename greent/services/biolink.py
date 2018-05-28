@@ -19,6 +19,20 @@ class Biolink(Service):
         self.go = context.core.go
         self.label2id = {'colocalizes_with': 'RO:0002325', 'contributes_to': 'RO:0002326'}
 
+    #TODO: share the retry logic in Service?
+    def query(self,url):
+        done = False
+        num_tries = 0
+        max_tries = 10
+        wait_time = 5 # seconds
+        while num_tries < max_tries:
+            try:
+                return requests.get(url).json()
+            except:
+                num_tries += 1
+                time.sleep(wait_time)
+        return None
+ 
         
     def process_associations(self, r, function, target_node_type, input_identifier, url, input_node, reverse=False):
         """Given a response from biolink, create our edge and node structures.
@@ -72,13 +86,15 @@ class Biolink(Service):
         ehgnc = urllib.parse.quote_plus(gene_node.identifier)
         logging.getLogger('application').debug('          biolink: %s/bioentity/gene/%s/diseases' % (self.url, ehgnc))
         urlcall = '%s/bioentity/gene/%s/diseases' % (self.url, ehgnc)
-        r = requests.get(urlcall).json()
+        r = self.query(urlcall)
+        #r = requests.get(urlcall).json()
         return self.process_associations(r, 'gene_get_disease', node_types.DISEASE, ehgnc, urlcall, gene_node)
 
     def disease_get_phenotype(self, disease):
         #Biolink should understand any of our disease inputs here.
         url = "{0}/bioentity/disease/{1}/phenotypes/".format(self.url, disease.identifier)
-        response = requests.get(url).json()
+        response = self.query(url)
+        #response = requests.get(url).json()
         return self.process_associations(response, 'disease_get_phenotype', node_types.PHENOTYPE, disease.identifier, url, disease)
 
     def gene_get_go(self, gene):
@@ -89,7 +105,8 @@ class Biolink(Service):
             return None,None,None
         uniprot_id = list(uniprot_ids)[0]
         url = "{0}/bioentity/gene/UniProtKB:{1}/function/".format(self.url, Text.un_curie(uniprot_id))
-        response = requests.get(url).json()
+        #response = requests.get(url).json()
+        response = self.query(url)
         return response,url,uniprot_id
         #return self.process_associations(response, 'gene_get_go', node_types.PROCESS, url)
 
@@ -119,10 +136,12 @@ class Biolink(Service):
 
     def gene_get_pathways(self, gene):
         url = "{0}/bioentity/gene/{1}/pathways/".format(self.url, gene.identifier)
-        response = requests.get(url).json()
+        #response = requests.get(url).json()
+        response = self.query(url)
         return self.process_associations(response, 'gene_get_pathways', node_types.PATHWAY, gene.identifier, url,gene)
 
     def pathway_get_gene(self, pathway):
         url = "{0}/bioentity/pathway/{1}/genes/".format(self.url, pathway.identifier)
-        response = requests.get(url).json()
+        #response = requests.get(url).json()
+        response = self.query(url)
         return self.process_associations(response, 'pathway_get_genes', node_types.GENE, url, pathway.identifier, pathway, reverse=True)

@@ -311,8 +311,12 @@ class KnowledgeGraph:
                 logger.info (f"cache hit: {key} {support_edge}")
             else:
                 logger.info (f"exec op: {key}")
-                support_edge = supporter.term_to_term(source, target)
-                self.rosetta.cache.set (key, support_edge)
+                try:
+                    support_edge = supporter.term_to_term(source, target)
+                    self.rosetta.cache.set (key, support_edge)
+                except:
+                    logger.debug('Support error, not caching')
+                    continue
             if support_edge is not None:
                 n_supported += 1
                 if len(support_edge.publications)> 0:
