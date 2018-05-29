@@ -20,6 +20,12 @@ def mondo(rosetta):
     checker = rosetta.core.checker
     return checker
 
+def test_bad_gene_to_process(biolink):
+    BAD_protein = KNode('UniProtKB:XXXXXX', node_types.GENE)
+    results = biolink.gene_get_process_or_function(BAD_protein)
+    assert len(results) == 0
+
+
 def test_gene_to_disease(biolink):
     """What do we get back for HBB"""
     relations = biolink.gene_get_disease(KNode('HGNC:4827',node_types.GENE))

@@ -62,6 +62,7 @@ class QuickGo(Service):
 
     #TODO: share the retry logic in Service?
     def query(self,url):
+        """Responds appropriately to unknown ids by returning valid json with no results"""
         done = False
         num_tries = 0
         max_tries = 10

@@ -23,6 +23,10 @@ def test_prefixes(oxo):
     assert oxo.is_valid_curie_prefix("MONDO") #surprise!
     assert not oxo.is_valid_curie_prefix("dummy")
 
+def test_bogus_syn(oxo):
+    curieset = oxo.get_synonymous_curies('EFO:9999999')
+    assert len(curieset) == 0
+
 def test_synonyms(oxo):
     curieset = oxo.get_synonymous_curies('EFO:0000764')
     #A bunch of stuff comes back. We'll spot check a few

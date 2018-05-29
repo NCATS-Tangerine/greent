@@ -35,6 +35,7 @@ class OXO(Service):
 
     def query(self, ids, distance=2):
         #Occasionally, OXO will throw an exception in here, maybe due to load?
+        #Calling with an unknown id just returns an empty set, so that's fine
         done = False
         num_tries = 0
         max_tries = 10
@@ -50,7 +51,7 @@ class OXO(Service):
                         "size": 10000
                     })
                 return res
-            except:
+            except Exception as e:
                 num_tries += 1
                 time.sleep(wait_time)
         return None

@@ -29,6 +29,8 @@ class HGNC(Service):
 
     #TODO: share the retry logic in Service?
     def query(self,url,headers):
+        """if the prefix is malformed, then you get a 400.  If the prefix is ok, but there is no data, you get
+        a valid json response with no entries.  So failures here are most likely timeouts and stuff like that."""
         done = False
         num_tries = 0
         max_tries = 10
@@ -66,15 +68,19 @@ class HGNC(Service):
     def get_synonyms(self, identifier):
         identifier_parts = identifier.split(':')
         prefix = identifier_parts[0]
-        id = identifier_parts[1]
+        gid = identifier_parts[1]
         try:
             query_type = prefixes_to_hgnc[prefix]
         except KeyError:
-            logger.warn(f'HGNC does not handle prefix: {prefix}')
+            #logger.warn(f'HGNC does not handle prefix: {prefix}')
             return set()
         headers = {'Accept':'application/json'}
-        r = self.query('%s/%s/%s' % (self.url, query_type, id), headers= headers)
-        docs = r['response']['docs']
+        r = self.query('%s/%s/%s' % (self.url, query_type, gid), headers= headers)
+        try:
+            docs = r['response']['docs']
+        except:
+            #didn't get anything useful
+            return set()
         synonyms = set()
         for doc in docs:
             #hgnc only returns an hgnc label (not eg. an entrez label)

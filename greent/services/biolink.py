@@ -22,14 +22,21 @@ class Biolink(Service):
 
     #TODO: share the retry logic in Service?
     def query(self,url):
+        """The biolink functions mostly work nicely - if the identifier is unresolvable, they return
+        a valid json with no results.   However, gene/{id}/function throws a 500 (yuck).  So if there's a 500 from
+        any endpoint, don't try again."""
         done = False
         num_tries = 0
         max_tries = 10
         wait_time = 5 # seconds
         while num_tries < max_tries:
             try:
-                return requests.get(url).json()
-            except:
+                r = requests.get(url)
+                if r.status_code == 500:
+                    return None
+                #Anything else, it's either good or we want to retry on exception.
+                return r.json()
+            except Exception as e:
                 num_tries += 1
                 time.sleep(wait_time)
         return None
@@ -100,31 +107,15 @@ class Biolink(Service):
 
     def gene_get_go(self, gene):
         # this function is very finicky.  gene must be in uniprotkb, and the curie prefix must be correctly capitalized
+        # TODO: Not actually true anymore, seems to handle most CURIEs.
         uniprot_id = None
         uniprot_ids = gene.get_synonyms_by_prefix('UNIPROTKB')
         if len(uniprot_ids) == 0:
             return None,None,None
         uniprot_id = list(uniprot_ids)[0]
         url = "{0}/bioentity/gene/UniProtKB:{1}/function/".format(self.url, Text.un_curie(uniprot_id))
-        #response = requests.get(url).json()
         response = self.query(url)
         return response,url,uniprot_id
-        #return self.process_associations(response, 'gene_get_go', node_types.PROCESS, url)
-
-    #Now I just have the higher-level version, and I can always get to these versions using caster
-    '''
-    def gene_get_function(self, gene):
-        response,url,input_id = self.gene_get_go(gene)
-        edges_nodes = self.process_associations(response, 'gene_get_function', node_types.FUNCTION, input_id, url,gene)
-        function_results = list(filter(lambda x: self.go.is_molecular_function(x[1].identifier), edges_nodes))
-        return function_results
-
-    def gene_get_process(self, gene):
-        response,url,input_id = self.gene_get_go(gene)
-        edges_nodes = self.process_associations(response, 'gene_get_process', node_types.PROCESS, input_id, url,gene)
-        process_results = list(filter(lambda x: self.go.is_biological_process(x[1].identifier), edges_nodes))
-        return process_results
-    '''
 
     def gene_get_process_or_function(self,gene):
         response,url,input_id = self.gene_get_go(gene)
