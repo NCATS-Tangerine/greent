@@ -1,7 +1,17 @@
 import pytest
-from greent.graph_components import KNode
+from greent.graph_components import KNode, LabeledID
 from greent import node_types
 from greent.conftest import rosetta
+
+def test_complicated(rosetta):
+    """make sure that a very complicated cast gets everything to the right place"""
+    fname='caster.output_filter(input_filter(upcast(hetio~disease_to_phenotype,disease_or_phenotypic_feature),disease,typecheck~is_disease),disease,typecheck~is_disease)'
+    func = rosetta.get_ops(fname)
+    assert func is not None
+    node = KNode('HP:0007354',node_types.PHENOTYPE)
+    node.add_synonyms( set( [LabeledID('DOID:332','ALS')] ) )
+    results = func(node)
+    assert results is not None
 
 def test_output_filter(rosetta):
     """Test automatic wrapping of gene_get_disease so that outputs are only genetic conditions"""
@@ -67,3 +77,4 @@ def test_nested(rosetta):
     fname = 'caster.output_filter(input_filter(uberongraph~get_anatomy_by_cell_graph,cell,typecheck~is_cell),cell,typecheck~is_cell)'
     #Test that we can actually get a function.  This was failing 4/21
     func = rosetta.get_ops(fname)
+

@@ -64,7 +64,10 @@ class Text:
 
     @staticmethod
     def snakify(text):
-        return '_'.join( text.split() )
+        decomma = '_'.join( text.split(','))
+        dedash = '_'.join( decomma.split('-'))
+        resu =  '_'.join( dedash.split() )
+        return resu
 
 
 class Resource:

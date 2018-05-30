@@ -34,3 +34,7 @@ def test_uniprot(hgnc):
     uniprot='UniProtKB:Q96RI1'
     syns = [s.identifier for s  in hgnc.get_synonyms(uniprot) ]
     assert 'HGNC:7967' in syns
+
+def test_rnacentral(hgnc):
+    rna='RNAcentral:URS00000C7662_9606'
+    syns = [s.identifier for s in hgnc.get_synonyms(rna)]

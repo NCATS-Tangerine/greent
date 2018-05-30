@@ -14,13 +14,6 @@ class Caster(Service):
         super(Caster, self).__init__("caster", context)
         self.core = core
 
-    def output_filter(self, base_function, output_type, type_check, node):
-        results = base_function(node)
-        good_results = list(filter(lambda y: type_check(y[1]), results))
-        for edge,node in good_results:
-            node.node_type = output_type
-        return good_results
-
     def upcast(self, base_function, output_type, node):
         results = base_function(node)
         for edge,node in results:
@@ -28,7 +21,12 @@ class Caster(Service):
         return results
 
     def output_filter(self, base_function, output_type, type_check, node):
+        logger.debug(f'base_function {base_function}')
+        logger.debug(f'output_type {output_type}')
+        logger.debug(f'type_check {type_check}')
+        logger.debug(f'node {node}')
         results = base_function(node)
+        logger.debug(f'results {results}')
         good_results = list(filter(lambda y: type_check(y[1]), results))
         for edge,node in good_results:
             node.node_type = output_type
@@ -52,13 +50,14 @@ class Caster(Service):
         if ')' in argstring:
             r = argstring.rindex(')')
             arg0 = argstring[:r+1]
-            args = [arg0] + argstring[r+1].split(',')
+            args = [arg0] + argstring[r+2:].split(',')
         else:
             args = argstring.split(',')
         return fname,args
 
     def create_function(self,functiontext):
-        logger.debug(functiontext)
+        #if functiontext.strip()=='':
+        #    raise Exception(f"Illegal Argument: '{functiontext}'")
         if '(' in functiontext:
             fname, args = self.unwrap(functiontext)
             if fname == 'output_filter':

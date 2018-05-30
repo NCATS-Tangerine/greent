@@ -9,6 +9,11 @@ def test_mesh_synonymization(rosetta):
     for s in synonyms:
         assert isinstance(s, LabeledID)
 
+def test_chembl_synonymization(rosetta):
+    node = KNode('CHEMBL:CHEMBL744',node_types.DRUG)
+    synonyms = synonymize(node,rosetta.core)
+    for s in synonyms:
+        assert isinstance(s, LabeledID)
 
 def test_from_each(rosetta):
     #For these tests, you should know that ADAPALENE has these identifiers

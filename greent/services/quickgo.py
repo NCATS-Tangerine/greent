@@ -5,6 +5,7 @@ from greent.util import Text,LoggingUtil
 from greent.graph_components import KNode,LabeledID
 from greent import node_types
 from datetime import datetime as dt
+import time
 
 logger = LoggingUtil.init_logging(__name__)
 
@@ -12,6 +13,7 @@ class QuickGo(Service):
 
     def __init__(self, context):
         super(QuickGo, self).__init__("quickgo", context)
+        self.go = context.core.go
 
     def get_predicate(self, p_label):
         labels2identifiers={'occurs_in': 'BFO:0000066',
@@ -43,22 +45,46 @@ class QuickGo(Service):
             logger.warn(p_label)
             return LabeledID(f'GO:{p_label}',p_label)
 
-    def standardize_predicate(self, predicate):
+    def standardize_predicate(self, predicate, source, target):
         """Fall back to a catch-all if we can't find a specific mapping"""
         try:
             return super(QuickGo, self).standardize_predicate(predicate)
         except:
-            return super(QuickGo,self).standardize_predicate(self.get_predicate('occurs_in'))
+            #If the target is a molecular function, use RO:0002215 capable_of
+            if self.go.is_biological_process(target):
+                return super(QuickGo,self).standardize_predicate(LabeledID('RO:0002215','capable_of'))
+            #If the target is a biological process, use RO:0002331 involved_in
+            if self.go.is_molecular_function(target):
+                return super(QuickGo,self).standardize_predicate(LabeledID('RO:0002331','involved_in'))
+            #If the target is a cell, use 'occurs_in'
+            if target.node_type == node_types.CELL:
+                return super(QuickGo,self).standardize_predicate(self.get_predicate('occurs_in'))
+
+    #TODO: share the retry logic in Service?
+    def query(self,url):
+        """Responds appropriately to unknown ids by returning valid json with no results"""
+        done = False
+        num_tries = 0
+        max_tries = 10
+        wait_time = 5 # seconds
+        while num_tries < max_tries:
+            try:
+                return requests.get(url).json()
+            except:
+                num_tries += 1
+                time.sleep(wait_time)
+        return None
+ 
 
     def page_calls(self,url):
-        response = requests.get(url).json()
+        response = self.query(url)
         if 'results' not in response:
             return []
         allresults = response['results']
         total_pages = response['pageInfo']['total']
         for page in range(2,total_pages+1):
             url_page = url+f'&page={page}'
-            response = requests.get(url_page).json()
+            response = self.query(url_page)
             if 'results' in response:
                 allresults += response['results']
         return allresults
@@ -66,7 +92,7 @@ class QuickGo(Service):
     def go_term_to_cell_xontology_relationships(self, go_node):
         #This call is not paged!
         url = "{0}/QuickGO/services/ontology/go/terms/GO:{1}/xontologyrelations".format (self.url, Text.un_curie(go_node.identifier))
-        response = requests.get(url).json()
+        response = self.query(url)
         if 'results' not in response:
             return []
         results = []
@@ -137,10 +163,12 @@ class QuickGo(Service):
         results = [] 
         for r in call_results:
             uniprotid = r["geneProductId"]
-            if uniprotid not in used:
+            #quickgo returns all kinda stuff: rna central ids, complex portal ids.  These are good, but we can't do
+            #anything with them, so for now, dump em.
+            if uniprotid not in used and uniprotid.upper().startswith('UNIPROT'):
                 used.add(uniprotid)
                 predicate = self.get_predicate(r['qualifier'])
                 gene_node = KNode( uniprotid, node_types.GENE ) 
-                edge = self.create_edge(node, gene_node, 'quickgo.go_term_to_gene_annotation',node.identifier,predicate,url = url)
+                edge = self.create_edge(gene_node, node, 'quickgo.go_term_to_gene_annotation',node.identifier,predicate,url = url)
                 results.append( (edge,gene_node ) )
         return results

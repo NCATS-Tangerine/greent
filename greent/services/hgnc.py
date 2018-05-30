@@ -2,6 +2,7 @@ import requests
 from greent import node_types
 from greent.graph_components import LabeledID
 from greent.service import Service
+import time
 
 
 #A map from identifiers.org namespaces (curie prefixes) to how HGNC describes these things
@@ -14,7 +15,8 @@ prefixes_to_hgnc = {
     #UNIPROTKB is not a identifiers.org prefix.  Uniprot is, and uniprot.isoform is.
     'UNIPROTKB': 'uniprot_ids',
     'UniProtKB': 'uniprot_ids',
-    'ENSEMBL': 'ensembl_gene_id'
+    'ENSEMBL': 'ensembl_gene_id',
+    #'RNAcentral': 'rna_central_ids' According to the docs, rna_central_ids should be supported but it is not.
 }
 
 hgnc_to_prefixes = { v: k for k,v in prefixes_to_hgnc.items()}
@@ -24,6 +26,23 @@ class HGNC(Service):
     """ Generic GENE id translation service. Essentially a highly generic synonym finder. """
     def __init__(self, context): 
         super(HGNC, self).__init__("hgnc", context)
+
+    #TODO: share the retry logic in Service?
+    def query(self,url,headers):
+        """if the prefix is malformed, then you get a 400.  If the prefix is ok, but there is no data, you get
+        a valid json response with no entries.  So failures here are most likely timeouts and stuff like that."""
+        done = False
+        num_tries = 0
+        max_tries = 10
+        wait_time = 5 # seconds
+        while num_tries < max_tries:
+            try:
+                return requests.get(url , headers= headers).json()
+            except:
+                num_tries += 1
+                time.sleep(wait_time)
+        return None
+        
 
     def  get_name(self, node):
         """Given a node for an hgnc, return the name for that id"""
@@ -39,7 +58,7 @@ class HGNC(Service):
         hgnc_id = identifier_parts[1]
         headers = {'Accept':'application/json'}
         try:
-            r = requests.get('%s/%s/%s' % (self.url, query_string, hgnc_id), headers= headers).json()
+            r = self.query('%s/%s/%s' % (self.url, query_string, hgnc_id), headers= headers)
             symbol = r['response']['docs'][0]['symbol']
         except:
             #logger.warn(f"Problem retrieving name for {hgnc_id}")
@@ -49,11 +68,19 @@ class HGNC(Service):
     def get_synonyms(self, identifier):
         identifier_parts = identifier.split(':')
         prefix = identifier_parts[0]
-        id = identifier_parts[1]
-        query_type = prefixes_to_hgnc[prefix]
+        gid = identifier_parts[1]
+        try:
+            query_type = prefixes_to_hgnc[prefix]
+        except KeyError:
+            #logger.warn(f'HGNC does not handle prefix: {prefix}')
+            return set()
         headers = {'Accept':'application/json'}
-        r = requests.get('%s/%s/%s' % (self.url, query_type, id), headers= headers).json()
-        docs = r['response']['docs']
+        r = self.query('%s/%s/%s' % (self.url, query_type, gid), headers= headers)
+        try:
+            docs = r['response']['docs']
+        except:
+            #didn't get anything useful
+            return set()
         synonyms = set()
         for doc in docs:
             #hgnc only returns an hgnc label (not eg. an entrez label)

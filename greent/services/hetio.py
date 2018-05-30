@@ -69,6 +69,8 @@ class HetIO(Neo4JREST):
     #TODO: implement the reverse too
     def gene_to_disease (self, gene):
         gene_identifiers = list(gene.get_synonyms_by_prefix('NCBIGENE'))
+        if len(gene_identifiers) == 0:
+            return []
         gene_identifier = Text.un_curie(gene_identifiers[0])
         nodes, edges = self.query (
             "MATCH (d:Disease)-[a1]-(g:Gene) WHERE g.identifier={0} RETURN a1,d".format (gene_identifier),
@@ -86,6 +88,8 @@ class HetIO(Neo4JREST):
 
     def disease_to_phenotype (self, disease):
         disease_identifiers = list(disease.get_synonyms_by_prefix('DOID'))
+        if len(disease_identifiers) == 0:
+            return []
         disease_identifier = disease_identifiers[0]
         query = """MATCH (d:Disease{identifier:'%s'})-[r]-(s:Symptom) RETURN d,r,s""" % (disease_identifier)
         nodes,edges = self.query (query, labels=['Symptom'], kinds=['node','relationship'])

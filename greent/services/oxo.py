@@ -2,6 +2,7 @@ import json
 import requests
 from greent.service import Service
 from greent.graph_components import LabeledID
+import time
 
 
 class OXO(Service):
@@ -33,14 +34,27 @@ class OXO(Service):
                              headers={"Content-Type": "application/json"}).json()
 
     def query(self, ids, distance=2):
-        return self.request(
-            url=self.url,
-            obj={
-                "ids": ids,
-                "mappingTarget": [],
-                "distance": str(distance),
-                "size": 10000
-            })
+        #Occasionally, OXO will throw an exception in here, maybe due to load?
+        #Calling with an unknown id just returns an empty set, so that's fine
+        done = False
+        num_tries = 0
+        max_tries = 10
+        wait_time = 5 # seconds
+        while num_tries < max_tries:
+            try:
+                res = self.request(
+                    url=self.url,
+                    obj={
+                        "ids": ids,
+                        "mappingTarget": [],
+                        "distance": str(distance),
+                        "size": 10000
+                    })
+                return res
+            except Exception as e:
+                num_tries += 1
+                time.sleep(wait_time)
+        return None
 
     #This is the main call into here.  It's what the synonymizer uses.
     def get_synonymous_curies(self, identifier, distance=2):

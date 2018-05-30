@@ -8,6 +8,7 @@ from neo4jrestclient.exceptions import TransactionException
 
 from greent.concept import Concept
 from greent.concept import ConceptModel
+from greent.node_types import ROOT_ENTITY
 from greent.service import Service
 from greent.util import LoggingUtil
 from neo4j.v1 import GraphDatabase
@@ -56,6 +57,20 @@ class TypeGraph(Service):
                 db = GraphDB(session)
                 db.exec("MATCH (n:Concept) DETACH DELETE n")
                 db.exec("MATCH (n:Type) DETACH DELETE n")
+        except Exception as e:
+            traceback.print_exc()
+
+    def create_constraints(self):
+        """Neo4j demands that constraints are by label.  That is, you might have a constraint that
+        every anatomy label occurs uniquely, or every cell label.  But there's not a way to say that
+        every identifier is unique across all of the nodes except to give them all a common parent
+        label. In biolink-model, that parent entity is named_thing, so that is what we will call it."""
+        try:
+            config = self.get_config()
+            driver = GraphDatabase.driver(self.url, auth=("neo4j", config['neo4j_password']))
+            with driver.session() as session:
+                db = GraphDB(session)
+                db.exec(f"CREATE CONSTRAINT ON (p:{ROOT_ENTITY}) ASSERT p.id IS UNIQUE")
         except Exception as e:
             traceback.print_exc()
 
@@ -289,6 +304,7 @@ class TypeGraph(Service):
             db = GraphDB(session)
             result = self.get_transitions_actor(db, query)
         return result
+
     def get_transitions_actor(self, db, query):
         """ Execute a cypher query and walk the results to build a set of transitions to execute.
         The query should be such that it returns a path (node0-relation0-node1-relation1-node2), and
@@ -304,7 +320,10 @@ class TypeGraph(Service):
         """
         graphs=[]
         result = db.query(query)        
+        nrow = 0
         for row in result:
+            print('row:',nrow)
+            nrow+=1
             nodes = {}
             transitions = {}
             result_rows = []
@@ -340,6 +359,12 @@ class TypeGraph(Service):
                         'op'   : element.properties['op'],
                         'to'   : to_node
                     }                
+            #This check might not be valid for more general patterns, but it is true for lines.
+            if len(transitions) != (len(nodes) - 1):
+                logger.error('Error',len(transitions), len(nodes)-1)
+                logger.error(nodes)
+                logger.error(transitions)
+                raise Exception("Incorrect number of transitions")
             graphs.append( (nodes, transitions) )
             if logger.isEnabledFor (logging.DEBUG):
                 logger.debug (f"{json.dumps(graphs, indent=2)}")

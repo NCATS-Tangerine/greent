@@ -20,6 +20,12 @@ def mondo(rosetta):
     checker = rosetta.core.checker
     return checker
 
+def test_bad_gene_to_process(biolink):
+    BAD_protein = KNode('UniProtKB:XXXXXX', node_types.GENE)
+    results = biolink.gene_get_process_or_function(BAD_protein)
+    assert len(results) == 0
+
+
 def test_gene_to_disease(biolink):
     """What do we get back for HBB"""
     relations = biolink.gene_get_disease(KNode('HGNC:4827',node_types.GENE))
@@ -30,6 +36,13 @@ def test_gene_to_disease(biolink):
         assert Text.get_curie(ident) == 'MONDO'
     #Sickle cell should be in there.
     assert 'MONDO:0011382' in identifiers
+    predicates = [ relation.standard_predicate for relation,n in relations ] 
+    pids = set( [p.identifier for p in predicates] )
+    plabels = set( [p.label for p in predicates] )
+    assert len(pids) == 1
+    assert len(plabels) == 1
+    assert 'RO:0002607' in pids
+    assert 'gene_associated_with_condition' in pids
 
 
 def test_gene_to_process(biolink):

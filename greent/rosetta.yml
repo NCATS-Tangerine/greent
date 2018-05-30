@@ -34,23 +34,23 @@
 
 '@operators':
   anatomical_entity:
-    # cell:
-    #   - link : anatomy_to_cell_type
-    #     op   : uberongraph.get_cell_by_anatomy_graph
+    cell:
+       - link : anatomy_to_cell_type
+         op   : uberongraph.get_cell_by_anatomy_graph
     gene:
       - link : anatomy_to_gene
         op   : hetio.anatomy_to_gene
-    # phenotypic_feature:
-    #   - link : anatomy_to_phenotype
-    #     op   : uberongraph.get_phenotype_by_anatomy_graph
+    phenotypic_feature:
+       - link : anatomy_to_phenotype
+         op   : uberongraph.get_phenotype_by_anatomy_graph
   cell:
     anatomical_entity:
       - link : cell_type_to_anatomy
         op   : uberongraph.get_anatomy_by_cell_graph
-    # biological_process_or_molecular_activity:
-    #   - link : bio_process_cell_type
-    #     op   : quickgo.cell_to_go_term_annotation_extensions
-  biological_process_or_molecular_activity:
+    biological_process_or_activity:
+       - link : bio_process_cell_type
+         op   : quickgo.cell_to_go_term_annotation_extensions
+  biological_process_or_activity:
     gene:
       - link : bio_process_gene
         op   : quickgo.go_term_to_gene_annotation
@@ -103,16 +103,9 @@
         op    : biolink.gene_get_pathways
       - link  : gene_to_pathway
         op    : chembio.graph_get_pathways_by_gene
-    biological_process_or_molecular_activity:
-      - link  : biological_process_or_molecular_function
+    biological_process_or_activity:
+      - link  : biological_process_or_activity
         op    : biolink.gene_get_process_or_function
-    #I think I don't need the next two any more.  I can just implement go typechecks, and then they come for free.
-    #molecular_function:
-    #  - link  : molecular_function
-    #    op    : biolink.gene_get_function
-    #biological_process:
-    #  - link  : biological_process
-    #    op    : biolink.gene_get_process
   pathway:
     gene:
       - link  : pathway_to_gene

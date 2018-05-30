@@ -162,7 +162,11 @@ class Pharos(Service):
                 original_edge_nodes = []
                 url = 'https://pharos.nih.gov/idg/api/v1/targets(%s)?view=full' % pharosid
                 r = requests.get(url)
-                result = r.json()
+                try:
+                    result = r.json()
+                except:
+                    #If pharos doesn't know the identifier, it just 404s.  move to the next
+                    continue 
                 actions = set()  # for testing
                 predicate = LabeledID('PHAROS:drug_targets','is_target')
                 chembl_id = None
@@ -176,7 +180,7 @@ class Pharos(Service):
                                     pharosid,predicate, url=url)
                             resolved_edge_nodes.append( (edge,drug_node) )
             except:
-                logger.debug("Error encountered calling pharos with",identifier)
+                logger.debug("Error encountered calling pharos with",s)
         return resolved_edge_nodes
 
 
@@ -189,7 +193,12 @@ class Pharos(Service):
             original_edge_nodes = []
             url = 'https://pharos.nih.gov/idg/api/v1/ligands(%s)?view=full' % pharosid
             r = requests.get(url)
-            result = r.json()
+            try: 
+                result = r.json()
+            except:
+                #Pharos returns a 404 if it doesn't recognize the identifier, which ends up producing
+                # errors in turning into json. Skip to next identifier
+                continue
             actions = set()  # for testing
             predicate = LabeledID('PHAROS:drug_targets','is_target')
             for link in result['links']:

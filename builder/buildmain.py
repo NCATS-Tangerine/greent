@@ -10,95 +10,97 @@ import sys
 from neo4j.v1 import GraphDatabase
 from importlib import import_module
 from builder.lookup_utils import lookup_identifier
-from collections import defaultdict
+from collections import defaultdict, deque
 from builder.pathlex import tokenize_path
 import calendar
 
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
-def export_edge(tx,edge):
-    logger.debug(f'Export {edge}')
+def export_edges(edges,driver):
+    edges_by_label = sort_edges_by_label(edges)
+    for label,nodelist in edges_by_label.items():
+        chunksize = 1000
+        for chunknum in range(0, len(nodelist), chunksize):
+            chunk = nodelist[chunknum:chunknum+chunksize]
+            with driver.session() as session:
+                session.write_transaction(export_edge_chunk,chunk,label)
+
+def sort_edges_by_label(edges):
+    el = defaultdict(list)
+    deque( map( lambda x: el[Text.snakify(x[2]['object'].standard_predicate.label)].append(x), edges ) )
+    return el
+
+def export_edge_chunk(tx,edgelist,edgelabel):
     """The approach of updating edges will be to erase an old one and replace it in whole.   There's no real
     reason to worry about preserving information from an old edge.
     What defines the edge are the identifiers of its nodes, and the source.function that created it."""
-    aid = edge[0].identifier
-    bid = edge[1].identifier
-    ke  = edge[2]['object']
-    #nn = len(ke.publications)
-    #logger.debug(f'{aid},{bid},{ke.standard_predicate.label},{nn}')
+    cypher = """UNWIND {batches} as row
+            MATCH (a:%s {id: row.aid}),(b:%s {id: row.bid})
+            MERGE (a)-[r:%s {edge_source: row.edge_source}]-(b)
+            set r.source_database=row.database
+            set r.ctime=row.ctime 
+            set r.predicate_id=row.standard_id 
+            set r.relation_label=row.original_predicate_label
+            set r.relation=row.original_predicate_id 
+            set r.publications=row.publications
+            set r.url=row.url
+            set r.input_identifiers=row.input
+            """ % (node_types.ROOT_ENTITY, node_types.ROOT_ENTITY, edgelabel)
+    batch = [ {'aid': edge[0].identifier,
+               'bid': edge[1].identifier,
+               'edge_source': edge[2]['object'].edge_source,
+               'database': edge[2]['object'].edge_source.split('.')[0],
+               'ctime': calendar.timegm(edge[2]['object'].ctime.timetuple()),
+               'standard_label': Text.snakify(edge[2]['object'].standard_predicate.label),
+               'standard_id': edge[2]['object'].standard_predicate.identifier,
+               'original_predicate_id': edge[2]['object'].original_predicate.identifier,
+               'original_predicate_label': edge[2]['object'].original_predicate.label,
+               'publication_count': len(edge[2]['object'].publications),
+               'publications': edge[2]['object'].publications[:1000],
+               'url' : edge[2]['object'].url,
+               'input': edge[2]['object'].input_id
+               }
+              for edge in edgelist]
+    tx.run(cypher,{'batches': batch})
 
-    #Delete any old edge
-    tx.run("MATCH (a {id: {aid}})-[r {edge_source:{source}}]-(b {id:{bid}}) DELETE r",
-                {'aid': aid, 'bid': bid, 'source': ke.edge_source} )
-    #Now write the new edge....
-    #note that we can't use the CURIE as the label, because the : in the curie screws up the cypher :(
-    if ke.standard_predicate is None:
-        logger.error('No standard predicate on the edge')
-        logger.error(ke)
-        print(ke)
-    label='_'.join(ke.standard_predicate.identifier.split(':'))
-    if label is None:
-        print(ke)
-        exit()
-    #Following KG standardization here: https://docs.google.com/document/d/1TrvqJPe_HwmRJ5HCwZ7fsi9_mwGcwLOZ53Fnjo8Sh4E/
-    # We are going to put original_predicate_label into "relation"
-    # We are going to put standard_label into "predicate"
-    tx.run (
-        '''MATCH (a), (b) where a.id = {aid} AND b.id={bid} CREATE (a)-[r:%s {
-           edge_source: {source}, 
-           ctime:{ctime}, 
-           predicate:{standard_label}, 
-           predicate_id:{standard_id}, 
-           relation:{original_predicate_label}, 
-           relation_id:{original_predicate_id}, 
-           publications:{publications}, url: {url},
-           input_identifiers: {input}}]->(b) return r''' % (label,),
-        {'aid': aid, 'bid': bid, 'source': ke.edge_source, 'ctime': calendar.timegm(ke.ctime.timetuple()),
-         'standard_label': Text.snakify(ke.standard_predicate.label),
-         'standard_id': ke.standard_predicate.identifier,
-         'original_predicate_id': ke.original_predicate.identifier,
-         'original_predicate_label': ke.original_predicate.label,
-         'publication_count': len(ke.publications),
-         'publications': ke.publications[:1000], 'url' : ke.url, 'input': ke.input_id}
-    )
-    if ke.standard_predicate.identifier == 'GAMMA:0':
-        logger.warn(f"Unable to map predicate for edge {ke.original_predicate}  {ke}")
+    for edge in edgelist:
+        ke = edge[2]['object']
+        if ke.standard_predicate.identifier == 'GAMMA:0':
+            logger.warn(f"Unable to map predicate for edge {ke.original_predicate}  {ke}")
 
+def sort_nodes_by_label(nodes):
+    nl = defaultdict(list)
+    deque( map( lambda x: nl[x.node_type].append(x), nodes ) )
+    return nl
 
-def export_node(tx,node ):
-    """Utility for writing updated nodes.  Goes in node?"""
-    logger.debug(f'Export {node}')
-    result = tx.run("MATCH (a {id: {id}}) RETURN a", {"id": node.identifier})
-    original_record = result.peek()
-    if not original_record:
-        logger.debug( ' Not in graph - export whole thing')
-        syns = [s.identifier for s in node.synonyms]
-        syns.sort()
-        cstring = "CREATE (a:%s {id: {id}, name: {name}, node_type: {node_type}, equivalent_identifiers: {syn}"
-        if len(node.properties) > 0:
-            pstring = ','.join(['%s: {%s}' % (k,k) for k in node.properties])
-            cstring = cstring + ',%s' % pstring
-        cstring += "})"
-        logger.debug(f'  {cstring}')
-        nodemap = {"id": node.identifier, "name": node.label, "node_type": node.node_type, "syn": syns }
-        nodemap.update(node.properties)
-        #logger.info(cstring)
-        #logger.info(nodemap)
-        tx.run( cstring % (node.node_type),nodemap)
-    else:
-        logger.debug( ' In graph - update')
-        original_node = original_record['a']
-        if node.node_type not in original_node.labels:
-            #Note: You can't use query parameterization on node labels in neo4j - UGH
-            logger.debug(f'  update label')
-            tx.run("MATCH (a {id: {identifier} }) SET a:%s" % (node.node_type,), identifier = node.identifier)
-        new_syns = [s.identifier for s in node.synonyms]
-        new_syns.sort()
-        if original_node['name'] != node.label or original_node['synonyms'] != new_syns:
-            logger.debug(f'  update props')
-            tx.run("MATCH (a {id: {identifier} }) SET a.name = {name}, a.equivalent_identifiers= {synonyms}",
-                        identifier = node.identifier, name = node.label, synonyms = new_syns)
-    logger.debug('ok')
+def export_nodes(nodes,driver):
+    nodes_by_label = sort_nodes_by_label(nodes)
+    for label,nodelist in nodes_by_label.items():
+        chunksize = 1000
+        for chunknum in range(0, len(nodelist), chunksize):
+            chunk = nodelist[chunknum:chunknum+chunksize]
+            with driver.session() as session:
+                session.write_transaction(export_node_chunk,chunk,label)
+
+def export_node_chunk(tx,nodelist,label):
+    cypher = """UNWIND {batches} as batch
+                MERGE (a:%s {id: batch.id})
+                set a:%s
+                set a.name=batch.label
+                set a.equivalent_identifiers=batch.syn
+                """ % (node_types.ROOT_ENTITY, label)
+    propnames = set()
+    for node in nodelist:
+        propnames.update(node.properties.keys())
+    for pname in propnames:
+        cypher += f'set a.{pname}=batch.{pname}'
+    batch = []
+    for i,n in enumerate(nodelist):
+        nodeout = { 'id': n.identifier, 'label': n.label, 'syn': [s.identifier for s in n.synonyms] }
+        for pname in propnames:
+            nodeout[pname] = n.properties[pname]
+        batch.append(nodeout)
+    tx.run(cypher,{'batches': batch})
 
 class KnowledgeGraph:
     def __init__(self, userquery, rosetta):
@@ -309,8 +311,12 @@ class KnowledgeGraph:
                 logger.info (f"cache hit: {key} {support_edge}")
             else:
                 logger.info (f"exec op: {key}")
-                support_edge = supporter.term_to_term(source, target)
-                self.rosetta.cache.set (key, support_edge)
+                try:
+                    support_edge = supporter.term_to_term(source, target)
+                    self.rosetta.cache.set (key, support_edge)
+                except:
+                    logger.debug('Support error, not caching')
+                    continue
             if support_edge is not None:
                 n_supported += 1
                 if len(support_edge.publications)> 0:
@@ -414,14 +420,10 @@ class KnowledgeGraph:
         logger.info("Writing to neo4j")
         config = self.rosetta.type_graph.get_config()
         driver = GraphDatabase.driver(config['url'], auth=("neo4j", config['neo4j_password']))
-        session = driver.session()
         # Now add all the nodes
-        for node in self.graph.nodes():
-            session.write_transaction(export_node,node)
-        for edge in self.graph.edges(data=True):
-            session.write_transaction(export_edge,edge)
-        session.close()
-        logger.info("Wrote {} nodes.".format(len(self.graph.nodes())))
+        export_nodes(self.graph.nodes(),driver)
+        export_edges(self.graph.edges(data=True),driver)
+        logger.info(f"Wrote {len(self.graph.nodes())} nodes and {len(self.graph.edges())} edges.")
 
 
 # TODO: push to node, ...
