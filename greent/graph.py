@@ -12,7 +12,7 @@ from greent.service import Service
 from greent.util import LoggingUtil
 from neo4j.v1 import GraphDatabase
 
-logger = logging.getLogger('type_graph')
+logger = logging.getLogger(__name__)
 
 class TypeGraph(Service):
     """ A graph of 
@@ -307,14 +307,15 @@ class TypeGraph(Service):
         for row in result:
             nodes = {}
             transitions = {}
-            path = row[0]
             result_rows = []
-            nodes = { i : n for i, n in enumerate(path.nodes) }
-            for i, element in enumerate(path):
-                result_rows.append (nodes[i])
-                result_rows.append (element)
-                if i == len(path) - 1:
-                    result_rows.append (nodes[i+1])
+            for path_idx, key in enumerate(row):
+                path = row[key]
+                nodes = { i : n for i, n in enumerate(path.nodes) }
+                for i, element in enumerate(path):
+                    result_rows.append (nodes[i])
+                    result_rows.append (element)
+                    if path_idx == len(row)-1 and i == len(path) - 1:
+                        result_rows.append (nodes[i+1])
 
             for i, element in enumerate(result_rows):
                 if i % 2 == 0:

@@ -27,16 +27,19 @@ class Transition:
             return 'n{0}:{1}'
 
     def generate_concept_cypher_pathstring(self, t_number):
-        end   = f'(c{t_number+1}:Concept {{name: "{self.out_type}" }})'
-        pstring = ''
+        pstring = f'MATCH p{t_number}='
         if t_number == 0:
             start = f'(c{t_number}:Concept {{name: "{self.in_type}" }})\n'
+            pstring += start
+        else:
+            start = f'(c{t_number})\n'
             pstring += start
         if self.max_path_length > 1:
             pstring += f'-[:translation*{self.min_path_length}..{self.max_path_length}]-\n'
         else:
             pstring += '--\n'
-        pstring += f'{end}\n'
+        end = f'(c{t_number+1}:Concept {{name: "{self.out_type}" }})'
+        pstring += end
         return pstring
 
 class UserQuery:
@@ -108,20 +111,22 @@ class UserQuery:
 
     def generate_cypher(self):
         """Generate a cypher query to find paths through the concept-level map."""
-        cypherbuffer = ['MATCH p=\n']
+        cypherbuffer = []
         paths_parts = []
         for t_number, transition in enumerate(self.definition.transitions):
             paths_parts.append(transition.generate_concept_cypher_pathstring(t_number))
-        cypherbuffer.append( ''.join(paths_parts) )
+        cypherbuffer.append( '\n'.join(paths_parts) )
         last_node_i = len(self.definition.transitions)
+        nodes = '+'.join([f'nodes(p{i})' for i in range(len(self.definition.transitions))])
+        relationships = '+'.join([f'relationships(p{i})' for i in range(len(self.definition.transitions))])
         if self.definition.end_values is None:
-            cypherbuffer.append('WHERE robokop.traversable(nodes(p), relationships(p), [c0])\n')
+            cypherbuffer.append(f"WHERE robokop.traversable({nodes}, {relationships}, [c0])")
         else:
-            cypherbuffer.append(f'WHERE robokop.traversable(nodes(p), relationships(p), [c0,c{last_node_i}])\n')
+            cypherbuffer.append(f'WHERE robokop.traversable({nodes}, {relationships}, [c0,c{last_node_i}])')
         #This is to make sure that we don't get caught up in is_a and other funky relations.:
-        cypherbuffer.append('AND ALL( r in relationships(p) WHERE  EXISTS(r.op) )')
-        cypherbuffer.append('RETURN p\n')
-        return ''.join(cypherbuffer)
+        cypherbuffer.append(f'AND ALL( r in {relationships} WHERE  EXISTS(r.op) )')
+        cypherbuffer.append(f"RETURN {', '.join([f'p{i}' for i in range(len(self.definition.transitions))])}")
+        return '\n'.join(cypherbuffer)
 
     def compile_query(self, rosetta):
         self.cypher = self.generate_cypher()
