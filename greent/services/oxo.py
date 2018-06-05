@@ -16,8 +16,12 @@ class OXO(Service):
         """Query for the current valid list of input curies"""
         # size defaults to 40...
         url = "https://www.ebi.ac.uk/spot/oxo/api/datasources?size=10000"
-        response = requests.get(url).json()
+        response = self.safeget(url)
+        if response is None:
+            #If we can't talk to oxo, we can't do much.
+            raise Exception('Error Communicating with OXO')
         self.curies = set()
+        print(json.dumps(response, indent=4))
         for ds in response['_embedded']['datasources']:
             self.curies.add(ds['prefix'])
             self.curies.add(ds['prefix'].upper())
@@ -31,7 +35,7 @@ class OXO(Service):
     def request(self, url, obj):
         return requests.post(self.url,
                              data=json.dumps(obj, indent=2),
-                             headers={"Content-Type": "application/json"}).json()
+                             headers={"Content-Type": "application/json"})
 
     def query(self, ids, distance=2):
         #Occasionally, OXO will throw an exception in here, maybe due to load?
@@ -50,7 +54,26 @@ class OXO(Service):
                         "distance": str(distance),
                         "size": 10000
                     })
-                return res
+                if res.status_code == 200:
+                    return res.json()
+            except Exception as e:
+                num_tries += 1
+                time.sleep(wait_time)
+        return None
+
+    #TODO smush with the post version
+    def safeget(self, url):
+        #Occasionally, OXO will throw an exception in here, maybe due to load?
+        #Calling with an unknown id just returns an empty set, so that's fine
+        done = False
+        num_tries = 0
+        max_tries = 10
+        wait_time = 5 # seconds
+        while num_tries < max_tries:
+            try:
+                resp = requests.get(url)
+                if resp.status_code == 200:
+                    return resp.json()
             except Exception as e:
                 num_tries += 1
                 time.sleep(wait_time)
@@ -70,7 +93,11 @@ class OXO(Service):
         """ Find all synonyms for a curie for a given distance . """
         others = []
         response = self.query(ids=[identifier], distance=distance)
-        searchResults = response['_embedded']['searchResults']
+        try:
+            searchResults = response['_embedded']['searchResults']
+        except KeyError as e:
+            print(json.dumps(response))
+            raise e
         if len(searchResults) > 0 and searchResults[0]['queryId'] == identifier:
             others = searchResults[0]['mappingResponseList']
         return others

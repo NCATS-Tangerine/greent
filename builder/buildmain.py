@@ -330,11 +330,11 @@ class KnowledgeGraph:
         """Export to neo4j database."""
         # TODO: lots of this should probably go in the KNode and KEdge objects?
         logger.info("Writing to neo4j")
-        config = self.rosetta.type_graph.get_config()
-        driver = GraphDatabase.driver(config['url'], auth=("neo4j", config['neo4j_password']))
+        #config = self.rosetta.type_graph.get_config()
+        #driver = GraphDatabase.driver(config['url'], auth=("neo4j", config['neo4j_password']))
         # Now add all the nodes
-        export_nodes(self.graph.nodes(),driver)
-        export_edges(self.graph.edges(data=True),driver)
+        #export_nodes(self.graph.nodes(),driver)
+        #export_edges(self.graph.edges(data=True),driver)
         logger.info(f"Wrote {len(self.graph.nodes())} nodes and {len(self.graph.edges())} edges.")
 
 def run_query(querylist, supports, rosetta, prune=False):

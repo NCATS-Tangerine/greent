@@ -24,7 +24,7 @@ def _get_driver(rosetta):
     return driver
 
 def export_edges(edges,rosetta):
-    driver = _get_driver(rosetta):
+    driver = _get_driver(rosetta)
     edges_by_label = sort_edges_by_label(edges)
     for label,nodelist in edges_by_label.items():
         chunksize = 1000
