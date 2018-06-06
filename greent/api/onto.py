@@ -144,12 +144,12 @@ def label (curie):
        "id"        : curie
    })
 
-@app.route('/search/<pat>/<regex>')
-def search (pat, regex):
+@app.route('/search/<pattern>/')
+def search (pattern):
    """ Search for ids in an ontology based on a pattern, optionally a regular expression.
    ---
    parameters:
-     - name: pat
+      - name: pattern
        in: path
        type: string
        required: true
@@ -159,9 +159,9 @@ def search (pat, regex):
          - http://schema.org/string
        x-requestTemplate:
          - valueType: http://schema.org/string
-           template: /search/{{ curie }}/{{ pat }}/{{ regex }}/
+            template: /search/{{ pattern }}/?regex={{ regex }}
      - name: regex
-       in: path
+        in: query
        type: boolean
        required: true
        default: false
@@ -170,13 +170,15 @@ def search (pat, regex):
          - http://schema.org/boolean
        x-requestTemplate:
          - valueType: http://schema.org/boolean
-           template: /search/{{ curie }}/{{ pat }}/{{ regex }}/
+            template: /search/{{ pattern }}/?regex={{ regex }}
    responses:
      200:
        description: ...
    """
+    params = request.args
+    regex = 'regex' in params and params['regex'] == 'true'
    core = get_core ()
-   regex = regex=='true'
+    
     obo_map = {
         'chebi': 'chemical_substance',
         'doid': 'disease'
