@@ -47,7 +47,7 @@ class BioNames(Service):
     
     def _find_chemical_substance(self, q, concept):
         ids = lookup_drug_by_name (q, self.context.core)
-        return [ { "id" : i, "desc" : "" } for i in ids ] if ids else []
+        return [ { "id" : i, "label" : q } for i in ids ] if ids else []
     '''
     def _find_anatomical_entity(self, q, concept=None):
         return self._search_owlsim(q, concept) + self._search_onto(q)
