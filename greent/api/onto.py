@@ -10,7 +10,7 @@ from greent import node_types
 from greent.graph_components import KNode,KEdge,elements_to_json
 from greent.services.ontology import GenericOntology
 from greent.servicecontext import ServiceContext
-from flask import Flask, jsonify, g, Response
+from flask import Flask, jsonify, g, Response, request
 from flasgger import Swagger
 app = Flask(__name__)
 
