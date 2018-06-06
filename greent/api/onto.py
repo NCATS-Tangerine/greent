@@ -177,8 +177,16 @@ def search (pat, regex):
    """
    core = get_core ()
    regex = regex=='true'
-   vals = [ ont.search(pat, regex) for name, ont in core.onts.items () ]
-   vals = [ term for term_list in vals for term in term_list ] 
+    obo_map = {
+        'chebi': 'chemical_substance',
+        'doid': 'disease'
+    }
+    vals = []
+    for name, ont in core.onts.items():
+        new = ont.search(pattern, regex)
+        for n in new:
+            n['type'] = obo_map[name]
+        vals.extend(new)
    return jsonify ({ "values" : vals })
      
 @app.route('/xrefs/<curie>')
