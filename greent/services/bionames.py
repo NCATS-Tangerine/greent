@@ -40,7 +40,8 @@ class BioNames(Service):
                 raise ValueError (f"Unknown concept {concept} is not a biolink-model concept.")
         else:
             """ Try everything? Union the lot. """
-            for route in self.router.values ():
+            for concept in self.router.keys():
+                route = self.router[concept]
                 result = result + route(q, concept)
         logger.debug (f"search q: {q} results: {result}")
         return result
