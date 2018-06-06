@@ -35,7 +35,7 @@ class BioNames(Service):
             if concept in self.normalize:
                 concept = self.normalize[concept]
             if concept in self.router:
-                result = self.router[concept](q, concept) if concept in self.router else []
+                result = self.router[concept](q, concept)
             else:
                 raise ValueError (f"Unknown concept {concept} is not a biolink-model concept.")
         else:
