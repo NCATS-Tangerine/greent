@@ -62,7 +62,7 @@ class BioNames(Service):
         return self._search_onto(q) + self._search_owlsim(q, concept)
     '''
     def _find(self, q, concept):
-        return self._search_onto(q) + self._search_owlsim(q, concept)
+        return self._search_onto(q, concept=concept) + self._search_owlsim(q, concept)
     
     def _search_owlsim(self, q, concept):
         result = []
@@ -78,10 +78,12 @@ class BioNames(Service):
             traceback.print_exc ()
         return result
     
-    def _search_onto(self, q):
+    def _search_onto(self, q, concept=None):
         result = []
         try:
             result = self.context.core.onto.search (q, is_regex=True, full=True)
+            if concept:
+                result = [r for r in result if r['type'] == concept]
         except:
             traceback.print_exc ()
         return result
