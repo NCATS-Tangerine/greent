@@ -72,7 +72,7 @@ class BioNames(Service):
             response = requests.get (owlsim_query).json ()
             logger.debug (f"owlsim response: {response}")
             if response and "docs" in response:
-                result = [ { "id" : d["id"], "label" : ", ".join (d["label"]) } for d in response["docs"] ]
+                result = [ { "id" : d["id"], "label" : ", ".join (d["label"]), "type": concept } for d in response["docs"] ]
             logger.debug (f"owlsim result: {result}")
         except:
             traceback.print_exc ()
