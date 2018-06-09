@@ -190,7 +190,6 @@ def search (pattern):
        'doid'    : 'disease',
        'ro'      : 'related_to'
    }
-   print (f"---------------------------- {pattern}")
    vals = []
    for name, ont in core.onts.items():
        new = ont.search(pattern, regex)
