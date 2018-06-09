@@ -149,7 +149,7 @@ def search (pattern):
    """ Search for ids in an ontology based on a pattern, optionally a regular expression.
    ---
    parameters:
-      - name: pattern
+     - name: pattern
        in: path
        type: string
        required: true
@@ -159,9 +159,9 @@ def search (pattern):
          - http://schema.org/string
        x-requestTemplate:
          - valueType: http://schema.org/string
-            template: /search/{{ pattern }}/?regex={{ regex }}
+           template: /search/{{ pattern }}/?regex={{ regex }}
      - name: regex
-        in: query
+       in: query
        type: boolean
        required: true
        default: false
@@ -170,25 +170,33 @@ def search (pattern):
          - http://schema.org/boolean
        x-requestTemplate:
          - valueType: http://schema.org/boolean
-            template: /search/{{ pattern }}/?regex={{ regex }}
+           template: /search/{{ pattern }}/?regex={{ regex }}
    responses:
      200:
        description: ...
    """
-    params = request.args
-    regex = 'regex' in params and params['regex'] == 'true'
+   params = request.args
+   regex = 'regex' in params and params['regex'] == 'true'
    core = get_core ()
-    
-    obo_map = {
-        'chebi': 'chemical_substance',
-        'doid': 'disease'
-    }
-    vals = []
-    for name, ont in core.onts.items():
-        new = ont.search(pattern, regex)
-        for n in new:
-            n['type'] = obo_map[name]
-        vals.extend(new)
+   
+   obo_map = {
+       'chebi'   : 'chemical_substance',
+       'pubchem' : 'chemical_substance',
+       'mondo'   : 'disease',
+       'hp'      : 'phenotypic_feature',
+       'go'      : 'biological_process_or_activity',
+       'uberon'  : 'anatomical_entity',
+       'cl'      : 'cell',
+       'doid'    : 'disease',
+       'ro'      : 'related_to'
+   }
+   print (f"---------------------------- {pattern}")
+   vals = []
+   for name, ont in core.onts.items():
+       new = ont.search(pattern, regex)
+       for n in new:
+           n['type'] = obo_map[name] if name in obo_map else 'unknown'
+       vals.extend(new)
    return jsonify ({ "values" : vals })
      
 @app.route('/xrefs/<curie>')
