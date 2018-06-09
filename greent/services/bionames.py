@@ -17,7 +17,7 @@ class BioNames(Service):
         super(BioNames, self).__init__("bionames", context)
         self.router = {
             "chemical_substance" : self._find_chemical_substance,
-            "disease"            : self._find,
+            "disease"            : self._search_onto, #_find,
             "phenotypic_feature" : self._find,
             "cell"               : self._find,
             "anatomical_entity"  : self._find,
