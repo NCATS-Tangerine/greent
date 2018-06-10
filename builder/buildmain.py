@@ -2,7 +2,7 @@ from greent.graph_components import KNode, KEdge
 from greent import node_types
 from greent.util import LoggingUtil,Text
 from greent.rosetta import Rosetta
-#from greent.export import export_graph, prepare_node_for_output
+from greent.export import BufferedWriter
 from builder.userquery import UserQuery
 import argparse
 import networkx as nx
@@ -207,7 +207,7 @@ class KnowledgeGraph:
         n_supported = len(support_edges)
         return n_supported
 
-    def path_support(self, supporter):
+    def path_support(self, supporter,writer):
         n_supported = 0
         links_to_check = self.generate_links_from_paths()
         logger.info('Number of pairs to check: {}'.format(len(links_to_check)))
@@ -233,6 +233,7 @@ class KnowledgeGraph:
                 if len(support_edge.publications)> 0:
                     logger.info('  -Adding support edge from {} to {}'.
                                       format(source.identifier, target.identifier))
+                    writer.write_edge(support_edge)
                     self.add_nonsynonymous_edge(support_edge)
         return n_supported
 
@@ -253,13 +254,16 @@ class KnowledgeGraph:
         #
         # Generate paths, (unique) edges along paths
         logger.debug('Building Support')
-        for supporter in supporters:
-            self.generate_support_node_information(supporter)
-            #n_supported = self.full_support(supporter)
-            n_supported = self.path_support(supporter)
-            logger.info('Support Completed.  Added {} edges.'.format(n_supported))
+        #This is a different writer than the one used in building, so it will updated nodes that have
+        # already been written to include support info.
+        with BufferedWriter(self.rosetta) as writer:
+            for supporter in supporters:
+                self.generate_support_node_information(supporter,writer)
+                #n_supported = self.full_support(supporter)
+                n_supported = self.path_support(supporter,writer)
+                logger.info('Support Completed.  Added {} edges.'.format(n_supported))
 
-    def generate_support_node_information(self,supporter):
+    def generate_support_node_information(self,supporter,writer):
         for node in self.graph.nodes():
             node_id = node.identifier
             key = f"{supporter.__class__.__name__}({node_id})"
@@ -273,6 +277,7 @@ class KnowledgeGraph:
                 self.rosetta.cache.set (key, support_dict)
             if support_dict is not None:
                 node.properties.update(support_dict)
+            writer.write_node(node)
 
     def generate_all_links(self,nodelist=None):
         links_to_check = set()
@@ -340,7 +345,7 @@ def run_query(querylist, supports, rosetta, prune=False):
         kgraph.prune()
     #Enhance should not be needed.  If we have bad nodes, find the root of the badness and fix it there, don't try to post-process
     #kgraph.enhance()
-    #kgraph.support(supports)
+    kgraph.support(supports)
     #kgraph.export()
 
 
