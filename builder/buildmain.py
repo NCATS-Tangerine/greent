@@ -2,7 +2,7 @@ from greent.graph_components import KNode, KEdge
 from greent import node_types
 from greent.util import LoggingUtil,Text
 from greent.rosetta import Rosetta
-from greent.export import export_graph, prepare_node_for_output
+#from greent.export import export_graph, prepare_node_for_output
 from builder.userquery import UserQuery
 import argparse
 import networkx as nx
@@ -192,12 +192,12 @@ class KnowledgeGraph:
                 self.graph.remove_node(node)
         logger.debug('Pruned {} nodes.'.format(n_pruned))
 
-    def enhance(self):
-        """Enhance nodes,edges with good labels and properties"""
-        # TODO: it probably makes sense to push this stuff into the KNode itself
-        logger.debug('Enhancing nodes with labels')
-        for node in self.graph.nodes():
-            prepare_node_for_output(node, self.rosetta.core)
+#    def enhance(self):
+#        """Enhance nodes,edges with good labels and properties"""
+#        # TODO: it probably makes sense to push this stuff into the KNode itself
+#        logger.debug('Enhancing nodes with labels')
+#        for node in self.graph.nodes():
+#            prepare_node_for_output(node, self.rosetta.core)
 
     def full_support(self,supporter, support_nodes):
         n_supported = 0
@@ -325,17 +325,11 @@ class KnowledgeGraph:
         logger.debug("Found {} links".format(len(links_to_check)))
         return links_to_check
 
-    def export(self):
-        export_graph(self.graph, self.rosetta)
-        """Export to neo4j database."""
-        # TODO: lots of this should probably go in the KNode and KEdge objects?
-        logger.info("Writing to neo4j")
-        #config = self.rosetta.type_graph.get_config()
-        #driver = GraphDatabase.driver(config['url'], auth=("neo4j", config['neo4j_password']))
-        # Now add all the nodes
-        #export_nodes(self.graph.nodes(),driver)
-        #export_edges(self.graph.edges(data=True),driver)
-        logger.info(f"Wrote {len(self.graph.nodes())} nodes and {len(self.graph.edges())} edges.")
+   # def export(self):
+   #     """Export to neo4j database."""
+   #     logger.info("Writing to neo4j")
+   #     export_graph(self.graph, self.rosetta)
+   #     logger.info(f"Wrote {len(self.graph.nodes())} nodes and {len(self.graph.edges())} edges.")
 
 def run_query(querylist, supports, rosetta, prune=False):
     """Given a query, create a knowledge graph though querying external data sources.  Export the graph"""
@@ -344,9 +338,10 @@ def run_query(querylist, supports, rosetta, prune=False):
     kgraph.print_types()
     if prune:
         kgraph.prune()
-    kgraph.enhance()
-    kgraph.support(supports)
-    kgraph.export()
+    #Enhance should not be needed.  If we have bad nodes, find the root of the badness and fix it there, don't try to post-process
+    #kgraph.enhance()
+    #kgraph.support(supports)
+    #kgraph.export()
 
 
 def generate_query(pathway, start_identifiers, start_name = None, end_identifiers=None, end_name=None):

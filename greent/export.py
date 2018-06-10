@@ -1,13 +1,70 @@
 from greent.graph_components import KNode, KEdge
 from greent import node_types
 from greent.util import LoggingUtil,Text
-from greent.rosetta import Rosetta
 from neo4j.v1 import GraphDatabase
 from collections import defaultdict, deque
 import calendar
 import logging
 
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
+
+class BufferedWriter:
+    """Buffered writer accepts individual nodes and edges to write to neo4j.
+    It doesn't write the node/edge if it has already been written in its lifetime (it maintains a record)
+    It then accumulates nodes/edges by label/type until a buffersize has been reached, at which point it does
+    an intelligent update/write to the batch of nodes and edges.
+    
+    The correct way to use this is 
+    with BufferedWriter(rosetta) as writer:
+        writer.write_node(node)
+        ...
+
+    Doing this as a context manager will make sure that the different queues all get flushed out.
+    """
+
+    def __init__(self,rosetta):
+        self.rosetta = rosetta
+        self.written_nodes = set()
+        self.written_edges = defaultdict(lambda: defaultdict( set ) )
+        self.node_queues = defaultdict(list)
+        self.edge_queues = defaultdict(list)
+        self.node_buffer_size = 1000
+        self.edge_buffer_size = 1000
+
+    def __enter__(self):
+        return self
+
+    def write_node(self,node):
+        if node.identifier not in self.written_nodes:
+            self.written_nodes.add(node.identifier)
+            typednodes = self.node_queues[node.node_type]
+            typednodes.append(node)
+            if len(typednodes) >= self.node_buffer_size:
+                driver = _get_driver(self.rosetta)
+                with driver.session() as session:
+                    session.write_transaction(export_node_chunk,typednodes,node.node_type)
+                self.node_queues[node.node_type] = []
+
+    def write_edge(self,edge):
+        if edge not in self.written_edges[edge.subject_node][edge.object_node]:
+            self.written_edges[edge.subject_node][edge.object_node].add(edge)
+            label = Text.snakify(edge.standard_predicate.label)
+            typed_edges = self.edge_queues[label]
+            typed_edges.append(edge)
+            if len(typed_edges) >= self.edge_buffer_size:
+                driver = _get_driver(self.rosetta)
+                with driver.session() as session:
+                    session.write_transaction(export_edge_chunk,typed_edges,label)
+                self.edge_queues[label] = []
+
+    def __exit__(self,*args):
+        driver = _get_driver(self.rosetta)
+        with driver.session() as session:
+            for node_type in self.node_queues:
+                session.write_transaction(export_node_chunk,self.node_queues[node_type],node_type)
+            for edge_label in self.edge_queues:
+                session.write_transaction(export_edge_chunk,self.edge_queues[edge_label],edge_label)
+
 
 def export_graph(graph, rosetta):
     """Export to neo4j database."""
@@ -54,27 +111,27 @@ def export_edge_chunk(tx,edgelist,edgelabel):
             set r.url=row.url
             set r.input_identifiers=row.input
             """ % (node_types.ROOT_ENTITY, node_types.ROOT_ENTITY, edgelabel)
-    batch = [ {'aid': edge[0].identifier,
-               'bid': edge[1].identifier,
-               'edge_source': edge[2]['object'].edge_source,
-               'database': edge[2]['object'].edge_source.split('.')[0],
-               'ctime': calendar.timegm(edge[2]['object'].ctime.timetuple()),
-               'standard_label': Text.snakify(edge[2]['object'].standard_predicate.label),
-               'standard_id': edge[2]['object'].standard_predicate.identifier,
-               'original_predicate_id': edge[2]['object'].original_predicate.identifier,
-               'original_predicate_label': edge[2]['object'].original_predicate.label,
-               'publication_count': len(edge[2]['object'].publications),
-               'publications': edge[2]['object'].publications[:1000],
-               'url' : edge[2]['object'].url,
-               'input': edge[2]['object'].input_id
+    batch = [ {'aid': edge.subject_node.identifier,
+               'bid': edge.object_node.identifier,
+               'edge_source': edge.edge_source,
+               'database': edge.edge_source.split('.')[0],
+               'ctime': calendar.timegm(edge.ctime.timetuple()),
+               'standard_label': Text.snakify(edge.standard_predicate.label),
+               'standard_id': edge.standard_predicate.identifier,
+               'original_predicate_id': edge.original_predicate.identifier,
+               'original_predicate_label': edge.original_predicate.label,
+               'publication_count': len(edge.publications),
+               'publications': edge.publications[:1000],
+               'url' : edge.url,
+               'input': edge.input_id
                }
               for edge in edgelist]
+
     tx.run(cypher,{'batches': batch})
 
     for edge in edgelist:
-        ke = edge[2]['object']
-        if ke.standard_predicate.identifier == 'GAMMA:0':
-            logger.warn(f"Unable to map predicate for edge {ke.original_predicate}  {ke}")
+        if edge.standard_predicate.identifier == 'GAMMA:0':
+            logger.warn(f"Unable to map predicate for edge {edge.original_predicate}  {edge}")
 
 def sort_nodes_by_label(nodes):
     nl = defaultdict(list)
@@ -112,6 +169,9 @@ def export_node_chunk(tx,nodelist,label):
     tx.run(cypher,{'batches': batch})
 
 
+"""
+No longer relevent.  Might need to scavenge bits here 
+
 # TODO: push to node, ...
 def prepare_node_for_output(node, gt):
     logger.debug('Prepare: {} {}'.format(node.identifier, node.label))
@@ -140,4 +200,4 @@ def prepare_node_for_output(node, gt):
             node.label = node.identifier
     logger.debug('Prepared: {} {}'.format(node.identifier, node.label))
 
-
+"""

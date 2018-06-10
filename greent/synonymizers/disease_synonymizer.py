@@ -20,6 +20,7 @@ def synonymize_with_MONDO(node,gt):
     syns = set([ LabeledID(x,"") for x in gt.mondo.mondo_get_doid( node.identifier )])
     syns.update( set( [ LabeledID(x,"") for x in gt.mondo.mondo_get_umls( node.identifier )]) )
     syns.update( set( [ LabeledID(x, "") for x in gt.mondo.mondo_get_efo( node.identifier )]))
+    mondo_ids = node.get_synonyms_by_prefix('MONDO')
     #node.add_synonyms(syns)
     return syns
 
@@ -32,7 +33,7 @@ def synonymize_with_OXO(node,gt):
     if len(mondos) == 0:
         doids = node.get_synonyms_by_prefix('DOID')
         for doid in doids:
-            moremondos = gt.mondo.get_mondo_id(doid)
+            moremondos = gt.mondo.get_mondo_id_and_label(doid)
             synonyms.update(moremondos)
     return synonyms
 

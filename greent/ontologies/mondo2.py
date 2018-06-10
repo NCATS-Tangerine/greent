@@ -38,6 +38,10 @@ class Mondo2(Onto):
         return super(Mondo2,self).get_label(identifier)
     
     def get_mondo_id(self,obj_id):
+        mondo_id, label = self.get_mondo_id_and_label(obj_id)
+        return mondo_id
+
+    def get_mondo_id_and_label(self,obj_id):
         result = []
         label = super(Mondo2,self).get_label(obj_id)
         #if label and 'label' in label and label['label'] is not None:
@@ -47,7 +51,7 @@ class Mondo2(Onto):
         else:
             result = super(Mondo2,self).lookup(obj_id)
             logger.debug (f"input id {obj_id} resolves to id {result}")
-        return result
+        return result,label
     
     def has_ancestor(self,obj, terms):
         """ Is is_a(obj,t) true for any t in terms ? """

@@ -72,6 +72,10 @@ class KNode():
         """Returns curies (not labeledIDs) for any synonym with the input prefix"""
         return set( filter(lambda x: Text.get_curie(x).upper() == prefix.upper(), [s.identifier for s in self.synonyms]) )
 
+    def get_labeled_ids_by_prefix(self, prefix):
+        """Returns labeledIDs for any synonym with the input prefix"""
+        return set( filter(lambda x: Text.get_curie(x.identifier).upper() == prefix.upper(), self.synonyms) )
+
     def add_context(self, program_id, context):
         self.contexts[program_id].add(context)
 

@@ -21,7 +21,6 @@ class OXO(Service):
             #If we can't talk to oxo, we can't do much.
             raise Exception('Error Communicating with OXO')
         self.curies = set()
-        print(json.dumps(response, indent=4))
         for ds in response['_embedded']['datasources']:
             self.curies.add(ds['prefix'])
             self.curies.add(ds['prefix'].upper())
@@ -96,7 +95,6 @@ class OXO(Service):
         try:
             searchResults = response['_embedded']['searchResults']
         except KeyError as e:
-            print(json.dumps(response))
             raise e
         if len(searchResults) > 0 and searchResults[0]['queryId'] == identifier:
             others = searchResults[0]['mappingResponseList']
