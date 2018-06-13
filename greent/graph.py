@@ -322,7 +322,6 @@ class TypeGraph(Service):
         result = db.query(query)        
         nrow = 0
         for row in result:
-            print('row:',nrow)
             nrow+=1
             nodes = {}
             transitions = {}
