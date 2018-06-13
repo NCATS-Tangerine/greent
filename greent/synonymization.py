@@ -2,7 +2,9 @@ import logging
 from collections import defaultdict
 
 from greent import node_types
+from greent.graph_components import LabeledID
 from greent.util import Text, LoggingUtil
+from greent.synonymizers import cell_synonymizer
 from greent.synonymizers import hgnc_synonymizer
 from greent.synonymizers import oxo_synonymizer
 from greent.synonymizers import substance_synonymizer
@@ -21,7 +23,7 @@ synonymizers = {
     node_types.PROCESS:oxo_synonymizer,
     node_types.FUNCTION:oxo_synonymizer,
     node_types.PROCESS_OR_FUNCTION:oxo_synonymizer,
-    node_types.CELL:oxo_synonymizer,
+    node_types.CELL:cell_synonymizer,
     node_types.ANATOMY:oxo_synonymizer,
 }
 
@@ -59,6 +61,16 @@ class Synonymizer:
         for s in node.synonyms:
             c = Text.get_curie(s.identifier)
             synonyms_by_curie[c].append(s)
+        #If we have two synonyms with the same id, but one has no label, chuck it
+        smap = defaultdict[list]
+        for labeledid in node.synonyms:
+            smap[labeledid.identifier].append(labeledid.label)
+        for lid,labels in smap.items():
+            if len(labels) > 1 and (None in labels):
+                node.synonyms.remove(LabeledID(lid,None))
+            if len(labels) > 1 and ('' in labels):
+                node.synonyms.remove(LabeledID(lid,''))
+        #Now find the bset one for an id
         for type_curie in type_curies:
             potential_identifiers = synonyms_by_curie[type_curie]
             if len(potential_identifiers) > 0:
