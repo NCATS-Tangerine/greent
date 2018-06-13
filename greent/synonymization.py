@@ -62,7 +62,7 @@ class Synonymizer:
             c = Text.get_curie(s.identifier)
             synonyms_by_curie[c].append(s)
         #If we have two synonyms with the same id, but one has no label, chuck it
-        smap = defaultdict[list]
+        smap = defaultdict(list)
         for labeledid in node.synonyms:
             smap[labeledid.identifier].append(labeledid.label)
         for lid,labels in smap.items():
