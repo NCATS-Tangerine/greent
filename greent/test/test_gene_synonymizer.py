@@ -12,6 +12,16 @@ def test_uniprot(rosetta):
     assert hgnc.pop() == 'HGNC:8856'
     assert node.identifier == 'HGNC:8856'
 
+def test_crappy_uniprot(rosetta):
+    """Do we correctly synonymize if all we have is a UniProtKB identifier?"""
+    node = KNode('UniProtKB:A0A024QZH5', node_types.GENE)
+    rosetta.synonymizer.synonymize(node)
+    hgnc = node.get_synonyms_by_prefix('HGNC')
+    assert len(hgnc) == 1
+    assert hgnc.pop() == 'HGNC:18859'
+    assert node.identifier == 'HGNC:18859'
+
+
 def test_hgnc(rosetta):
     """Observed an error for this id, is it transient?"""
     node = KNode('HGNC:8599', node_types.GENE)

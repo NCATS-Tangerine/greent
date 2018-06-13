@@ -8,6 +8,20 @@ def uniprot():
     uniprot = UniProt(ServiceContext.create_context())
     return uniprot
 
+def test_uniprot_both(uniprot):
+    uni = 'UniProtKB:A0A024QZH5'
+    results = uniprot.get_synonyms(uni)
+    assert len(results) == 1
+    assert results[0] == 'NCBIGene:56848'
+
+def test_uniprot_fail(uniprot):
+    uni = 'UniProtKB:A0A024QZH5'
+    ncbis = uniprot.uniprot_2_ncbi(uni)
+    assert len(ncbis) == 1
+    hgncs = uniprot.uniprot_2_hgnc(uni)
+    assert len(hgncs) == 0
+    assert ncbis[0] == 'NCBIGene:56848'
+
 def test_uniprot(uniprot):
     uni = 'UniProtKB:A0A096LNX8'
     hgncs = uniprot.uniprot_2_hgnc(uni)
