@@ -1,10 +1,7 @@
 import json
 
-#from greent.ontologies.go import GO
 from greent.ontologies.go2 import GO2
-#from greent.ontologies.hpo import HPO
 from greent.ontologies.hpo2 import HPO2
-#from greent.ontologies.mondo import Mondo
 from greent.ontologies.mondo2 import Mondo2
 from greent.services.biolink import Biolink
 from greent.services.caster import Caster
@@ -23,6 +20,7 @@ from greent.services.tkba import TranslatorKnowledgeBeaconAggregator
 from greent.services.typecheck import TypeCheck
 from greent.services.uberongraph import UberonGraphKS
 from greent.services.unichem import UniChem
+from greent.services.uniprot import UniProt
 #from greent.service import ServiceContext
 from greent.util import LoggingUtil
 
@@ -43,11 +41,11 @@ class GreenT:
             "chembio"          : lambda :  ChemBioKS (self.service_context),
             "chemotext"        : lambda :  Chemotext (self.service_context),
             "ctd"              : lambda :  CTD(self.service_context),
-            "go"               : lambda :  GO2(self.service_context) if self.ont_api else GO(self.service_context),
+            "go"               : lambda :  GO2(self.service_context),
             "hetio"            : lambda :  HetIO (self.service_context),
             "hgnc"             : lambda :  HGNC(self.service_context),
-            "hpo"              : lambda :  HPO2 (self.service_context) if self.ont_api else HPO (self.service_context),
-            "mondo"            : lambda :  Mondo2(self.service_context) if self.ont_api else Mondo(self.service_context),
+            "hpo"              : lambda :  HPO2 (self.service_context),
+            "mondo"            : lambda :  Mondo2(self.service_context),
             "mychem"           : lambda :  MyChem(self.service_context),
             "omnicorp"         : lambda :  OmniCorp (self.service_context),
             "oxo"              : lambda :  OXO (self.service_context),
@@ -57,7 +55,8 @@ class GreenT:
             "tkba"             : lambda :  TranslatorKnowledgeBeaconAggregator (self.service_context),
             "typecheck"        : lambda :  TypeCheck(self.service_context, self),
             "uberongraph"      : lambda :  UberonGraphKS(self.service_context),
-            "unichem"          : lambda :  UniChem(self.service_context)
+            "unichem"          : lambda :  UniChem(self.service_context),
+            "uniprot"          : lambda :  UniProt(self.service_context)
         }
         
     def get_config_val(self, key):
