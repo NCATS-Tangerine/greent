@@ -5,6 +5,10 @@ from neo4j.v1 import GraphDatabase
 from collections import defaultdict, deque
 import calendar
 import logging
+from neo4j.util import watch
+from sys import stdout
+
+watch("neo4j.bolt", logging.DEBUG, stdout)
 
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
@@ -42,7 +46,9 @@ class BufferedWriter:
             if len(typednodes) >= self.node_buffer_size:
                 driver = _get_driver(self.rosetta)
                 with driver.session() as session:
+                    logger.debug("Write Nodes -- start")
                     session.write_transaction(export_node_chunk,typednodes,node.node_type)
+                    logger.debug("Write Nodes -- done")
                 self.node_queues[node.node_type] = []
 
     def write_edge(self,edge):
@@ -54,16 +60,22 @@ class BufferedWriter:
             if len(typed_edges) >= self.edge_buffer_size:
                 driver = _get_driver(self.rosetta)
                 with driver.session() as session:
+                    logger.debug("Write Edge -- start")
                     session.write_transaction(export_edge_chunk,typed_edges,label)
+                    logger.debug("Write Edge -- done")
                 self.edge_queues[label] = []
 
     def __exit__(self,*args):
         driver = _get_driver(self.rosetta)
         with driver.session() as session:
             for node_type in self.node_queues:
+                logger.debug("Write nodes (exit) -- start")
                 session.write_transaction(export_node_chunk,self.node_queues[node_type],node_type)
+                logger.debug("Write nodes (exit) -- done")
             for edge_label in self.edge_queues:
+                logger.debug("Write edges (exit) -- start")
                 session.write_transaction(export_edge_chunk,self.edge_queues[edge_label],edge_label)
+                logger.debug("Write nodes (exit) -- done")
 
 
 def export_graph(graph, rosetta):
