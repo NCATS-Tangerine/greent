@@ -92,9 +92,8 @@ class UberonGraphKS(Service):
         from <http://example.org/uberon-hp-cl.ttl>
         where {
             graph <http://reasoner.renci.org/redundant> {
-                ?cellID rdfs:subClassOf ?super .
                 ?cellID rdfs:subClassOf CL:0000000 .
-                ?super BFO:0000050 $anatomyID .
+                ?cellID BFO:0000050 $anatomyID .
             }
             ?cellID rdfs:label ?cellLabel .
         }
@@ -122,9 +121,8 @@ class UberonGraphKS(Service):
         from <http://example.org/uberon-hp-cl.ttl>
         where {
             graph <http://reasoner.renci.org/redundant> {
-                $cellID rdfs:subClassOf ?super .
                 ?anatomyID rdfs:subClassOf UBERON:0001062 .
-                ?super BFO:0000050 ?anatomyID .
+                $cellID BFO:0000050 ?anatomyID .
             }
             ?anatomyID rdfs:label ?anatomyLabel .
         }
