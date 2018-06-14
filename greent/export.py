@@ -35,7 +35,7 @@ class BufferedWriter:
         self.node_buffer_size = 1000
         self.edge_buffer_size = 1000
         config = rosetta.type_graph.get_config()
-        self.driver = GraphDatabase.driver(config['url'], auth=("neo4j", config['neo4j_password']))
+        self.driver = GraphDatabase.driver(config['url'], auth=("neo4j", config['neo4j_password']),max_retry_time=3600)
 
     def __enter__(self):
         return self
@@ -75,7 +75,7 @@ class BufferedWriter:
                 logger.debug("Write edges (exit) -- start")
                 session.write_transaction(export_edge_chunk,self.edge_queues[edge_label],edge_label)
                 logger.debug("Write edges (exit) -- done")
-
+        self.driver.close()
 
 def export_graph(graph, rosetta):
     """Export to neo4j database."""
