@@ -91,13 +91,14 @@ class UberonGraphKS(Service):
         from <http://reasoner.renci.org/nonredundant>
         from <http://example.org/uberon-hp-cl.ttl>
         where {
-                  graph <http://reasoner.renci.org/redundant> {
-                    ?cellID rdfs:subClassOf ?super .
-                    ?cellID rdfs:subClassOf CL:0000000 .
-                  }
-                  ?super BFO:0000050 $anatomyID .
-                  ?cellID rdfs:label ?cellLabel .
-              }
+            graph <http://reasoner.renci.org/redundant> {
+                ?cellID rdfs:subClassOf ?super .
+                ?cellID rdfs:subClassOf CL:0000000 .
+                ?super BFO:0000050 $anatomyID .
+            }
+            ?cellID rdfs:label ?cellLabel .
+        }
+
         """
         results = self.triplestore.query_template(
             inputs = { 'anatomyID': anatomy_identifier }, \
@@ -115,16 +116,18 @@ class UberonGraphKS(Service):
         text = """
         prefix CL: <http://purl.obolibrary.org/obo/CL_>
         prefix BFO: <http://purl.obolibrary.org/obo/BFO_>
+        prefix UBERON: <http://purl.obolibrary.org/obo/UBERON_>
         select distinct ?anatomyID ?anatomyLabel
         from <http://reasoner.renci.org/nonredundant>
         from <http://example.org/uberon-hp-cl.ttl>
         where {
-                  graph <http://reasoner.renci.org/redundant> {
-                    $cellID rdfs:subClassOf ?super .
-                  }
-                  ?super BFO:0000050 ?anatomyID .
-                  ?anatomyID rdfs:label ?anatomyLabel .
-              }
+            graph <http://reasoner.renci.org/redundant> {
+                $cellID rdfs:subClassOf ?super .
+                ?anatomyID rdfs:subClassOf UBERON:0001062 .
+                ?super BFO:0000050 ?anatomyID .
+            }
+            ?anatomyID rdfs:label ?anatomyLabel .
+        }
         """
         results = self.triplestore.query_template( 
             inputs = { 'cellID': cell_identifier }, \

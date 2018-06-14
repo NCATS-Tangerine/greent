@@ -17,6 +17,16 @@ def test_name(uberon):
     assert len(results) == 1
     assert results[0]['cellLabel'] == 'mast cell'
 
+def test_cell_to_anatomy_super(uberon):
+    k = KNode('CL:0002251',node_types.CELL,label='epithelial cell of the alimentary canal')
+    results = uberon.get_anatomy_by_cell_graph( k )
+    #Should get back digestive system UBERON:0001007
+    assert len(results) > 0
+    idents = [ ke[1].identifier for ke in results ]
+    print(idents)
+    assert 'UBERON:0001007' in idents
+
+
 def test_cell_to_anatomy(uberon):
     k = KNode('CL:0000097',node_types.CELL)
     results = uberon.get_anatomy_by_cell_graph( k )
