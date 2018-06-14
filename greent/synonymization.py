@@ -55,37 +55,31 @@ class Synonymizer:
     def normalize(self,node):
         """Given a node, which will have many potential identifiers, choose the best identifier to be the node ID,
         where 'best' is defined by the order in which identifiers appear in the id prefix configurations within the concept model."""
+        #If we have two synonyms with the same id, but one has no label, chuck it
+        smap = defaultdict(list)
+        for labeledid in node.synonyms:
+            smap[labeledid.identifier].append(labeledid.label)
+        for lid,labels in smap.items():
+            if len(labels) > 1 and (None in labels):
+                node.synonyms.remove(LabeledID(lid,None))
+            if len(labels) > 1 and ('' in labels):
+                node.synonyms.remove(LabeledID(lid,''))
+        #Now find the bset one for an id
         type_curies = self.concepts.get(node.node_type).id_prefixes
         #Now start looking for the best curies
         synonyms_by_curie = defaultdict(list)
         for s in node.synonyms:
             c = Text.get_curie(s.identifier)
             synonyms_by_curie[c].append(s)
-        #If we have two synonyms with the same id, but one has no label, chuck it
-        smap = defaultdict(list)
-        for labeledid in node.synonyms:
-            smap[labeledid.identifier].append(labeledid.label)
-        for lid,labels in smap.items():
-            logger.debug(f"NORM! {lid} {labels}")
-            if len(labels) > 1 and (None in labels):
-                logger.debug(f'wipe {lid}')
-                node.synonyms.remove(LabeledID(lid,None))
-            if len(labels) > 1 and ('' in labels):
-                node.synonyms.remove(LabeledID(lid,''))
-                logger.debug(f'wipe2 {lid}')
-            logger.debug(node.synonyms)
-        #Now find the bset one for an id
         for type_curie in type_curies:
             potential_identifiers = synonyms_by_curie[type_curie]
             if len(potential_identifiers) > 0:
                 if len(potential_identifiers) > 1:
                     pis = [ f'{pi.identifier}({pi.label})' for pi in potential_identifiers]
-                    logger.warn('More than one potential identifier for a node: {}'.format(','.join(pis)))
                     ids_with_labels = list(filter(lambda x: x.label is not None, potential_identifiers ))
                     if len(ids_with_labels) > 0:
                         potential_identifiers = ids_with_labels
                     potential_identifiers.sort()
-                logger.debug(potential_identifiers)
                 node.identifier = potential_identifiers[0].identifier
                 node.label = potential_identifiers[0].label
                 break
