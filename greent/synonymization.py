@@ -66,10 +66,14 @@ class Synonymizer:
         for labeledid in node.synonyms:
             smap[labeledid.identifier].append(labeledid.label)
         for lid,labels in smap.items():
+            logger.debug(f"NORM! {lid} {labels}")
             if len(labels) > 1 and (None in labels):
+                logger.debug(f'wipe {lid}')
                 node.synonyms.remove(LabeledID(lid,None))
             if len(labels) > 1 and ('' in labels):
                 node.synonyms.remove(LabeledID(lid,''))
+                logger.debug(f'wipe2 {lid}')
+            logger.debug(node.synonyms)
         #Now find the bset one for an id
         for type_curie in type_curies:
             potential_identifiers = synonyms_by_curie[type_curie]
