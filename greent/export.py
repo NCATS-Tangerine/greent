@@ -8,7 +8,7 @@ import logging
 from neo4j.util import watch
 from sys import stdout
 
-watch("neo4j.bolt", logging.DEBUG, stdout)
+#watch("neo4j.bolt", logging.DEBUG, stdout)
 
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
@@ -34,6 +34,8 @@ class BufferedWriter:
         self.edge_queues = defaultdict(list)
         self.node_buffer_size = 1000
         self.edge_buffer_size = 1000
+        config = rosetta.type_graph.get_config()
+        self.driver = GraphDatabase.driver(config['url'], auth=("neo4j", config['neo4j_password']))
 
     def __enter__(self):
         return self
@@ -44,8 +46,7 @@ class BufferedWriter:
             typednodes = self.node_queues[node.node_type]
             typednodes.append(node)
             if len(typednodes) >= self.node_buffer_size:
-                driver = _get_driver(self.rosetta)
-                with driver.session() as session:
+                with self.driver.session() as session:
                     logger.debug("Write Nodes -- start")
                     session.write_transaction(export_node_chunk,typednodes,node.node_type)
                     logger.debug("Write Nodes -- done")
@@ -58,16 +59,14 @@ class BufferedWriter:
             typed_edges = self.edge_queues[label]
             typed_edges.append(edge)
             if len(typed_edges) >= self.edge_buffer_size:
-                driver = _get_driver(self.rosetta)
-                with driver.session() as session:
+                with self.driver.session() as session:
                     logger.debug("Write Edge -- start")
                     session.write_transaction(export_edge_chunk,typed_edges,label)
                     logger.debug("Write Edge -- done")
                 self.edge_queues[label] = []
 
     def __exit__(self,*args):
-        driver = _get_driver(self.rosetta)
-        with driver.session() as session:
+        with self.driver.session() as session:
             for node_type in self.node_queues:
                 logger.debug("Write nodes (exit) -- start")
                 session.write_transaction(export_node_chunk,self.node_queues[node_type],node_type)
@@ -75,7 +74,7 @@ class BufferedWriter:
             for edge_label in self.edge_queues:
                 logger.debug("Write edges (exit) -- start")
                 session.write_transaction(export_edge_chunk,self.edge_queues[edge_label],edge_label)
-                logger.debug("Write nodes (exit) -- done")
+                logger.debug("Write edges (exit) -- done")
 
 
 def export_graph(graph, rosetta):
@@ -87,10 +86,6 @@ def export_graph(graph, rosetta):
     export_edges(graph.edges(data=True),rosetta)
     logger.info(f"Wrote {len(graph.nodes())} nodes and {len(graph.edges())} edges.")
 
-def _get_driver(rosetta):
-    config = rosetta.type_graph.get_config()
-    driver = GraphDatabase.driver(config['url'], auth=("neo4j", config['neo4j_password']))
-    return driver
 
 def export_edges(edges,rosetta):
     driver = _get_driver(rosetta)
@@ -180,6 +175,9 @@ def export_node_chunk(tx,nodelist,label):
         batch.append(nodeout)
     tx.run(cypher,{'batches': batch})
 
+def _get_driver(rosetta):
+    config = rosetta.type_graph.get_config()
+    return GraphDatabase.driver(config['url'], auth=("neo4j", config['neo4j_password']))
 
 """
 No longer relevent.  Might need to scavenge bits here 
