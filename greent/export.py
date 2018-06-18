@@ -43,7 +43,7 @@ class BufferedWriter:
     def write_node(self,node):
         if node.identifier not in self.written_nodes:
             if node.label is None or node.label == '':
-                logger.error(f"Node {node.identifer} is missing a label")
+                logger.error(f"Node {node.identifier} is missing a label")
             self.written_nodes.add(node.identifier)
             typednodes = self.node_queues[node.node_type]
             typednodes.append(node)
