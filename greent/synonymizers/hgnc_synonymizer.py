@@ -11,4 +11,7 @@ def synonymize(node,gt):
             labeled_ids = [ LabeledID(h,'') for h in new_ids ]
             node.add_synonyms(labeled_ids)
             node.identifier = new_ids[0]
-    return gt.hgnc.get_synonyms(node.identifier)
+    g_synonyms = gt.hgnc.get_synonyms(node.identifier)
+    if len(g_synonyms) == 0:
+        raise Exception("No Gene Synonyms...")
+    return g_synonyms

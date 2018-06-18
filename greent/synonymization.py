@@ -27,7 +27,7 @@ synonymizers = {
     node_types.ANATOMY:oxo_synonymizer,
 }
 
-logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
+logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG, format='medium')
 
 class Synonymizer:
 
@@ -47,6 +47,7 @@ class Synonymizer:
                 logger.debug (f"exec op: {key}")
                 synonyms = synonymizers[node.node_type].synonymize(node, self.rosetta.core)
                 self.rosetta.cache.set (key, synonyms)
+            logger.debug(f"Number of synonyms:{len(synonyms)}")
             node.add_synonyms(synonyms)
         else:
             logger.warn (f"No synonymizer registered for concept: {node.node_type}")
