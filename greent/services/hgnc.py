@@ -5,6 +5,7 @@ from greent.service import Service
 from greent.util import LoggingUtil
 
 import time
+import logging
 
 
 #A map from identifiers.org namespaces (curie prefixes) to how HGNC describes these things
