@@ -39,10 +39,12 @@ class HGNC(Service):
         num_tries = 0
         max_tries = 10
         wait_time = 5 # seconds
+        logger.debug(f'Try {url}')
         while num_tries < max_tries:
             try:
                 return requests.get(url , headers= headers).json()
-            except:
+            except Exception as e:
+                logger.error(f'Threw exception {e}')
                 num_tries += 1
                 time.sleep(wait_time)
         return None
