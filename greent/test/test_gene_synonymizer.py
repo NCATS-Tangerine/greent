@@ -33,7 +33,15 @@ def test_failing_uniprot(rosetta):
     assert node.identifier == 'HGNC:7939'
     assert node.label == 'NPPA'
 
-
+def test_failing_uniprot_2(rosetta):
+    """Do we correctly synonymize if all we have is a UniProtKB identifier?"""
+    node = KNode('UniProtKB:P14416', node_types.GENE, label='')
+    rosetta.synonymizer.synonymize(node)
+    hgnc = node.get_synonyms_by_prefix('HGNC')
+    assert len(hgnc) == 1
+    assert hgnc.pop() == 'HGNC:3023'
+    assert node.identifier == 'HGNC:3023'
+    assert node.label == 'DRD2'
 
 def test_hgnc(rosetta):
     """Observed an error for this id, is it transient?"""
