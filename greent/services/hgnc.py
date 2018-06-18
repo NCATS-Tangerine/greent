@@ -38,13 +38,15 @@ class HGNC(Service):
         a valid json response with no entries.  So failures here are most likely timeouts and stuff like that."""
         done = False
         num_tries = 0
-        max_tries = 10
+        max_tries = 100
         wait_time = 5 # seconds
         logger.debug(f'Try {url}')
         while num_tries < max_tries:
             try:
-                return requests.get(url , headers= headers).json()
+                response = requests.get(url , headers= headers)
+                return response.json()
             except Exception as e:
+                logger.error(response)
                 logger.error(f'Threw exception {e}')
                 num_tries += 1
                 time.sleep(wait_time)
