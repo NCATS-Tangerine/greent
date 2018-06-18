@@ -60,7 +60,7 @@ def test_hgnc_label(rosetta):
     assert node.label != ''
 
 def test_gene_synonymizer(rosetta):
-    node = KNode('HGNC:18729', node_types.GENE)
+    node = KNode('NCBIGENE:57016', node_types.GENE)
     results = hgnc_synonymizer.synonymize(node,rosetta.core)
     print(results)
     assert len(results) > 0

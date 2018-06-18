@@ -2,6 +2,8 @@ import requests
 from greent import node_types
 from greent.graph_components import LabeledID
 from greent.service import Service
+from greent.util import LoggingUtil
+
 import time
 
 
@@ -20,6 +22,8 @@ prefixes_to_hgnc = {
 }
 
 hgnc_to_prefixes = { v: k for k,v in prefixes_to_hgnc.items()}
+
+logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
 class HGNC(Service):
 
@@ -80,8 +84,10 @@ class HGNC(Service):
             docs = r['response']['docs']
         except:
             #didn't get anything useful
+            logger.error("No good return")
             return set()
         synonyms = set()
+        logger.debug(f"Number of docs: {len(docs)}")
         for doc in docs:
             #hgnc only returns an hgnc label (not eg. an entrez label)
             try:
