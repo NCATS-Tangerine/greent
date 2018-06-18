@@ -10,5 +10,7 @@ source ./deploy/setenv.sh
 # set up Neo4j type graph
 ./initialize_type_graph.sh
 
+find . -name "*.pid" -exec rm -rf {} \;
+
 cd - > /dev/null # squash output
 exec "$@"
