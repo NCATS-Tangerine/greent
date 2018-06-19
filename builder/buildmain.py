@@ -8,12 +8,10 @@ import argparse
 import networkx as nx
 import logging
 import sys
-from neo4j.v1 import GraphDatabase
 from importlib import import_module
 from builder.lookup_utils import lookup_identifier
 from collections import defaultdict, deque
 from builder.pathlex import tokenize_path
-import calendar
 
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
@@ -32,11 +30,7 @@ class KnowledgeGraph:
         #  multiple different ways.
         self.node_map = {}
 
-        #uri = 'bolt://localhost:7687'
-        #self.driver = GraphDatabase.driver(uri, encrypted=False)
-        # Use the same database connection as the type_graph.
-        # self.driver = self.rosetta.type_graph.driver
-        
+
     def execute(self):
         """Execute the query that defines the graph"""
         logger.debug('Executing Query')

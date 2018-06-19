@@ -34,8 +34,9 @@ class BufferedWriter:
         self.edge_queues = defaultdict(list)
         self.node_buffer_size = 100
         self.edge_buffer_size = 100
-        config = rosetta.type_graph.get_config()
-        self.driver = GraphDatabase.driver(config['url'], auth=("neo4j", config['neo4j_password']),max_retry_time=3600)
+        #config = rosetta.type_graph.get_config()
+        #self.driver = GraphDatabase.driver(config['url'], auth=("neo4j", config['neo4j_password']),max_retry_time=3600)
+        self.driver = self.rosetta.type_graph.driver
 
     def __enter__(self):
         return self
@@ -77,8 +78,10 @@ class BufferedWriter:
                 logger.debug("Write edges (exit) -- start")
                 session.write_transaction(export_edge_chunk,self.edge_queues[edge_label],edge_label)
                 logger.debug("Write edges (exit) -- done")
-        self.driver.close()
+        #Doesn't own the driver
+        #self.driver.close()
 
+'''
 def export_graph(graph, rosetta):
     """Export to neo4j database."""
     # TODO: lots of this should probably go in the KNode and KEdge objects?
@@ -98,6 +101,18 @@ def export_edges(edges,rosetta):
             chunk = nodelist[chunknum:chunknum+chunksize]
             with driver.session() as session:
                 session.write_transaction(export_edge_chunk,chunk,label)
+                
+def export_nodes(nodes,rosetta):
+    driver = _get_driver(rosetta)
+    nodes_by_label = sort_nodes_by_label(nodes)
+    for label,nodelist in nodes_by_label.items():
+        chunksize = 1000
+        for chunknum in range(0, len(nodelist), chunksize):
+            chunk = nodelist[chunknum:chunknum+chunksize]
+            with driver.session() as session:
+                session.write_transaction(export_node_chunk,chunk,label)
+'''
+
 
 def sort_edges_by_label(edges):
     el = defaultdict(list)
@@ -147,15 +162,6 @@ def sort_nodes_by_label(nodes):
     deque( map( lambda x: nl[x.node_type].append(x), nodes ) )
     return nl
 
-def export_nodes(nodes,rosetta):
-    driver = _get_driver(rosetta)
-    nodes_by_label = sort_nodes_by_label(nodes)
-    for label,nodelist in nodes_by_label.items():
-        chunksize = 1000
-        for chunknum in range(0, len(nodelist), chunksize):
-            chunk = nodelist[chunknum:chunknum+chunksize]
-            with driver.session() as session:
-                session.write_transaction(export_node_chunk,chunk,label)
 
 def export_node_chunk(tx,nodelist,label):
     cypher = """UNWIND {batches} as batch
@@ -177,11 +183,11 @@ def export_node_chunk(tx,nodelist,label):
         batch.append(nodeout)
     tx.run(cypher,{'batches': batch})
 
+"""
 def _get_driver(rosetta):
     config = rosetta.type_graph.get_config()
     return GraphDatabase.driver(config['url'], auth=("neo4j", config['neo4j_password']))
 
-"""
 No longer relevent.  Might need to scavenge bits here 
 
 # TODO: push to node, ...

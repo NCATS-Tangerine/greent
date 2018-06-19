@@ -42,6 +42,8 @@ class TypeGraph(Service):
         self.set_concept_model()
         self.TYPE = "Type"
         self.CONCEPT = "Concept"
+        config = self.get_config()
+        self.driver = GraphDatabase.driver(self.url, auth=("neo4j", config['neo4j_password']))
 
     def initialize_connection(self):
         """ Connect to the database. """
@@ -51,9 +53,7 @@ class TypeGraph(Service):
     def delete_all(self):
         """ Delete the type-graph only.  Leave result graphs alone. """
         try:
-            config = self.get_config()
-            driver = GraphDatabase.driver(self.url, auth=("neo4j", config['neo4j_password']))
-            with driver.session() as session:
+            with self.driver.session() as session:
                 db = GraphDB(session)
                 db.exec("MATCH (n:Concept) DETACH DELETE n")
                 db.exec("MATCH (n:Type) DETACH DELETE n")
@@ -66,9 +66,7 @@ class TypeGraph(Service):
         every identifier is unique across all of the nodes except to give them all a common parent
         label. In biolink-model, that parent entity is named_thing, so that is what we will call it."""
         try:
-            config = self.get_config()
-            driver = GraphDatabase.driver(self.url, auth=("neo4j", config['neo4j_password']))
-            with driver.session() as session:
+            with self.driver.session() as session:
                 db = GraphDB(session)
                 db.exec(f"CREATE CONSTRAINT ON (p:{ROOT_ENTITY}) ASSERT p.id IS UNIQUE")
         except Exception as e:
@@ -102,9 +100,7 @@ class TypeGraph(Service):
             self.build_concept(db, concept.is_a)
 
     def find_or_create_list(self, items):
-        config = self.get_config()
-        driver = GraphDatabase.driver(self.url, auth=("neo4j", config['neo4j_password']))
-        with driver.session() as session:
+        with self.driver.session() as session:
             db = GraphDB(session)
             for k, v in items:
                 if isinstance(v, str):
@@ -135,9 +131,7 @@ class TypeGraph(Service):
         return n
 
     def configure_operators (self, operators):
-        config = self.get_config()
-        driver = GraphDatabase.driver(self.url, auth=("neo4j", config['neo4j_password']))
-        with driver.session() as session:
+        with self.driver.session() as session:
             db = GraphDB(session)
             logger.debug ("Configure operators in the Rosetta config.")
             for a_concept, transition_list in operators:
@@ -202,9 +196,7 @@ class TypeGraph(Service):
         #This approach generates a lot of edges if we let it.  And that might be the right answer
         #But for now, let's try to keep it in check
         #This is one way to do it, but we could swap it with something more complex
-        config = self.get_config()
-        driver = GraphDatabase.driver(self.url, auth=("neo4j", config['neo4j_password']))
-        with driver.session() as session:
+        with self.driver.session() as session:
             db = GraphDB(session)
             usable_concepts = self.get_concepts_with_edges()
             children= self._push_up(db, type_check_functions,usable_concepts)
@@ -285,9 +277,7 @@ class TypeGraph(Service):
         """ Execute a cypher query and return the result set. """
         result = None
         try:
-            config = self.get_config()
-            driver = GraphDatabase.driver(self.url, auth=("neo4j", config['neo4j_password']))
-            with driver.session() as session:
+            with self.driver.session() as session:
                 db = GraphDB(session)
                 result = db.query(query, data_contents=True)
         except TransactionException:
@@ -298,9 +288,7 @@ class TypeGraph(Service):
 
     def get_transitions(self, query):
         result = []
-        config = self.get_config()
-        driver = GraphDatabase.driver(self.url, auth=("neo4j", config['neo4j_password']))
-        with driver.session() as session:
+        with self.driver.session() as session:
             db = GraphDB(session)
             result = self.get_transitions_actor(db, query)
         return result
@@ -371,9 +359,7 @@ class TypeGraph(Service):
 
     def get_knowledge_map_programss(self, query):
         result = []
-        config = self.get_config()
-        driver = GraphDatabase.driver(self.url, auth=("neo4j", config['neo4j_password']))
-        with driver.session() as session:
+        with self.driver.session() as session:
             db = GraphDB(session)
             result = self.get_knowledge_map_programs_actor(db, query)
         return result
