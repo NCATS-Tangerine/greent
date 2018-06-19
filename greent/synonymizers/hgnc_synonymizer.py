@@ -3,6 +3,8 @@ from greent.graph_components import LabeledID
 from greent.util import Text
 
 def synonymize(node,gt):
+    print("How did I get here?")
+    exit()
     if not node.node_type == node_types.GENE:
         raise Exception("Incorrect node type")
     if Text.get_curie(node.identifier).upper() == 'UNIPROTKB':

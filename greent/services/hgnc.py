@@ -75,6 +75,11 @@ class HGNC(Service):
         return symbol 
 
     def get_synonyms(self, identifier):
+        #HGNC doesn't want to handle more than 10 of these a second (from one IP).  If we think that we're
+        # going to be running in parallel, that means a simple wait should fix it.  ESPECIALLY, since we should
+        # almost never be calling this - everything should be pre-cached.  So this little wait time, which is
+        # terrible, should in the end not matter very much
+        time.sleep(0.2)
         identifier_parts = identifier.split(':')
         prefix = identifier_parts[0]
         gid = identifier_parts[1]
