@@ -132,7 +132,6 @@ class UserQuery:
         self.cypher = self.generate_cypher()
         logger.debug(self.cypher)
         plans = rosetta.type_graph.get_transitions(self.cypher)
-        #self.programs = [Program(plan, self.definition, rosetta, i) for i,plan in enumerate(plans)]
         self.programs = []
         for i,plan in enumerate(plans):
             try:

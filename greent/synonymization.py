@@ -2,7 +2,9 @@ import logging
 from collections import defaultdict
 
 from greent import node_types
+from greent.graph_components import LabeledID
 from greent.util import Text, LoggingUtil
+from greent.synonymizers import cell_synonymizer
 from greent.synonymizers import hgnc_synonymizer
 from greent.synonymizers import oxo_synonymizer
 from greent.synonymizers import substance_synonymizer
@@ -21,11 +23,11 @@ synonymizers = {
     node_types.PROCESS:oxo_synonymizer,
     node_types.FUNCTION:oxo_synonymizer,
     node_types.PROCESS_OR_FUNCTION:oxo_synonymizer,
-    node_types.CELL:oxo_synonymizer,
+    node_types.CELL:cell_synonymizer,
     node_types.ANATOMY:oxo_synonymizer,
 }
 
-logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
+logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG, format='medium')
 
 class Synonymizer:
 
@@ -45,6 +47,7 @@ class Synonymizer:
                 logger.debug (f"exec op: {key}")
                 synonyms = synonymizers[node.node_type].synonymize(node, self.rosetta.core)
                 self.rosetta.cache.set (key, synonyms)
+            logger.debug(f"Number of synonyms:{len(synonyms)}")
             node.add_synonyms(synonyms)
         else:
             logger.warn (f"No synonymizer registered for concept: {node.node_type}")
@@ -53,6 +56,16 @@ class Synonymizer:
     def normalize(self,node):
         """Given a node, which will have many potential identifiers, choose the best identifier to be the node ID,
         where 'best' is defined by the order in which identifiers appear in the id prefix configurations within the concept model."""
+        #If we have two synonyms with the same id, but one has no label, chuck it
+        smap = defaultdict(list)
+        for labeledid in node.synonyms:
+            smap[labeledid.identifier].append(labeledid.label)
+        for lid,labels in smap.items():
+            if len(labels) > 1 and (None in labels):
+                node.synonyms.remove(LabeledID(lid,None))
+            if len(labels) > 1 and ('' in labels):
+                node.synonyms.remove(LabeledID(lid,''))
+        #Now find the bset one for an id
         type_curies = self.concepts.get(node.node_type).id_prefixes
         #Now start looking for the best curies
         synonyms_by_curie = defaultdict(list)
@@ -64,12 +77,10 @@ class Synonymizer:
             if len(potential_identifiers) > 0:
                 if len(potential_identifiers) > 1:
                     pis = [ f'{pi.identifier}({pi.label})' for pi in potential_identifiers]
-                    logger.warn('More than one potential identifier for a node: {}'.format(','.join(pis)))
                     ids_with_labels = list(filter(lambda x: x.label is not None, potential_identifiers ))
                     if len(ids_with_labels) > 0:
                         potential_identifiers = ids_with_labels
                     potential_identifiers.sort()
-                logger.debug(potential_identifiers)
                 node.identifier = potential_identifiers[0].identifier
                 node.label = potential_identifiers[0].label
                 break

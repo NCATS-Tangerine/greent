@@ -2,7 +2,10 @@ import requests
 from greent import node_types
 from greent.graph_components import LabeledID
 from greent.service import Service
+from greent.util import LoggingUtil
+
 import time
+import logging
 
 
 #A map from identifiers.org namespaces (curie prefixes) to how HGNC describes these things
@@ -21,6 +24,8 @@ prefixes_to_hgnc = {
 
 hgnc_to_prefixes = { v: k for k,v in prefixes_to_hgnc.items()}
 
+logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
+
 class HGNC(Service):
 
     """ Generic GENE id translation service. Essentially a highly generic synonym finder. """
@@ -33,12 +38,16 @@ class HGNC(Service):
         a valid json response with no entries.  So failures here are most likely timeouts and stuff like that."""
         done = False
         num_tries = 0
-        max_tries = 10
+        max_tries = 100
         wait_time = 5 # seconds
+        logger.debug(f'Try {url}')
         while num_tries < max_tries:
             try:
-                return requests.get(url , headers= headers).json()
-            except:
+                response = requests.get(url , headers= headers)
+                return response.json()
+            except Exception as e:
+                logger.error(response)
+                logger.error(f'Threw exception {e}')
                 num_tries += 1
                 time.sleep(wait_time)
         return None
@@ -80,8 +89,10 @@ class HGNC(Service):
             docs = r['response']['docs']
         except:
             #didn't get anything useful
+            logger.error("No good return")
             return set()
         synonyms = set()
+        logger.debug(f"Number of docs: {len(docs)}")
         for doc in docs:
             #hgnc only returns an hgnc label (not eg. an entrez label)
             try:

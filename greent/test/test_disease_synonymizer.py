@@ -15,11 +15,12 @@ def test_mondo_synonymization(rosetta):
     assert len(doids) == 1
     assert doids.pop() == 'DOID:14504'
     meshes = node.get_synonyms_by_prefix('MESH')
-    assert len(meshes) == 3
-    assert 'MeSH:D052536' in meshes
+    assert len(meshes) == 2
     assert 'MeSH:D009542' in meshes
     assert 'MeSH:D052556' in meshes
     assert Text.get_curie(node.identifier) == 'MONDO'
+    #This is not really what the synonymizer does.  The synonymizer returns synonyms, not modifies the node.
+    #assert node.label == 'Niemann-Pick Disease'
 
 def test_mondo_synonymization_2(rosetta):
     node = KNode('MONDO:0005737',node_types.DISEASE)

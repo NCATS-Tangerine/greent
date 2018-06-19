@@ -23,6 +23,7 @@ class LoggingUtil(object):
 
         FORMAT = {
             "short" : '%(funcName)s: %(message)s',
+            "medium" : '%(funcName)s: %(asctime)-15s %(message)s',
             "long"  : '%(asctime)-15s %(filename)s %(funcName)s %(levelname)s: %(message)s'
         }[format]
         handler = logging.StreamHandler()

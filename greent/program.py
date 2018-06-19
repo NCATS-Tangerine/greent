@@ -4,6 +4,7 @@ from collections import defaultdict
 from greent.graph_components import KNode
 from greent.util import LoggingUtil
 from greent import node_types
+from greent.export import BufferedWriter
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
@@ -34,8 +35,10 @@ class Program:
         self.rosetta = rosetta
         self.unused_instance_nodes = set()
         self.all_instance_nodes = set()
-        self.initialize_instance_nodes(query_definition)
+        #self.initialize_instance_nodes(query_definition)
         self.linked_results = []
+        #hang onto this for the moment.
+        self.query_definition = query_definition
         self.start_nodes = []
         self.end_nodes = []
         self.check_program(query_definition)
@@ -60,24 +63,24 @@ class Program:
             logstring+=f' {k}: {self.transitions[k]}\n'
         logger.debug(logstring)
 
-    def initialize_instance_nodes(self, query_definition):
+    def initialize_instance_nodes(self,writer):
         logger.debug("Initializing program {}".format(self.program_number))
         t_node_ids = self.get_fixed_concept_nodes()
-        self.start_nodes = [KNode(start_identifier, self.concept_nodes[t_node_ids[0]],label=query_definition.start_name)
-                            for start_identifier in query_definition.start_values]
-        self.add_instance_nodes(self.start_nodes, t_node_ids[0])
+        self.start_nodes = [KNode(start_identifier, self.concept_nodes[t_node_ids[0]],label=self.query_definition.start_name)
+                            for start_identifier in self.query_definition.start_values]
+        self.add_instance_nodes(self.start_nodes, t_node_ids[0], writer)
         if len(t_node_ids) == 1:
-            if query_definition.end_values:
+            if self.query_definition.end_values:
                 raise Exception(
                     "We only have one set of fixed nodes in the query plan, but multiple sets of fixed instances")
             return
         if len(t_node_ids) == 2:
-            if not query_definition.end_values:
+            if not self.query_definition.end_values:
                 raise Exception(
                     "We have multiple fixed nodes in the query plan but only one set of fixed instances")
-            self.end_nodes = [KNode(start_identifier, self.concept_nodes[t_node_ids[-1]], label=query_definition.start_name)
-                              for start_identifier in query_definition.end_values]
-            self.add_instance_nodes(self.end_nodes, t_node_ids[-1])
+            self.end_nodes = [KNode(start_identifier, self.concept_nodes[t_node_ids[-1]], label=self.query_definition.end_name)
+                              for start_identifier in self.query_definition.end_values]
+            self.add_instance_nodes(self.end_nodes, t_node_ids[-1], writer)
             return
         raise Exception("We don't yet support more than 2 instance-specified nodes")
 
@@ -90,7 +93,7 @@ class Program:
         fixed_node_identifiers.sort()
         return fixed_node_identifiers
 
-    def add_instance_nodes(self, nodelist, context):
+    def add_instance_nodes(self, nodelist, context, writer):
         """We've got a new set of nodes (either initial nodes or from a query).  They are attached
         to a particular concept in our query plan. We make sure that they're synonymized and then
         add them to both all_instance_nodes as well as the unused_instance_nodes"""
@@ -99,6 +102,8 @@ class Program:
             node.add_context(self.program_number, context)
         self.all_instance_nodes.update(nodelist)
         self.unused_instance_nodes.update([(node, context) for node in nodelist])
+        for node in nodelist:
+            writer.write_node(node)
         
     #CAN I SOMEHOW CAPTURE PATHS HERE>>>>
 
@@ -106,48 +111,51 @@ class Program:
         """Loop over unused nodes, send them to the appropriate operator, and collect the results.
         Keep going until there's no nodes left to process."""
         logger.debug(f"Running program {self.program_number}")
-        while len(self.unused_instance_nodes) > 0:
-            source_node, context = self.unused_instance_nodes.pop()
-            if context not in self.transitions:
-                #Need a comment explaining why this is here.
-                continue
-            link = self.transitions[context]
-            next_context = link['to']
-            op_name = link['op']
-            key = f"{op_name}({source_node.identifier})"
-            log_text = f"  -- {key}"
-            try:
-                results = self.rosetta.cache.get (key)
-                if results is not None:
-                    logger.info (f"cache hit: {key} size:{len(results)}")
-                    #When we get an edge out of the cache, it stores the old source node in it.
-                    #Because context is in our copy of the source node, this can cause problems
-                    # in support.   So we need to replace the cached source with our source node
-                    for edge,other in results:
-                        if edge.subject_node.identifier == source_node.identifier:
-                            edge.subject_node = source_node
-                        elif edge.object_node.identifier == source_node.identifier:
-                            edge.object_node = source_node
-                        else:
-                            logger.error("Cached edge doesn't have source node in it")
-                            raise Exception("Cached edge doesn't have source node in it")
-                else:
-                    logger.info (f"exec op: {key}")
-                    op = self.rosetta.get_ops(op_name)
-                    results = op(source_node)
-                    self.rosetta.cache.set (key, results)
-                    logger.debug (f"cache.set-> {key} length:{len(results)}")
-                newnodes = []
-                for r in results:
-                    #edge = r[0]
-                    self.linked_results.append(r[0])
-                    newnodes.append(r[1])
-                logger.debug(f"    {newnodes}")
-                self.add_instance_nodes(newnodes,next_context)
-            except Exception as e:
-                traceback.print_exc()
-                logger.warning(f"Error invoking> {log_text}")
-            logger.debug(f" {len(self.unused_instance_nodes)} nodes remaining.")
+        with BufferedWriter(self.rosetta) as writer:
+            self.initialize_instance_nodes(writer)
+            while len(self.unused_instance_nodes) > 0:
+                source_node, context = self.unused_instance_nodes.pop()
+                if context not in self.transitions:
+                    #Need a comment explaining why this is here.
+                    continue
+                link = self.transitions[context]
+                next_context = link['to']
+                op_name = link['op']
+                key = f"{op_name}({source_node.identifier})"
+                log_text = f"  -- {key}"
+                try:
+                    results = self.rosetta.cache.get (key)
+                    if results is not None:
+                        logger.info (f"cache hit: {key} size:{len(results)}")
+                        #When we get an edge out of the cache, it stores the old source node in it.
+                        #Because context is in our copy of the source node, this can cause problems
+                        # in support.   So we need to replace the cached source with our source node
+                        for edge,other in results:
+                            if edge.subject_node.identifier == source_node.identifier:
+                                edge.subject_node = source_node
+                            elif edge.object_node.identifier == source_node.identifier:
+                                edge.object_node = source_node
+                            else:
+                                logger.error("Cached edge doesn't have source node in it")
+                                raise Exception("Cached edge doesn't have source node in it")
+                    else:
+                        logger.info (f"exec op: {key}")
+                        op = self.rosetta.get_ops(op_name)
+                        results = op(source_node)
+                        self.rosetta.cache.set (key, results)
+                        logger.debug (f"cache.set-> {key} length:{len(results)}")
+                    newnodes = []
+                    for r in results:
+                        edge = r[0]
+                        self.linked_results.append(edge)
+                        writer.write_edge(edge)
+                        newnodes.append(r[1])
+                    logger.debug(f"    {newnodes}")
+                    self.add_instance_nodes(newnodes,next_context,writer)
+                except Exception as e:
+                    traceback.print_exc()
+                    logger.warning(f"Error invoking> {log_text}")
+                logger.debug(f" {len(self.unused_instance_nodes)} nodes remaining.")
         return self.linked_results
 
     def get_results(self):
