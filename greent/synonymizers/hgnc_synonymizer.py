@@ -3,8 +3,6 @@ from greent.graph_components import LabeledID
 from greent.util import Text
 
 def synonymize(node,gt):
-    print("How did I get here?")
-    exit()
     if not node.node_type == node_types.GENE:
         raise Exception("Incorrect node type")
     if Text.get_curie(node.identifier).upper() == 'UNIPROTKB':
@@ -13,7 +11,8 @@ def synonymize(node,gt):
             labeled_ids = [ LabeledID(h,'') for h in new_ids ]
             node.add_synonyms(labeled_ids)
             node.identifier = new_ids[0]
-    g_synonyms = gt.hgnc.get_synonyms(node.identifier)
-    if len(g_synonyms) == 0:
-        raise Exception("No Gene Synonyms...")
+    if Text.get_curie(node.identifier).upper() != 'UNIPROTKB':
+        g_synonyms = gt.hgnc.get_synonyms(node.identifier)
+    else:
+        g_synonyms = set()
     return g_synonyms
