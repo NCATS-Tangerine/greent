@@ -10,7 +10,7 @@ from greent import node_types
 from greent.graph_components import KNode,KEdge,elements_to_json
 from greent.services.ontology import GenericOntology
 from greent.servicecontext import ServiceContext
-from flask import Flask, jsonify, g, Response
+from flask import Flask, jsonify, g, Response, request
 from flasgger import Swagger
 app = Flask(__name__)
 
@@ -144,12 +144,12 @@ def label (curie):
        "id"        : curie
    })
 
-@app.route('/search/<pat>/<regex>')
-def search (pat, regex):
+@app.route('/search/<pattern>/')
+def search (pattern):
    """ Search for ids in an ontology based on a pattern, optionally a regular expression.
    ---
    parameters:
-     - name: pat
+     - name: pattern
        in: path
        type: string
        required: true
@@ -159,9 +159,9 @@ def search (pat, regex):
          - http://schema.org/string
        x-requestTemplate:
          - valueType: http://schema.org/string
-           template: /search/{{ curie }}/{{ pat }}/{{ regex }}/
+           template: /search/{{ pattern }}/?regex={{ regex }}
      - name: regex
-       in: path
+       in: query
        type: boolean
        required: true
        default: false
@@ -170,15 +170,32 @@ def search (pat, regex):
          - http://schema.org/boolean
        x-requestTemplate:
          - valueType: http://schema.org/boolean
-           template: /search/{{ curie }}/{{ pat }}/{{ regex }}/
+           template: /search/{{ pattern }}/?regex={{ regex }}
    responses:
      200:
        description: ...
    """
+   params = request.args
+   regex = 'regex' in params and params['regex'] == 'true'
    core = get_core ()
-   regex = regex=='true'
-   vals = [ ont.search(pat, regex) for name, ont in core.onts.items () ]
-   vals = [ term for term_list in vals for term in term_list ] 
+   
+   obo_map = {
+       'chebi'   : 'chemical_substance',
+       'pubchem' : 'chemical_substance',
+       'mondo'   : 'disease',
+       'hp'      : 'phenotypic_feature',
+       'go'      : 'biological_process_or_activity',
+       'uberon'  : 'anatomical_entity',
+       'cl'      : 'cell',
+       'doid'    : 'disease',
+       'ro'      : 'related_to'
+   }
+   vals = []
+   for name, ont in core.onts.items():
+       new = ont.search(pattern, regex)
+       for n in new:
+           n['type'] = obo_map[name] if name in obo_map else 'unknown'
+       vals.extend(new)
    return jsonify ({ "values" : vals })
      
 @app.route('/xrefs/<curie>')

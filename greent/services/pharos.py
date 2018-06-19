@@ -124,9 +124,9 @@ class Pharos(Service):
                     identifier = 'CHEMBL:{}'.format(term)
                     return_results.add( (identifier, drugname) )
         if foundany and len(return_results) == 0:
-            print('UHOH')
-            print(drugname)
-            exit()
+            print (f" unable to find drug {drugname}")
+            traceback.print_exc ()
+
         return list(return_results)
 
     def drugname_to_pharos(self, namenode):

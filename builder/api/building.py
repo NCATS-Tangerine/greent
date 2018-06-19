@@ -21,6 +21,7 @@ class UpdateKG(Resource):
         """
         Update the cached knowledge graph 
         ---
+        tags: [build]
         parameters:
           - in: body
             name: question
@@ -63,6 +64,7 @@ class TaskStatus(Resource):
         """
         Get the status of a task
         ---
+        tags: [tasks]
         parameters:
           - in: path
             name: task_id
@@ -103,6 +105,7 @@ class Concepts(Resource):
         """
         Get known biomedical concepts
         ---
+        tags: [util]
         responses:
             200:
                 description: Concepts

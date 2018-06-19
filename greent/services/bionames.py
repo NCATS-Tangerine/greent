@@ -17,7 +17,7 @@ class BioNames(Service):
         super(BioNames, self).__init__("bionames", context)
         self.router = {
             "chemical_substance" : self._find_chemical_substance,
-            "disease"            : self._find,
+            "disease"            : self._search_onto, #_find,
             "phenotypic_feature" : self._find,
             "cell"               : self._find,
             "anatomical_entity"  : self._find,
@@ -35,19 +35,20 @@ class BioNames(Service):
             if concept in self.normalize:
                 concept = self.normalize[concept]
             if concept in self.router:
-                result = self.router[concept](q, concept) if concept in self.router else []
+                result = self.router[concept](q, concept)
             else:
                 raise ValueError (f"Unknown concept {concept} is not a biolink-model concept.")
         else:
             """ Try everything? Union the lot. """
-            for route in self.router.values ():
+            for concept in self.router.keys():
+                route = self.router[concept]
                 result = result + route(q, concept)
         logger.debug (f"search q: {q} results: {result}")
         return result
     
     def _find_chemical_substance(self, q, concept):
         ids = lookup_drug_by_name (q, self.context.core)
-        return [ { "id" : i, "desc" : "" } for i in ids ] if ids else []
+        return [ { "id" : i, "label" : q } for i in ids ] if ids else []
     '''
     def _find_anatomical_entity(self, q, concept=None):
         return self._search_owlsim(q, concept) + self._search_onto(q)
@@ -62,7 +63,7 @@ class BioNames(Service):
         return self._search_onto(q) + self._search_owlsim(q, concept)
     '''
     def _find(self, q, concept):
-        return self._search_onto(q) + self._search_owlsim(q, concept)
+        return self._search_onto(q, concept=concept) + self._search_owlsim(q, concept)
     
     def _search_owlsim(self, q, concept):
         result = []
@@ -72,16 +73,18 @@ class BioNames(Service):
             response = requests.get (owlsim_query).json ()
             logger.debug (f"owlsim response: {response}")
             if response and "docs" in response:
-                result = [ { "id" : d["id"], "label" : ", ".join (d["label"]) } for d in response["docs"] ]
+                result = [ { "id" : d["id"], "label" : ", ".join (d["label"]), "type": concept } for d in response["docs"] ]
             logger.debug (f"owlsim result: {result}")
         except:
             traceback.print_exc ()
         return result
     
-    def _search_onto(self, q):
+    def _search_onto(self, q, concept=None):
         result = []
         try:
             result = self.context.core.onto.search (q, is_regex=True, full=True)
+            if concept:
+                result = [r for r in result if r['type'] == concept]
         except:
             traceback.print_exc ()
         return result
