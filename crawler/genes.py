@@ -42,7 +42,6 @@ def json_2_identifiers(gene_dict):
         idset.add( LabeledID(f"ENSEMBL:{gene_dict['ensembl_gene_id']}", symbol))
     return idset
 
-
 def load_genes(rosetta):
     """The HGNC API limits users to 10 queries/second.  That's reasonable, but the data is pretty static.
     This function instead pulls the (not that big) data file from the server and puts the whole thing into the
@@ -110,12 +109,15 @@ def synonymize_genes():
                 entrez_mapped += 1
             else:
                 #Oh well.  There are a lot of other keys, but they don't overlap the HGNC Keys
+                #We're still going to toss the uniprotkb in there, because, we're going to end up looking for
+                # it later anyway
                 still_unmapped += 1
+                ids_to_synonyms[uniprot_id] = set([LabeledID(uniprot_id,None)])
     logger.debug(f'There were {premapped} UniProt Ids already mapped in HGNC')
     logger.debug(f'There were {isoforms} UniProt Ids that are just isoforms')
     logger.debug(f'There were {unpremapped} UniProt Ids not already mapped in HGNC')
     logger.debug(f'There were {hgnc_mapped} Mapped using HGNC notes in UniProt')
     logger.debug(f'There were {entrez_mapped} Mapped using Entrez in UniProt')
-    logger.debug(f'There were {still_unmapped} UniProt Ids left that we are discarding')
+    logger.debug(f'There were {still_unmapped} UniProt Ids left that we are keeping as solos')
     return ids_to_synonyms
 

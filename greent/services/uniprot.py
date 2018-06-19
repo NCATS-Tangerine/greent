@@ -23,8 +23,9 @@ class UniProt(Service):
                 #We are only doing it because UniProt has an error with one of their servers
                 # returning a crappy SSL certificate.  Once they fix that, we will remove the
                 # verify=False flag.
-                return requests.post(url , data =data, verify=False)
-                #return requests.post(url , data =data)
+                #return requests.post(url , data =data, verify=False)
+                # The bad server has supposedly been removed.
+                return requests.post(url , data =data)
             except Exception as e:
                 print(e)
                 num_tries += 1
