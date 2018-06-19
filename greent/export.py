@@ -32,8 +32,8 @@ class BufferedWriter:
         self.written_edges = defaultdict(lambda: defaultdict( set ) )
         self.node_queues = defaultdict(list)
         self.edge_queues = defaultdict(list)
-        self.node_buffer_size = 1000
-        self.edge_buffer_size = 1000
+        self.node_buffer_size = 100
+        self.edge_buffer_size = 100
         config = rosetta.type_graph.get_config()
         self.driver = GraphDatabase.driver(config['url'], auth=("neo4j", config['neo4j_password']),max_retry_time=3600)
 
