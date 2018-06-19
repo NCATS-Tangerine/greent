@@ -34,8 +34,6 @@ class BufferedWriter:
         self.edge_queues = defaultdict(list)
         self.node_buffer_size = 100
         self.edge_buffer_size = 100
-        #config = rosetta.type_graph.get_config()
-        #self.driver = GraphDatabase.driver(config['url'], auth=("neo4j", config['neo4j_password']),max_retry_time=3600)
         self.driver = self.rosetta.type_graph.driver
 
     def __enter__(self):
@@ -50,9 +48,7 @@ class BufferedWriter:
             typednodes.append(node)
             if len(typednodes) >= self.node_buffer_size:
                 with self.driver.session() as session:
-                    logger.debug("Write Nodes -- start")
                     session.write_transaction(export_node_chunk,typednodes,node.node_type)
-                    logger.debug("Write Nodes -- done")
                 self.node_queues[node.node_type] = []
 
     def write_edge(self,edge):
@@ -63,21 +59,15 @@ class BufferedWriter:
             typed_edges.append(edge)
             if len(typed_edges) >= self.edge_buffer_size:
                 with self.driver.session() as session:
-                    logger.debug("Write Edge -- start")
                     session.write_transaction(export_edge_chunk,typed_edges,label)
-                    logger.debug("Write Edge -- done")
                 self.edge_queues[label] = []
 
     def __exit__(self,*args):
         with self.driver.session() as session:
             for node_type in self.node_queues:
-                logger.debug("Write nodes (exit) -- start")
                 session.write_transaction(export_node_chunk,self.node_queues[node_type],node_type)
-                logger.debug("Write nodes (exit) -- done")
             for edge_label in self.edge_queues:
-                logger.debug("Write edges (exit) -- start")
                 session.write_transaction(export_edge_chunk,self.edge_queues[edge_label],edge_label)
-                logger.debug("Write edges (exit) -- done")
         #Doesn't own the driver
         #self.driver.close()
 
@@ -183,39 +173,4 @@ def export_node_chunk(tx,nodelist,label):
         batch.append(nodeout)
     tx.run(cypher,{'batches': batch})
 
-"""
-def _get_driver(rosetta):
-    config = rosetta.type_graph.get_config()
-    return GraphDatabase.driver(config['url'], auth=("neo4j", config['neo4j_password']))
 
-No longer relevent.  Might need to scavenge bits here 
-
-# TODO: push to node, ...
-def prepare_node_for_output(node, gt):
-    logger.debug('Prepare: {} {}'.format(node.identifier, node.label))
-    #logger.debug('  Synonyms: {}'.format(' '.join(list(node.synonyms))))
-    node.synonyms.update([mi['curie'] for mi in node.mesh_identifiers if mi['curie'] != ''])
-    if node.node_type == node_types.DISEASE or node.node_type == node_types.GENETIC_CONDITION:
-        if 'mondo_identifiers' in node.properties:
-            node.synonyms.update(node.properties['mondo_identifiers'])
-        try:
-            node.label = gt.mondo.get_label(node.identifier)
-        except:
-            if node.label is None:
-                node.label = node.identifier
-    if node.label is None:
-        if node.node_type == node_types.GENE and node.identifier.startswith('HGNC:'):
-            node.label = gt.hgnc.get_name(node)
-        elif node.node_type == node_types.GENE and node.identifier.upper().startswith('NCBIGENE:'):
-            node.label = gt.hgnc.get_name(node)
-        elif node.node_type == node_types.CELL and node.identifier.upper().startswith('CL:'):
-            try:
-                node.label = gt.uberongraph.cell_get_cellname(node.identifier)[0]['cellLabel']
-            except:
-                logger.error('Error getting cell label for {}'.format(node.identifier))
-                node.label = node.identifier
-        else:
-            node.label = node.identifier
-    logger.debug('Prepared: {} {}'.format(node.identifier, node.label))
-
-"""
