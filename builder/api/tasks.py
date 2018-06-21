@@ -55,9 +55,9 @@ def update_kg(self, question_json):
         question = Question(question_json)
         symbol_lookup = {node_types.type_codes[a]:a for a in node_types.type_codes} # invert this dict
         # assume the nodes are in order
-        node_string = ''.join([symbol_lookup[n.type if not n.type =='biological_process' else 'biological_process_or_molecular_activity'] for n in question.nodes])
-        start_identifiers = question.nodes[0].identifiers
-        end_identifiers = question.nodes[-1].identifiers
+        node_string = ''.join([symbol_lookup[n.type if not n.type =='biological_process' else 'biological_process_or_activity'] for n in question.machine_question['nodes']])
+        start_identifiers = [question.machine_question['nodes'][0].curie]
+        end_identifiers = [question.machine_question['nodes'][-1].curie] if question.machine_question['nodes'][-1].curie else []
 
         steps = tokenize_path(node_string)
         query = generate_query(steps, start_identifiers, end_identifiers=end_identifiers)
