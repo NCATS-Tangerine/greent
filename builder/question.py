@@ -37,6 +37,7 @@ class Node(FromDictMixin):
         self.id = None
         self.type = None
         self.curie = None
+        self.name = None
 
         super().__init__(*args, **kwargs)
 

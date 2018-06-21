@@ -57,10 +57,12 @@ def update_kg(self, question_json):
         # assume the nodes are in order
         node_string = ''.join([symbol_lookup[n.type if not n.type =='biological_process' else 'biological_process_or_activity'] for n in question.machine_question['nodes']])
         start_identifiers = [question.machine_question['nodes'][0].curie]
+        start_name = question.machine_question['nodes'][0].name
         end_identifiers = [question.machine_question['nodes'][-1].curie] if question.machine_question['nodes'][-1].curie else []
+        end_name = question.machine_question['nodes'][-1].name or None
 
         steps = tokenize_path(node_string)
-        query = generate_query(steps, start_identifiers, end_identifiers=end_identifiers)
+        query = generate_query(steps, start_identifiers, start_name=start_name, end_identifiers=end_identifiers, end_name=end_name)
         run_query(query, supports=['builder.omnicorp'], rosetta=rosetta, prune=False)
 
         logger.info("Done updating.")
