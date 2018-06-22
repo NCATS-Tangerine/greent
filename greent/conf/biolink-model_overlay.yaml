@@ -203,6 +203,16 @@ slots:
       - RO:0002292
       - hetio:EXPRESSES_AeG
 
+  - name: located in
+    mappings:
+      - GO:regulates_o_occurs_in
+
+  - name: produces
+    mappings:
+      - GO:regulates_o_results_in_acquisition_of_features_of
+      - GO:results_in_acquisition_of_features_of
+      - GO:results_in_development_of
+
   #the following are not in the original biolink model
   
   - name: disease to gene association
@@ -238,5 +248,6 @@ slots:
       - RO:0002300
       - RO:0002301
       - RO:0002585
+
 
 
