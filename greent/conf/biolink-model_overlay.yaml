@@ -211,6 +211,10 @@ slots:
       - GO:regulates_o_occurs_in
       - RO:0002231
 
+  - name: contributes to
+    mappings:
+      - RO:0003302 #Causes or contributes to
+
   - name: produces
     mappings:
       - GO:regulates_o_results_in_acquisition_of_features_of
