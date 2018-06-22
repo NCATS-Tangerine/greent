@@ -209,11 +209,13 @@ slots:
   - name: located in
     mappings:
       - GO:regulates_o_occurs_in
-      - RO:0002231
+      - RO:0002231 # has_start_location
+      - RO:0002338 # has_target_start_location
 
   - name: contributes to
     mappings:
       - RO:0003302 #Causes or contributes to
+      - RO:0002327 #enables
 
   - name: produces
     mappings:
