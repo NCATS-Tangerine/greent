@@ -24,10 +24,11 @@ from builder.buildmain import setup
 
 
 # set up Celery
-app.config['broker_url'] = os.environ["CELERY_BROKER_URL"]
-app.config['result_backend'] = os.environ["CELERY_RESULT_BACKEND"]
-celery = Celery(app.name, broker=app.config['broker_url'])
-celery.conf.update(app.config)
+celery = Celery(app.name)
+celery.conf.update(
+    broker_url=os.environ["CELERY_BROKER_URL"],
+    result_backend=os.environ["CELERY_RESULT_BACKEND"],
+)
 celery.conf.task_queues = (
     Queue('update', routing_key='update'),
 )
@@ -43,7 +44,7 @@ def update_kg(self, question_json):
     Update the shared knowledge graph with respect to a question
     '''
     # logger = get_task_logger(__name__)
-
+    
     greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
     sys.path.insert(0, greent_path)
     rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
