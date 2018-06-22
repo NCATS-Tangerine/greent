@@ -154,6 +154,7 @@ slots:
       - CTD:affects^mutagenesis
       - CTD:affects^reaction
       - CTD:affects^RNA splicing
+      - CTD:affects^splicing
       - CTD:affects^stability
       - CTD:affects^secretion
       - CTD:decreases^activity
@@ -164,6 +165,7 @@ slots:
       - CTD:decreases^mutagenesis
       - CTD:decreases^reaction
       - CTD:decreases^RNA splicing
+      - CTD:decreases^splicing
       - CTD:decreases^stability
       - CTD:decreases^secretion
       - CTD:increases^activity
@@ -174,6 +176,7 @@ slots:
       - CTD:increases^mutagenesis
       - CTD:increases^reaction
       - CTD:increases^RNA splicing
+      - CTD:increases^splicing
       - CTD:increases^stability
       - CTD:increases^secretion
       - PHAROS:drug_targets
