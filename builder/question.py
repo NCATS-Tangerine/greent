@@ -36,7 +36,8 @@ class Node(FromDictMixin):
     def __init__(self, *args, **kwargs):
         self.id = None
         self.type = None
-        self.identifiers = []
+        self.curie = None
+        self.name = None
 
         super().__init__(*args, **kwargs)
 
@@ -104,16 +105,18 @@ class Question(FromDictMixin):
         q = Question(struct, ...)
         '''
         # initialize all properties
-        self.nodes = [] # list of nodes
-        self.edges = [] # list of edges
+        self.machine_question = {}
 
         super().__init__(*args, **kwargs)
 
     def preprocess(self, key, value):
-        if key == 'nodes':
-            return [Node(n) for n in value]
-        elif key == 'edges':
-            return [Edge(e) for e in value]
+        if key == 'machine_question':
+            return {
+                'nodes': [Node(n) for n in value['nodes']],
+                'edges': [Edge(e) for e in value['edges']]
+            }
+        else:
+            return None
 
     def dump(self):
         return {**vars(self)}

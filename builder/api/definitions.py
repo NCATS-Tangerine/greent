@@ -15,14 +15,10 @@ class Node(FromDictMixin):
     properties:
         id:
             type: string
-            required: true
         type:
             type: string
-        identifiers:
-            type: array
-            items:
-                type: string
-            default: []
+        curie:
+            type: string
     """
     def __init__(self, *args, **kwargs):
         self.id = None
@@ -41,12 +37,12 @@ class Edge(FromDictMixin):
     ---
     id: Edge
     required:
-        - start
-        - end
+        - source_id
+        - target_id
     properties:
-        start:
+        source_id:
             type: string
-        end:
+        target_id:
             type: string
         min_length:
             type: integer
@@ -56,8 +52,8 @@ class Edge(FromDictMixin):
             default: 1
     """
     def __init__(self, *args, **kwargs):
-        self.start = None
-        self.end = None
+        self.source_id = None
+        self.target_id = None
         self.min_length = 1
         self.max_length = 1
 
@@ -69,35 +65,39 @@ class Edge(FromDictMixin):
 @swagger.definition('Question')
 class Question(FromDictMixin):
     """
-    Question Object
+    Question
     ---
     id: Question
     required:
       - nodes
       - edges
     properties:
-        nodes:
-            type: array
-            items:
-                $ref: '#/definitions/Node'
-        edges:
-            type: array
-            items:
-                $ref: '#/definitions/Edge'
+        machine_question:
+            type: object
+            properties:
+                nodes:
+                    type: array
+                    items:
+                        $ref: '#/definitions/Node'
+                edges:
+                    type: array
+                    items:
+                        $ref: '#/definitions/Edge'
     example:
-        nodes:
-          - id: 0
-            type: disease
-            identifiers: ["MONDO:0005737"]
-          - id: 1
-            type: gene
-          - id: 2
-            type: genetic_condition
-        edges:
-          - start: 0
-            end: 1
-          - start: 1
-            end: 2
+        machine_question:
+            nodes:
+              - id: 0
+                type: disease
+                curie: "MONDO:0005737"
+              - id: 1
+                type: gene
+              - id: 2
+                type: genetic_condition
+            edges:
+              - source_id: 0
+                target_id: 1
+              - source_id: 1
+                target_id: 2
     """
 
     def __init__(self, *args, **kwargs):

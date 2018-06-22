@@ -22,15 +22,13 @@ from builder.buildmain import run_query, generate_query
 from builder.pathlex import tokenize_path
 from builder.buildmain import setup
 
-greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
-sys.path.insert(0, greent_path)
-rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
 
 # set up Celery
-app.config['broker_url'] = os.environ["CELERY_BROKER_URL"]
-app.config['result_backend'] = os.environ["CELERY_RESULT_BACKEND"]
-celery = Celery(app.name, broker=app.config['broker_url'])
-celery.conf.update(app.config)
+celery = Celery(app.name)
+celery.conf.update(
+    broker_url=os.environ["CELERY_BROKER_URL"],
+    result_backend=os.environ["CELERY_RESULT_BACKEND"],
+)
 celery.conf.task_queues = (
     Queue('update', routing_key='update'),
 )
@@ -46,6 +44,10 @@ def update_kg(self, question_json):
     Update the shared knowledge graph with respect to a question
     '''
     # logger = get_task_logger(__name__)
+    
+    greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
+    sys.path.insert(0, greent_path)
+    rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
 
     self.update_state(state='UPDATING KG')
     logger = logging.getLogger(__name__)
@@ -55,12 +57,14 @@ def update_kg(self, question_json):
         question = Question(question_json)
         symbol_lookup = {node_types.type_codes[a]:a for a in node_types.type_codes} # invert this dict
         # assume the nodes are in order
-        node_string = ''.join([symbol_lookup[n.type if not n.type =='biological_process' else 'biological_process_or_molecular_activity'] for n in question.nodes])
-        start_identifiers = question.nodes[0].identifiers
-        end_identifiers = question.nodes[-1].identifiers
+        node_string = ''.join([symbol_lookup[n.type if not n.type =='biological_process' else 'biological_process_or_activity'] for n in question.machine_question['nodes']])
+        start_identifiers = [question.machine_question['nodes'][0].curie]
+        start_name = question.machine_question['nodes'][0].name
+        end_identifiers = [question.machine_question['nodes'][-1].curie] if question.machine_question['nodes'][-1].curie else []
+        end_name = question.machine_question['nodes'][-1].name or None
 
         steps = tokenize_path(node_string)
-        query = generate_query(steps, start_identifiers, end_identifiers=end_identifiers)
+        query = generate_query(steps, start_identifiers, start_name=start_name, end_identifiers=end_identifiers, end_name=end_name)
         run_query(query, supports=['builder.omnicorp'], rosetta=rosetta, prune=False)
 
         logger.info("Done updating.")
