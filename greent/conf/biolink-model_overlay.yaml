@@ -123,6 +123,9 @@ slots:
     mappings:
       - biolink:gene_get_function            # biolink returns no relation_id or an identifier that is not a curie
 
+  - name: affects
+    mappings:
+      - GO:acts_on_population_of
 
     #In the model, here for the hetio mappings
   - name: positively regulates, entity to entity
@@ -206,12 +209,15 @@ slots:
   - name: located in
     mappings:
       - GO:regulates_o_occurs_in
+      - RO:0002231
 
   - name: produces
     mappings:
       - GO:regulates_o_results_in_acquisition_of_features_of
-      - GO:results_in_acquisition_of_features_of
-      - GO:results_in_development_of
+
+  - name: participates in
+    mappings:
+      - GO:mediated_by
 
   #the following are not in the original biolink model
   

@@ -23,6 +23,7 @@ class QuickGo(Service):
                 'involved_in': 'RO:0002331',
                 'contributes_to': 'RO:0002326',
                 'has_input': 'RO:0002233',
+                'has_start_location' : 'RO:0002231',
                 'results_in_movement_of': 'RO:0002565',
                 'results_in_developmental_progression_of':'RO:0002295',
                 'results_in_development_of':'RO:0002296',
