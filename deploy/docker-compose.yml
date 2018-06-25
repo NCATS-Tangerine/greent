@@ -1,5 +1,11 @@
 version: "3"
 services:
+  cache:
+    image: redis
+    ports:
+      - "${CACHE_PORT}:${CACHE_PORT}"
+    command: --port ${CACHE_PORT}
+
   interfaces:
     # image: patrickkwang/robokop-interfaces
     build:
