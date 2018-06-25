@@ -84,3 +84,19 @@ def test_artemether_to_gene(ctd):
     result_ids = [ node.identifier for edge,node in results]
     assert 'NCBIGENE:9970' in result_ids #
 
+def test_chemical_to_gene_glutathione(ctd):
+    input_node = KNode("MESH:D006861", node_types.DRUG)
+    results = ctd.drug_to_gene(input_node)
+    for edge,node in results:
+        assert node.node_type == node_types.GENE
+    for edge, node in results:
+        if node == edge.object_node:
+            direction='+'
+        elif node == edge.subject_node:
+            direction = '-'
+        else:
+            print("wat")
+        print(edge.original_predicate.identifier, edge.standard_predicate.identifier, node.identifier, direction)
+    result_ids = [ node.identifier for edge,node in results]
+    assert 'NCBIGENE:5743' in result_ids #Cox2 for a cox2 inhibitor
+

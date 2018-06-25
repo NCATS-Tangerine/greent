@@ -34,7 +34,7 @@ class Relationship:
         use the first mapping."""
         if len(self.mappings) == 0:
             return f'BIOLINK:{self.name}'
-        favorites=['BIOLINK','RO','SIO','BFO','GENO','SEMMEDDB']
+        favorites=['BIOLINK','BFO','RO','SIO','GENO','SEMMEDDB']
         for favorite in favorites:
             for mapped in self.mappings:
                 if mapped.startswith(favorite):

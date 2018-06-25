@@ -16,28 +16,35 @@ class QuickGo(Service):
         self.go = context.core.go
 
     def get_predicate(self, p_label):
+        if p_label.startswith('NOT'):
+            return None
         labels2identifiers={'occurs_in': 'BFO:0000066',
                 'enables': 'RO:0002327',
                 'involved_in': 'RO:0002331',
+                'contributes_to': 'RO:0002326',
+                'has_participant': 'RO:0000057',
+                'has_input': 'RO:0002233',
+                'has_start_location' : 'RO:0002231',
+                'has_target_start_location' : 'RO:0002338',
                 'results_in_movement_of': 'RO:0002565',
-                'results in developmental progression of':'RO:0002295',
-                'results in development of':'RO:0002296',
-                'results in formation of':'RO:0002297',
-                'results in synthesis of':'RO:0002587',
-                'results in assembly of':'RO:0002588',
-                'results in morphogenesis of':'RO:0002298',
-                'results in maturation of':'RO:0002299',
-                'results in acquisition of features of':'RO:0002315',
-                'results in growth of':'RO:0002343',
-                'results in commitment to':'RO:0002348',
-                'results in determination of':'RO:0002349',
-                'results in structural organization of':'RO:0002355',
-                'results in specification of':'RO:0002356',
-                'results in developmental induction of':'RO:0002357',
-                'results in ending of':'RO:0002552',
-                'results in disappearance of':'RO:0002300',
-                'results in developmental regression of':'RO:0002301',
-                'results in closure of':'RO:0002585',
+                'results_in_developmental_progression_of':'RO:0002295',
+                'results_in_development_of':'RO:0002296',
+                'results_in_formation_of':'RO:0002297',
+                'results_in_synthesis_of':'RO:0002587',
+                'results_in_assembly_of':'RO:0002588',
+                'results_in_morphogenesis_of':'RO:0002298',
+                'results_in_maturation_of':'RO:0002299',
+                'results_in_acquisition_of_features_of':'RO:0002315',
+                'results_in_growth_of':'RO:0002343',
+                'results_in_commitment_to':'RO:0002348',
+                'results_in_determination_of':'RO:0002349',
+                'results_in_structural_organization_of':'RO:0002355',
+                'results_in_specification_of':'RO:0002356',
+                'results_in_developmental_induction_of':'RO:0002357',
+                'results_in_ending_of':'RO:0002552',
+                'results_in_disappearance_of':'RO:0002300',
+                'results_in_developmental_regression_of':'RO:0002301',
+                'results_in_closure_of':'RO:0002585',
                 }
         try:
             return LabeledID(labels2identifiers[p_label],p_label)
@@ -101,6 +108,8 @@ class QuickGo(Service):
                 for xrel in r['xRelations']:
                     if xrel['id'].startswith('CL:'):
                         predicate = self.get_predicate(xrel['relation'])
+                        if predicate is None:
+                            continue
                         cell_node = KNode (xrel['id'], node_types.CELL, label = xrel['term']) 
                         edge = self.create_edge(go_node, cell_node,'quickgo.go_term_to_cell_xontology_relationships',go_node.identifier,predicate,url = url)
                         results.append( ( edge , cell_node))
@@ -121,6 +130,8 @@ class QuickGo(Service):
                     if c['db'] == 'CL':
                         if c['id'] not in cell_ids:
                             predicate = self.get_predicate(c['qualifier'])
+                            if predicate is None:
+                                continue
                             #Bummer, don't get a name
                             cell_node = KNode( 'CL:{}'.format(c['id']), node_types.CELL )
                             edge = self.create_edge(go_node, cell_node, 'quickgo.go_term_to_cell_annotation_extensions',go_node.identifier,predicate,url = url)
@@ -149,6 +160,8 @@ class QuickGo(Service):
             if uniprotid not in used:
                 used.add(uniprotid)
                 predicate = self.get_predicate(r['qualifier'])
+                if predicate is None:
+                    continue
                 gene_node = KNode( uniprotid, node_types.GENE ) 
                 edge = self.create_edge(node, gene_node, 'quickgo.go_term_to_gene_annotation',node.identifier,predicate,url = url)
                 results.append( (edge,gene_node ) )
@@ -168,6 +181,8 @@ class QuickGo(Service):
             if uniprotid not in used and uniprotid.upper().startswith('UNIPROT'):
                 used.add(uniprotid)
                 predicate = self.get_predicate(r['qualifier'])
+                if predicate is None:
+                    continue
                 gene_node = KNode( uniprotid, node_types.GENE ) 
                 edge = self.create_edge(gene_node, node, 'quickgo.go_term_to_gene_annotation',node.identifier,predicate,url = url)
                 results.append( (edge,gene_node ) )

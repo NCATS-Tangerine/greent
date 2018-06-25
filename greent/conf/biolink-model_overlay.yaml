@@ -123,6 +123,9 @@ slots:
     mappings:
       - biolink:gene_get_function            # biolink returns no relation_id or an identifier that is not a curie
 
+  - name: affects
+    mappings:
+      - GO:acts_on_population_of
 
     #In the model, here for the hetio mappings
   - name: positively regulates, entity to entity
@@ -151,6 +154,7 @@ slots:
       - CTD:affects^mutagenesis
       - CTD:affects^reaction
       - CTD:affects^RNA splicing
+      - CTD:affects^splicing
       - CTD:affects^stability
       - CTD:affects^secretion
       - CTD:decreases^activity
@@ -161,6 +165,7 @@ slots:
       - CTD:decreases^mutagenesis
       - CTD:decreases^reaction
       - CTD:decreases^RNA splicing
+      - CTD:decreases^splicing
       - CTD:decreases^stability
       - CTD:decreases^secretion
       - CTD:increases^activity
@@ -171,6 +176,7 @@ slots:
       - CTD:increases^mutagenesis
       - CTD:increases^reaction
       - CTD:increases^RNA splicing
+      - CTD:increases^splicing
       - CTD:increases^stability
       - CTD:increases^secretion
       - PHAROS:drug_targets
@@ -202,6 +208,25 @@ slots:
     mappings:
       - RO:0002292
       - hetio:EXPRESSES_AeG
+
+  - name: located in
+    mappings:
+      - GO:regulates_o_occurs_in
+      - RO:0002231 # has_start_location
+      - RO:0002338 # has_target_start_location
+
+  - name: contributes to
+    mappings:
+      - RO:0003302 #Causes or contributes to
+      - RO:0002327 #enables
+
+  - name: produces
+    mappings:
+      - GO:regulates_o_results_in_acquisition_of_features_of
+
+  - name: participates in
+    mappings:
+      - GO:mediated_by
 
   #the following are not in the original biolink model
   
@@ -238,5 +263,6 @@ slots:
       - RO:0002300
       - RO:0002301
       - RO:0002585
+
 
 
