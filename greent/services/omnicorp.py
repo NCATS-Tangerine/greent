@@ -55,6 +55,7 @@ class OmniCorp(Service):
         PREFIX dct: <http://purl.org/dc/terms/>
         SELECT DISTINCT ?pubmed ?term1 ?term2
         WHERE {
+          hint:Query hint:analytic true .
           VALUES ?term1 $id_list_a
           VALUES ?term2 $id_list_b
           ?pubmed dct:references ?term1 .
@@ -78,10 +79,10 @@ class OmniCorp(Service):
         PREFIX dct: <http://purl.org/dc/terms/>
         SELECT (COUNT(DISTINCT ?pubmed) as ?count) 
         WHERE {
+          hint:Query hint:analytic true .
           ?pubmed dct:references <$identifier> .
         }
         """
-        logger.debug(text)
         results = self.triplestore.query_template(
             inputs = { 'identifier': identifier },
             outputs = [ 'count' ],
@@ -153,6 +154,7 @@ class OmniCorp(Service):
         if res is None:
             return None
         else:
+            logger.debug(f"Returned {res[0]['count']}")
             return res[0]['count']
 
     def get_shared_pmids (self, node1, node2):
