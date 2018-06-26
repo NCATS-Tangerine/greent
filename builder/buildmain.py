@@ -47,39 +47,6 @@ class KnowledgeGraph:
         for node_type in counts:
             logger.info('{}: {}'.format(node_type, counts[node_type]))
 
-    def merge(self, source, target):
-        """Source and target are both members of the graph, and we've found that they are
-        synonyms.  Remove target, and attach all of target's edges to source"""
-        logger.debug('Merging {} and {}'.format(source.identifier, target.identifier))
-        source.add_synonym(target)
-        nodes_from_target = self.graph.successors(target)
-        for s in nodes_from_target:
-            # b/c this is a multidigraph, this is actually a map where the edges are the values
-            logger.debug('Node s: {}'.format(s))
-            kedgemap = self.graph.get_edge_data(target, s)
-            if kedgemap is None:
-                logger.error('s?')
-            for i in kedgemap.values():
-                kedge = i['object']
-                # The node being removed is the source in these edges, replace it
-                kedge.subject_node = source
-                self.graph.add_edge(source, s, object=kedge)
-        nodes_to_target = self.graph.predecessors(target)
-        for p in nodes_to_target:
-            logger.debug('Node p: {}'.format(p))
-            kedgemap = self.graph.get_edge_data(p, target)
-            if kedgemap is None:
-                logger.error('p?')
-            for i in kedgemap.values():
-                kedge = i['object']
-                kedge.target_node = source
-                self.graph.add_edge(p, source, object=kedge)
-        self.graph.remove_node(target)
-        # now, any synonym that was mapping to the old target should be remapped to source
-        for k in self.node_map:
-            if self.node_map[k] == target:
-                self.node_map[k] = source
-
     def add_nonsynonymous_edge(self, edge, reverse_edges=False):
         # Found an edge between nodes. Add nodes if needed.
         source_node = self.add_or_find_node(edge.subject_node)
