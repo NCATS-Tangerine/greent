@@ -13,7 +13,7 @@ import datetime
 from collections import defaultdict
 import time
 
-logger = LoggingUtil.init_logging(__name__)
+logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
 class OmniCorp(Service):
 
