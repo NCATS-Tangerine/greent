@@ -95,12 +95,12 @@ class OmniCorp(Service):
         PREFIX dct: <http://purl.org/dc/terms/>
         SELECT DISTINCT ?pubmed
         WHERE {
+          hint:Query hint:analytic true .
           ?pubmed dct:references <$id_a> .
           ?pubmed dct:references <$id_b> .
         }
         """
-        logger.debug(text)
-        results = self.triplestore.query_template( 
+        results = self.triplestore.query_template(
             inputs = { 'id_a': identifier_a, 'id_b': identifier_b },
             outputs = [ 'pubmed' ],
             template_text = text,
