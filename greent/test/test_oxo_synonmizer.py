@@ -22,3 +22,14 @@ def test_phenotype(rosetta):
     hpsyns = node.get_synonyms_by_prefix("HP")
     assert len(hpsyns) > 0
     print(hpsyns)
+
+def test_names(rosetta):
+    node = KNode('HP:0002527', node_type = node_types.PHENOTYPE, label='Falls')
+    synonymize(node,rosetta.core)
+    print( node.synonyms )
+    msyns = node.get_labeled_ids_by_prefix("MedDRA")
+    assert len(msyns) == 1
+    ms = msyns.pop()
+    assert ms.identifier == 'MedDRA:10016173'
+    assert ms.label == 'Fall'
+

@@ -62,12 +62,15 @@ class OmniCorp(Service):
           FILTER(STR(?term1) < STR(?term2))
         }
         """
+        start = datetime.datetime.now()
         results = self.triplestore.query_template(
                 inputs = { 'id_list_a': identifier_list, 'id_list_b': identifier_list },
             outputs = [ 'term1','term2','pubmed' ],
             template_text = text,
             post = True
         )
+        end = datetime.datetime.now()
+        logger.debug(f'Completed in: {end-start}')
         return results
 
     def sparql_count_pmids (self, identifier):
@@ -126,7 +129,8 @@ class OmniCorp(Service):
         ntries = 0
         maxtries = 100
         rest_time = 10 #seconds
-        while not done and ntries < 100:
+        start = datetime.datetime.now()
+        while not done and ntries < maxtries:
             try:
                 result = fnc(*args)
                 done = True
@@ -136,6 +140,10 @@ class OmniCorp(Service):
                 ntries += 1
         if not done:
             return None
+        else:
+            end = datetime.datetime.now()
+            logger.debug(f'Total call ntries: {ntries}, time: {end-start}')
+            return result
 
     def count_pmids(self, node):
         identifier = self.get_omni_identifier(node)
@@ -145,7 +153,7 @@ class OmniCorp(Service):
         if res is None:
             return None
         else:
-            return count[0]['count']
+            return res[0]['count']
 
     def get_shared_pmids (self, node1, node2):
         id1 = self.get_omni_identifier(node1)
