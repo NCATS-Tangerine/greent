@@ -227,7 +227,7 @@ class KnowledgeGraph:
                 if len(support_edge.publications)> 0:
                     logger.info('  -Adding support edge from {} to {}'.
                                       format(source.identifier, target.identifier))
-                    writer.write_edge(support_edge)
+                    #writer.write_edge(support_edge)
                     self.add_nonsynonymous_edge(support_edge)
         return n_supported
 
@@ -340,7 +340,7 @@ def run_query(querylist, supports, rosetta, prune=False):
     #Enhance should not be needed.  If we have bad nodes, find the root of the badness and fix it there, don't try to post-process
     #kgraph.enhance()
     #Till omni is back
-    #kgraph.support(supports)
+    kgraph.support(supports)
     #kgraph.export()
 
 
