@@ -286,83 +286,13 @@ class TypeGraph(Service):
             result = None
         return result
 
-    def get_transitions(self, query):
-        result = []
-        with self.driver.session() as session:
-            db = GraphDB(session)
-            result = self.get_transitions_actor(db, query)
-        return result
-
-    def get_transitions_actor(self, db, query):
-        """ Execute a cypher query and walk the results to build a set of transitions to execute.
-        The query should be such that it returns a path (node0-relation0-node1-relation1-node2), and
-        an array of the relation start nodes.  For the path above, start nodes like (node0,node1) would
-        indicate a unidirectional path, while (node0,node2) would indicate an end-based path meeting in
-        the middle.
-        Each node in the path can be described with an arbitrary node index.  Note that this index does not
-        have to correspond to the order of calling or any structural property of the graph.  It simply points
-        to a particular node in the call map.
-        Returns:
-            nodes: A map from a node index to the concept.
-            transitions: a map from a node index to an (operation, output index) pair
-        """
-        graphs=[]
-        result = db.query(query)        
-        nrow = 0
-        for row in result:
-            nrow+=1
-            nodes = {}
-            transitions = {}
-            result_rows = []
-            for path_idx, key in enumerate(row):
-                path = row[key]
-                nodes = { i : n for i, n in enumerate(path.nodes) }
-                for i, element in enumerate(path):
-                    result_rows.append (nodes[i])
-                    result_rows.append (element)
-                    if path_idx == len(row)-1 and i == len(path) - 1:
-                        result_rows.append (nodes[i+1])
-
-            for i, element in enumerate(result_rows):
-                if i % 2 == 0:
-                    #node
-                    nodenum = int(i / 2)
-                    if logger.isEnabledFor (logging.DEBUG):
-                        logger.debug (f"|| Node ||> i:{i} id:{element.id} props:{element.properties}")
-                    nodes[nodenum] = element.properties['name']
-                else:
-                    #relationship
-                    relnum = int((i-1)/2)
-                    if logger.isEnabledFor (logging.DEBUG):
-                        logger.debug (f"  <>Rel<> > i:{i} relnum:{relnum} strt:{element.start} end:{element.end} props:{element.properties}")
-                    if element.start == result_rows[i-1].id:
-                        from_node=relnum
-                        to_node = relnum+1
-                    elif element.start == result_rows[i+1].id:
-                        from_node = relnum+1
-                        to_node = relnum
-                    transitions[from_node] = {
-                        'link' : element.properties['predicate'],
-                        'op'   : element.properties['op'],
-                        'to'   : to_node
-                    }                
-            #This check might not be valid for more general patterns, but it is true for lines.
-            if len(transitions) != (len(nodes) - 1):
-                logger.error('Error',len(transitions), len(nodes)-1)
-                logger.error(nodes)
-                logger.error(transitions)
-                raise Exception("Incorrect number of transitions")
-            graphs.append( (nodes, transitions) )
-            if logger.isEnabledFor (logging.DEBUG):
-                logger.debug (f"{json.dumps(graphs, indent=2)}")
-        return graphs
-
     def get_knowledge_map_programss(self, query):
         result = []
         with self.driver.session() as session:
             db = GraphDB(session)
             result = self.get_knowledge_map_programs_actor(db, query)
         return result
+
     def get_knowledge_map_programs_actor(self, db, query):
         """ Execute a cypher query and walk the results to build a set of transitions to execute.
         The query should be such that it returns a path (node0-relation0-node1-relation1-node2), and
