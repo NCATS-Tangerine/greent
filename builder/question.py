@@ -73,6 +73,8 @@ class Edge(FromDictMixin):
             - source_id
             - target_id
         properties:
+            id:
+                type: string
             source_id:
                 type: string
             target_id:
@@ -85,6 +87,7 @@ class Edge(FromDictMixin):
                 default: 1
     """
     def __init__(self, *args, **kwargs):
+        self.id = None
         self.source_id = None
         self.target_id = None
         self.min_length = 1
@@ -141,7 +144,7 @@ class Question(FromDictMixin):
         if key == 'machine_question':
             return {
                 'nodes': [Node(n) for n in value['nodes']],
-                'edges': [Edge(e) for e in value['edges']]
+                'edges': [Edge(e, id=idx) for idx, e in enumerate(value['edges'])]
             }
         else:
             return super().load_attribute(key, value)
@@ -178,7 +181,7 @@ class Question(FromDictMixin):
                 f'n{e.target_id}',
                 known=e.target_id in known_ids
             )
-            links.append(f"{source_signature}{e.cypher_signature(f'e{idx}')}{target_signature}")
+            links.append(f"{source_signature}{e.cypher_signature(f'e{e.id}')}{target_signature}")
             known_ids.update([e.source_id, e.target_id])
         return links
 
@@ -188,18 +191,21 @@ class Question(FromDictMixin):
 
     def generate_concept_cypher(self):
         """Generate a cypher query to find paths through the concept-level map."""
-        links = self.concept_cypher_signature
-        num_links = len(links)
+        named_node_names = [f'n{n}' for n in self.named_nodes]
         node_names = [f'n{n.id}' for n in self.machine_question['nodes']]
-        edge_names = [f"e{idx}" for idx in range(num_links)]
+        edge_names = [f"e{e.id}" for e in self.machine_question['edges']]
         cypherbuffer = [f"MATCH {s}" for s in self.concept_cypher_signature]
-        node_list = f"[{', '.join(node_names)}]"
+        node_list = f"""[{', '.join([f"'{n}'" for n in node_names])}]"""
+        named_node_list = f"""[{', '.join([f"'{n}'" for n in named_node_names])}]"""
         edge_list = f"[{', '.join(edge_names)}]"
-        cypherbuffer.append(f'WHERE robokop.traversable({node_list}, {edge_list}, [{", ".join([f"n{idx}" for idx in self.named_nodes])}])')
+        edge_switches = [f"CASE startnode(e{e.id}) WHEN n{e.source_id} THEN ['n{e.source_id}','n{e.target_id}'] ELSE ['n{e.target_id}','n{e.source_id}'] END AS e{e.id}_pair" for e in self.machine_question['edges']]
+        edge_pairs = [f"e{e.id}_pair" for e in self.machine_question['edges']]
+        cypherbuffer.append(f"WITH {', '.join(node_names + edge_names + edge_switches)}")
+        cypherbuffer.append(f"WHERE robokop.traversable({node_list}, [{', '.join(edge_pairs)}], {named_node_list})")
         # This is to make sure that we don't get caught up in is_a and other funky relations.:
         cypherbuffer.append(f'AND ALL(r in {edge_list} WHERE EXISTS(r.op))')
         node_map = f"{{{', '.join([f'{n}:{n}' for n in node_names])}}}"
-        edge_map = f"{{{', '.join([f'{e}:{e}' for e in edge_names])}}}"
+        edge_map = f"{{{', '.join([f'{e}:{e}{{.*, source:{e}_pair[0], target:{e}_pair[1]}}' for e in edge_names])}}}"
         cypherbuffer.append(f"RETURN {node_map} as nodes, {edge_map} as edges")
         return '\n'.join(cypherbuffer)
 
@@ -223,26 +229,19 @@ class Question(FromDictMixin):
             nodes = row['nodes']
             edges = row['edges']
 
-            # convert keys 'n#' to #
-            nodes = {int(k[1:]):nodes[k] for k in nodes}
-
-            # map internal Neo4j id to our id
-            id_map = {nodes[k].id:k for k in nodes}
-
             # extract transitions
-            transitions = {k:[] for k in nodes}
+            transitions = {int(k[1:]):[] for k in nodes}
             for e in edges:
                 edge = edges[e]
-                props = edge.properties
-                source_id = id_map[edge.start]
-                target_id = id_map[edge.end]
+                source_id = int(edge['source'][1:])
+                target_id = int(edge['target'][1:])
                 trans = {
-                    "op": props['op'],
-                    "link": props['predicate'],
+                    "op": edge['op'],
+                    "link": edge['predicate'],
                     "target_id": target_id
                 }
                 transitions[source_id].append(trans)
-
+            
             plans.append(transitions)
         return plans
 
