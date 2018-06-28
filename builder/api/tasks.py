@@ -18,9 +18,9 @@ from builder.question import Question
 
 from greent import node_types
 
-from builder.buildmain import run_query, generate_query
+from builder.buildmain import run_query, generate_query, run
 from builder.pathlex import tokenize_path
-from builder.buildmain import setup
+from builder.buildmain import setup, build_spec
 
 
 # set up Celery
@@ -54,18 +54,12 @@ def update_kg(self, question_json):
     logger.info("Updating the knowledge graph...")
 
     try:
-        question = Question(question_json)
-        symbol_lookup = {node_types.type_codes[a]:a for a in node_types.type_codes} # invert this dict
-        # assume the nodes are in order
-        node_string = ''.join([symbol_lookup[n.type if not n.type =='biological_process' else 'biological_process_or_activity'] for n in question.machine_question['nodes']])
-        start_identifiers = [question.machine_question['nodes'][0].curie]
-        start_name = question.machine_question['nodes'][0].name
-        end_identifiers = [question.machine_question['nodes'][-1].curie] if question.machine_question['nodes'][-1].curie else []
-        end_name = question.machine_question['nodes'][-1].name or None
+        logger.debug(question_json)
+        q = Question(question_json)
+        programs = q.compile(rosetta)
 
-        steps = tokenize_path(node_string)
-        query = generate_query(steps, start_identifiers, start_name=start_name, end_identifiers=end_identifiers, end_name=end_name)
-        run_query(query, supports=['builder.omnicorp'], rosetta=rosetta, prune=False)
+        for p in programs:
+            p.run_program()
 
         logger.info("Done updating.")
         return "You updated the KG!"
