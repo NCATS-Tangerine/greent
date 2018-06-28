@@ -31,8 +31,6 @@ class Program:
         self.concept_nodes = nodes
         self.transitions = plan
         self.rosetta = rosetta
-        self.unused_instance_nodes = set()
-        self.all_instance_nodes = set()
         self.linked_results = []
         self.log_program()
 
@@ -52,21 +50,60 @@ class Program:
         for n in self.concept_nodes:
             if not n.curie:
                 continue
-            start_nodes = [KNode(n.curie, n.type, label=n.name)]
-            self.add_instance_nodes(start_nodes, n.id, writer)
+            start_node = KNode(n.curie, n.type, label=n.name)
+            self.process_node(start_node, n.id, writer)
         return
 
-    def add_instance_nodes(self, nodelist, source_id, writer):
+    def process_op(self, link, source_node):
+        next_source_id = link['target_id']
+        op_name = link['op']
+        key = f"{op_name}({source_node.identifier})"
+        try:
+            results = self.rosetta.cache.get(key)
+            if results is not None:
+                logger.debug(f"cache hit: {key} size:{len(results)}")
+                # When we get an edge out of the cache, it stores the old source node in it.
+                # Because source_id is in our copy of the source node, this can cause problems
+                #   in support. So we need to replace the cached source with our source node.
+                for edge, _ in results:
+                    if edge.subject_node.identifier == source_node.identifier:
+                        edge.subject_node = source_node
+                    elif edge.object_node.identifier == source_node.identifier:
+                        edge.object_node = source_node
+                    else:
+                        raise Exception("Cached edge doesn't have source node in it.")
+            else:
+                logger.debug(f"exec op: {key}")
+                op = self.rosetta.get_ops(op_name)
+                results = op(source_node)
+                self.rosetta.cache.set(key, results)
+                logger.debug(f"cache.set-> {key} length:{len(results)}")
+            with BufferedWriter(self.rosetta) as writer:
+                logger.debug(f"    {[node for _, node in results]}")
+                for edge, node in results:
+                    self.linked_results.append(edge)
+                    self.process_node(node, next_source_id, writer)
+                    writer.write_edge(edge) # make sure the edge is queued for creation AFTER the node
+
+        except Exception as e:
+            traceback.print_exc()
+            log_text = f"  -- {key}"
+            logger.warning(f"Error invoking> {log_text}")
+
+    def process_node(self, node, source_id, writer):
         """We've got a new set of nodes (either initial nodes or from a query).  They are attached
         to a particular concept in our query plan. We make sure that they're synonymized and then
-        add them to both all_instance_nodes as well as the unused_instance_nodes"""
-        for node in nodelist:
-            self.rosetta.synonymizer.synonymize(node)
-            node.add_context(self.program_number, source_id)
-        self.all_instance_nodes.update(nodelist)
-        self.unused_instance_nodes.update([(node, source_id) for node in nodelist])
-        for node in nodelist:
-            writer.write_node(node)
+        add them to unused_instance_nodes"""
+        self.rosetta.synonymizer.synonymize(node)
+        print(node, self.program_number, source_id)
+        writer.write_node(node)
+
+        if source_id not in self.transitions:
+            # there are no transitions from this node
+            return
+        links = self.transitions[source_id]
+        for link in links:
+            self.process_op(link, node)
         
     #CAN I SOMEHOW CAPTURE PATHS HERE>>>>
 
@@ -76,50 +113,7 @@ class Program:
         logger.debug(f"Running program {self.program_number}")
         with BufferedWriter(self.rosetta) as writer:
             self.initialize_instance_nodes(writer)
-            while len(self.unused_instance_nodes) > 0:
-                source_node, source_id = self.unused_instance_nodes.pop()
-                if source_id not in self.transitions:
-                    # there are no transitions from this node
-                    continue
-                links = self.transitions[source_id]
-                for link in links:
-                    next_source_id = link['target_id']
-                    op_name = link['op']
-                    key = f"{op_name}({source_node.identifier})"
-                    log_text = f"  -- {key}"
-                    try:
-                        results = self.rosetta.cache.get(key)
-                        if results is not None:
-                            logger.info (f"cache hit: {key} size:{len(results)}")
-                            # When we get an edge out of the cache, it stores the old source node in it.
-                            # Because source_id is in our copy of the source node, this can cause problems
-                            #   in support. So we need to replace the cached source with our source node.
-                            for edge, other in results:
-                                if edge.subject_node.identifier == source_node.identifier:
-                                    edge.subject_node = source_node
-                                elif edge.object_node.identifier == source_node.identifier:
-                                    edge.object_node = source_node
-                                else:
-                                    logger.error("Cached edge doesn't have source node in it")
-                                    raise Exception("Cached edge doesn't have source node in it")
-                        else:
-                            logger.info(f"exec op: {key}")
-                            op = self.rosetta.get_ops(op_name)
-                            results = op(source_node)
-                            self.rosetta.cache.set (key, results)
-                            logger.debug(f"cache.set-> {key} length:{len(results)}")
-                        newnodes = []
-                        for r in results:
-                            edge = r[0]
-                            self.linked_results.append(edge)
-                            writer.write_edge(edge)
-                            newnodes.append(r[1])
-                        logger.debug(f"    {newnodes}")
-                        self.add_instance_nodes(newnodes, next_source_id, writer)
-                    except Exception as e:
-                        traceback.print_exc()
-                        logger.warning(f"Error invoking> {log_text}")
-                    logger.debug(f" {len(self.unused_instance_nodes)} nodes remaining.")
+                
         return self.linked_results
 
     def get_results(self):
