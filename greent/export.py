@@ -80,9 +80,9 @@ def export_edge_chunk(tx,edgelist,edgelabel):
     """The approach of updating edges will be to erase an old one and replace it in whole.   There's no real
     reason to worry about preserving information from an old edge.
     What defines the edge are the identifiers of its nodes, and the source.function that created it."""
-    cypher = """UNWIND {batches} as row
-            MATCH (a:%s {id: row.aid}),(b:%s {id: row.bid})
-            MERGE (a)-[r:%s {edge_source: row.edge_source}]-(b)
+    cypher = f"""UNWIND $batches as row
+            MATCH (a:{node_types.ROOT_ENTITY} {{id: row.aid}}),(b:{node_types.ROOT_ENTITY} {{id: row.bid}})
+            MERGE (a)-[r:{edgelabel} {{edge_source: row.edge_source}}]-(b)
             set r.source_database=row.database
             set r.ctime=row.ctime 
             set r.predicate_id=row.standard_id 
@@ -91,7 +91,7 @@ def export_edge_chunk(tx,edgelist,edgelabel):
             set r.publications=row.publications
             set r.url=row.url
             set r.input_identifiers=row.input
-            """ % (node_types.ROOT_ENTITY, node_types.ROOT_ENTITY, edgelabel)
+            """
     batch = [ {'aid': edge.subject_node.identifier,
                'bid': edge.object_node.identifier,
                'edge_source': edge.edge_source,
@@ -121,12 +121,12 @@ def sort_nodes_by_label(nodes):
 
 
 def export_node_chunk(tx,nodelist,label):
-    cypher = """UNWIND {batches} as batch
-                MERGE (a:%s {id: batch.id})
-                set a:%s
+    cypher = f"""UNWIND $batches as batch
+                MERGE (a:{node_types.ROOT_ENTITY} {{id: batch.id}})
+                set a:{label}
                 set a.name=batch.label
                 set a.equivalent_identifiers=batch.syn
-                """ % (node_types.ROOT_ENTITY, label)
+                """
     propnames = set()
     for node in nodelist:
         propnames.update(node.properties.keys())
