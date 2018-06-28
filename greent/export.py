@@ -83,9 +83,6 @@ def export_edge_chunk(tx,edgelist,edgelabel):
     """The approach of updating edges will be to erase an old one and replace it in whole.   There's no real
     reason to worry about preserving information from an old edge.
     What defines the edge are the identifiers of its nodes, and the source.function that created it."""
-
-    print(f"Writing {edgelist}")
-
     cypher = f"""UNWIND $batches as row
             MATCH (a:{node_types.ROOT_ENTITY} {{id: row.aid}}),(b:{node_types.ROOT_ENTITY} {{id: row.bid}})
             MERGE (a)-[r:{edgelabel} {{edge_source: row.edge_source}}]-(b)
@@ -127,9 +124,6 @@ def sort_nodes_by_label(nodes):
 
 
 def export_node_chunk(tx,nodelist,label):
-
-    print(f"Writing {nodelist}")
-
     cypher = f"""UNWIND $batches as batch
                 MERGE (a:{node_types.ROOT_ENTITY} {{id: batch.id}})
                 set a:{label}
