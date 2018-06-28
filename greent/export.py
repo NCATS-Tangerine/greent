@@ -71,39 +71,6 @@ class BufferedWriter:
         #Doesn't own the driver
         #self.driver.close()
 
-'''
-def export_graph(graph, rosetta):
-    """Export to neo4j database."""
-    # TODO: lots of this should probably go in the KNode and KEdge objects?
-    logger.info("Writing graph to neo4j")
-    # Now add all the nodes
-    export_nodes(graph.nodes(),rosetta)
-    export_edges(graph.edges(data=True),rosetta)
-    logger.info(f"Wrote {len(graph.nodes())} nodes and {len(graph.edges())} edges.")
-
-
-def export_edges(edges,rosetta):
-    driver = _get_driver(rosetta)
-    edges_by_label = sort_edges_by_label(edges)
-    for label,nodelist in edges_by_label.items():
-        chunksize = 1000
-        for chunknum in range(0, len(nodelist), chunksize):
-            chunk = nodelist[chunknum:chunknum+chunksize]
-            with driver.session() as session:
-                session.write_transaction(export_edge_chunk,chunk,label)
-                
-def export_nodes(nodes,rosetta):
-    driver = _get_driver(rosetta)
-    nodes_by_label = sort_nodes_by_label(nodes)
-    for label,nodelist in nodes_by_label.items():
-        chunksize = 1000
-        for chunknum in range(0, len(nodelist), chunksize):
-            chunk = nodelist[chunknum:chunknum+chunksize]
-            with driver.session() as session:
-                session.write_transaction(export_node_chunk,chunk,label)
-'''
-
-
 def sort_edges_by_label(edges):
     el = defaultdict(list)
     deque( map( lambda x: el[Text.snakify(x[2]['object'].standard_predicate.label)].append(x), edges ) )
