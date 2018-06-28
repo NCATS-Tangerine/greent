@@ -12,6 +12,7 @@ from importlib import import_module
 from builder.lookup_utils import lookup_identifier
 from collections import defaultdict, deque
 from builder.pathlex import tokenize_path
+from builder.question import Question
 
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
@@ -322,6 +323,77 @@ def generate_query(pathway, start_identifiers, start_name = None, end_identifier
     return query
 
 
+conceptsAndIds = [
+  ("anatomical_entity", "A"),
+  ("biological_process_or_activity", "P"),
+  ("cell", "C"),
+  ("chemical_substance", "S"),
+  ("disease", "D"),
+  ("gene", "G"),
+  ("phenotypic_feature", "T"),
+  ("genetic_condition", "X")
+]
+map = {c[1]:c[0] for c in conceptsAndIds}
+
+def build_spec(spec_sequence, start_name, start_id, end_name=None, end_id=None):
+    sequence_ids = [map[c] for c in spec_sequence]
+    
+    machine_question = {'nodes': [], 'edges': []}
+    node, edge = build_step(sequence_ids[0], start_name, start_id, id=0)
+    machine_question['nodes'].append(node)
+    if edge:
+        machine_question['edges'].append(edge)
+    for idx, s in enumerate(sequence_ids[1:-1]):
+        node, edge = build_step(s, id=idx+1)
+        machine_question['nodes'].append(node)
+        machine_question['edges'].append(edge)
+    if end_name:
+        node, edge = build_step(sequence_ids[-1], end_name, end_id, id=len(sequence_ids)-1)
+        machine_question['nodes'].append(node)
+        machine_question['edges'].append(edge)
+
+        sequence_name = ' -> '.join(sequence_ids[1:-1])
+        name = f'{start_name} -> {sequence_name} -> {end_name}'
+        natural = f'{spec_sequence}({start_name}, {end_name})'
+        
+    else:
+        node, edge = build_step(sequence_ids[-1], id=len(sequence_ids)-1)
+        machine_question['nodes'].append(node)
+        machine_question['edges'].append(edge)
+        
+        sequence_name = ' -> '.join(sequence_ids[1:])
+        name = f'{start_name} -> {sequence_name}'
+        natural = f'{spec_sequence}({start_name})'
+
+    out = {"name": name,
+           "natural_question": natural, 
+           "notes": '',
+           "machine_question": machine_question
+    }
+    return out
+
+def build_step(spec, name=None, curie=None, id=0):
+    if name and curie:
+        node = {
+            "type": spec,
+            "name": name,
+            "curie": curie,
+            "id": id
+        }
+    else:
+        node = {
+            "type": spec,
+            "id": id
+        }
+    if id:
+        edge = {
+            "source_id": id-1,
+            "target_id": id
+        }
+    else:
+        edge = None
+    return node, edge
+
 def run(pathway, start_name, start_id, end_name, end_id, supports, config):
     """Programmatic interface.  Pathway defined as in the command-line input.
        Arguments:
@@ -332,24 +404,14 @@ def run(pathway, start_name, start_id, end_name, end_id, supports, config):
          supports: array strings designating support modules to apply
          config: Rosettta environment configuration. 
     """
-    # TODO: move to a more structured pathway description (such as json)
-    steps = tokenize_path(pathway)
-    # start_type = node_types.type_codes[pathway[0]]
-    start_type = steps[0].nodetype
+    spec = build_spec(pathway, start_name, start_id, end_name=end_name, end_id=end_id)
+    q = Question(spec)
+
     rosetta = setup(config)
-    #start_identifiers = lookup_identifier(start_name, start_type, rosetta.core)
-    #Strip spaces from the id's, which can cause problems down the road
-    start_identifiers=[start_id.strip()]
-    if end_name is not None:
-        # end_type = node_types.type_codes[pathway[-1]]
-        end_type = steps[-1].nodetype
-        #end_identifiers = lookup_identifier(end_name, end_type, rosetta.core)
-        end_identifiers = [end_id.strip()]
-    else:
-        end_identifiers = None
-    print("Start identifiers: " + '..'.join(start_identifiers))
-    query = generate_query(steps, start_identifiers, start_name, end_identifiers, end_name)
-    run_query(query, supports, rosetta, prune=False)
+    programs = q.compile(rosetta)
+
+    for p in programs:
+        p.run_program()
 
 
 def setup(config):
