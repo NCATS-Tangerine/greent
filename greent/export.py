@@ -40,69 +40,39 @@ class BufferedWriter:
         return self
 
     def write_node(self,node):
-        if node.identifier not in self.written_nodes:
-            if node.label is None or node.label == '':
-                logger.error(f"Node {node.identifier} is missing a label")
-            self.written_nodes.add(node.identifier)
-            typednodes = self.node_queues[node.node_type]
-            typednodes.append(node)
-            if len(typednodes) >= self.node_buffer_size:
-                with self.driver.session() as session:
-                    session.write_transaction(export_node_chunk,typednodes,node.node_type)
-                self.node_queues[node.node_type] = []
+        if node.identifier in self.written_nodes:
+            return
+        if node.label is None or node.label == '':
+            logger.error(f"Node {node.identifier} is missing a label")
+        self.written_nodes.add(node.identifier)
+        typednodes = self.node_queues[node.node_type]
+        typednodes.append(node)
+        if len(typednodes) >= self.node_buffer_size:
+            self.flush()
 
     def write_edge(self,edge):
-        if edge not in self.written_edges[edge.subject_node][edge.object_node]:
-            self.written_edges[edge.subject_node][edge.object_node].add(edge)
-            label = Text.snakify(edge.standard_predicate.label)
-            typed_edges = self.edge_queues[label]
-            typed_edges.append(edge)
-            if len(typed_edges) >= self.edge_buffer_size:
-                with self.driver.session() as session:
-                    session.write_transaction(export_edge_chunk,typed_edges,label)
-                self.edge_queues[label] = []
+        if edge in self.written_edges[edge.subject_node][edge.object_node]:
+            return
+        self.written_edges[edge.subject_node][edge.object_node].add(edge)
+        label = Text.snakify(edge.standard_predicate.label)
+        typed_edges = self.edge_queues[label]
+        typed_edges.append(edge)
+        if len(typed_edges) >= self.edge_buffer_size:
+            self.flush()
 
-    def __exit__(self,*args):
+    def flush(self):
         with self.driver.session() as session:
             for node_type in self.node_queues:
                 session.write_transaction(export_node_chunk,self.node_queues[node_type],node_type)
+                self.node_queues[node_type] = []
             for edge_label in self.edge_queues:
                 session.write_transaction(export_edge_chunk,self.edge_queues[edge_label],edge_label)
+                self.edge_queues[edge_label] = []
+
+    def __exit__(self,*args):
+        self.flush()
         #Doesn't own the driver
         #self.driver.close()
-
-'''
-def export_graph(graph, rosetta):
-    """Export to neo4j database."""
-    # TODO: lots of this should probably go in the KNode and KEdge objects?
-    logger.info("Writing graph to neo4j")
-    # Now add all the nodes
-    export_nodes(graph.nodes(),rosetta)
-    export_edges(graph.edges(data=True),rosetta)
-    logger.info(f"Wrote {len(graph.nodes())} nodes and {len(graph.edges())} edges.")
-
-
-def export_edges(edges,rosetta):
-    driver = _get_driver(rosetta)
-    edges_by_label = sort_edges_by_label(edges)
-    for label,nodelist in edges_by_label.items():
-        chunksize = 1000
-        for chunknum in range(0, len(nodelist), chunksize):
-            chunk = nodelist[chunknum:chunknum+chunksize]
-            with driver.session() as session:
-                session.write_transaction(export_edge_chunk,chunk,label)
-                
-def export_nodes(nodes,rosetta):
-    driver = _get_driver(rosetta)
-    nodes_by_label = sort_nodes_by_label(nodes)
-    for label,nodelist in nodes_by_label.items():
-        chunksize = 1000
-        for chunknum in range(0, len(nodelist), chunksize):
-            chunk = nodelist[chunknum:chunknum+chunksize]
-            with driver.session() as session:
-                session.write_transaction(export_node_chunk,chunk,label)
-'''
-
 
 def sort_edges_by_label(edges):
     el = defaultdict(list)
@@ -113,9 +83,12 @@ def export_edge_chunk(tx,edgelist,edgelabel):
     """The approach of updating edges will be to erase an old one and replace it in whole.   There's no real
     reason to worry about preserving information from an old edge.
     What defines the edge are the identifiers of its nodes, and the source.function that created it."""
-    cypher = """UNWIND {batches} as row
-            MATCH (a:%s {id: row.aid}),(b:%s {id: row.bid})
-            MERGE (a)-[r:%s {edge_source: row.edge_source}]-(b)
+
+    print(f"Writing {edgelist}")
+
+    cypher = f"""UNWIND $batches as row
+            MATCH (a:{node_types.ROOT_ENTITY} {{id: row.aid}}),(b:{node_types.ROOT_ENTITY} {{id: row.bid}})
+            MERGE (a)-[r:{edgelabel} {{edge_source: row.edge_source}}]-(b)
             set r.source_database=row.database
             set r.ctime=row.ctime 
             set r.predicate_id=row.standard_id 
@@ -124,7 +97,7 @@ def export_edge_chunk(tx,edgelist,edgelabel):
             set r.publications=row.publications
             set r.url=row.url
             set r.input_identifiers=row.input
-            """ % (node_types.ROOT_ENTITY, node_types.ROOT_ENTITY, edgelabel)
+            """
     batch = [ {'aid': edge.subject_node.identifier,
                'bid': edge.object_node.identifier,
                'edge_source': edge.edge_source,
@@ -154,12 +127,15 @@ def sort_nodes_by_label(nodes):
 
 
 def export_node_chunk(tx,nodelist,label):
-    cypher = """UNWIND {batches} as batch
-                MERGE (a:%s {id: batch.id})
-                set a:%s
+
+    print(f"Writing {nodelist}")
+
+    cypher = f"""UNWIND $batches as batch
+                MERGE (a:{node_types.ROOT_ENTITY} {{id: batch.id}})
+                set a:{label}
                 set a.name=batch.label
                 set a.equivalent_identifiers=batch.syn
-                """ % (node_types.ROOT_ENTITY, label)
+                """
     propnames = set()
     for node in nodelist:
         propnames.update(node.properties.keys())

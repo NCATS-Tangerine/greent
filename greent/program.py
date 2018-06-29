@@ -144,14 +144,13 @@ class Program:
                         results = op(source_node)
                         self.rosetta.cache.set (key, results)
                         logger.debug (f"cache.set-> {key} length:{len(results)}")
-                    newnodes = []
-                    for r in results:
-                        edge = r[0]
-                        self.linked_results.append(edge)
-                        writer.write_edge(edge)
-                        newnodes.append(r[1])
-                    logger.debug(f"    {newnodes}")
+                    newnodes = [ r[1] for r in results ]
                     self.add_instance_nodes(newnodes,next_context,writer)
+                    newedges = [ r[0] for r in results ]
+                    self.linked_results.extend(newedges)
+                    for edge in newedges:
+                        writer.write_edge(edge)
+                    logger.debug(f"    {newnodes}")
                 except Exception as e:
                     traceback.print_exc()
                     logger.warning(f"Error invoking> {log_text}")
