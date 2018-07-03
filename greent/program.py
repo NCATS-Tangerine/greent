@@ -80,9 +80,11 @@ class Program:
             logger.warning(f"Error invoking> {log_text}")
 
     def process_node(self, node, history, edge=None):
-        """We've got a new set of nodes (either initial nodes or from a query).  They are attached
+        """
+        We've got a new set of nodes (either initial nodes or from a query).  They are attached
         to a particular concept in our query plan. We make sure that they're synonymized and then
-        add them to unused_instance_nodes"""
+        queue up their children
+        """
         self.rosetta.synonymizer.synonymize(node)
 
         # import pika
@@ -107,24 +109,25 @@ class Program:
         # to determine which ops are valid
         key = node.identifier
 
-        print("--History: ", history)
+        print("-"*len(history)+"History: ", history)
 
-        with BufferedWriter(self.rosetta) as writer:
-            # only add a node if it wasn't cached
-            results = self.cache.get(key) # set of nodes we've been from here
-            print("--Results: ", results)
-            if results is None:
-                results = set()
-                self.cache.set(key, results)
+        # only add a node if it wasn't cached
+        completed = self.cache.get(key) # set of nodes we've been from here
+        print("-"*len(history)+"Completed: ", completed)
+        if completed is None:
+            completed = set()
+            self.cache.set(key, completed)
+            with BufferedWriter(self.rosetta) as writer:
                 writer.write_node(node)
 
-            # make sure the edge is queued for creation AFTER the node
-            if edge:
+        # make sure the edge is queued for creation AFTER the node
+        if edge:
+            with BufferedWriter(self.rosetta) as writer:
                 writer.write_edge(edge)
 
         # quit if we've closed a loop
         if history[-1] in history[:-1]:
-            print("--Closed a loop!")
+            print("-"*len(history)+"Closed a loop!")
             return
 
         source_id = int(history[-1])
@@ -134,7 +137,7 @@ class Program:
             return
 
         destinations = self.transitions[source_id]
-        results = self.cache.get(key)
+        completed = self.cache.get(key)
         for target_id in destinations:
             if not self.transitions[source_id][target_id]:
                 continue
@@ -142,14 +145,14 @@ class Program:
             if len(history)>1 and str(target_id) == history[-2]:
                 continue
             # don't repeat things
-            if target_id in results:
+            if target_id in completed:
                 continue
-            results.add(target_id)
-            self.cache.set(key, results)
+            completed.add(target_id)
+            self.cache.set(key, completed)
             links = self.transitions[source_id][target_id]
-            print(f"--destination {target_id}")
+            print("-"*len(history)+f"Destination: {target_id}")
             for link in links:
-                print("---executing")
+                print("-"*len(history)+"Executing: ", link['op'])
                 self.process_op(link, node, history+str(target_id))
         
     #CAN I SOMEHOW CAPTURE PATHS HERE>>>>
