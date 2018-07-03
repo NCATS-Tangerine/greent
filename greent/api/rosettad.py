@@ -5,8 +5,6 @@ import requests
 import shutil
 import yaml
 from builder.gamma import Gamma
-#from builder.builder import KnowledgeGraph
-from builder.knowledgeQuery import KnowledgeQuery
 from flasgger import Swagger
 from flask import Flask, jsonify, g, Response
 from greent import node_types

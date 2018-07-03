@@ -1,4 +1,3 @@
-from greent.graph_components import KNode, KEdge
 from greent import node_types
 from greent.util import LoggingUtil,Text
 from greent.rosetta import Rosetta
@@ -154,13 +153,6 @@ class KnowledgeGraph:
                 n_pruned += 1
                 self.graph.remove_node(node)
         logger.debug('Pruned {} nodes.'.format(n_pruned))
-
-#    def enhance(self):
-#        """Enhance nodes,edges with good labels and properties"""
-#        # TODO: it probably makes sense to push this stuff into the KNode itself
-#        logger.debug('Enhancing nodes with labels')
-#        for node in self.graph.nodes():
-#            prepare_node_for_output(node, self.rosetta.core)
 
     def full_support(self,supporter, support_nodes):
         n_supported = 0
