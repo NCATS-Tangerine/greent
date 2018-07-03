@@ -8,7 +8,7 @@ import socket
 
 class ServiceContext:
     """ A context for all service objects. Centralizes control over how services behave
-    and a common point of coniguration. """
+    and a common point of configuration. """
     def __init__(self, config=None):
         if config is None:
             config_name = "greent.conf"
@@ -17,11 +17,17 @@ class ServiceContext:
         self.core = GreenT (self)
         
         # Initiaize the cache.
-        redis_conf = self.config["redis"]
+        redis_conf = self.config["results"]
         self.cache = Cache (
             redis_host = redis_conf.get ("host"),
             redis_port = redis_conf.get ("port"),
             redis_db = redis_conf.get ("db"))
+        #redis_conf = self.config["redis"]
+        #self.cache = Cache (
+        #    redis_host = self.config.get ("RESULTS_HOST"),
+        #    redis_port = self.config.get ("RESULTS_PORT"),
+        #    redis_db = self.config.get ("CACHE_DB"))
+ 
         
     @staticmethod
     def create_context (config=None):

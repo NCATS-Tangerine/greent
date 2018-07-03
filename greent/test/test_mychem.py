@@ -20,6 +20,12 @@ def test_drug_adverse_events(mychem):
     assert len(results) > 0
 
 def test_event_to_drug(mychem):
+    node = KNode('MONDO:0002050', node_type = node_types.DISEASE, label='Mental Depression')
+    node.add_synonyms( set( [LabeledID('MedDRA:10002855','Depression')]))
+    results = mychem.get_drug_from_adverse_events(node)
+    assert len(results) > 0
+
+def test_event_to_drug(mychem):
     node = KNode('HP:0002018', node_type = node_types.PHENOTYPE, label='Nausea')
     node.add_synonyms( set( [LabeledID('MedDRA:10028813','Nausea')]))
     results = mychem.get_drug_from_adverse_events(node)

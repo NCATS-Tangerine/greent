@@ -126,6 +126,8 @@ slots:
   - name: affects
     mappings:
       - GO:acts_on_population_of
+      - CTD:inferred
+      - CTD:prediction/hypothesis
 
     #In the model, here for the hetio mappings
   - name: positively regulates, entity to entity
@@ -219,6 +221,13 @@ slots:
     mappings:
       - RO:0003302 #Causes or contributes to
       - RO:0002327 #enables
+      - CTD:marker/mechanism
+      - CTD:positivecorrelation
+
+  - name: treats
+    mappings:
+      - CTD:therapeutic
+      - CTD:negativecorrelation
 
   - name: produces
     mappings:

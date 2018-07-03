@@ -100,3 +100,23 @@ def test_chemical_to_gene_glutathione(ctd):
     result_ids = [ node.identifier for edge,node in results]
     assert 'NCBIGENE:5743' in result_ids #Cox2 for a cox2 inhibitor
 
+def test_disease_to_exposure(ctd):
+    input_node = KNode("MESH:D001249", node_types.DISEASE, label='Asthma')
+    results = ctd.disease_to_exposure(input_node)
+    ddt = None
+    for edge,node in results:
+        assert node.node_type == node_types.DRUG
+        assert edge.standard_predicate.identifier != 'GAMMA:0'
+        if node.identifier == 'MESH:D003634':
+            ddt = node
+    assert len(results) > 0
+    assert ddt is not None
+    assert ddt.label == 'DDT'
+
+def test_disease_to_chemical(ctd):
+    input_node = KNode("MESH:D001249", node_types.DISEASE, label='Asthma')
+    results = ctd.disease_to_chemical(input_node)
+    ddt = None
+    for edge,node in results:
+        assert node.node_type == node_types.DRUG
+        assert edge.standard_predicate.identifier != 'GAMMA:0'

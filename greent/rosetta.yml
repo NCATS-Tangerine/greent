@@ -68,6 +68,12 @@
     disease_or_phenotypic_feature:
       - link  : adverse_events
         op    : mychem.get_adverse_events
+  disease_or_phenotypic_feature:
+    chemical_substance:
+      - link  : exposures
+        op    : ctd.disease_to_exposure
+      - link  : disease_to_chemical
+        op    : ctd.disease_to_chemical
   disease:
     phenotypic_feature:
       - link  : disease_to_phenotype
