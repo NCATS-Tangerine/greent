@@ -32,11 +32,8 @@ class Node(FromDictMixin):
                 required: true
             type:
                 type: string
-            identifiers:
-                type: array
-                items:
-                    type: string
-                default: []
+            curie:
+                type: string
     """
     def __init__(self, *args, **kwargs):
         self.id = None
@@ -230,32 +227,38 @@ class Question(FromDictMixin):
             edges = row['edges']
 
             # extract transitions
-            transitions = {int(k[1:]):[] for k in nodes}
+            transitions = {int(k[1:]): {int(k[1:]): [] for k in nodes} for k in nodes}
             for e in edges:
                 edge = edges[e]
                 source_id = int(edge['source'][1:])
                 target_id = int(edge['target'][1:])
                 trans = {
                     "op": edge['op'],
-                    "link": edge['predicate'],
-                    "target_id": target_id
+                    "link": edge['predicate']
                 }
-                transitions[source_id].append(trans)
+                transitions[source_id][target_id].append(trans)
             
             plans.append(transitions)
         return plans
 
     def compile(self, rosetta):
         plans = self.get_transitions(rosetta.type_graph, self.generate_concept_cypher())
-        programs = []
-        for i,plan in enumerate(plans):
-            try:
-                # Some programs are bogus (when you have input to a named node) 
-                # it throws an exception then, and we ignore it.
-                program = Program(plan, self.machine_question['nodes'], rosetta, i)
-                programs.append(program)
-            except Exception as err:
-                logger.warn(f'WARN: {err}')
-        if not programs:
+
+        # merge plans
+        plan = {n.id: {n.id: [] for n in self.machine_question['nodes']} for n in self.machine_question['nodes']}
+        for p in plans:
+            for source_id in p:
+                for target_id in p[source_id]:
+                    plan[source_id][target_id].extend(p[source_id][target_id])
+
+        # remove duplicate transitions
+        for source_id in plan:
+            for target_id in plan:
+                plan[source_id][target_id] = {t['op']:t for t in plan[source_id][target_id]}.values()
+
+        if not plan:
             raise RuntimeError('No viable programs.')
+        program = Program(plan, self.machine_question['nodes'], rosetta, 0)
+        programs = [program]
+        
         return programs
