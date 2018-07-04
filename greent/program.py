@@ -136,7 +136,14 @@ class Program:
         to a particular concept in our query plan. We make sure that they're synonymized and then
         queue up their children
         """
+        if edge is not None:
+            is_source = node.curie == edge.source_id
         self.rosetta.synonymizer.synonymize(node)
+        if edge is not None:
+            if is_source:
+                edge.source_id = node.curie
+            else:
+                edge.target_id = node.curie
 
         # check the node cache, compare to the provided history
         # to determine which ops are valid
@@ -156,7 +163,6 @@ class Program:
             # with BufferedWriter(self.rosetta) as writer:
             #     writer.write_node(node)
             
-            # print(node.dump())
             self.channel.basic_publish(exchange='',
                                 routing_key='neo4j',
                                 body=json.dumps({'nodes': [node.dump()], 'edges': []}))
@@ -166,7 +172,7 @@ class Program:
         if edge:
             # with BufferedWriter(self.rosetta) as writer:
             #     writer.write_edge(edge)
-            # print(edge.dump())
+            
             self.channel.basic_publish(exchange='',
                                 routing_key='neo4j',
                                 body=json.dumps({'nodes': [], 'edges': [edge.dump()]}))
