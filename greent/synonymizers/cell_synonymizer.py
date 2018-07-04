@@ -1,6 +1,7 @@
 from greent import node_types
 from greent.graph_components import LabeledID
 from greent.util import Text
+from builder.question import LabeledThing
 
 def synonymize(node,gt):
     """The main thing to worry about for cells is that we get a label."""
@@ -11,5 +12,5 @@ def synonymize(node,gt):
     for csim in currentsynonyms:
         if csim.label is None or csim.label == '':
             label = gt.uberongraph.cell_get_cellname(csim.identifier)[0]['cellLabel']
-            new_syns.add(LabeledID(csim.identifier, label))
+            new_syns.add(LabeledThing(identifier=csim.identifier, label=label))
     return new_syns

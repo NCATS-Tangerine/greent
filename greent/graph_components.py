@@ -5,6 +5,7 @@ from greent.util import Text
 from json import JSONEncoder
 from json import JSONDecoder
 from typing import NamedTuple
+from builder.question import LabeledThing
 
 class GenericJSONEncoder(JSONEncoder):
     def default(self, obj):
@@ -54,7 +55,7 @@ class KNode():
         self.mesh_identifiers = []
         #Synonyms is just for CURIEs
         self.synonyms = set()
-        self.synonyms.add(LabeledID(identifier,label))
+        self.synonyms.add(LabeledThing(identifier=identifier, label=label))
         self.contexts = defaultdict(set)
 
     def add_synonyms(self, new_synonym_set):
@@ -63,7 +64,7 @@ class KNode():
         #self.synonyms.update(new_synonym_set)
         for newsyn in new_synonym_set:
             if isinstance(newsyn,str):
-                self.synonyms.add(LabeledID(newsyn,""))
+                self.synonyms.add(LabeledThing(identifier=newsyn, label=""))
             else:
                 #Better be a LabeledID
                 self.synonyms.add(newsyn)

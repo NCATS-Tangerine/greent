@@ -1,4 +1,5 @@
 import warnings
+import json
 
 class FromDictMixin():
     def __init__(self, *args, **kwargs):
@@ -28,11 +29,20 @@ class FromDictMixin():
         prop_dict = vars(self)
         return recursive_dump(prop_dict)
 
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__) and
+            all(getattr(other, attr, None) == getattr(self, attr, None) for attr in self.__dict__.keys()))
+
+    def __hash__(self):
+        return hash(json.dumps(self.dump()))
+
 def recursive_dump(value):
     # recursively call dump() for nested objects to generate a json-serializable dict
     if isinstance(value, dict):
         return {key:recursive_dump(value[key]) for key in value}
     elif isinstance(value, list):
+        return [recursive_dump(v) for v in value]
+    elif isinstance(value, set):
         return [recursive_dump(v) for v in value]
     else:
         try:

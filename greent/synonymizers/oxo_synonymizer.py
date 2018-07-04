@@ -18,12 +18,12 @@ def synonymize(node, gt):
     '''
     # OK, we're not going to use them all, there's some BS PMIDs that come back...
     synonyms = {s for s in synonyms if not s.identifier.startswith('PMID')}
-    node.add_synonyms(synonyms)
+    node.synonyms.update(synonyms)
     return synonyms
 
 def get_synonyms(node, gt, distance=2):
     #OXO doesn't know about every kind of curie.  So let's see if it knows about our node identifier
-    synonyms = get_synonyms_with_curie_check(node.identifier, gt, distance=distance)
+    synonyms = get_synonyms_with_curie_check(node.curie, gt, distance=distance)
     if len(synonyms) == 0:
         #OXO didn't know about it.  So we're going to call oxo with our (valid) synonyms
         #Because of this, we're likely to end up with a mix of Strings and LabeledID

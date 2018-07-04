@@ -9,8 +9,8 @@ import json
 import hashlib
 import warnings
 import logging
+import time
 
-from greent.program import Program
 from builder.api.setup import swagger
 from builder.util import FromDictMixin
 from greent.util import LoggingUtil
@@ -34,12 +34,19 @@ class Node(FromDictMixin):
                 type: string
             curie:
                 type: string
+            name:
+                type: string
+            synonyms:
+                type: array
+                items:
+                    $ref: '#/definitions/LabeledThing'
     """
     def __init__(self, *args, **kwargs):
         self.id = None
         self.type = None
         self.curie = None
         self.name = None
+        self.synonyms = []
 
         super().__init__(*args, **kwargs)
 
@@ -59,6 +66,36 @@ class Node(FromDictMixin):
         else:
             return f"({id})"
 
+    def load_attribute(self, key, value):
+        if key == 'synonyms':
+            return {LabeledThing(v) if isinstance(v, dict) else v for v in value}
+        else:
+            return super().load_attribute(key, value)
+
+@swagger.definition('LabeledThing')
+class LabeledThing(FromDictMixin):
+    """
+    Labeled Thing Object
+    ---
+    schema:
+        id: LabeledThing
+        required:
+            - identifier
+        properties:
+            identifer:
+                type: string
+            label:
+                type: string
+    """
+    def __init__(self, *args, **kwargs):
+        self.identifier = None
+        self.label = None
+
+        super().__init__(*args, **kwargs)
+
+    def __gt__(self, other):
+        return self.identifier > other.identifier
+
 @swagger.definition('Edge')
 class Edge(FromDictMixin):
     """
@@ -76,6 +113,16 @@ class Edge(FromDictMixin):
                 type: string
             target_id:
                 type: string
+            provided_by:
+                type: string
+            original_predicate:
+                $ref: '#/definitions/LabeledThing'
+            standard_predicate:
+                $ref: '#/definitions/LabeledThing'
+            publications:
+                type: array
+                items:
+                    type: string
             min_length:
                 type: integer
                 default: 1
@@ -87,8 +134,14 @@ class Edge(FromDictMixin):
         self.id = None
         self.source_id = None
         self.target_id = None
+        self.provided_by = None
+        self.original_predicate = None
+        self.standard_predicate = None
+        self.publications = []
         self.min_length = 1
         self.max_length = 1
+        self.ctime = time.time() # creation time in seconds since the epoch, UTC
+        # time.localtime() will turn this into a localized struct_time
 
         super().__init__(*args, **kwargs)
 
@@ -105,6 +158,12 @@ class Edge(FromDictMixin):
             return f"-[*{self.min_length}..{self.max_length}]-"
         else:
             return  "--"
+
+    def load_attribute(self, key, value):
+        if key == 'original_predicate' or key == 'standard_predicate':
+            return LabeledThing(value) if isinstance(value, dict) else value
+        else:
+            return super().load_attribute(key, value)
 
 @swagger.definition('Question')
 class Question(FromDictMixin):
@@ -258,6 +317,8 @@ class Question(FromDictMixin):
 
         if not plan:
             raise RuntimeError('No viable programs.')
+
+        from greent.program import Program
         program = Program(plan, self.machine_question['nodes'], rosetta, 0)
         programs = [program]
         

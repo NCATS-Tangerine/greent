@@ -1,11 +1,14 @@
 import logging
 import traceback
+import calendar
+import json
 from collections import defaultdict
 from greent.graph_components import KNode
 from greent.util import LoggingUtil
 from greent import node_types
 from greent.export import BufferedWriter
 from greent.cache import Cache
+from builder.question import Node, Edge, LabeledThing
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
@@ -54,12 +57,21 @@ class Program:
             if not n.curie:
                 continue
             start_node = KNode(n.curie, n.type, label=n.name)
+            start_node = Node(
+                name=start_node.label,
+                curie=start_node.identifier,
+                type=start_node.node_type,
+                synonyms={LabeledThing(
+                        identifier=s.identifier,
+                        label=s.label
+                    ) for s in start_node.synonyms}
+            )
             self.process_node(start_node, str(n.id))
         return
 
     def process_op(self, link, source_node, history):
         op_name = link['op']
-        key = f"{op_name}({source_node.identifier})"
+        key = f"{op_name}({source_node.curie})"
         try:
             results = self.rosetta.cache.get(key)
             if results is not None:
@@ -67,11 +79,38 @@ class Program:
             else:
                 logger.debug(f"exec op: {key}")
                 op = self.rosetta.get_ops(op_name)
+                synonyms = source_node.synonyms
+                source_node = KNode(source_node.curie, source_node.type, label=source_node.name)
+                source_node.synonyms = synonyms
                 results = op(source_node)
                 self.rosetta.cache.set(key, results)
                 logger.debug(f"cache.set-> {key} length:{len(results)}")
                 logger.debug(f"    {[node for _, node in results]}")
             for edge, node in results:
+                node = Node(
+                    name=node.label,
+                    curie=node.identifier,
+                    type=node.node_type,
+                    synonyms={LabeledThing(
+                        identifier=s.identifier,
+                        label=s.label
+                    ) for s in node.synonyms}
+                )
+                edge = Edge(
+                    source_id=edge.subject_node.identifier,
+                    target_id=edge.object_node.identifier,
+                    standard_predicate=LabeledThing(
+                        identifier=edge.standard_predicate.identifier,
+                        label=edge.standard_predicate.label
+                    ),
+                    original_predicate=LabeledThing(
+                        identifier=edge.original_predicate.identifier,
+                        label=edge.original_predicate.label
+                    ),
+                    provided_by=edge.edge_source,
+                    ctime=calendar.timegm(edge.ctime.timetuple()),
+                    publications=edge.publications
+                )
                 self.process_node(node, history, edge)
 
         except Exception as e:
@@ -107,8 +146,11 @@ class Program:
 
         # check the node cache, compare to the provided history
         # to determine which ops are valid
-        key = node.identifier
+        key = node.curie
 
+        # print(node.dump())
+        # if edge:
+        #     print(edge.dump())
         print("-"*len(history)+"History: ", history)
 
         # only add a node if it wasn't cached

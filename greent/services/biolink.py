@@ -6,6 +6,7 @@ from greent.ontologies.go2 import GO2
 from greent.util import Text
 from greent.graph_components import KNode, KEdge,LabeledID
 from greent import node_types
+from builder.question import LabeledThing
 from datetime import datetime as dt
 import logging
 import time
@@ -82,7 +83,7 @@ class Biolink(Service):
             if predicate_label is None:
                 predicate_label = f'biolink:{function}'
             #now back to the show
-            predicate = LabeledID(identifier=predicate_id,label= predicate_label)
+            predicate = LabeledThing(identifier=predicate_id, label=predicate_label)
             edge = self.create_edge(source_node, target_node, f'biolink.{function}',  input_identifier, predicate,  publications = pubs, url = url)
             edge_nodes.append((edge, newnode))
         return edge_nodes

@@ -3,6 +3,7 @@ import requests
 from greent.service import Service
 from greent.graph_components import LabeledID
 import time
+from builder.question import LabeledThing
 
 
 class OXO(Service):
@@ -86,7 +87,7 @@ class OXO(Service):
     #This is the new version of get_synonymous_curies that also returns labels
     def get_synonymous_curies_and_labels(self, identifier, distance=2):
         synonyms = self.get_synonyms(identifier, distance)
-        return set([LabeledID(x['curie'],x['label']) for x in synonyms])
+        return set([LabeledThing(identifier=x['curie'], label=x['label']) for x in synonyms])
 
     def get_synonyms(self, identifier, distance=2):
         """ Find all synonyms for a curie for a given distance . """

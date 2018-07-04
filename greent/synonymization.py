@@ -9,6 +9,7 @@ from greent.synonymizers import hgnc_synonymizer
 from greent.synonymizers import oxo_synonymizer
 from greent.synonymizers import substance_synonymizer
 from greent.synonymizers import disease_synonymizer
+from builder.question import LabeledThing
 
 
 #The mapping from a node type to the synonymizing module
@@ -37,18 +38,18 @@ class Synonymizer:
         
     def synonymize(self, node):
         """Given a node, determine its type and dispatch it to the correct synonymizer"""
-        logger.debug('syn {} {}'.format(node.identifier,node.node_type))
-        if node.node_type in synonymizers:
-            key = f"synonymize({node.identifier})"
-            synonyms = self.rosetta.cache.get (key)
+        logger.debug('syn {} {}'.format(node.curie,node.type))
+        if node.type in synonymizers:
+            key = f"synonymize({node.curie})"
+            synonyms = self.rosetta.cache.get(key)
             if synonyms is not None:
                 logger.debug (f"cache hit: {key}")
             else:
                 logger.debug (f"exec op: {key}")
-                synonyms = synonymizers[node.node_type].synonymize(node, self.rosetta.core)
+                synonyms = synonymizers[node.type].synonymize(node, self.rosetta.core)
                 self.rosetta.cache.set (key, synonyms)
             logger.debug(f"Number of synonyms:{len(synonyms)}")
-            node.add_synonyms(synonyms)
+            node.synonyms.update(synonyms)
         else:
             logger.warn (f"No synonymizer registered for concept: {node.node_type}")
         self.normalize(node)
@@ -62,11 +63,11 @@ class Synonymizer:
             smap[labeledid.identifier].append(labeledid.label)
         for lid,labels in smap.items():
             if len(labels) > 1 and (None in labels):
-                node.synonyms.remove(LabeledID(lid,None))
+                node.synonyms.remove(LabeledThing(identifier=lid, label=None))
             if len(labels) > 1 and ('' in labels):
-                node.synonyms.remove(LabeledID(lid,''))
+                node.synonyms.remove(LabeledThing(identifier=lid, label=''))
         #Now find the bset one for an id
-        type_curies = self.concepts.get(node.node_type).id_prefixes
+        type_curies = self.concepts.get(node.type).id_prefixes
         #Now start looking for the best curies
         synonyms_by_curie = defaultdict(list)
         for s in node.synonyms:
@@ -81,10 +82,10 @@ class Synonymizer:
                     if len(ids_with_labels) > 0:
                         potential_identifiers = ids_with_labels
                     potential_identifiers.sort()
-                node.identifier = potential_identifiers[0].identifier
-                node.label = potential_identifiers[0].label
+                node.curie = potential_identifiers[0].identifier
+                node.name = potential_identifiers[0].label
                 break
-        if node.identifier.startswith('DOID'):
+        if node.curie.startswith('DOID'):
             logger.warn("We are ending up with a DOID here")
             logger.warn(node.identifier)
             logger.warn(node.synonyms)
