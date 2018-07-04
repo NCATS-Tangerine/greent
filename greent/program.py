@@ -40,6 +40,16 @@ class Program:
         self.cache.flush()
         self.log_program()
 
+        import pika
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='127.0.0.1',
+            virtual_host='builder',
+            credentials=pika.credentials.PlainCredentials('murphy', 'pword')))
+        self.channel = self.connection.channel()
+        self.channel.queue_declare(queue='neo4j')
+
+    def __del__(self):
+        self.connection.close()
+
     def log_program(self):
         logstring = f'Program {self.program_number}\n'
         logstring += 'Nodes: \n'
@@ -126,24 +136,6 @@ class Program:
         """
         self.rosetta.synonymizer.synonymize(node)
 
-        # import pika
-        # import json
-
-        # connection = pika.BlockingConnection(pika.ConnectionParameters(host='127.0.0.1',
-        #     virtual_host='builder',
-        #     credentials=pika.credentials.PlainCredentials('murphy', 'pword')))
-        # channel = connection.channel()
-
-
-        # channel.queue_declare(queue='hello')
-
-        # print(node.to_json())
-        # channel.basic_publish(exchange='',
-        #                     routing_key='nodes',
-        #                     body=json.dumps(node.to_json()))
-        # print(" [x] Sent node")
-        # connection.close()
-
         # check the node cache, compare to the provided history
         # to determine which ops are valid
         key = node.curie
@@ -159,13 +151,24 @@ class Program:
         if completed is None:
             completed = set()
             self.cache.set(key, completed)
-            with BufferedWriter(self.rosetta) as writer:
-                writer.write_node(node)
+            # with BufferedWriter(self.rosetta) as writer:
+            #     writer.write_node(node)
+            
+            # print(node.dump())
+            self.channel.basic_publish(exchange='',
+                                routing_key='neo4j',
+                                body=json.dumps({'nodes': [node.dump()], 'edges': []}))
+            print(" [x] Sent node")
 
         # make sure the edge is queued for creation AFTER the node
         if edge:
-            with BufferedWriter(self.rosetta) as writer:
-                writer.write_edge(edge)
+            # with BufferedWriter(self.rosetta) as writer:
+            #     writer.write_edge(edge)
+            # print(edge.dump())
+            self.channel.basic_publish(exchange='',
+                                routing_key='neo4j',
+                                body=json.dumps({'nodes': [], 'edges': [edge.dump()]}))
+            print(" [x] Sent edge")
 
         # quit if we've closed a loop
         if history[-1] in history[:-1]:
@@ -204,7 +207,9 @@ class Program:
         Keep going until there's no nodes left to process."""
         logger.debug(f"Running program {self.program_number}")
         self.initialize_instance_nodes()
-                
+        self.channel.basic_publish(exchange='',
+            routing_key='neo4j',
+            body='flush')
         return
 
     def get_path_descriptor(self):
