@@ -57,6 +57,7 @@ class Pharos(Service):
     def disease_map(self, disease_id):
         return self.query(query="diseases({0})".format(disease_id))
 
+    '''
     def make_doid_id(self, obj):
         if not obj:
             return None
@@ -93,6 +94,7 @@ class Pharos(Service):
             pharos_set.update(pmap[vi])
         pharos_list = list(pharos_set)
         return pharos_list
+    '''
 
     def target_to_hgnc(self, target_id):
         """Convert a pharos target id into an HGNC ID.
@@ -215,12 +217,12 @@ class Pharos(Service):
 
     def disease_get_gene(self, subject):
         """ Get a gene from a pharos disease id. """
-        pharos_ids = self.translate(subject)
+        pharos_ids = subject.get_synonyms_by_prefix('DOID')
         resolved_edge_nodes = []
         for pharosid in pharos_ids:
             logging.getLogger('application').debug("Identifier:" + subject.identifier)
             original_edge_nodes = []
-            url='https://pharos.nih.gov/idg/api/v1/diseases(%s)?view=full' % pharosid
+            url='https://pharos.nih.gov/idg/api/v1/diseases/%s?view=full' % pharosid
             r = requests.get(url)
             result = r.json()
             predicate=LabeledID('PHAROS:gene_involved','gene_involved')
@@ -235,5 +237,4 @@ class Pharos(Service):
                     else:
                         logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
             return resolved_edge_nodes
-
 

@@ -12,8 +12,9 @@ from builder.lookup_utils import lookup_identifier
 from collections import defaultdict, deque
 from builder.pathlex import tokenize_path
 from builder.question import Question
+import datetime
 
-logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
+logger = LoggingUtil.init_logging(__name__, logging.INFO)
 
 class KnowledgeGraph:
     def __init__(self, userquery, rosetta):
@@ -166,6 +167,8 @@ class KnowledgeGraph:
         n_supported = 0
         links_to_check = self.generate_links_from_paths()
         logger.info('Number of pairs to check: {}'.format(len(links_to_check)))
+        #This is bogus because I'm abandoning the pretense of non-omnicorp supporters, but for now...
+        cached = self.rosetta.cache.get('OmnicorpPrefixes')
         print('Number of pairs to check: {}'.format(len(links_to_check)))
         for source, target in links_to_check:
             ids = [source.identifier, target.identifier]
@@ -174,22 +177,28 @@ class KnowledgeGraph:
             log_text = "  -- {key}"
             support_edge = self.rosetta.cache.get (key)
             if support_edge is not None:
-                logger.info (f"cache hit: {key} {support_edge}")
+                logger.debug (f"cache hit: {key} {len(support_edge)}")
             else:
-                logger.info (f"exec op: {key}")
-                try:
-                    support_edge = supporter.term_to_term(source, target)
-                    self.rosetta.cache.set (key, support_edge)
-                except:
-                    logger.debug('Support error, not caching')
-                    continue
+                prefixes = tuple([Text.get_curie(i) for i in ids])
+                if prefixes in cached:
+                    #If the pair is not in there, and the prefixes are cached, then that's a real 0
+                    support_edge = []
+                    logger.debug (f"Sparse Cache: {key} {len(support_edge)}")
+                else:
+                    logger.debug (f"exec op: {key}")
+                    try:
+                        support_edge = supporter.term_to_term(source, target)
+                        self.rosetta.cache.set (key, support_edge)
+                    except:
+                        logger.debug('Support error, not caching')
+                        continue
             if support_edge is not None:
                 n_supported += 1
-                if len(support_edge.publications)> 0:
-                    logger.info('  -Adding support edge from {} to {}'.
-                                      format(source.identifier, target.identifier))
-                    writer.write_edge(support_edge)
-                    self.add_nonsynonymous_edge(support_edge)
+                #if len(support_edge.publications)> 0:
+                #    logger.debug('  -Adding support edge from {} to {}'.
+                #                      format(source.identifier, target.identifier))
+                    #writer.write_edge(support_edge)
+                    #self.add_nonsynonymous_edge(support_edge)
         return n_supported
 
     def support(self, support_module_names):
@@ -213,10 +222,12 @@ class KnowledgeGraph:
         # already been written to include support info.
         with BufferedWriter(self.rosetta) as writer:
             for supporter in supporters:
+                start = datetime.datetime.now()
                 self.generate_support_node_information(supporter,writer)
                 #n_supported = self.full_support(supporter)
                 n_supported = self.path_support(supporter,writer)
-                logger.info('Support Completed.  Added {} edges.'.format(n_supported))
+                end = datetime.datetime.now()
+                logger.info('Support Completed.  Added {} edges in {}.'.format(n_supported,end-start))
 
     def generate_support_node_information(self,supporter,writer):
         for node in self.graph.nodes():
@@ -225,9 +236,9 @@ class KnowledgeGraph:
             log_text = "  -- {key}"
             support_dict = self.rosetta.cache.get (key)
             if support_dict is not None:
-                logger.info (f"cache hit: {key} {support_dict}")
+                logger.debug (f"cache hit: {key} {support_dict}")
             else:
-                logger.info (f"exec op: {key}")
+                logger.debug (f"exec op: {key}")
                 support_dict = supporter.get_node_info(node)
                 self.rosetta.cache.set (key, support_dict)
             if support_dict is not None:
@@ -248,6 +259,7 @@ class KnowledgeGraph:
         """This is going to assume that the first node is 0, which is bogus, but this is temp until support plan is figured out"""
         logger.debug("Follow Paths")
         links_to_check = set()
+        ntotal = 0
         for program in self.userquery.get_programs():
             ancestors = defaultdict(set)
             current_nodes = set()
@@ -281,8 +293,11 @@ class KnowledgeGraph:
             for key in ancestors:
                 #logger.debug("Ancestorkey {}".format(key))
                 for a in ancestors[key]:
-                    links_to_check.add( (key, a) )
-        logger.debug("Found {} links".format(len(links_to_check)))
+                    if key.properties['omnicorp_article_count'] > 0:
+                        if a.properties['omnicorp_article_count'] > 0:
+                            links_to_check.add( (key, a) )
+                    ntotal += 1
+        logger.info("Found {} links out of a possible {}".format(len(links_to_check),ntotal))
         return links_to_check
 
    # def export(self):

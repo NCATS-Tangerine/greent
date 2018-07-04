@@ -12,7 +12,8 @@ from greent.services.hetio import HetIO
 from greent.services.hgnc import HGNC
 from greent.services.mychem import MyChem
 from greent.services.onto import Onto
-from greent.services.omnicorp import OmniCorp
+#from greent.services.omnicorp import OmniCorp
+from greent.services.omnicorp_postgres import OmniCorp
 from greent.services.oxo import OXO
 from greent.services.pharos import Pharos
 from greent.services.quickgo import QuickGo

@@ -45,3 +45,4 @@ def test_synonyms_hp(oxo):
     assert len(all_results) > 0
     for result in all_results:
         assert 'label' in result
+

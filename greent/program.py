@@ -39,6 +39,8 @@ class Program:
 
         self.cache.flush()
         self.log_program()
+        #self.excluded_identifiers=set()
+        self.excluded_identifiers=set(['UBERON:0000468'])
 
         import pika
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='127.0.0.1',

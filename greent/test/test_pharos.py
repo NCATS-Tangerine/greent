@@ -3,7 +3,6 @@ from greent.graph_components import KNode, LabeledID
 from greent import node_types
 from greent.util import Text
 from greent.conftest import rosetta
-from greent.synonymizers.hgnc_synonymizer import synonymize
 
 @pytest.fixture()
 def pharos(rosetta):
@@ -47,3 +46,9 @@ def test_gene_get_drug(pharos,rosetta):
     output = pharos.gene_get_drug(gene_node)
     identifiers = [ output_i[1].identifier for output_i in output ]
     assert 'CHEMBL:CHEMBL118'in identifiers
+
+def test_disease_get_gene(pharos,rosetta):
+    disease_node = KNode('DOID:4325',node_types.DISEASE, label="ebola")
+    output = pharos.disease_get_gene(disease_node)
+    identifiers = [ output_i[1].identifier for output_i in output ]
+    assert 'HGNC:7897' in identifiers
