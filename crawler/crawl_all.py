@@ -5,9 +5,9 @@ from crawler.omni import create_omnicache
 
 def crawl():
     rosetta = Rosetta()
-    load_genes(rosetta)
+#    load_genes(rosetta)
     load_chemicals(rosetta)
-    create_omnicache(rosetta)
+#    create_omnicache(rosetta)
 
 if __name__=='__main__':
     crawl()
