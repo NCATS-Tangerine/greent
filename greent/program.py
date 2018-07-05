@@ -2,6 +2,9 @@ import logging
 import traceback
 import calendar
 import json
+import os
+
+import requests
 from collections import defaultdict
 from greent.graph_components import KNode
 from greent.util import LoggingUtil
@@ -42,12 +45,19 @@ class Program:
         #self.excluded_identifiers=set()
         self.excluded_identifiers=set(['UBERON:0000468'])
 
-        import pika
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='127.0.0.1',
-            virtual_host='builder',
-            credentials=pika.credentials.PlainCredentials('murphy', 'pword')))
-        self.channel = self.connection.channel()
-        self.channel.queue_declare(queue='neo4j')
+        response = requests.get(f"{os.environ['FLOWER_BROKER_API']}queues/")
+        queues = response.json()
+        num_consumers = [q['consumers'] for q in queues if q['name'] == 'neo4j'][0]
+        if num_consumers:
+            import pika
+            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='127.0.0.1',
+                virtual_host='builder',
+                credentials=pika.credentials.PlainCredentials('murphy', 'pword')))
+            self.channel = self.connection.channel()
+            self.channel.queue_declare(queue='neo4j')
+        else:
+            self.connection = None
+            self.channel = None
 
     def __del__(self):
         self.connection.close()
@@ -160,22 +170,25 @@ class Program:
         if completed is None:
             completed = set()
             self.cache.set(key, completed)
-            # with BufferedWriter(self.rosetta) as writer:
-            #     writer.write_node(node)
-            
-            self.channel.basic_publish(exchange='',
-                                routing_key='neo4j',
-                                body=json.dumps({'nodes': [node.dump()], 'edges': []}))
+
+            if self.channel is None:
+                with BufferedWriter(self.rosetta) as writer:
+                    writer.write_node(node)
+            else:
+                self.channel.basic_publish(exchange='',
+                    routing_key='neo4j',
+                    body=json.dumps({'nodes': [node.dump()], 'edges': []}))
             print(" [x] Sent node")
 
         # make sure the edge is queued for creation AFTER the node
         if edge:
-            # with BufferedWriter(self.rosetta) as writer:
-            #     writer.write_edge(edge)
-            
-            self.channel.basic_publish(exchange='',
-                                routing_key='neo4j',
-                                body=json.dumps({'nodes': [], 'edges': [edge.dump()]}))
+            if self.channel is None:
+                with BufferedWriter(self.rosetta) as writer:
+                    writer.write_edge(edge)
+            else:
+                self.channel.basic_publish(exchange='',
+                    routing_key='neo4j',
+                    body=json.dumps({'nodes': [], 'edges': [edge.dump()]}))
             print(" [x] Sent edge")
 
         # quit if we've closed a loop
