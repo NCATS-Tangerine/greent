@@ -33,6 +33,7 @@ ply==3.11
 portalocker==1.2.0
 prefixcommons==0.1.4
 pronto==0.10.2
+psycopg2==2.7.4
 py==1.5.2
 PyLD==1.0.3
 pyparsing==2.2.0

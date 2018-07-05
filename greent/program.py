@@ -43,6 +43,8 @@ class Program:
         self.end_nodes = []
         self.check_program(query_definition)
         self.log_program()
+        #self.excluded_identifiers=set()
+        self.excluded_identifiers=set(['UBERON:0000468'])
 
     def check_program(self,qd):
         #Check for lines - need to have outward edges from defined nodes
@@ -144,6 +146,7 @@ class Program:
                         results = op(source_node)
                         self.rosetta.cache.set (key, results)
                         logger.debug (f"cache.set-> {key} length:{len(results)}")
+                    results = list(filter(lambda x: x[1].identifier not in self.excluded_identifiers, results))
                     newnodes = [ r[1] for r in results ]
                     self.add_instance_nodes(newnodes,next_context,writer)
                     newedges = [ r[0] for r in results ]

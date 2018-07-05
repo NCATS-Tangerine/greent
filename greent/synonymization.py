@@ -27,7 +27,7 @@ synonymizers = {
     node_types.ANATOMY:oxo_synonymizer,
 }
 
-logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG, format='medium')
+logger = LoggingUtil.init_logging(__name__, level=logging.INFO, format='medium')
 
 class Synonymizer:
 

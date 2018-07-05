@@ -84,7 +84,7 @@ def export_edge_chunk(tx,edgelist,edgelabel):
     reason to worry about preserving information from an old edge.
     What defines the edge are the identifiers of its nodes, and the source.function that created it."""
 
-    print(f"Writing {edgelist}")
+    #print(f"Writing {edgelist}")
 
     cypher = f"""UNWIND $batches as row
             MATCH (a:{node_types.ROOT_ENTITY} {{id: row.aid}}),(b:{node_types.ROOT_ENTITY} {{id: row.bid}})
@@ -128,7 +128,7 @@ def sort_nodes_by_label(nodes):
 
 def export_node_chunk(tx,nodelist,label):
 
-    print(f"Writing {nodelist}")
+    #print(f"Writing {nodelist}")
 
     cypher = f"""UNWIND $batches as batch
                 MERGE (a:{node_types.ROOT_ENTITY} {{id: batch.id}})

@@ -6,7 +6,7 @@ from greent import node_types
 from collections import defaultdict
 from datetime import datetime as dt
 
-logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
+logger = LoggingUtil.init_logging(__name__, logging.INFO)
 
 def get_supporter(greent):
     return OmnicorpSupport(greent)
@@ -31,12 +31,14 @@ class OmnicorpSupport():
         else:
             articles = []
         logger.debug(f'OmniCorp {node_a.identifier} {node_b.identifier} -> {len(articles)}')
+        return articles
+        #We're not putting these edges into neo4j, just return the article list
         #Even if articles = [], we want to make an edge for the cache. We can decide later to write it or not.
-        pmids = [f'PMID:{x.split("/")[-1]}' for x in articles]
-        predicate=LabeledID('omnicorp:1', 'literature_co-occurrence')
-        ke = KEdge(node_a, node_b, 'omnicorp.term_to_term', dt.now(), predicate,predicate,
-                   f'{node_a.identifier},{node_b.identifier}',publications=pmids, is_support=True)
-        return ke
+        #pmids = [f'PMID:{x.split("/")[-1]}' for x in articles]
+        #predicate=LabeledID('omnicorp:1', 'literature_co-occurrence')
+        #ke = KEdge(node_a, node_b, 'omnicorp.term_to_term', dt.now(), predicate,predicate,
+        #           f'{node_a.identifier},{node_b.identifier}',publications=pmids, is_support=True)
+        #return ke
 
     def generate_all_edges(self, nodelist):
         results = self.omnicorp.get_all_shared_pmids(nodelist)

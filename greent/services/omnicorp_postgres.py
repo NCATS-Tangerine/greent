@@ -12,40 +12,90 @@ from pprint import pprint
 import datetime
 from collections import defaultdict
 import time
+import psycopg2
 
-logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
+logger = LoggingUtil.init_logging(__name__, logging.INFO)
 
 class OmniCorp(Service):
 
     def __init__(self, context): #triplestore):
         super(OmniCorp, self).__init__("omnicorp", context)
-        self.triplestore = TripleStore (self.url)
-        self.prefix_to_uri = {'UBERON': 'http://purl.obolibrary.org/obo/UBERON_',
-                              'BSPO': 'http://purl.obolibrary.org/obo/BSPO_',
-                              'PATO': 'http://purl.obolibrary.org/obo/PATO_',
-                              'GO':'http://purl.obolibrary.org/obo/GO_',
-                              'MONDO':'http://purl.obolibrary.org/obo/MONDO_',
-                              'HP':'http://purl.obolibrary.org/obo/HP_',
-                              'ENVO:':'http://purl.obolibrary.org/obo/ENVO_',
-                              'OBI':'http://purl.obolibrary.org/obo/OBI_',
-                              'CL':'http://purl.obolibrary.org/obo/CL_',
-                              'SO':'http://purl.obolibrary.org/obo/SO_',
-                              'CHEBI':'http://purl.obolibrary.org/obo/CHEBI_',
-                              'HGNC':'http://identifiers.org/hgnc/HGNC:',
-                              'MESH':'http://id.nlm.nih.gov/mesh/'}
+        db = context.config['POSTGRES_DB']
+        user = context.config['POSTGRES_USER']
+        port = context.config['POSTGRES_PORT']
+        host = context.config['POSTGRES_HOST']
+        self.prefixes = set(['UBERON', 'BSPO', 'PATO', 'GO', 'MONDO', 'HP', 'ENVO', 'OBI', 'CL', 'SO', 'CHEBI', 'HGNC', 'MESH'])
+        self.conn = psycopg2.connect(dbname=db, user=user, host=host, port=port)
+        self.nsingle = 0
+        self.total_single_call = datetime.timedelta()
+        self.npair = 0
+        self.total_pair_call = datetime.timedelta()
 
     def get_omni_identifier(self,node):
         #Let's start with just the 'best' identifier
         identifier = node.identifier
         prefix = Text.get_curie(node.identifier)
-        if prefix not in self.prefix_to_uri:
-            logger.warn("What kinda tomfoolery is this?")
-            logger.warn(f"{node.identifier} {node.node_type}")
-            logger.warn(f"{node.synonyms}")
+        if prefix not in self.prefixes:
+            logger.debug("What kinda tomfoolery is this?")
+            logger.debug(f"{node.identifier} {node.node_type}")
+            logger.debug(f"{node.synonyms}")
             return None
-        oident = f'{self.prefix_to_uri[prefix]}{Text.un_curie(node.identifier)}'
-        return oident
+        return identifier
 
+    def get_shared_pmids (self, node1, node2):
+        id1 = self.get_omni_identifier(node1)
+        id2 = self.get_omni_identifier(node2)
+        if id1 is None or id2 is None:
+            return []
+        done = False
+        ntries = 0
+        pmids = self.postgres_get_shared_pmids( id1,id2 )
+        if pmids is None:
+            logger.error("OmniCorp gave up")
+            return None
+        return [ f'PMID:{p}' for p in pmids ]
+
+    def postgres_get_shared_pmids(self, id1, id2):
+        prefix1 = Text.get_curie(id1)
+        prefix2 = Text.get_curie(id2)
+        start = datetime.datetime.now()
+        cur = self.conn.cursor()
+        statement = f'''SELECT a.pubmedid 
+           FROM omnicorp.{prefix1} a
+           JOIN omnicorp.{prefix2} b ON a.pubmedid = b.pubmedid
+           WHERE a.curie = %s
+           AND b.curie = %s '''
+        cur.execute(statement, (id1, id2))
+        pmids = [ x[0] for x in cur.fetchall() ]
+        cur.close()
+        end = datetime.datetime.now()
+        self.total_pair_call += (end-start)
+        logger.debug(f'Found {len(pmids)} shared ids in {end-start}. Total {self.total_pair_call}')
+        self.npair += 1
+        if self.npair % 100 == 0:
+            logger.info(f'NCalls: {self.npair} Total time: {self.total_pair_call}  Avg Time: {self.total_pair_call/self.npair}')
+        return pmids
+
+    def count_pmids(self, node):
+        identifier = self.get_omni_identifier(node)
+        if identifier is None:
+            return 0
+        prefix = Text.get_curie(identifier)
+        start = datetime.datetime.now()
+        cur = self.conn.cursor()
+        statement = f'SELECT COUNT(pubmedid) from omnicorp.{prefix} WHERE curie = %s'
+        cur.execute(statement, (identifier,))
+        n = cur.fetchall()[0][0]
+        cur.close()
+        end = datetime.datetime.now()
+        self.total_single_call += (end-start)
+        logger.debug(f'Found {n} pmids in {end-start}. Total {self.total_single_call}')
+        self.nsingle += 1
+        if self.nsingle % 100 == 0:
+            logger.info(f'NCalls: {self.nsingle} Total time: {self.total_single_call}  Avg Time: {self.total_single_call/self.nsingle}')
+        return n
+
+'''
     def query_omnicorp (self, query):
         """ Execute and return the result of a SPARQL query. """
         return self.triplestore.execute_query (query)
@@ -171,4 +221,4 @@ class OmniCorp(Service):
         return [ p['pubmed'] for p in pmids ]
     
 
-
+'''
