@@ -26,7 +26,6 @@ neo4jrestclient==2.1.1
 networkx==1.11
 numpy==1.14.2
 ontobio==0.2.33
-pandas==0.22.0
 pathtools==0.1.2
 pluggy==0.6.0
 ply==3.11
