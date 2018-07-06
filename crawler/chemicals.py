@@ -228,25 +228,44 @@ def true(s,p,o):
     return True
 
 def load_chemicals(rosetta):
-    #load_unichem()
+    concord = load_unichem()
     cid2mesh = get_pubchem_cid_mesh()
+    glom(cid2mesh, concord)
+    with open('chemconc.txt','w') as outf:
+        for key in concord:
+            outf.write(f'{key}\t{concord[key]}\n')
+    for chem_id in concord:
+        key = f"synonymize({chem_id})"
+        value = concord[chem_id]
+        rosetta.cache.set(key,value)
+
 
 def uni_glom(unichem_data,prefix1,prefix2,chemdict):
     n = unichem_data.split('\n')[1:]
+    if len(n[-1]) == 0:
+        n = n[:-1]
     pairs = [ ni.split('\t') for ni in n ]
     curiepairs = [ (f'{prefix1}:{p[0]}',f'{prefix2}:{p[1]}') for p in pairs]
     glom(curiepairs,chemdict)
 
 def glom(cpairs, chemdict):
+    print(len(cpairs))
+    print(len(chemdict))
     for cpair in cpairs:
         if cpair[0] not in chemdict:
             if cpair[1] in chemdict:
-                print('hmmm')
+                chemdict[cpair[0]] = chemdict[cpair[1]]
+            else:
+                chemdict[cpair[0]] = set()
+        if cpair[1] in chemdict:
+            if chemdict[cpair[0]] != chemdict[cpair[1]]:
+                print('haaay')
                 print(cpair[0],cpair[1])
+                print(chemdict[cpair[0]])
+                print(chemdict[cpair[1]])
                 exit()
-            chemdict[cpair[0]] = set()
-        #for curie in cset:
-            #if curie
+        chemdict[cpair[0]].update(cpair)
+        chemdict[cpair[1]] = chemdict[cpair[0]]
 
 def load_unichem():
     chemcord = {}
@@ -257,8 +276,12 @@ def load_unichem():
     chembl_pubchem = pull('ftp.ebi.ac.uk','pub/databases/chembl/UniChem/data/wholeSourceMapping/src_id1', 'src1src22.txt.gz')
     uni_glom(chembl_pubchem,'CHEMBL','PUBCHEM',chemcord)
     db_chebi = pull('ftp.ebi.ac.uk','pub/databases/chembl/UniChem/data/wholeSourceMapping/src_id2', 'src2src7.txt.gz')
+    uni_glom(db_chebi,'DRUGBANK','CHEBI',chemcord)
     db_pubchem = pull('ftp.ebi.ac.uk','pub/databases/chembl/UniChem/data/wholeSourceMapping/src_id2', 'src2src22.txt.gz')
+    uni_glom(db_pubchem,'DRUGBANK','PUBCHEM',chemcord)
     chebi_pubchem = pull('ftp.ebi.ac.uk','pub/databases/chembl/UniChem/data/wholeSourceMapping/src_id7', 'src7src22.txt.gz')
+    uni_glom(chebi_pubchem,'CHEBI','PUBCHEM',chemcord)
+    return chemcord
 
 def get_pubchem_cid_mesh():
     #Concept2mesh
@@ -271,6 +294,11 @@ def get_pubchem_cid_mesh():
     #compound2mesh: read :synonym  :is_attribute_of :compound
     compounds2mesh = transfer_map('ftp.ncbi.nlm.nih.gov', '/pubchem/RDF/synonym', 'pc_synonym2compound_%06d.ttl.gz',synonym2mesh,true,match_obj=False)
     print(len(compounds2mesh))
+    pubchem_mesh = []
+    for cid in compounds2mesh:
+        for mesh in compounds2mesh[cid]:
+            pubchem_mesh.append((f'PUBCHEM:{cid}\tMESH:{mesh}\n'))
+    return pubchem_mesh
 
     ###If you want to go all the way to chembl2mesh, you can, but all we really need is pubchem cid to mesh
     ### (the cid->everything else can come from unichem)
@@ -279,9 +307,9 @@ def get_pubchem_cid_mesh():
     #chembl2mesh: read
     #chembl2mesh = transfer_map('ftp.ncbi.nlm.nih.gov', '/pubchem/RDF/substance', 'pc_substance_match.ttl%06d.ttl.gz',substance2mesh,object_is_chembl,match_obj=False)
 
-    print(len(compounds2mesh))
-    with open('pubchemmesh.txt','w') as outf:
-        for cid in compounds2mesh:
-            for mesh in compounds2mesh[cid]:
-                outf.write(f'{cid}\t{mesh}\n')
-    return compounds2mesh
+    #print(len(compounds2mesh))
+    #with open('pubchemmesh.txt','w') as outf:
+    #    for cid in compounds2mesh:
+    #        for mesh in compounds2mesh[cid]:
+    #            outf.write(f'{cid}\t{mesh}\n')
+    #return compounds2mesh
