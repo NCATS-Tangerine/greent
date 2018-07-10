@@ -65,6 +65,18 @@ def test_gene_to_drug_unique(ctd):
             assert n.label == 'Estradiol'
     assert total == unique
 
+def test_gene_to_drug_ACHE(ctd):
+    input_node=KNode("NCBIGENE:43",node_types.GENE) #ACHE
+    results = ctd.gene_to_drug(input_node)
+    outputs = [ (e.standard_predicate,n.identifier) for e,n in results]
+    total = len(outputs)
+    unique = len(set(outputs))
+    found = False
+    for e,n in results:
+        if (n.identifier == 'MESH:D003976'):
+            print(e)
+    assert total == unique
+
 
 def test_gene_to_drug_synonym(ctd):
      #Even though the main identifier is drugbank, CTD should find the right synonym in there somewhere.

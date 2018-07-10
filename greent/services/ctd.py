@@ -155,9 +155,12 @@ class CTD(Service):
         identifiers = gene_node.get_synonyms_by_prefix('NCBIGENE')
         for identifier in identifiers:
             unique = set()
-            url = f"{self.url}/CTD_chem_gene_ixns_GeneID/{Text.un_curie(identifier)}/"
+            geneid = Text.un_curie(identifier)
+            url = f"{self.url}/CTD_chem_gene_ixns_GeneID/{geneid}/"
             obj = requests.get (url).json ()
             for r in obj:
+                if r['GeneID'] != geneid:
+                    continue
                 props = {"description": r[ 'Interaction' ]}
                 predicate_label = r['InteractionActions']
                 predicate = LabeledID(self.get_ctd_predicate_identifier(predicate_label),predicate_label)
