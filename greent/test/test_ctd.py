@@ -58,10 +58,11 @@ def test_gene_to_drug_unique(ctd):
     outputs = [ (e.standard_predicate,n.identifier) for e,n in results]
     total = len(outputs)
     unique = len(set(outputs))
+    found = False
     for e,n in results:
         if n.identifier=='MESH:D004958':
-            print(e.standard_predicate)
-    print(total,unique)
+            found = True
+            assert n.label == 'Estradiol'
     assert total == unique
 
 

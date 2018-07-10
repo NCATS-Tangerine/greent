@@ -24,8 +24,9 @@ class OmniCorp(Service):
         user = context.config['POSTGRES_USER']
         port = context.config['POSTGRES_PORT']
         host = context.config['POSTGRES_HOST']
+        password = context.config['POSTGRES_PASSWORD']
         self.prefixes = set(['UBERON', 'BSPO', 'PATO', 'GO', 'MONDO', 'HP', 'ENVO', 'OBI', 'CL', 'SO', 'CHEBI', 'HGNC', 'MESH'])
-        self.conn = psycopg2.connect(dbname=db, user=user, host=host, port=port)
+        self.conn = psycopg2.connect(dbname=db, user=user, host=host, port=port, password=password)
         self.nsingle = 0
         self.total_single_call = datetime.timedelta()
         self.npair = 0

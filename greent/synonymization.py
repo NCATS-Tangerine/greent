@@ -82,7 +82,9 @@ class Synonymizer:
                         potential_identifiers = ids_with_labels
                     potential_identifiers.sort()
                 node.identifier = potential_identifiers[0].identifier
-                node.label = potential_identifiers[0].label
+                #Only replace the label if we have a label.
+                if potential_identifiers[0].label != '':
+                    node.label = potential_identifiers[0].label
                 break
         if node.identifier.startswith('DOID'):
             logger.warn("We are ending up with a DOID here")

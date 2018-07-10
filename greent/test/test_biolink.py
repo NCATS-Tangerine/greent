@@ -39,10 +39,8 @@ def test_gene_to_disease(biolink):
     predicates = [ relation.standard_predicate for relation,n in relations ] 
     pids = set( [p.identifier for p in predicates] )
     plabels = set( [p.label for p in predicates] )
-    assert len(pids) == 1
-    assert len(plabels) == 1
     assert 'RO:0002607' in pids
-    assert 'gene_associated_with_condition' in pids
+    assert 'gene_associated_with_condition' in plabels
 
 
 def test_gene_to_process(biolink):

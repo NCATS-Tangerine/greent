@@ -355,7 +355,7 @@ def run_query(querylist, supports, rosetta, prune=False):
     #Enhance should not be needed.  If we have bad nodes, find the root of the badness and fix it there, don't try to post-process
     #kgraph.enhance()
     #Till omni is back
-    #kgraph.support(supports)
+    kgraph.support(supports)
     #kgraph.export()
 
 
