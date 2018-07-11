@@ -1,12 +1,10 @@
 from ftplib import FTP
 from io import BytesIO
-from json import loads
 from gzip import decompress
-from collections import defaultdict
-from greent.graph_components import LabeledID
 from greent.util import LoggingUtil
 import logging
-from crawler.mesh_pubchem import refresh_mesh_pubchem
+import os
+from crawler.mesh_unii import refresh_mesh_pubchem
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
@@ -32,16 +30,21 @@ def make_mesh_id(mesh_uri):
     return f"mesh:{mesh_uri.split('/')[-1][:-1]}"
 
 
-def load_chemicals(rosetta,refresh=False):
+def load_chemicals(rosetta, refresh=False):
+    #Build if need be
     if refresh:
-        refresh_mesh_pubchem()
+        refresh_mesh_pubchem(rosetta)
+    #Get all the simple stuff
     concord = load_unichem()
-    cid2mesh_1 = load_pubchem_mesh('compound_mesh_1.txt')
-    print('PUBCHEM/MESH')
-    glom(cid2mesh_1, concord)
-    cid2mesh_2 = load_pubchem_mesh('compound_mesh_2.txt')
-    print('PUBCHEM/MESH')
-    glom(cid2mesh_2, concord)
+    #DO MESH/UNII
+    mesh_unii_file = os.path.join(os.path.dirname(__file__),'mesh_to_unii.txt')
+    mesh_unii_pairs = load_pairs(mesh_unii_file,'UNII')
+    glom(mesh_unii_pairs, concord)
+    #DO MESH/PUBCHEM
+    mesh_pc_file = os.path.join(os.path.dirname(__file__),'mesh_to_pubchem.txt')
+    mesh_pc_pairs = load_pairs(mesh_pc_file,'PUBCHEM')
+    glom(mesh_pc_pairs, concord)
+    #Dump
     with open('chemconc.txt','w') as outf:
         for key in concord:
             outf.write(f'{key}\t{concord[key]}\n')
@@ -50,16 +53,20 @@ def load_chemicals(rosetta,refresh=False):
         value = concord[chem_id]
         rosetta.cache.set(key,value)
 
-def load_pubchem_mesh(fname):
+def load_pairs(fname,prefix):
     pairs = []
     with open(fname,'r') as inf:
         for line in inf:
             x = line.strip().split('\t')
-            pc = f"PUBCHEM:{x[0].split(':')[1][3:]}"
-            pre_meshes = x[1][1:-1].split(',')
-            meshes = [ f"MESH:{pmesh.strip()[1:-1].split(':')[1]}" for pmesh in pre_meshes ]
-            for mesh in meshes:
-                pairs.append( (pc,mesh) )
+            mesh = f"MESH:{x[0]}"
+            if x[1].startswith('['):
+                pre_ids = x[1][1:-1].split(',')
+                pre_ids = [pids[1:-1] for pids in pre_ids] #remove ' marks around ids
+            else:
+                pre_ids = [x[1]]
+            ids = [ f'{prefix}:{pid}' for pid in pre_ids ]
+            for identifier in ids:
+                pairs.append( (mesh,identifier) )
     return pairs
 
 def uni_glom(unichem_data,prefix1,prefix2,chemdict):
@@ -88,18 +95,22 @@ def glom(cpairs, chemdict):
 
 def load_unichem():
     chemcord = {}
-    chembl_db = pull('ftp.ebi.ac.uk','pub/databases/chembl/UniChem/data/wholeSourceMapping/src_id1', 'src1src2.txt.gz')
-    uni_glom(chembl_db,'CHEMBL','DRUGBANK',chemcord)
-    chembl_chebi = pull('ftp.ebi.ac.uk','pub/databases/chembl/UniChem/data/wholeSourceMapping/src_id1', 'src1src7.txt.gz')
-    uni_glom(chembl_chebi,'CHEMBL','CHEBI',chemcord)
-    chembl_pubchem = pull('ftp.ebi.ac.uk','pub/databases/chembl/UniChem/data/wholeSourceMapping/src_id1', 'src1src22.txt.gz')
-    uni_glom(chembl_pubchem,'CHEMBL','PUBCHEM',chemcord)
-    db_chebi = pull('ftp.ebi.ac.uk','pub/databases/chembl/UniChem/data/wholeSourceMapping/src_id2', 'src2src7.txt.gz')
-    uni_glom(db_chebi,'DRUGBANK','CHEBI',chemcord)
-    db_pubchem = pull('ftp.ebi.ac.uk','pub/databases/chembl/UniChem/data/wholeSourceMapping/src_id2', 'src2src22.txt.gz')
-    uni_glom(db_pubchem,'DRUGBANK','PUBCHEM',chemcord)
-    chebi_pubchem = pull('ftp.ebi.ac.uk','pub/databases/chembl/UniChem/data/wholeSourceMapping/src_id7', 'src7src22.txt.gz')
-    uni_glom(chebi_pubchem,'CHEBI','PUBCHEM',chemcord)
+    prefixes={1:'CHEMBL', 2:'DRUGBANK', 7:'CHEBI', 14:'UNII', 22:'PUBCHEM'}
+    #
+    keys=list(prefixes.keys())
+    keys.sort()
+    for i in range(len(keys)):
+        for j in range(i+1,len(keys)):
+            print(i,j)
+            ki = keys[i]
+            kj = keys[j]
+            prefix_i = prefixes[ki]
+            prefix_j = prefixes[kj]
+            dr =f'pub/databases/chembl/UniChem/data/wholeSourceMapping/src_id{ki}'
+            fl = f'src{ki}src{kj}.txt.gz'
+            print(dr,fl)
+            pairs = pull('ftp.ebi.ac.uk',dr ,fl )
+            uni_glom(pairs,prefix_i,prefix_j,chemcord)
     return chemcord
 
 
