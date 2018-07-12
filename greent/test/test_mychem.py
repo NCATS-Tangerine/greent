@@ -11,6 +11,21 @@ def mychem(rosetta):
     mychem = rosetta.core.mychem
     return mychem
 
+def test_drugcentral(mychem):
+    node = KNode('CHEMBL:CHEMBL118',node_types.DRUG, label='Celecoxib') #Celecoxib
+    results = mychem.get_drugcentral(node)
+    found1 = False
+    found2 = False
+    for e,n in results:
+        if n.identifier == 'UMLS:C0007222':
+            found1 = True
+            assert e.relation_label == 'contraindicated'
+        if n.identifier == 'UMLS:C0003873':
+            found2 = True
+            assert e.relation_label == 'treats'
+    assert found1
+    assert found2
+
 def test_drug_adverse_events(mychem):
     node = KNode('CHEMBL:CHEMBL1508',node_types.DRUG) #Escitalopram
     results = mychem.get_adverse_events(node)
