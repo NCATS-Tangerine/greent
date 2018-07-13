@@ -89,6 +89,7 @@ class Question(FromDictMixin):
               - id: 0
                 type: disease
                 curie: "MONDO:0005737"
+                name: "Ebola hemorrhagic fever"
               - id: 1
                 type: gene
               - id: 2
