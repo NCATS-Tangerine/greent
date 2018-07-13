@@ -115,7 +115,7 @@ def export_edge_chunk(tx,edgelist,edgelabel):
 
 def sort_nodes_by_label(nodes):
     nl = defaultdict(list)
-    deque( map( lambda x: nl[x.node_type].append(x), nodes ) )
+    deque( map( lambda x: nl[x.type].append(x), nodes ) )
     return nl
 
 
