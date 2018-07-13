@@ -241,13 +241,9 @@ class Question(FromDictMixin):
             known_ids.update([e.source_id, e.target_id])
         return links
 
-    @property
-    def named_nodes(self):
-        return [n.id for n in self.machine_question['nodes'] if n.curie]
-
     def generate_concept_cypher(self):
         """Generate a cypher query to find paths through the concept-level map."""
-        named_node_names = [f'n{n}' for n in self.named_nodes]
+        named_node_names = [f'n{n.id}' for n in self.machine_question['nodes'] if n.curie]
         node_names = [f'n{n.id}' for n in self.machine_question['nodes']]
         edge_names = [f"e{e.id}" for e in self.machine_question['edges']]
         cypherbuffer = [f"MATCH {s}" for s in self.concept_cypher_signature]
