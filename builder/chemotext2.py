@@ -45,9 +45,9 @@ class Chemotext2Support():
     def term_to_term(self,node_a,node_b,limit = 10000):
         """Given two terms, find articles in chemotext that connect them, and return as a KEdge.
         If nothing is found, return None"""
-        logging.getLogger('application').debug('chemotext2: "{}" to "{}"'.format(node_a.label, node_b.label))
-        phrases_a = self.generate_phrases(node_a.label)
-        phrases_b = self.generate_phrases(node_b.label)
+        logging.getLogger('application').debug('chemotext2: "{}" to "{}"'.format(node_a.name, node_b.name))
+        phrases_a = self.generate_phrases(node_a.name)
+        phrases_b = self.generate_phrases(node_b.name)
         maxr = -1
         besta = ''
         bestb = ''

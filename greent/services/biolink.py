@@ -92,7 +92,7 @@ class Biolink(Service):
     def gene_get_disease(self, gene_node):
         """Given a gene specified as a curie, return associated diseases."""
         #Biolink is pretty forgiving on gene inputs, and our genes should have HGNC as their identifiers nearly always
-        ehgnc = urllib.parse.quote_plus(gene_node.identifier)
+        ehgnc = urllib.parse.quote_plus(gene_node.id)
         logging.getLogger('application').debug('          biolink: %s/bioentity/gene/%s/diseases' % (self.url, ehgnc))
         urlcall = '%s/bioentity/gene/%s/diseases' % (self.url, ehgnc)
         r = self.query(urlcall)
@@ -101,10 +101,10 @@ class Biolink(Service):
 
     def disease_get_phenotype(self, disease):
         #Biolink should understand any of our disease inputs here.
-        url = "{0}/bioentity/disease/{1}/phenotypes/".format(self.url, disease.identifier)
+        url = "{0}/bioentity/disease/{1}/phenotypes/".format(self.url, disease.id)
         response = self.query(url)
         #response = requests.get(url).json()
-        return self.process_associations(response, 'disease_get_phenotype', node_types.PHENOTYPE, disease.identifier, url, disease)
+        return self.process_associations(response, 'disease_get_phenotype', node_types.PHENOTYPE, disease.id, url, disease)
 
     def gene_get_go(self, gene):
         # this function is very finicky.  gene must be in uniprotkb, and the curie prefix must be correctly capitalized
@@ -123,18 +123,18 @@ class Biolink(Service):
         if response is None:
             return []
         edges_nodes = self.process_associations(response, 'gene_get_process_or_function', node_types.PROCESS_OR_FUNCTION, input_id, url,gene)
-        process_or_function_results = list(filter(lambda x: self.go.is_biological_process(x[1].identifier) or
-                                                  self.go.is_molecular_function(x[1].identifier), edges_nodes))
+        process_or_function_results = list(filter(lambda x: self.go.is_biological_process(x[1].id) or
+                                                  self.go.is_molecular_function(x[1].id), edges_nodes))
         return process_or_function_results
 
     def gene_get_pathways(self, gene):
-        url = "{0}/bioentity/gene/{1}/pathways/".format(self.url, gene.identifier)
+        url = "{0}/bioentity/gene/{1}/pathways/".format(self.url, gene.id)
         #response = requests.get(url).json()
         response = self.query(url)
-        return self.process_associations(response, 'gene_get_pathways', node_types.PATHWAY, gene.identifier, url,gene)
+        return self.process_associations(response, 'gene_get_pathways', node_types.PATHWAY, gene.id, url,gene)
 
     def pathway_get_gene(self, pathway):
-        url = "{0}/bioentity/pathway/{1}/genes/".format(self.url, pathway.identifier)
+        url = "{0}/bioentity/pathway/{1}/genes/".format(self.url, pathway.id)
         #response = requests.get(url).json()
         response = self.query(url)
-        return self.process_associations(response, 'pathway_get_genes', node_types.GENE, url, pathway.identifier, pathway, reverse=True)
+        return self.process_associations(response, 'pathway_get_genes', node_types.GENE, url, pathway.id, pathway, reverse=True)

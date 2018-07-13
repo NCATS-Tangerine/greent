@@ -15,26 +15,26 @@ class TypeCheck(Service):
 
     def is_cell(self, node):
         """This is a very cheesy approach.  Once we have a generic ontology browser hooked in, we can reformulate"""
-        curie_prefix = Text.get_curie(node.identifier)
+        curie_prefix = Text.get_curie(node.id)
         return curie_prefix == 'CL'
 
     #The way caster works, these nodes won't necessarily be synonymized yet.  So it may just
     # have e.g. a Meddra ID or something
     def is_disease(self,node):
         #If this thing can be converted to DOID or MONDO then I'm calling it a disease
-        curie_prefix = Text.get_curie(node.identifier)
+        curie_prefix = Text.get_curie(node.id)
         if 'DOID' == curie_prefix or 'MONDO' == curie_prefix :
             return True
-        synonyms = self.greent.oxo.get_synonymous_curies(node.identifier)
+        synonyms = self.greent.oxo.get_synonymous_curies(node.id)
         prefixes = [ Text.get_curie(ident) for ident in synonyms ]
         return ('DOID' in prefixes) or ('MONDO' in prefixes)
 
     def is_phenotypic_feature(self,node):
         #If this thing can be converted to HP, then it's a phenotype
-        curie_prefix = Text.get_curie(node.identifier)
+        curie_prefix = Text.get_curie(node.id)
         if 'HP' == curie_prefix:
             return True
-        synonyms = self.greent.oxo.get_synonymous_curies(node.identifier)
+        synonyms = self.greent.oxo.get_synonymous_curies(node.id)
         prefixes = [ Text.get_curie(ident) for ident in synonyms ]
         return ('HP' in prefixes)
 

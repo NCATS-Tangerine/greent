@@ -55,7 +55,7 @@ class Mondo2(Onto):
     
     def has_ancestor(self,obj, terms):
         """ Is is_a(obj,t) true for any t in terms ? """
-        ids = self.get_mondo_id(obj.identifier)        
+        ids = self.get_mondo_id(obj.id)        
         results = [ i for i in ids for candidate_ancestor in terms if super(Mondo2,self).is_a(i, candidate_ancestor) ] \
                  if terms else []
         return len(results) > 0, results
@@ -79,11 +79,11 @@ class Mondo2(Onto):
     """ No indication anyone ever calls these three. And the fourth is called internally by something we're replacing. """
     def doid_get_orphanet_genetic_condition (self, disease):
         results = self.doid_get_genetic_condition (disease)
-        return [ r for r in results if r[1].identifier.startswith ('ORPHANET.GENETIC_CONDITION') ]
+        return [ r for r in results if r[1].id.startswith ('ORPHANET.GENETIC_CONDITION') ]
     
     def doid_get_doid_genetic_condition (self, disease):
         results = self.doid_get_genetic_condition (disease)
-        return [ r for r in results if r[1].identifier.startswith ('DOID.GENETIC_CONDITION') ]
+        return [ r for r in results if r[1].id.startswith ('DOID.GENETIC_CONDITION') ]
 
     def substring_search(self,name):
         ciname = '(?i){}'.format(name)

@@ -51,7 +51,7 @@ class Synonymizer:
             logger.debug(f"Number of synonyms:{len(synonyms)}")
             node.synonyms.update(synonyms)
         else:
-            logger.warn (f"No synonymizer registered for concept: {node.node_type}")
+            logger.warn (f"No synonymizer registered for concept: {node.type}")
         self.normalize(node)
 
     def normalize(self,node):
@@ -87,7 +87,7 @@ class Synonymizer:
                 break
         if node.curie.startswith('DOID'):
             logger.warn("We are ending up with a DOID here")
-            logger.warn(node.identifier)
+            logger.warn(node.id)
             logger.warn(node.synonyms)
-            logger.warn(node.node_type)
+            logger.warn(node.type)
 

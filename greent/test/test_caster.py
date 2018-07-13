@@ -21,8 +21,8 @@ def test_output_filter(rosetta):
     #PPARG
     results = func(KNode('HGNC:9236',node_types.GENE))
     for edge,node in results:
-        assert node.node_type == node_types.GENETIC_CONDITION
-    gc_identifiers = [ node.identifier for edge,node in results]
+        assert node.type == node_types.GENETIC_CONDITION
+    gc_identifiers = [ node.id for edge,node in results]
     #These are genetic conditions associated with PPARG
     assert 'MONDO:0007455' in gc_identifiers
     assert 'MONDO:0011448' in gc_identifiers
@@ -41,7 +41,7 @@ def test_upcast(rosetta):
     results = func(KNode('HGNC:9236',node_types.GENE))
     assert len(results) > 0
     for edge,node in results:
-        assert node.node_type == node_types.PROCESS
+        assert node.type == node_types.PROCESS
 
 def test_null_input_filter(rosetta):
     """According to biolink model, pathway is_a biological process.  So if we have a process, we can try to
@@ -53,8 +53,8 @@ def test_null_input_filter(rosetta):
     results = func(KNode('KEGG-path:maphsa04211',node_types.PROCESS)) #one of the results from the above
     assert len(results) > 0
     for edge,node in results:
-        assert node.node_type == node_types.GENE
-    gene_ids = [ node.identifier for edge,node in results]
+        assert node.type == node_types.GENE
+    gene_ids = [ node.id for edge,node in results]
     assert 'HGNC:9236' in gene_ids #PPARG
 
 def test_input_filter(rosetta):
@@ -67,7 +67,7 @@ def test_input_filter(rosetta):
     assert func is not None
     results = func(KNode('CL:0000169',node_types.ANATOMY)) #Type-B pancreatic cell cast as an anatomy
     assert len(results) > 0
-    anat_ids = [node.identifier for edge,node in results]
+    anat_ids = [node.id for edge,node in results]
     assert 'UBERON:0001264' in anat_ids #pancreas
     results = func(KNode('UBERON:0001264',node_types.ANATOMY)) #PANCREAS
     assert len(results) == 0

@@ -17,7 +17,7 @@ class ServiceContext:
         self.core = GreenT (self)
         
         # Initiaize the cache.
-        redis_conf = self.config["results"]
+        redis_conf = self.config["cache"]
         self.cache = Cache (
             redis_host = redis_conf.get ("host"),
             redis_port = redis_conf.get ("port"),

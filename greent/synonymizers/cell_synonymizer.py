@@ -5,7 +5,7 @@ from builder.question import LabeledThing
 
 def synonymize(node,gt):
     """The main thing to worry about for cells is that we get a label."""
-    if not node.node_type == node_types.CELL:
+    if not node.type == node_types.CELL:
         raise Exception("Incorrect node type")
     currentsynonyms = node.get_labeled_ids_by_prefix('CL')
     new_syns = set()

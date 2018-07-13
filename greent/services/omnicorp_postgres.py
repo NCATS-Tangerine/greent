@@ -33,11 +33,11 @@ class OmniCorp(Service):
 
     def get_omni_identifier(self,node):
         #Let's start with just the 'best' identifier
-        identifier = node.identifier
-        prefix = Text.get_curie(node.identifier)
+        identifier = node.id
+        prefix = Text.get_curie(node.id)
         if prefix not in self.prefixes:
             logger.debug("What kinda tomfoolery is this?")
-            logger.debug(f"{node.identifier} {node.node_type}")
+            logger.debug(f"{node.id} {node.type}")
             logger.debug(f"{node.synonyms}")
             return None
         return identifier

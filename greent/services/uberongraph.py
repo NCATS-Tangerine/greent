@@ -208,22 +208,22 @@ class UberonGraphKS(Service):
 
 
     def get_anatomy_by_cell_graph (self, cell_node):
-        anatomies = self.cell_to_anatomy (cell_node.identifier)
+        anatomies = self.cell_to_anatomy (cell_node.id)
         results = []
         predicate = LabeledID('BFO:0000050', 'part_of')
         for r in anatomies:
             anatomy_node = KNode (Text.obo_to_curie(r['anatomyID']), node_types.ANATOMY, label=r['anatomyLabel'] )
-            edge = self.create_edge(cell_node, anatomy_node, 'uberongraph.get_anatomy_by_cell_graph', cell_node.identifier, predicate)
+            edge = self.create_edge(cell_node, anatomy_node, 'uberongraph.get_anatomy_by_cell_graph', cell_node.id, predicate)
             results.append ( (edge, anatomy_node) )
         return results
 
     def get_cell_by_anatomy_graph (self, anatomy_node):
-        cells = self.anatomy_to_cell(anatomy_node.identifier)
+        cells = self.anatomy_to_cell(anatomy_node.id)
         results = []
         predicate = LabeledID('BFO:0000050', 'part_of')
         for r in cells:
             cell_node = KNode (Text.obo_to_curie(r['cellID']), node_types.CELL, label=r['cellLabel'] )
-            edge = self.create_edge(cell_node, anatomy_node, 'uberongraph.get_cell_by_anatomy_graph', anatomy_node.identifier, predicate)
+            edge = self.create_edge(cell_node, anatomy_node, 'uberongraph.get_cell_by_anatomy_graph', anatomy_node.id, predicate)
             results.append ( (edge, cell_node) )
         return results
 
@@ -231,14 +231,14 @@ class UberonGraphKS(Service):
         predicate = LabeledID('GAMMA:0000002','inverse of has phenotype affecting')
         anatomy_node = KNode ( Text.obo_to_curie(node_id), node_types.ANATOMY , label=node_label)
         edge = self.create_edge(anatomy_node, phenotype_node,'uberongraph.get_anatomy_by_phenotype_graph', input_id, predicate)
-        #node.label = node_label
+        #node.name = node_label
         return edge,anatomy_node
 
     def create_anatomy_phenotype_edge(self, node_id, node_label, input_id ,anatomy_node):
         predicate = LabeledID('GAMMA:0000002','inverse of has phenotype affecting')
         phenotype_node = KNode ( Text.obo_to_curie(node_id), node_types.PHENOTYPE , label=node_label)
         edge = self.create_edge(anatomy_node, phenotype_node,'uberongraph.get_phenotype_by_anatomy_graph', input_id, predicate)
-        #node.label = node_label
+        #node.name = node_label
         return edge,phenotype_node
 
     def get_anatomy_by_phenotype_graph (self, phenotype_node):
@@ -247,8 +247,8 @@ class UberonGraphKS(Service):
             anatomies = self.phenotype_to_anatomy (curie)
             for r in anatomies:
                 edge, node = self.create_phenotype_anatomy_edge(r['anatomy_id'],r['anatomy_label'],curie,phenotype_node)
-                if phenotype_node.label is None:
-                    phenotype_node.label = r['input_label']
+                if phenotype_node.name is None:
+                    phenotype_node.name = r['input_label']
                 results.append ( (edge, node) )
                 #These tend to be very high level terms.  Let's also get their parts to
                 #be more inclusive.
@@ -267,7 +267,7 @@ class UberonGraphKS(Service):
             phenotypes = self.anatomy_to_phenotype (curie)
             for r in phenotypes:
                 edge, node = self.create_anatomy_phenotype_edge(r['pheno_id'],r['pheno_label'],curie,anatomy_node)
-                if anatomy_node.label is None:
-                    anatomy_node.label = r['anatomy_label']
+                if anatomy_node.name is None:
+                    anatomy_node.name = r['anatomy_label']
                 results.append ( (edge, node) )
         return results

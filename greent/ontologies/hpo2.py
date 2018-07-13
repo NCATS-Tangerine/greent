@@ -20,7 +20,7 @@ class HPO2(Onto):
 
     def has_ancestor(self,obj, terms):
         """ Is is_a(obj,t) true for any t in terms ? """
-        ids = self.get_mondo_id(obj.identifier)        
+        ids = self.get_mondo_id(obj.id)        
         results = [ i for i in ids for candidate_ancestor in terms if super(Mondo2,self).is_a(i, candidate_ancestor) ] \
                  if terms else []
         return len(results) > 0, results

@@ -57,45 +57,6 @@ class Pharos(Service):
     def disease_map(self, disease_id):
         return self.query(query="diseases({0})".format(disease_id))
 
-    '''
-    def make_doid_id(self, obj):
-        if not obj:
-            return None
-        result = obj
-        if isinstance(obj, KNode):
-            result = obj.identifier
-        if isinstance(result, list):
-            if len(result) == 1:
-                result = result[0]
-        if result:
-            if isinstance(result, str):
-                if result.startswith('DOID:'):
-                    result = result.replace('DOID:', '')
-        return result
-
-    def translate(self, subject_node):
-        """Convert a subject with a DOID or UMLS into a Pharos Disease ID"""
-        # TODO: This relies on a pretty ridiculous caching of a map between pharos ids and doids.
-        #      As Pharos improves, this will not be required, but for the moment I don't know a better way.
-        pmap = defaultdict(list)
-        print (f"-------------------- {subject_node}")
-        pharos_id_filename = os.path.join(os.path.dirname(__file__), 'pharos.id.all.txt')
-        with open(pharos_id_filename, 'r') as inf:
-            rows = DictReader(inf, dialect='excel-tab')
-            for row in rows:
-                if row['DOID'] != '':
-                    doidlist = row['DOID'].split(',')
-                    for d in doidlist:
-                        pmap[d.upper()].append(row['PharosID'])
-        valid_identifiers = subject_node.get_synonyms_by_prefix('DOID')
-        valid_identifiers.update(subject_node.get_synonyms_by_prefix('UMLS'))
-        pharos_set = set()
-        for vi in valid_identifiers:
-            pharos_set.update(pmap[vi])
-        pharos_list = list(pharos_set)
-        return pharos_list
-    '''
-
     def target_to_hgnc(self, target_id):
         """Convert a pharos target id into an HGNC ID.
         The call does not return the actual name for the gene, so we do not provide it.
@@ -132,13 +93,13 @@ class Pharos(Service):
         return list(return_results)
 
     def drugname_to_pharos(self, namenode):
-        drugname = Text.un_curie(namenode.identifier)
+        drugname = Text.un_curie(namenode.id)
         pharosids = self.drugname_string_to_pharos_info(drugname)
         results = []
         predicate = LabeledID('RDFS:id', 'identifies')
         for pharosid, pharoslabel in pharosids:
             newnode = KNode(pharosid, node_types.DRUG, label=pharoslabel)
-            newedge = KEdge(namenode, newnode, 'pharos.drugname_to_pharos', namenode.identifier, predicate)
+            newedge = KEdge(namenode, newnode, 'pharos.drugname_to_pharos', namenode.id, predicate)
             results.append((newedge, newnode))
         return results
 
@@ -220,7 +181,7 @@ class Pharos(Service):
         pharos_ids = subject.get_synonyms_by_prefix('DOID')
         resolved_edge_nodes = []
         for pharosid in pharos_ids:
-            logging.getLogger('application').debug("Identifier:" + subject.identifier)
+            logging.getLogger('application').debug("Identifier:" + subject.id)
             original_edge_nodes = []
             url='https://pharos.nih.gov/idg/api/v1/diseases/%s?view=full' % pharosid
             r = requests.get(url)

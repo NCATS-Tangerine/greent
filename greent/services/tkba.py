@@ -82,7 +82,7 @@ class TranslatorKnowledgeBeaconAggregator(Service):
                 if a.startswith ("MESH:"):
                     if not a in seen:
                         #TODO: not sure what node type should be here...
-                        result.append ( ( self.get_edge (r, predicate='name_to_mesh'), KNode(a, name.node_type) ) )
+                        result.append ( ( self.get_edge (r, predicate='name_to_mesh'), KNode(a, name.type) ) )
                         seen[a] = a
         return list(set(result))
     
@@ -145,7 +145,7 @@ def test_q2_diseases():
                 n_bad += 1
             else:
                 n_good += 1
-                doids = ';'.join( [r[1].identifier for r in result] )
+                doids = ';'.join( [r[1].id for r in result] )
                 aliases = ''
             outf.write('{}\t{}\t{}\n'.format(x, doids, aliases))
             print( 'Good: {}   Bad: {}'.format(n_good, n_bad) )

@@ -17,7 +17,7 @@ class Caster(Service):
     def upcast(self, base_function, output_type, node):
         results = base_function(node)
         for edge,node in results:
-            node.node_type = output_type
+            node.type = output_type
         return results
 
     def output_filter(self, base_function, output_type, type_check, node):
@@ -29,7 +29,7 @@ class Caster(Service):
         logger.debug(f'results {results}')
         good_results = list(filter(lambda y: type_check(y[1]), results))
         for edge,node in good_results:
-            node.node_type = output_type
+            node.type = output_type
         return good_results
 
     def input_filter(self, base_function, input_type, type_check, node):

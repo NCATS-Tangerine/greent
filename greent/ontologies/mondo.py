@@ -93,7 +93,7 @@ class Mondo(Service):
                          ancestor.
                  The list of Mondo identifiers for the object, which have the term as an ancestor"""
         #TODO: The return signature is funky, fix it.
-        obj_id = obj.identifier
+        obj_id = obj.id
         obj_ids = self.get_mondo_id(obj_id)
         return_objects=[]
         for obj_id in obj_ids:
@@ -104,7 +104,7 @@ class Mondo(Service):
         return len(return_objects) > 0, return_objects
 
 #    def disease_is_genetic_condition(self, node):
-#        return self.is_genetic_disease(node.identifier)
+#        return self.is_genetic_disease(node.id)
 
     def is_genetic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:630 as an ancestor"""
@@ -131,11 +131,11 @@ class Mondo(Service):
 
     def doid_get_orphanet_genetic_condition (self, disease):
         results = self.doid_get_genetic_condition (disease)
-        return [ r for r in results if r[1].identifier.startswith ('ORPHANET.GENETIC_CONDITION') ]
+        return [ r for r in results if r[1].id.startswith ('ORPHANET.GENETIC_CONDITION') ]
     
     def doid_get_doid_genetic_condition (self, disease):
         results = self.doid_get_genetic_condition (disease)
-        return [ r for r in results if r[1].identifier.startswith ('DOID.GENETIC_CONDITION') ]
+        return [ r for r in results if r[1].id.startswith ('DOID.GENETIC_CONDITION') ]
 
     def substring_search(self,name):
         ciname = '(?i){}'.format(name)

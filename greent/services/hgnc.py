@@ -56,9 +56,9 @@ class HGNC(Service):
 
     def  get_name(self, node):
         """Given a node for an hgnc, return the name for that id"""
-        if node.node_type != node_types.GENE:
+        if node.type != node_types.GENE:
             raise ValueError('Node must be a gene')
-        identifier_parts = node.identifier.split(':')
+        identifier_parts = node.id.split(':')
         if identifier_parts[0] == 'HGNC':
             query_string='hgnc_id'
         elif identifier_parts[0].upper() == 'NCBIGENE':

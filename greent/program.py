@@ -80,9 +80,9 @@ class Program:
                 continue
             start_node = KNode(n.curie, n.type, label=n.name)
             start_node = Node(
-                name=start_node.label,
-                curie=start_node.identifier,
-                type=start_node.node_type,
+                name=start_node.name,
+                curie=start_node.id,
+                type=start_node.type,
                 synonyms={LabeledThing(
                         identifier=s.identifier,
                         label=s.label
@@ -110,17 +110,17 @@ class Program:
                 logger.debug(f"    {[node for _, node in results]}")
             for edge, node in results:
                 node = Node(
-                    name=node.label,
-                    curie=node.identifier,
-                    type=node.node_type,
+                    name=node.name,
+                    curie=node.id,
+                    type=node.type,
                     synonyms={LabeledThing(
                         identifier=s.identifier,
                         label=s.label
                     ) for s in node.synonyms}
                 )
                 edge = Edge(
-                    source_id=edge.subject_node.identifier,
-                    target_id=edge.object_node.identifier,
+                    source_id=edge.source_id,
+                    target_id=edge.target_id,
                     standard_predicate=LabeledThing(
                         identifier=edge.standard_predicate.identifier,
                         label=edge.standard_predicate.label
@@ -129,7 +129,7 @@ class Program:
                         identifier=edge.original_predicate.identifier,
                         label=edge.original_predicate.label
                     ),
-                    provided_by=edge.edge_source,
+                    provided_by=edge.provided_by,
                     ctime=calendar.timegm(edge.ctime.timetuple()),
                     publications=edge.publications
                 )

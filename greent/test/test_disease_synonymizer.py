@@ -18,9 +18,9 @@ def test_mondo_synonymization(rosetta):
     assert len(meshes) == 2
     assert 'MeSH:D009542' in meshes
     assert 'MeSH:D052556' in meshes
-    assert Text.get_curie(node.identifier) == 'MONDO'
+    assert Text.get_curie(node.id) == 'MONDO'
     #This is not really what the synonymizer does.  The synonymizer returns synonyms, not modifies the node.
-    #assert node.label == 'Niemann-Pick Disease'
+    #assert node.name == 'Niemann-Pick Disease'
 
 def test_mondo_synonymization_2(rosetta):
     node = KNode('MONDO:0005737',node_types.DISEASE)
@@ -31,7 +31,7 @@ def test_mondo_synonymization_2(rosetta):
     assert len(doids) == 1
     meshes = node.get_synonyms_by_prefix('MESH')
     assert len(meshes) > 0
-    assert Text.get_curie(node.identifier) == 'MONDO'
+    assert Text.get_curie(node.id) == 'MONDO'
 
 #This test doesn't currently pass because OXO hasn't integrated MONDO yet
 def future_test_disease_normalization(rosetta):
@@ -41,4 +41,4 @@ def future_test_disease_normalization(rosetta):
     node.add_synonyms(synonyms)
     mondos = node.get_synonyms_by_prefix('MONDO')
     assert len(mondos) > 0
-    assert Text.get_curie(node.identifier) == 'MONDO'
+    assert Text.get_curie(node.id) == 'MONDO'

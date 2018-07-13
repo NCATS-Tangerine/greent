@@ -22,7 +22,7 @@ def test_cell_to_anatomy_super(uberon):
     results = uberon.get_anatomy_by_cell_graph( k )
     #Should get back digestive system UBERON:0001007
     assert len(results) > 0
-    idents = [ ke[1].identifier for ke in results ]
+    idents = [ ke[1].id for ke in results ]
     print(idents)
     assert 'UBERON:0001007' in idents
 
@@ -33,15 +33,15 @@ def test_cell_to_anatomy(uberon):
     #Mast cells are part of the immune system
     assert len(results) == 1
     node = results[0][1]
-    assert node.node_type  == node_types.ANATOMY
-    assert node.identifier == 'UBERON:0002405'
+    assert node.type  == node_types.ANATOMY
+    assert node.id == 'UBERON:0002405'
 
 def test_anatomy_to_cell(uberon):
     k = KNode('UBERON:0002405',node_types.ANATOMY,'Immune system')
     results = uberon.get_cell_by_anatomy_graph( k )
     #Mast cells are part of the immune system
     assert len(results) > 0
-    identifiers = [result[1].identifier for result in results]
+    identifiers = [result[1].id for result in results]
     for identifier in identifiers:
         assert identifier.startswith('CL:')
     assert 'CL:0000097' in identifiers
@@ -57,10 +57,10 @@ def test_pheno_to_anatomy(uberon):
     k = KNode('HP:0011675',node_types.PHENOTYPE)
     results = uberon.get_anatomy_by_phenotype_graph( k )
     #anatomical features
-    ntypes = set([n.node_type for e,n in results])
+    ntypes = set([n.type for e,n in results])
     assert len(ntypes) == 1
     assert node_types.ANATOMY in ntypes
-    identifiers = [n.identifier for e,n in results]
+    identifiers = [n.id for e,n in results]
     assert 'UBERON:0000468' in identifiers #multicellular organism (yikes)
     assert 'UBERON:0004535' in identifiers #cardiovascular system
     assert 'UBERON:0000948' in identifiers #heart
@@ -71,12 +71,12 @@ def test_anat_to_pheno(uberon):
     k = KNode('UBERON:0000948', node_types.ANATOMY)
     results = uberon.get_phenotype_by_anatomy_graph( k )
     #phenos
-    ntypes = set([n.node_type for e,n in results])
+    ntypes = set([n.type for e,n in results])
     assert len(ntypes) == 1
     assert node_types.PHENOTYPE in ntypes
-    identifiers = [n.identifier for e,n in results]
+    identifiers = [n.id for e,n in results]
 #    for e,n in results:
-#        print( n.identifier, n.label )
+#        print( n.id, n.name )
     assert 'HP:0001750' in identifiers #single ventricle
     assert 'HP:0001644' in identifiers #dilated cardiomyopathy
 

@@ -29,15 +29,15 @@ class Service:
             #traceback.print_exc ()
         return result
 
-    def standardize_predicate(self, predicate,source=None,target=None):
+    def standardize_predicate(self, predicate, source=None, target=None):
         return self.concept_model.standardize_relationship(predicate)
 
-    def create_edge(self,source_node,target_node,edge_source,input_id,predicate,publications=None,url=None,properties=None):
+    def create_edge(self,source_id,target_id,provided_by,input_id,predicate,publications=None,url=None,properties=None):
         ctime = dt.now()
-        standard_predicate=self.standardize_predicate(predicate,source_node,target_node)
-        return KEdge(source_node,
-                     target_node,
-                     edge_source,
+        standard_predicate=self.standardize_predicate(predicate, source_id, target_id)
+        return KEdge(source_id,
+                     target_id,
+                     provided_by,
                      ctime,
                      predicate,
                      standard_predicate,

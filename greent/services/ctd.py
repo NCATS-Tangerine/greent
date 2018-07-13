@@ -171,7 +171,7 @@ class CTD(Service):
                     obj = gene_node
                 edge = self.create_edge(subject,obj,'ctd.gene_to_drug',identifier,predicate,
                                         publications=[f"PMID:{r['PubMedIDs']}"],url=url,properties=props)
-                key = (drug_node.identifier, edge.standard_predicate)
+                key = (drug_node.id, edge.standard_predicate)
                 if key not in unique:
                     output.append( (edge,drug_node) )
                     unique.add(key)
@@ -193,7 +193,7 @@ class CTD(Service):
                 drug_node = KNode(f"MESH:{r['exposurestressorid']}", node_types.DRUG,label=r['exposurestressorname'])
                 edge = self.create_edge(drug_node,disease_node,'ctd.disease_to_exposure',identifier,predicate,
                                         publications=[f"PMID:{r['reference']}"],url=url)
-                key = (drug_node.identifier, edge.standard_predicate)
+                key = (drug_node.id, edge.standard_predicate)
                 if key not in unique:
                     output.append( (edge,drug_node) )
                     unique.add(key)
@@ -216,7 +216,7 @@ class CTD(Service):
                 drug_node = KNode(f"MESH:{r['ChemicalID']}", node_types.DRUG,label=r['ChemicalName'])
                 edge = self.create_edge(drug_node,disease_node,'ctd.disease_to_chemical',identifier,predicate,
                                         publications=refs,url=url)
-                key = (drug_node.identifier, edge.standard_predicate)
+                key = (drug_node.id, edge.standard_predicate)
                 if key not in unique:
                     output.append( (edge,drug_node) )
                     unique.add(key)

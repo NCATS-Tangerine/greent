@@ -35,7 +35,7 @@ class HetIO(Neo4JREST):
         results = []
         for node_id, predicate_label in zip(node_ids,edge_ids):
             predicate = LabeledID(f'hetio:{predicate_label}', predicate_label)
-            anatomy = KNode(node_id.identifier, node_types.ANATOMY, label=node_id.label)
+            anatomy = KNode(node_id.id, node_types.ANATOMY, label=node_id.label)
             #These edges all go from anatomy to gene
             edge = self.create_edge(anatomy, gene,'hetio.gene_to_anatomy',gene_identifier,predicate)
             results.append((edge, anatomy))
@@ -51,7 +51,7 @@ class HetIO(Neo4JREST):
         results = []
         for node_id, predicate_label in zip(node_ids,edge_ids):
             predicate = LabeledID(f'hetio:{predicate_label}', predicate_label)
-            gene = KNode(node_id.identifier, node_types.GENE, label=node_id.label)
+            gene = KNode(node_id.id, node_types.GENE, label=node_id.label)
             #These edges all go from anatomy to gene
             edge = self.create_edge(anat, gene,'hetio.anatomy_to_gene',anat_identifier,predicate)
             results.append((edge, gene))
@@ -60,7 +60,7 @@ class HetIO(Neo4JREST):
     #TODO: this is not to a cell, but a cellular component.  REmoving it from the yaml until we can fix it up
     def gene_to_cellular_component (self, gene):
         result = self.query (
-            "MATCH (g:Gene)-[r]-(c:CellularComponent) WHERE g.name='{0}' RETURN g, r, c LIMIT 200".format (Text.un_curie (gene.identifier)),
+            "MATCH (g:Gene)-[r]-(c:CellularComponent) WHERE g.name='{0}' RETURN g, r, c LIMIT 200".format (Text.un_curie (gene.id)),
             labels=['CellularComponent'],
             node_properties=['identifier','name'])
         anatomies = []
@@ -98,7 +98,7 @@ class HetIO(Neo4JREST):
         results = []
         for node_id, predicate_label in zip(node_ids,edge_ids):
             predicate = LabeledID(f'hetio:{predicate_label}', predicate_label)
-            phenotype = KNode(node_id.identifier, node_types.PHENOTYPE,label=node_id.label)
+            phenotype = KNode(node_id.id, node_types.PHENOTYPE,label=node_id.label)
             edge = self.create_edge(disease, phenotype, 'hetio.disease_to_phenotype', disease_identifier, predicate)
             results.append( (edge, phenotype) )
         return results

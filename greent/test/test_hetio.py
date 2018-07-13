@@ -19,7 +19,7 @@ def hetio(rosetta):
 def test_gene_to_anatomy(hetio):
     relations = hetio.gene_to_anatomy(KNode('NCBIGENE:83752',node_types.GENE))
     assert len(relations) < 20 and len(relations) > 10
-    identifiers = [node.identifier for r,node in relations]
+    identifiers = [node.id for r,node in relations]
     #everything should be UBERON ids
     for ident in identifiers:
         assert Text.get_curie(ident) == 'UBERON'
@@ -27,10 +27,10 @@ def test_gene_to_anatomy(hetio):
 
 def test_anatomy_to_gene(hetio):
     relations = hetio.anatomy_to_gene(KNode('UBERON:0001007', node_types.ANATOMY))
-    nts = [node.node_type for r,node in relations]
+    nts = [node.type for r,node in relations]
     for nt in nts:
         assert nt == node_types.GENE
-    identifiers = [node.identifier for r,node in relations]
+    identifiers = [node.id for r,node in relations]
     for ident in identifiers:
         assert Text.get_curie(ident) == 'NCBIGENE'
     assert 'NCBIGENE:83752' in identifiers
@@ -40,7 +40,7 @@ def test_gene_to_disease(hetio):
     #KRT7 associated with bile duct cancer?
     relations = hetio.gene_to_disease(KNode('NCBIGENE:3855',node_types.GENE))
     assert len(relations) < 20 and len(relations) > 10
-    identifiers = [node.identifier for r,node in relations]
+    identifiers = [node.id for r,node in relations]
     #everything should be UBERON ids
     for ident in identifiers:
         assert Text.get_curie(ident) == 'DOID'
@@ -49,7 +49,7 @@ def test_gene_to_disease(hetio):
 def test_disease_to_symptom(hetio):
     #Crohn's disease has associated Skin Manifesations?
     relations = hetio.disease_to_phenotype(KNode('DOID:8778',node_types.DISEASE))
-    identifiers = [node.identifier for r,node in relations]
+    identifiers = [node.id for r,node in relations]
     #everything should be UBERON ids
     for ident in identifiers:
         assert Text.get_curie(ident) == 'MESH'

@@ -18,15 +18,15 @@ class CDWSupport():
 
     def prepare(self,nodes):
         for node in nodes:
-            if (node.node_type == node_types.DISEASE) or (node.node_type == node_types.GENETIC_CONDITION):
-                split_curie = node.identifier.split(':')
+            if (node.type == node_types.DISEASE) or (node.type == node_types.GENETIC_CONDITION):
+                split_curie = node.id.split(':')
                 if self.oxo.is_valid_curie_prefix( split_curie[0] ):
-                    results = self.oxo.get_specific_synonym_expanding( node.identifier, 'ICD9CM' )
+                    results = self.oxo.get_specific_synonym_expanding( node.id, 'ICD9CM' )
                     if len(results) == 0:
-                        logging.getLogger('application').warn('No ICD9 found for term: %s' % node.identifier)
+                        logging.getLogger('application').warn('No ICD9 found for term: %s' % node.id)
                     else:
                         for r in results:
-                            logging.getLogger('application').debug('ICD9 for {}: {}'.format( node.identifier, r['curie']))
+                            logging.getLogger('application').debug('ICD9 for {}: {}'.format( node.id, r['curie']))
                             if ( '-' in r['curie'] ):
                                 logging.getLogger('application').warn('ICD9 has a dash: {}'.format(r['curie']) )
                             node.synonyms.add( r['curie'] )

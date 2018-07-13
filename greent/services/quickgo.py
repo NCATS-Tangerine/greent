@@ -64,7 +64,7 @@ class QuickGo(Service):
             if self.go.is_molecular_function(target):
                 return super(QuickGo,self).standardize_predicate(LabeledID('RO:0002331','involved_in'))
             #If the target is a cell, use 'occurs_in'
-            if target.node_type == node_types.CELL:
+            if target.type == node_types.CELL:
                 return super(QuickGo,self).standardize_predicate(self.get_predicate('occurs_in'))
 
     #TODO: share the retry logic in Service?
@@ -98,7 +98,7 @@ class QuickGo(Service):
 
     def go_term_to_cell_xontology_relationships(self, go_node):
         #This call is not paged!
-        url = "{0}/QuickGO/services/ontology/go/terms/GO:{1}/xontologyrelations".format (self.url, Text.un_curie(go_node.identifier))
+        url = "{0}/QuickGO/services/ontology/go/terms/GO:{1}/xontologyrelations".format (self.url, Text.un_curie(go_node.id))
         response = self.query(url)
         if 'results' not in response:
             return []
@@ -111,7 +111,7 @@ class QuickGo(Service):
                         if predicate is None:
                             continue
                         cell_node = KNode (xrel['id'], node_types.CELL, label = xrel['term']) 
-                        edge = self.create_edge(go_node, cell_node,'quickgo.go_term_to_cell_xontology_relationships',go_node.identifier,predicate,url = url)
+                        edge = self.create_edge(go_node, cell_node,'quickgo.go_term_to_cell_xontology_relationships',go_node.id,predicate,url = url)
                         results.append( ( edge , cell_node))
         return results
 
@@ -120,7 +120,7 @@ class QuickGo(Service):
         and they can have an extension like occurs_in(celltype). Technically, that occurs_in only relates to that
         particular gene/go combination.  But it's the only way to traverse from neurotransmitter release to neurons 
         that is currently available"""
-        url = '{0}/QuickGO/services/annotation/search?includeFields=goName&goId=GO:{1}&taxonId=9606&extension=occurs_in(CL)'.format( self.url, Text.un_curie(go_node.identifier)) 
+        url = '{0}/QuickGO/services/annotation/search?includeFields=goName&goId=GO:{1}&taxonId=9606&extension=occurs_in(CL)'.format( self.url, Text.un_curie(go_node.id)) 
         call_results = self.page_calls(url)
         cell_ids = set()
         results = []
@@ -134,23 +134,23 @@ class QuickGo(Service):
                                 continue
                             #Bummer, don't get a name
                             cell_node = KNode( 'CL:{}'.format(c['id']), node_types.CELL )
-                            edge = self.create_edge(go_node, cell_node, 'quickgo.go_term_to_cell_annotation_extensions',go_node.identifier,predicate,url = url)
+                            edge = self.create_edge(go_node, cell_node, 'quickgo.go_term_to_cell_annotation_extensions',go_node.id,predicate,url = url)
                             results.append( (edge,cell_node ) )
                             cell_ids.add(c['id'])
         return results
 
     def cell_to_go_term_annotation_extensions(self,cell_node):
-        url=f'{self.url}/QuickGO/services/annotation/search?includeFields=goName&aspect=biological_process,molecular_function&extension={cell_node.identifier}'
+        url=f'{self.url}/QuickGO/services/annotation/search?includeFields=goName&aspect=biological_process,molecular_function&extension={cell_node.id}'
         call_results = self.page_calls(url)
         go_ids = set([ (r['goId'],r['goName']) for r in call_results ])
         predicate=self.get_predicate('occurs_in')
         #Don't get a name for the go term.. there is a goName field, but it's always NULL.
         nodes = [ KNode( idlabel[0] , node_types.PROCESS_OR_FUNCTION, label=idlabel[1] ) for idlabel in go_ids ]
-        edges = [ self.create_edge(go_node, cell_node, 'quickgo.cell_to_go_term_annotation_extensions', cell_node.identifier, predicate, url = url) for go_node in nodes ] 
+        edges = [ self.create_edge(go_node, cell_node, 'quickgo.cell_to_go_term_annotation_extensions', cell_node.id, predicate, url = url) for go_node in nodes ] 
         return list(zip(edges,nodes))
 
     def go_term_to_gene_annotation_strict(self,node):
-        go = node.identifier
+        go = node.id
         url = f'{self.url}/QuickGO/services/annotation/search?goId={go}&taxonId=9606&goUsage=exact&targetSet=referencegenome'
         call_results = self.page_calls(url)
         used = set()
@@ -163,12 +163,12 @@ class QuickGo(Service):
                 if predicate is None:
                     continue
                 gene_node = KNode( uniprotid, node_types.GENE ) 
-                edge = self.create_edge(node, gene_node, 'quickgo.go_term_to_gene_annotation',node.identifier,predicate,url = url)
+                edge = self.create_edge(node, gene_node, 'quickgo.go_term_to_gene_annotation',node.id,predicate,url = url)
                 results.append( (edge,gene_node ) )
         return results
 
     def go_term_to_gene_annotation(self,node):
-        go = node.identifier
+        go = node.id
         url = f'{self.url}/QuickGO/services/annotation/search?goId={go}&taxonId=9606&goUsage=exact'
         #print(url)
         call_results = self.page_calls(url)
@@ -184,6 +184,6 @@ class QuickGo(Service):
                 if predicate is None:
                     continue
                 gene_node = KNode( uniprotid, node_types.GENE ) 
-                edge = self.create_edge(gene_node, node, 'quickgo.go_term_to_gene_annotation',node.identifier,predicate,url = url)
+                edge = self.create_edge(gene_node, node, 'quickgo.go_term_to_gene_annotation',node.id,predicate,url = url)
                 results.append( (edge,gene_node ) )
         return results
