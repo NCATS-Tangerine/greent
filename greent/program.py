@@ -38,7 +38,10 @@ class Program:
         self.concept_nodes = nodes
         self.transitions = plan
         self.rosetta = rosetta
-        self.cache = Cache(redis_db=1)
+        self.cache = Cache(
+            redis_host=os.environ['CACHE_HOST'],
+            redis_port=os.environ['CACHE_PORT'],
+            redis_db=1)
 
         self.cache.flush()
         self.log_program()
@@ -47,8 +50,8 @@ class Program:
 
         response = requests.get(f"{os.environ['FLOWER_BROKER_API']}queues/")
         queues = response.json()
-        num_consumers = [q['consumers'] for q in queues if q['name'] == 'neo4j'][0]
-        if num_consumers:
+        num_consumers = [q['consumers'] for q in queues if q['name'] == 'neo4j']
+        if num_consumers and num_consumers[0]:
             import pika
             self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='127.0.0.1',
                 virtual_host='builder',
@@ -60,7 +63,8 @@ class Program:
             self.channel = None
 
     def __del__(self):
-        self.connection.close()
+        if self.connection is not None:
+            self.connection.close()
 
     def log_program(self):
         logstring = f'Program {self.program_number}\n'
@@ -228,9 +232,10 @@ class Program:
         Keep going until there's no nodes left to process."""
         logger.debug(f"Running program {self.program_number}")
         self.initialize_instance_nodes()
-        self.channel.basic_publish(exchange='',
-            routing_key='neo4j',
-            body='flush')
+        if self.channel is not None:
+            self.channel.basic_publish(exchange='',
+                routing_key='neo4j',
+                body='flush')
         return
 
     def get_path_descriptor(self):
