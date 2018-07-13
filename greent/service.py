@@ -35,6 +35,8 @@ class Service:
     def create_edge(self,source_node,target_node,edge_source,input_id,predicate,publications=None,url=None,properties=None):
         ctime = dt.now()
         standard_predicate=self.standardize_predicate(predicate,source_node,target_node)
+        if edge_source is None:
+            raise 'missing edge source'
         return KEdge(source_node,
                      target_node,
                      edge_source,

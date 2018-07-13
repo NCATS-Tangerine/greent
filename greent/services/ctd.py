@@ -159,6 +159,9 @@ class CTD(Service):
             url = f"{self.url}/CTD_chem_gene_ixns_GeneID/{geneid}/"
             obj = requests.get (url).json ()
             for r in obj:
+                #Let's only keep humans for now:
+                if r['OrganismID'] != '9606':
+                    continue
                 if r['GeneID'] != geneid:
                     continue
                 props = {"description": r[ 'Interaction' ]}
@@ -174,7 +177,7 @@ class CTD(Service):
                     obj = gene_node
                 edge = self.create_edge(subject,obj,'ctd.gene_to_drug',identifier,predicate,
                                         publications=[f"PMID:{r['PubMedIDs']}"],url=url,properties=props)
-                key = (drug_node.identifier, edge.standard_predicate)
+                key = (drug_node.identifier, predicate.label)
                 if key not in unique:
                     output.append( (edge,drug_node) )
                     unique.add(key)

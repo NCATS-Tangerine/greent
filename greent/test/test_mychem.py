@@ -23,6 +23,7 @@ def test_drugcentral(mychem):
         if n.identifier == 'UMLS:C0003873':
             found2 = True
             assert e.original_predicate.label == 'treats'
+        assert e.edge_source == 'mychem.get_drugcentral'
     assert found1
     assert found2
 

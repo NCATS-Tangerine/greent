@@ -175,6 +175,8 @@ class KEdge():
         """
         self.subject_node = subject_node
         self.object_node = object_node
+        if edge_source is None:
+            raise 'Invalid source?'
         self.edge_source = edge_source
         self.ctime = ctime
         self.original_predicate = original_predicate
@@ -190,7 +192,7 @@ class KEdge():
         self.is_support = is_support
 
     def __key(self):
-        return (self.subject_node, self.object_node, self.edge_source)
+        return (self.subject_node, self.object_node, self.edge_source, self.original_predicate)
 
     def __eq__(x, y):
         return x.__key() == y.__key()

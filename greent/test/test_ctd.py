@@ -9,6 +9,23 @@ def ctd(rosetta):
     ctd = rosetta.core.ctd
     return ctd
 
+def test_gene_to_drug_and_back(ctd):
+    input_node = KNode('MESH:D003976', node_types.GENE, label='Diazinon')
+    results = ctd.drug_to_gene(input_node)
+    results= list(filter( lambda en: en[1].identifier=='NCBIGENE:5243', results ))
+    dgedges = set([ e.original_predicate.label for e,n in results ])
+    input_node_2 = KNode('NCBIGENE:5243', node_types.GENE, label='ABCB1')
+    results = ctd.gene_to_drug(input_node_2)
+    results= list(filter( lambda en: en[1].identifier=='MESH:D003976', results ))
+    gdedges = set([ e.original_predicate.label for e,n in results ])
+    for dge in dgedges:
+        print('Drug->Gene',dge)
+    for gde in gdedges:
+        print('Gene->Drug',gde)
+    assert False
+    assert dgedges == gdedges
+
+
 def test_drugname_to_mesh(ctd):
     nodes = ctd.drugname_string_to_drug("Celecoxib")
     assert len(nodes) == 1
@@ -76,6 +93,8 @@ def test_gene_to_drug_ACHE(ctd):
         if (n.identifier == 'MESH:D003976'):
             print(e)
     assert total == unique
+
+
 
 
 def test_gene_to_drug_synonym(ctd):

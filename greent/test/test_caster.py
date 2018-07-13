@@ -3,6 +3,15 @@ from greent.graph_components import KNode, LabeledID
 from greent import node_types
 from greent.conftest import rosetta
 
+def test_drugcentral(rosetta):
+    fname='caster.output_filter(mychem~get_drugcentral,disease,typecheck~is_disease)'
+    func = rosetta.get_ops(fname)
+    assert func is not None
+    node=KNode('CHEMBL:CHEMBL159',node_types.DRUG)
+    results = func(node)
+    for e,n in results:
+        assert e.edge_source=='mychem.get_drugcentral'
+
 def test_complicated(rosetta):
     """make sure that a very complicated cast gets everything to the right place"""
     fname='caster.output_filter(input_filter(upcast(hetio~disease_to_phenotype,disease_or_phenotypic_feature),disease,typecheck~is_disease),disease,typecheck~is_disease)'

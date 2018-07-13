@@ -88,11 +88,10 @@ def export_edge_chunk(tx,edgelist,edgelabel):
 
     cypher = f"""UNWIND $batches as row
             MATCH (a:{node_types.ROOT_ENTITY} {{id: row.aid}}),(b:{node_types.ROOT_ENTITY} {{id: row.bid}})
-            MERGE (a)-[r:{edgelabel} {{edge_source: row.edge_source}}]-(b)
+            MERGE (a)-[r:{edgelabel} {{edge_source: row.edge_source, relation_label: row.original_predicate_label}}]-(b)
             set r.source_database=row.database
             set r.ctime=row.ctime 
             set r.predicate_id=row.standard_id 
-            set r.relation_label=row.original_predicate_label
             set r.relation=row.original_predicate_id 
             set r.publications=row.publications
             set r.url=row.url
