@@ -5,6 +5,7 @@ from greent.util import LoggingUtil
 import logging
 import os
 from crawler.mesh_unii import refresh_mesh_pubchem
+from crawler.crawl_util import glom, dump_cache
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
@@ -39,19 +40,16 @@ def load_chemicals(rosetta, refresh=False):
     #DO MESH/UNII
     mesh_unii_file = os.path.join(os.path.dirname(__file__),'mesh_to_unii.txt')
     mesh_unii_pairs = load_pairs(mesh_unii_file,'UNII')
-    glom(mesh_unii_pairs, concord)
+    glom(concord,mesh_unii_pairs)
     #DO MESH/PUBCHEM
     mesh_pc_file = os.path.join(os.path.dirname(__file__),'mesh_to_pubchem.txt')
     mesh_pc_pairs = load_pairs(mesh_pc_file,'PUBCHEM')
-    glom(mesh_pc_pairs, concord)
+    glom(concord,mesh_pc_pairs)
     #Dump
     with open('chemconc.txt','w') as outf:
         for key in concord:
             outf.write(f'{key}\t{concord[key]}\n')
-    for chem_id in concord:
-        key = f"synonymize({chem_id})"
-        value = concord[chem_id]
-        rosetta.cache.set(key,value)
+    dump_cache(concord,rosetta)
 
 def load_pairs(fname,prefix):
     pairs = []
@@ -76,8 +74,9 @@ def uni_glom(unichem_data,prefix1,prefix2,chemdict):
         n = n[:-1]
     pairs = [ ni.split('\t') for ni in n ]
     curiepairs = [ (f'{prefix1}:{p[0]}',f'{prefix2}:{p[1]}') for p in pairs]
-    glom(curiepairs,chemdict)
+    glom(chemdict,curiepairs)
 
+'''
 def glom(cpairs, chemdict):
     print(f'Starting with {len(chemdict)} entries')
     for cpair in cpairs:
@@ -92,6 +91,7 @@ def glom(cpairs, chemdict):
         chemdict[cpair[0]].update(cpair)
         chemdict[cpair[1]] = chemdict[cpair[0]]
     print(f'Ending with {len(chemdict)} entries')
+'''
 
 def load_unichem():
     chemcord = {}

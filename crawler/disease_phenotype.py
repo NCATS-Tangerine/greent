@@ -1,10 +1,12 @@
+from crawler.crawl_util import glom, dump_cache
 
 def load_diseases_and_phenotypes(rosetta):
     mondo_sets = build_sets(rosetta.core.mondo)
     hpo_sets = build_sets(rosetta.core.hpo)
     dicts = {}
-    addto(dicts,mondo_sets)
-    addto(dicts,hpo_sets)
+    glom(dicts,mondo_sets)
+    glom(dicts,hpo_sets)
+    dump_cache(dicts,rosetta)
 
 def build_sets(o):
     sets = []
@@ -14,7 +16,3 @@ def build_sets(o):
         dbx.add(mid)
         sets.append(dbx)
 
-def addto(d,sets):
-    for s in sets:
-        for identifier in s:
-            print ()
