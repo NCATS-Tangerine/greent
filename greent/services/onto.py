@@ -11,7 +11,7 @@ class Onto(CachedService):
         super(Onto,self).__init__(name, context)
         self.name = name
     def get_ids(self):
-        obj = self.get(f"{self.url}/id_list/{self.name}/")
+        obj = self.get(f"{self.url}/id_list/{self.name.upper()}")
         return obj
     def is_a(self,identifier,candidate_ancestor):
         obj = self.get(f"{self.url}/is_a/{identifier}/{candidate_ancestor}/")

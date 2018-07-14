@@ -7,6 +7,7 @@ class HPO2(Onto):
     
     def __init__(self, context ):
         super(HPO2, self).__init__("hpo", context)
+        self.name = 'HP' #Override
 
     def hp_get_synonym(self,identifier,curie_prefix):
         return super(HPO2,self).get_xrefs(identifier)
