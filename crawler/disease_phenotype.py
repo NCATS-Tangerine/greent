@@ -15,4 +15,5 @@ def build_sets(o):
         dbx = set([x['id'] for x in o.get_xrefs(mid)])
         dbx.add(mid)
         sets.append(dbx)
+    return sets
 
