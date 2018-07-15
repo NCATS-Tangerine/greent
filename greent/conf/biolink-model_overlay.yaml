@@ -19,6 +19,7 @@ classes:
       - EFO
       - UMLS
       - MESH
+      - MEDDRA
       - PHAROS.DISEASE
 
 #The following modifications are to connect biolink concepts to identifier prefixes. 
@@ -69,6 +70,7 @@ classes:
       - MESH
       - INCHI
       - INCHIKEY
+      - UNII
       - PUBCHEM.COMPOUND
       - KEGG.COMPOUND
       - KEGG.DRUG

@@ -86,6 +86,16 @@ class Synonymizer:
                 if potential_identifiers[0].label != '':
                     node.label = potential_identifiers[0].label
                 break
+        #Remove any synonyms with extraneous prefixes.  The point of this is not so much to remove
+        # unknown prefixes, as to make sure that if we got e.g. a meddra, and we downcast it to a disease,
+        # that we don't end up with HP's in the equivalent ids.
+        bad_synonyms = set()
+        for synonym in node.synonyms:
+            prefix = Text.get_curie(synonym)
+            if prefix not in type_curies:
+                bad_synonyms.add(synonym)
+        for bs in bad_synonyms:
+            node.synonyms.remove(bs)
         if node.identifier.startswith('DOID'):
             logger.warn("We are ending up with a DOID here")
             logger.warn(node.identifier)
