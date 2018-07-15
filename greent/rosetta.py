@@ -46,7 +46,7 @@ class Rosetta:
         self.debug = False
 
         logger.debug("-- rosetta init.")
-        self.service_context = ServiceContext(greentConf)
+        self.service_context = ServiceContext(self,greentConf)
         self.core = self.service_context.core
 
         """ Load configuration. """

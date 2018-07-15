@@ -31,7 +31,9 @@ class GreenT:
 
     ''' The Green Translator API - a single Python interface aggregating access mechanisms for 
     all Green Translator services. '''
-    def __init__(self, context):
+    #Getting rosetta in here is solely so that typecheck has access to the synonmizer - seems like
+    # a crappy way to do this.   What's the right way?
+    def __init__(self, context,rosetta):
         self.translator_registry = None
         #self.ont_api = context.config.conf.get("system",{}).get("generic_ontology_service", "false")
         self.ont_api = True
@@ -54,7 +56,7 @@ class GreenT:
             "pharos"           : lambda :  Pharos (self.service_context),
             "quickgo"          : lambda :  QuickGo (self.service_context),
             "tkba"             : lambda :  TranslatorKnowledgeBeaconAggregator (self.service_context),
-            "typecheck"        : lambda :  TypeCheck(self.service_context, self),
+            "typecheck"        : lambda :  TypeCheck(self.service_context, self, rosetta),
             "uberongraph"      : lambda :  UberonGraphKS(self.service_context),
             "unichem"          : lambda :  UniChem(self.service_context),
             "uniprot"          : lambda :  UniProt(self.service_context)

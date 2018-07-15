@@ -9,9 +9,10 @@ class TypeCheck(Service):
     just won't be able to tell.  For instance, if all we have is meddra and umls, there's no way to know if that's
     a disease of a phenotype."""
 
-    def __init__(self, context, greent):
+    def __init__(self, context, greent,rosetta):
         super(TypeCheck, self).__init__("typecheck", context)
         self.greent = greent
+        self.synonymizer = rosetta.synonymizer
 
     def is_cell(self, node):
         """This is a very cheesy approach.  Once we have a generic ontology browser hooked in, we can reformulate"""
@@ -22,19 +23,18 @@ class TypeCheck(Service):
     # have e.g. a Meddra ID or something
     def is_disease(self,node):
         #If this thing can be converted to DOID or MONDO then I'm calling it a disease
-        curie_prefix = Text.get_curie(node.identifier)
-        if 'DOID' == curie_prefix or 'MONDO' == curie_prefix :
+        self.synonymizer.synonymize(node)
+        mondos = node.get_synonyms_by_prefix('MONDO')
+        if len(mondos) > 0:
             return True
-        synonyms = self.greent.oxo.get_synonymous_curies(node.identifier)
-        prefixes = [ Text.get_curie(ident) for ident in synonyms ]
-        return ('DOID' in prefixes) or ('MONDO' in prefixes)
+        doids = node.get_synonyms_by_prefix('DOID')
+        if len(doids) > 0:
+            return True
+        return False
 
     def is_phenotypic_feature(self,node):
         #If this thing can be converted to HP, then it's a phenotype
-        curie_prefix = Text.get_curie(node.identifier)
-        if 'HP' == curie_prefix:
-            return True
-        synonyms = self.greent.oxo.get_synonymous_curies(node.identifier)
-        prefixes = [ Text.get_curie(ident) for ident in synonyms ]
-        return ('HP' in prefixes)
+        self.synonymizer.synonymize(node)
+        hps = node.get_synonyms_by_prefix('HP')
+        return len(hps) > 0
 
