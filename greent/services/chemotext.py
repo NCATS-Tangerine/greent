@@ -78,7 +78,7 @@ class Chemotext(Neo4JREST):
         result = []
         drug_names = self.disease_name_to_drug_name (disease, limit)
         for r in drug_names:
-            result.append ( ( self.get_edge (props=r), KNode("DRUGBANK.NAME:{0}".format (r['name']), node_types.NAME_DRUG) ) )
+            result.append ( ( self.get_edge (props=r), KNode("DRUGBANK.NAME:{0}".format (r['name']), type=node_types.NAME_DRUG) ) )
         return result
 
     def get_chemotext_term(self, input_term):

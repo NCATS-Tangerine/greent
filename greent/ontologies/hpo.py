@@ -1,6 +1,6 @@
 from greent.service import Service
 from ontobio.ontol_factory import OntologyFactory
-from greent.graph_components import KNode, KEdge
+from greent.graph_components import KNode
 from greent.util import LoggingUtil
 from greent import node_types
 import datetime

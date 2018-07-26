@@ -169,7 +169,7 @@ class Rosetta:
         """
 
         """ Convert inputs to be structured like edges-and-nodes returned by a previous services. """
-        next_nodes = {key: [(None, KNode(val, key)) for val in val_list] for key, val_list in inputs.items()}
+        next_nodes = {key: [(None, KNode(val, type=key)) for val in val_list] for key, val_list in inputs.items()}
         logger.debug(f"inputs: {next_nodes}")
 
         """ Validated the input program. """

@@ -122,9 +122,9 @@ class ConceptModel:
         xref = relationship.identifier
         r = self.relations_by_xref[xref]
         if r is None:
-            return LabeledID(identifier = "GAMMA:0", label = "Unmapped_Relation")
+            return LabeledID(identifier="GAMMA:0", label="Unmapped_Relation")
         else:
-            return LabeledID(identifier =r.identifier, label = r.name)
+            return LabeledID(identifier=r.identifier, label=r.name)
 
 class ConceptModelLoader:
 

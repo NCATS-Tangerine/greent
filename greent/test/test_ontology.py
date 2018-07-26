@@ -1,7 +1,6 @@
 import pytest
 import requests
 import os
-from greent.graph_components import KNode
 from greent.services.ontology import GenericOntology
 from greent.servicecontext import ServiceContext
 

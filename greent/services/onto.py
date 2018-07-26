@@ -1,6 +1,5 @@
 import json
 from greent.cachedservice import CachedService
-from greent.graph_components import KNode, KEdge
 from greent.util import LoggingUtil
 
 logger = LoggingUtil.init_logging(__name__)

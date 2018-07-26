@@ -4,9 +4,9 @@ from greent.service import Service
 from greent.ontologies.mondo2 import Mondo2
 from greent.ontologies.go2 import GO2
 from greent.util import Text
-from greent.graph_components import KNode, KEdge,LabeledID
+from greent.graph_components import KNode, LabeledID
 from greent import node_types
-from builder.question import LabeledThing
+from builder.question import LabeledID
 from datetime import datetime as dt
 import logging
 import time
@@ -60,11 +60,11 @@ class Biolink(Service):
                     if pubid_prefix == 'PMID':
                         pubs.append(pub['id'])
             if reverse:
-                source_node = KNode(association['subject']['id'], target_node_type, association['subject']['label'])
+                source_node = KNode(association['subject']['id'], type=target_node_type, name=association['subject']['label'])
                 target_node = input_node
                 newnode = source_node
             else:
-                target_node = KNode(association['object']['id'], target_node_type, association['object']['label'])
+                target_node = KNode(association['object']['id'], type=target_node_type, name=association['object']['label'])
                 source_node = input_node
                 newnode = target_node
             #Deal with biolink's occasional propensity to return Null relations
@@ -83,7 +83,7 @@ class Biolink(Service):
             if predicate_label is None:
                 predicate_label = f'biolink:{function}'
             #now back to the show
-            predicate = LabeledThing(identifier=predicate_id, label=predicate_label)
+            predicate = LabeledID(identifier=predicate_id, label=predicate_label)
             edge = self.create_edge(source_node, target_node, f'biolink.{function}',  input_identifier, predicate,  publications = pubs, url = url)
             edge_nodes.append((edge, newnode))
         return edge_nodes

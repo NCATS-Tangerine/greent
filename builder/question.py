@@ -39,7 +39,7 @@ class Node(FromDictMixin):
             synonyms:
                 type: array
                 items:
-                    $ref: '#/definitions/LabeledThing'
+                    $ref: '#/definitions/LabeledID'
     """
     def __init__(self, *args, **kwargs):
         self.id = None
@@ -68,17 +68,17 @@ class Node(FromDictMixin):
 
     def load_attribute(self, key, value):
         if key == 'synonyms':
-            return {LabeledThing(v) if isinstance(v, dict) else v for v in value}
+            return {LabeledID(v) if isinstance(v, dict) else v for v in value}
         else:
             return super().load_attribute(key, value)
 
-@swagger.definition('LabeledThing')
-class LabeledThing(FromDictMixin):
+@swagger.definition('LabeledID')
+class LabeledID(FromDictMixin):
     """
     Labeled Thing Object
     ---
     schema:
-        id: LabeledThing
+        id: LabeledID
         required:
             - identifier
         properties:
@@ -116,9 +116,9 @@ class Edge(FromDictMixin):
             provided_by:
                 type: string
             original_predicate:
-                $ref: '#/definitions/LabeledThing'
+                $ref: '#/definitions/LabeledID'
             standard_predicate:
-                $ref: '#/definitions/LabeledThing'
+                $ref: '#/definitions/LabeledID'
             publications:
                 type: array
                 items:
@@ -161,7 +161,7 @@ class Edge(FromDictMixin):
 
     def load_attribute(self, key, value):
         if key == 'original_predicate' or key == 'standard_predicate':
-            return LabeledThing(value) if isinstance(value, dict) else value
+            return LabeledID(value) if isinstance(value, dict) else value
         else:
             return super().load_attribute(key, value)
 

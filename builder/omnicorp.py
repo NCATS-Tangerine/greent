@@ -5,6 +5,7 @@ from greent.util import LoggingUtil
 from greent import node_types
 from collections import defaultdict
 from datetime import datetime as dt
+import time
 
 logger = LoggingUtil.init_logging(__name__, logging.INFO)
 
@@ -42,8 +43,8 @@ class OmnicorpSupport():
 
     def generate_all_edges(self, nodelist):
         results = self.omnicorp.get_all_shared_pmids(nodelist)
-        predicate=LabeledID('omnicorp:1', 'literature_co-occurrence')
-        edges = [ KEdge(k[0], k[1], 'omnicorp.term_to_term', dt.now(), predicate,predicate,
+        predicate=LabeledID(identifier='omnicorp:1', label='literature_co-occurrence')
+        edges = [ KEdge(k[0], k[1], 'omnicorp.term_to_term', time.time(), predicate,predicate,
                         f'{k[0].id},{k[1].id}', publications=v, is_support=True)
                   for k,v in results.items()]
         return edges

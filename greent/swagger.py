@@ -1,6 +1,5 @@
 
 from bravado.client import SwaggerClient
-from greent.graph_components import KNode, KEdge
 from bravado.requests_client import RequestsClient
 from greent.service import Service
 

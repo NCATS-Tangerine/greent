@@ -2,7 +2,7 @@ import logging
 import requests
 from datetime import datetime as dt
 from greent.service import Service
-from greent.graph_components import KNode, KEdge, LabeledID
+from greent.graph_components import KNode, LabeledID
 from greent.util import Text, LoggingUtil
 from greent import node_types
 
@@ -103,7 +103,7 @@ class CTD(Service):
 
     def drugname_string_to_drug(self, drugname):
         identifiers = self.drugname_string_to_drug_identifier(drugname)
-        return [ KNode(identifier, node_types.DRUG) for identifier in identifiers ]
+        return [ KNode(identifier, type=node_types.DRUG) for identifier in identifiers ]
 
     def standardize_predicate(self, predicate, sourcenode=None, targetnode=None):
         """CTD has a little more work to do than the standard service."""
@@ -112,11 +112,11 @@ class CTD(Service):
         parts = predicate.label.split('|')
         goodparts = list(filter(lambda p:'reaction' not in p and 'cotreatment' not in p, parts))
         if len(goodparts) != 1:
-            return self.concept_model.standardize_relationship(LabeledID('CTD:interacts_with','interacts_with'))
+            return self.concept_model.standardize_relationship(LabeledID(identifier='CTD:interacts_with', label='interacts_with'))
         #Change the modifier to "affects" to deal with the fact that we don't know what the deleted part does.
         thing = self.term_parents[goodparts[0].split('^')[1]]
         new_id = f'CTD:affects^{thing}'
-        return self.concept_model.standardize_relationship(LabeledID(identifier=new_id,label=new_id))
+        return self.concept_model.standardize_relationship(LabeledID(identifier=new_id, label=new_id))
 
     def get_ctd_predicate_identifier(self,label):
         chunk = label.split('|')
@@ -136,8 +136,8 @@ class CTD(Service):
                     continue
                 props = {"description": r[ 'Interaction' ]}
                 predicate_label = r['InteractionActions']
-                predicate = LabeledID(self.get_ctd_predicate_identifier(predicate_label),predicate_label)
-                gene_node = KNode(f"NCBIGENE:{r['GeneID']}", node_types.GENE)
+                predicate = LabeledID(identifier=self.get_ctd_predicate_identifier(predicate_label), label=predicate_label)
+                gene_node = KNode(f"NCBIGENE:{r['GeneID']}", type=node_types.GENE)
                 if sum([s in predicate.identifier for s in self.g2d_strings]) > 0:
                     subject = gene_node
                     object = drug
@@ -160,9 +160,9 @@ class CTD(Service):
             for r in obj:
                 props = {"description": r[ 'Interaction' ]}
                 predicate_label = r['InteractionActions']
-                predicate = LabeledID(self.get_ctd_predicate_identifier(predicate_label),predicate_label)
+                predicate = LabeledID(identifier=self.get_ctd_predicate_identifier(predicate_label), label=predicate_label)
                 #Should this be substance?
-                drug_node = KNode(f"MESH:{r['ChemicalID']}", node_types.DRUG)
+                drug_node = KNode(f"MESH:{r['ChemicalID']}", type=node_types.DRUG)
                 if sum([s in predicate.identifier for s in self.g2d_strings]) > 0:
                     subject = gene_node
                     obj = drug_node
@@ -188,9 +188,9 @@ class CTD(Service):
                 predicate_label = r['outcomerelationship']
                 if predicate_label == 'no correlation':
                     continue
-                predicate = LabeledID(f"CTD:{''.join(predicate_label.split())}",predicate_label)
+                predicate = LabeledID(identifier=f"CTD:{''.join(predicate_label.split())}", label=predicate_label)
                 #Should this be substance?
-                drug_node = KNode(f"MESH:{r['exposurestressorid']}", node_types.DRUG,label=r['exposurestressorname'])
+                drug_node = KNode(f"MESH:{r['exposurestressorid']}", type=node_types.DRUG, name=r['exposurestressorname'])
                 edge = self.create_edge(drug_node,disease_node,'ctd.disease_to_exposure',identifier,predicate,
                                         publications=[f"PMID:{r['reference']}"],url=url)
                 key = (drug_node.id, edge.standard_predicate)
@@ -210,10 +210,10 @@ class CTD(Service):
                 predicate_label = r['DirectEvidence']
                 if predicate_label == '':
                     predicate_label = 'inferred'
-                predicate = LabeledID(f'CTD:{predicate_label}',predicate_label)
+                predicate = LabeledID(identifier=f'CTD:{predicate_label}', label=predicate_label)
                 refs = [f'PMID:{pmid}' for pmid in r['PubMedIDs'].split('|')]
                 #Should this be substance?
-                drug_node = KNode(f"MESH:{r['ChemicalID']}", node_types.DRUG,label=r['ChemicalName'])
+                drug_node = KNode(f"MESH:{r['ChemicalID']}", type=node_types.DRUG, name=r['ChemicalName'])
                 edge = self.create_edge(drug_node,disease_node,'ctd.disease_to_chemical',identifier,predicate,
                                         publications=refs,url=url)
                 key = (drug_node.id, edge.standard_predicate)

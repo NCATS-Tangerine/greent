@@ -3,25 +3,32 @@ from functools import singledispatch
 from greent import node_types
 from greent.util import Text
 from typing import NamedTuple
-from builder.question import LabeledThing
+from builder.question import LabeledID
+from builder.util import FromDictMixin
 
-class KNode():
+class KNode(FromDictMixin):
     """Used as the node object in KnowledgeGraph.
     
     Instances of this class can be passed to WorldGraph/greent as query subjects/objects."""
 
-    def __init__(self, identifier, node_type, label=None):
-        if identifier.startswith('http'):
-            identifier = Text.obo_to_curie(identifier)
-        self.id = identifier
-        self.name = label
-#        if type not in node_types:
-#            raise ValueError('type {} unsupported.'.format(type))
-        self.type = node_type
+    def __init__(self, *args, **kwargs):
+        self.id = None
+        self.name = None
+        self.type = None
         self.properties = {}
+
+        if args and len(args) == 1 and isinstance(args[0], str):
+            self.id = args[0]
+            args = []
+
+        super().__init__(*args, **kwargs)
+
+        if self.id.startswith('http'):
+            self.id = Text.obo_to_curie(self.id)
+
         #Synonyms is just for CURIEs
         self.synonyms = set()
-        self.synonyms.add(LabeledThing(identifier=identifier, label=label))
+        self.synonyms.add(LabeledID(identifier=self.id, label=self.name))
 
     def add_synonyms(self, new_synonym_set):
         """Accepts a collection of either String CURIES or LabeledIDs"""
@@ -29,7 +36,7 @@ class KNode():
         #self.synonyms.update(new_synonym_set)
         for newsyn in new_synonym_set:
             if isinstance(newsyn,str):
-                self.synonyms.add(LabeledThing(identifier=newsyn, label=""))
+                self.synonyms.add(LabeledID(identifier=newsyn, label=""))
             else:
                 #Better be a LabeledID
                 self.synonyms.add(newsyn)
@@ -72,17 +79,13 @@ class KNode():
             "type" : f"blm:{self.type}",
         }
 
-class LabeledID(NamedTuple):
-    """A simple struct for holding identifier/label pairs"""
-    identifier: str
-    label: str
-
-class KEdge():
+class KEdge(FromDictMixin):
     """Used as the edge object in KnowledgeGraph.
 
     Instances of this class should be returned from greenT"""
 
-    def __init__(self, source_node, target_node, provided_by, ctime, original_predicate, standard_predicate, input_id, publications = None, url=None, properties=None, is_support=False):
+    # def __init__(self, source_node, target_node, provided_by, ctime, original_predicate, standard_predicate, input_id, publications = None, url=None, properties=None, is_support=False):
+    def __init__(self, *args, **kwargs):
         """Definitions of the parameters:
         edge_function: the python function called to produce this edge
         ctime: When the external call to produce this edge was made.  If the edge comes from a cache, this
@@ -97,21 +100,27 @@ class KEdge():
         properties: A map of any other information about the edge that we may want to persist.  Default None.
         is_support: Whether or not the edge is a support edge. Default False.
         """
-        self.source_id = source_node.id
-        self.target_id = target_node.id
-        self.provided_by = provided_by
-        self.ctime = ctime
-        self.original_predicate = original_predicate
-        self.standard_predicate = standard_predicate
-        self.input_id = input_id
-        self.publications = publications
-        self.url = url
+        self.source_id = None
+        self.target_id = None
+        self.provided_by = None
+        self.ctime = None
+        self.original_predicate = None
+        self.standard_predicate = None
+        self.input_id = None
+        self.publications = []
+        self.url = None
+        self.is_support = False
+        self.properties = {}
+
+        super().__init__(*args, **kwargs)
+
         self.validate_publications()
-        if properties is not None:
-            self.properties = properties
+
+    def load_attribute(self, key, value):
+        if key == 'original_predicate' or key == 'standard_predicate':
+            return LabeledID(value) if isinstance(value, dict) else value
         else:
-            self.properties = {}
-        self.is_support = is_support
+            return super().load_attribute(key, value)
 
     def __key(self):
         return (self.source_id, self.target_id, self.provided_by)

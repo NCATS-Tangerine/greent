@@ -2,7 +2,6 @@ from greent.service import Service
 import operator
 import functools
 from greent.util import Text, LoggingUtil
-from greent.graph_components import KNode, KEdge
 from greent import node_types
 import logging
 

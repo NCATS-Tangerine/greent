@@ -1,6 +1,6 @@
 from greent.service import Service
 from ontobio.ontol_factory import OntologyFactory
-from greent.graph_components import KNode, KEdge
+from greent.graph_components import KNode
 from greent.util import LoggingUtil
 from greent import node_types
 
@@ -126,7 +126,7 @@ class Mondo(Service):
                     new_object_id = new_object_id.replace (orphanet_prefix, 'ORPHANET.GENETIC_CONDITION:')
                 elif new_object_id.startswith ('DOID:'):
                     new_object_id = new_object_id.replace ('DOID:', 'DOID.GENETIC_CONDITION:')
-                relations.append ( (self.get_edge ({}, 'is_genetic_condition'), KNode (new_object_id, node_types.GENETIC_CONDITION) ))
+                relations.append ( (self.get_edge ({}, 'is_genetic_condition'), KNode (new_object_id, type=node_types.GENETIC_CONDITION) ))
         return relations
 
     def doid_get_orphanet_genetic_condition (self, disease):

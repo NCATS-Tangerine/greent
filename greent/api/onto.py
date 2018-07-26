@@ -7,7 +7,6 @@ import requests
 import yaml
 import shutil
 from greent import node_types
-from greent.graph_components import KNode, KEdge
 from greent.services.ontology import GenericOntology
 from greent.servicecontext import ServiceContext
 from flask import Flask, jsonify, g, Response, request

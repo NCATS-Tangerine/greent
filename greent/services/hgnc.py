@@ -3,7 +3,7 @@ from greent import node_types
 from greent.graph_components import LabeledID
 from greent.service import Service
 from greent.util import LoggingUtil
-from builder.question import LabeledThing
+from builder.question import LabeledID
 
 import time
 import logging
@@ -115,7 +115,7 @@ class HGNC(Service):
                         if ':' in value:
                             value = value.split(':')[-1]
                         synonym = f'{prefix}:{value}'
-                        synonyms.add(LabeledThing(identifier=synonym, label=hgnc_label))
+                        synonyms.add(LabeledID(identifier=synonym, label=hgnc_label))
         return synonyms
 
 

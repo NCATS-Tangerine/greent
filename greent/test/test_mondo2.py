@@ -9,7 +9,7 @@ def mondo2():
     return Mondo2(ServiceContext.create_context())
 
 def test_huntington_is_genetic(mondo2):
-    huntington = KNode('OMIM:143100',node_types.DISEASE)
+    huntington = KNode('OMIM:143100', type=node_types.DISEASE)
     assert mondo2.is_genetic_disease(huntington)
 
 def test_lookup(mondo2):

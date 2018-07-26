@@ -4,6 +4,7 @@ from greent.util import Text
 from greent import node_types
 from collections import defaultdict
 from datetime import datetime as dt
+import time
 
 def get_supporter(greent):
     return ChemotextSupport(greent)
@@ -59,6 +60,7 @@ class ChemotextSupport():
         if len(articles) > 0:
             #ke= KEdge( 'chemotext', 'term_to_term', { 'publications': articles }, is_support = True )
             pmids = [f'PMID:{x["pmid"]}' for x in articles]
+            raise RuntimeError('The following KEdge constructor syntax looks very suspect.')
             ke = KEdge('chemotext.term_to_term', dt.now(), 'chemotext:1', 'literature_co-occurence',
                        f'{node_a.id},{node_b.id}','chemotext:1','literature_co-occurence',publications=pmids,
                        is_support=True)
@@ -74,7 +76,7 @@ def test():
     gt = rosetta.core
     support = ChemotextSupport(gt)
     from greent.graph_components import KNode
-    node = KNode('HP:0000964', node_type = node_types.PHENOTYPE, label='Eczema')
+    node = KNode('HP:0000964', type=node_types.PHENOTYPE, name='Eczema')
     # node.mesh_identifiers.append( { 'curie': 'MeSH:D004485', 'label': 'Eczema' } )
     support.add_chemotext_terms( [node] )
     # import json
@@ -86,8 +88,8 @@ def test2():
     gt = rosetta.core
     support = ChemotextSupport(gt)
     from greent.graph_components import KNode
-    node_a = KNode('CTD:1,2-linoleoylphosphatidylcholine', node_type = node_types.DRUG, label='1,2-linoleoylphosphatidylcholine')
-    node_b = KNode('CTD:Hydrogen Peroxide', node_type = node_types.DRUG, label='Hydrogen Peroxide')
+    node_a = KNode('CTD:1,2-linoleoylphosphatidylcholine', type=node_types.DRUG, name='1,2-linoleoylphosphatidylcholine')
+    node_b = KNode('CTD:Hydrogen Peroxide', type=node_types.DRUG, name='Hydrogen Peroxide')
     #node.mesh_identifiers.append( { 'curie': 'MeSH:D004485', 'label': 'Eczema' } )
     #support.add_chemotext_terms( [node] )
     #import json

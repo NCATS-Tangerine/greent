@@ -1,7 +1,6 @@
 import os
 from greent.cache import Cache
 from greent.core import GreenT
-from greent.graph_components import KEdge, KNode
 from greent.config import Config
 from greent.util import LoggingUtil
 import socket

@@ -2,7 +2,6 @@ import requests
 import pprint
 from greent.service import Service
 from greent.util import Text
-from greent.graph_components import KNode,KEdge
 from greent import node_types
 import time
 

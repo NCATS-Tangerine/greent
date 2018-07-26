@@ -21,14 +21,14 @@ def mondo(rosetta):
     return checker
 
 def test_bad_gene_to_process(biolink):
-    BAD_protein = KNode('UniProtKB:XXXXXX', node_types.GENE)
+    BAD_protein = KNode('UniProtKB:XXXXXX', type=node_types.GENE)
     results = biolink.gene_get_process_or_function(BAD_protein)
     assert len(results) == 0
 
 
 def test_gene_to_disease(biolink):
     """What do we get back for HBB"""
-    relations = biolink.gene_get_disease(KNode('HGNC:4827',node_types.GENE))
+    relations = biolink.gene_get_disease(KNode('HGNC:4827', type=node_types.GENE))
     assert len(relations) > 20 and len(relations) < 40
     identifiers = [node.id for r,node in relations]
     #everthing should be MONDO ids
@@ -46,21 +46,21 @@ def test_gene_to_disease(biolink):
 
 
 def test_gene_to_process(biolink):
-    KIT_protein = KNode('UniProtKB:P10721', node_types.GENE)
+    KIT_protein = KNode('UniProtKB:P10721', type=node_types.GENE)
     results = biolink.gene_get_process_or_function(KIT_protein)
     for ke, kn in results:
         assert kn.type == node_types.PROCESS_OR_FUNCTION
         assert Text.get_curie(kn.id) == "GO"
 
 def test_gene_to_process2(biolink):
-    KIT_protein = KNode('UniProtKB:Q14994', node_types.GENE)
+    KIT_protein = KNode('UniProtKB:Q14994', type=node_types.GENE)
     results = biolink.gene_get_process_or_function(KIT_protein)
     for ke, kn in results:
         assert kn.type == node_types.PROCESS_OR_FUNCTION
         assert Text.get_curie(kn.id) == "GO"
 
 def test_disease_to_phenotypes(biolink):
-    asthma = KNode('DOID:2841', node_types.DISEASE)
+    asthma = KNode('DOID:2841', type=node_types.DISEASE)
     results = biolink.disease_get_phenotype(asthma)
     assert len(results) > 90 and len(results) < 110
     identifiers = [node.id for r,node in results]
@@ -72,7 +72,7 @@ def test_disease_to_phenotypes(biolink):
 
 def test_pathways(biolink):
     gene_id = 'HGNC:5013'
-    gene = KNode(gene_id, node_type=node_types.GENE)
+    gene = KNode(gene_id, type=node_types.GENE)
     results = biolink.gene_get_pathways(gene)
     for e, k in results:
         print( k.id )

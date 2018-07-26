@@ -35,7 +35,7 @@ def test_drugname_to_mesh_synonym_bar(ctd):
     assert nodes[0].id == 'MESH:C024526'
 
 def test_drug_to_gene_simple(ctd):
-    input_node = KNode("MESH:D000068579", node_types.DRUG)
+    input_node = KNode("MESH:D000068579", type=node_types.DRUG)
     results = ctd.drug_to_gene(input_node)
     for edge,node in results:
         assert node.type == node_types.GENE
@@ -44,8 +44,8 @@ def test_drug_to_gene_simple(ctd):
 
 def test_drug_to_gene_synonym(ctd):
     #Even though the main identifier is drugbank, CTD should find the right synonym in there somewhere.
-    input_node = KNode("DB:FakeID", node_types.DRUG)
-    input_node.add_synonyms(set([LabeledID("MESH:D000068579","blah")]))
+    input_node = KNode("DB:FakeID", type=node_types.DRUG)
+    input_node.add_synonyms(set([LabeledID(identifier="MESH:D000068579", label="blah")]))
     results = ctd.drug_to_gene(input_node)
     for edge,node in results:
         assert node.type == node_types.GENE
@@ -53,7 +53,7 @@ def test_drug_to_gene_synonym(ctd):
     assert 'NCBIGENE:5743' in result_ids #Cox2 for a cox2 inhibitor
 
 def test_gene_to_drug_unique(ctd):
-    input_node=KNode("NCBIGENE:345",node_types.GENE) #APOC3
+    input_node=KNode("NCBIGENE:345", type=node_types.GENE) #APOC3
     results = ctd.gene_to_drug(input_node)
     outputs = [ (e.standard_predicate,n.id) for e,n in results]
     total = len(outputs)
@@ -67,7 +67,7 @@ def test_gene_to_drug_unique(ctd):
 
 def test_gene_to_drug_synonym(ctd):
      #Even though the main identifier is drugbank, CTD should find the right synonym in there somewhere.
-    input_node = KNode("DB:FakeID", node_types.GENE)
+    input_node = KNode("DB:FakeID", type=node_types.GENE)
     input_node.add_synonyms(set(["NCBIGene:5743"]))
     results = ctd.gene_to_drug(input_node)
     for edge,node in results:
@@ -77,7 +77,7 @@ def test_gene_to_drug_synonym(ctd):
 
 def test_artemether_to_gene(ctd):
     mesh = 'MESH:C032942'
-    input_node = KNode(mesh, node_types.DRUG)
+    input_node = KNode(mesh, type=node_types.DRUG)
     results = ctd.drug_to_gene(input_node)
     for edge,node in results:
         assert node.type == node_types.GENE
@@ -85,7 +85,7 @@ def test_artemether_to_gene(ctd):
     assert 'NCBIGENE:9970' in result_ids #
 
 def test_chemical_to_gene_glutathione(ctd):
-    input_node = KNode("MESH:D006861", node_types.DRUG)
+    input_node = KNode("MESH:D006861", type=node_types.DRUG)
     results = ctd.drug_to_gene(input_node)
     for edge,node in results:
         assert node.type == node_types.GENE
@@ -101,7 +101,7 @@ def test_chemical_to_gene_glutathione(ctd):
     assert 'NCBIGENE:5743' in result_ids #Cox2 for a cox2 inhibitor
 
 def test_disease_to_exposure(ctd):
-    input_node = KNode("MESH:D001249", node_types.DISEASE, label='Asthma')
+    input_node = KNode("MESH:D001249", type=node_types.DISEASE, name='Asthma')
     results = ctd.disease_to_exposure(input_node)
     ddt = None
     for edge,node in results:
@@ -114,7 +114,7 @@ def test_disease_to_exposure(ctd):
     assert ddt.name == 'DDT'
 
 def test_disease_to_chemical(ctd):
-    input_node = KNode("MESH:D001249", node_types.DISEASE, label='Asthma')
+    input_node = KNode("MESH:D001249", type=node_types.DISEASE, name='Asthma')
     results = ctd.disease_to_chemical(input_node)
     ddt = None
     for edge,node in results:

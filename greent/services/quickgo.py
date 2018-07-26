@@ -47,10 +47,10 @@ class QuickGo(Service):
                 'results_in_closure_of':'RO:0002585',
                 }
         try:
-            return LabeledID(labels2identifiers[p_label],p_label)
+            return LabeledID(identifier=labels2identifiers[p_label], label=p_label)
         except:
             logger.warn(p_label)
-            return LabeledID(f'GO:{p_label}',p_label)
+            return LabeledID(identifier=f'GO:{p_label}', label=p_label)
 
     def standardize_predicate(self, predicate, source, target):
         """Fall back to a catch-all if we can't find a specific mapping"""
@@ -59,10 +59,10 @@ class QuickGo(Service):
         except:
             #If the target is a molecular function, use RO:0002215 capable_of
             if self.go.is_biological_process(target):
-                return super(QuickGo,self).standardize_predicate(LabeledID('RO:0002215','capable_of'))
+                return super(QuickGo,self).standardize_predicate(LabeledID(identifier='RO:0002215', label='capable_of'))
             #If the target is a biological process, use RO:0002331 involved_in
             if self.go.is_molecular_function(target):
-                return super(QuickGo,self).standardize_predicate(LabeledID('RO:0002331','involved_in'))
+                return super(QuickGo,self).standardize_predicate(LabeledID(identifier='RO:0002331', label='involved_in'))
             #If the target is a cell, use 'occurs_in'
             if target.type == node_types.CELL:
                 return super(QuickGo,self).standardize_predicate(self.get_predicate('occurs_in'))
@@ -110,7 +110,7 @@ class QuickGo(Service):
                         predicate = self.get_predicate(xrel['relation'])
                         if predicate is None:
                             continue
-                        cell_node = KNode (xrel['id'], node_types.CELL, label = xrel['term']) 
+                        cell_node = KNode (xrel['id'], type=node_types.CELL, name=xrel['term']) 
                         edge = self.create_edge(go_node, cell_node,'quickgo.go_term_to_cell_xontology_relationships',go_node.id,predicate,url = url)
                         results.append( ( edge , cell_node))
         return results
@@ -133,7 +133,7 @@ class QuickGo(Service):
                             if predicate is None:
                                 continue
                             #Bummer, don't get a name
-                            cell_node = KNode( 'CL:{}'.format(c['id']), node_types.CELL )
+                            cell_node = KNode('CL:{}'.format(c['id']), type=node_types.CELL)
                             edge = self.create_edge(go_node, cell_node, 'quickgo.go_term_to_cell_annotation_extensions',go_node.id,predicate,url = url)
                             results.append( (edge,cell_node ) )
                             cell_ids.add(c['id'])
@@ -145,7 +145,7 @@ class QuickGo(Service):
         go_ids = set([ (r['goId'],r['goName']) for r in call_results ])
         predicate=self.get_predicate('occurs_in')
         #Don't get a name for the go term.. there is a goName field, but it's always NULL.
-        nodes = [ KNode( idlabel[0] , node_types.PROCESS_OR_FUNCTION, label=idlabel[1] ) for idlabel in go_ids ]
+        nodes = [ KNode(idlabel[0], type=node_types.PROCESS_OR_FUNCTION, name=idlabel[1]) for idlabel in go_ids ]
         edges = [ self.create_edge(go_node, cell_node, 'quickgo.cell_to_go_term_annotation_extensions', cell_node.id, predicate, url = url) for go_node in nodes ] 
         return list(zip(edges,nodes))
 
@@ -162,7 +162,7 @@ class QuickGo(Service):
                 predicate = self.get_predicate(r['qualifier'])
                 if predicate is None:
                     continue
-                gene_node = KNode( uniprotid, node_types.GENE ) 
+                gene_node = KNode( uniprotid, type=node_types.GENE ) 
                 edge = self.create_edge(node, gene_node, 'quickgo.go_term_to_gene_annotation',node.id,predicate,url = url)
                 results.append( (edge,gene_node ) )
         return results
@@ -183,7 +183,7 @@ class QuickGo(Service):
                 predicate = self.get_predicate(r['qualifier'])
                 if predicate is None:
                     continue
-                gene_node = KNode( uniprotid, node_types.GENE ) 
+                gene_node = KNode( uniprotid, type=node_types.GENE ) 
                 edge = self.create_edge(gene_node, node, 'quickgo.go_term_to_gene_annotation',node.id,predicate,url = url)
                 results.append( (edge,gene_node ) )
         return results

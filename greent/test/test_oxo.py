@@ -1,5 +1,4 @@
 import pytest
-from greent.graph_components import KNode
 from greent.services.oxo import OXO
 from greent.servicecontext import ServiceContext
 from greent import node_types

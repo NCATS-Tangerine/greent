@@ -13,7 +13,7 @@ def quickgo(rosetta):
 
 def test_xontology_relationships(quickgo):
     #Mast Cell Chemotaxis
-    r = quickgo.go_term_to_cell_xontology_relationships (KNode("GO:0002551", node_types.PROCESS))
+    r = quickgo.go_term_to_cell_xontology_relationships (KNode("GO:0002551", type=node_types.PROCESS))
     assert len(r) == 1
     assert r[0][1].type == node_types.CELL
     #Mast Cells
@@ -21,7 +21,7 @@ def test_xontology_relationships(quickgo):
 
 def test_extensions(quickgo):
     #Neurotransmitter secretion
-    r = quickgo.go_term_to_cell_annotation_extensions (KNode("GO:0055085", node_types.PROCESS))
+    r = quickgo.go_term_to_cell_annotation_extensions (KNode("GO:0055085", type=node_types.PROCESS))
     types = set([n.type for e,n in r])
     assert len(types) > 0
     assert node_types.CELL in types
@@ -30,7 +30,7 @@ def test_extensions(quickgo):
     assert myedges[0][0].standard_predicate is not None
 
 def test_reverse_extensions(quickgo):
-    r = quickgo.cell_to_go_term_annotation_extensions(KNode("CL:0002131", node_types.CELL))
+    r = quickgo.cell_to_go_term_annotation_extensions(KNode("CL:0002131", type=node_types.CELL))
     types = set([n.type for e,n in r])
     assert len(types) == 1
     assert node_types.PROCESS_OR_FUNCTION in types
@@ -41,7 +41,7 @@ def test_reverse_extensions(quickgo):
 
 def test_extensions_bp(quickgo):
     #Neurotransmitter secretion
-    r = quickgo.go_term_to_cell_annotation_extensions (KNode("GO.BIOLOGICAL_PROCESS:0007269", node_types.PROCESS))
+    r = quickgo.go_term_to_cell_annotation_extensions (KNode("GO.BIOLOGICAL_PROCESS:0007269", type=node_types.PROCESS))
     types = set([n.type for e,n in r])
     assert len(types) == 1
     assert node_types.CELL in types
@@ -53,7 +53,7 @@ def test_extensions_bp(quickgo):
 
 
 def test_go_to_gene(quickgo):
-    r = quickgo.go_term_to_gene_annotation (KNode("GO:0007165", node_types.PROCESS))
+    r = quickgo.go_term_to_gene_annotation (KNode("GO:0007165", type=node_types.PROCESS))
     for e,k in r:
         assert k.type == node_types.GENE
     assert len(r) > 25

@@ -1,4 +1,3 @@
-from greent.graph_components import KNode, KEdge
 from greent import node_types
 from greent.util import LoggingUtil,Text
 from neo4j.v1 import GraphDatabase
@@ -41,11 +40,11 @@ class BufferedWriter:
         return self
 
     def write_node(self,node):
-        if node.curie in self.written_nodes:
+        if node.id in self.written_nodes:
             return
         if node.name is None or node.name == '':
-            logger.error(f"Node {node.curie} is missing a label")
-        self.written_nodes.add(node.curie)
+            logger.error(f"Node {node.id} is missing a label")
+        self.written_nodes.add(node.id)
         typednodes = self.node_queues[node.type]
         typednodes.append(node)
         if len(typednodes) >= self.node_buffer_size:
@@ -121,14 +120,14 @@ def sort_nodes_by_label(nodes):
 
 def export_node_chunk(tx,nodelist,label):
     cypher = f"""UNWIND $batches as batch
-                MERGE (a:{node_types.ROOT_ENTITY} {{id: batch.curie}})
+                MERGE (a:{node_types.ROOT_ENTITY} {{id: batch.id}})
                 set a:{label}
                 set a.name=batch.name
                 set a.equivalent_identifiers=batch.synonyms
                 """
     batch = []
     for n in nodelist:
-        nodeout = { 'curie': n.curie, 'name': n.name, 'synonyms': [s.identifier for s in n.synonyms] }
+        nodeout = { 'id': n.id, 'name': n.name, 'synonyms': [s.identifier for s in n.synonyms] }
         batch.append(nodeout)
     tx.run(cypher,{'batches': batch})
 

@@ -7,7 +7,7 @@ from greent.util import Text
 
 def test_mondo_synonymization(rosetta):
     #Niemann Pick Disease (not type C)
-    node = KNode('MONDO:0001982',node_types.DISEASE)
+    node = KNode('MONDO:0001982', type=node_types.DISEASE)
     synonyms = synonymize(node,rosetta.core)
     assert len(synonyms) > 10
     node.add_synonyms(synonyms)
@@ -23,7 +23,7 @@ def test_mondo_synonymization(rosetta):
     #assert node.name == 'Niemann-Pick Disease'
 
 def test_mondo_synonymization_2(rosetta):
-    node = KNode('MONDO:0005737',node_types.DISEASE)
+    node = KNode('MONDO:0005737', type=node_types.DISEASE)
     synonyms = synonymize(node,rosetta.core)
     assert len(synonyms) > 1
     node.add_synonyms(synonyms)
@@ -35,7 +35,7 @@ def test_mondo_synonymization_2(rosetta):
 
 #This test doesn't currently pass because OXO hasn't integrated MONDO yet
 def future_test_disease_normalization(rosetta):
-    node = KNode('DOID:4325', node_types.DISEASE)
+    node = KNode('DOID:4325', type=node_types.DISEASE)
     synonyms = synonymize(node,rosetta.core)
     print( synonyms )
     node.add_synonyms(synonyms)

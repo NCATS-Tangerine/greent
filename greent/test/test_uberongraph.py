@@ -18,7 +18,7 @@ def test_name(uberon):
     assert results[0]['cellLabel'] == 'mast cell'
 
 def test_cell_to_anatomy_super(uberon):
-    k = KNode('CL:0002251',node_types.CELL,label='epithelial cell of the alimentary canal')
+    k = KNode('CL:0002251', type=node_types.CELL, name='epithelial cell of the alimentary canal')
     results = uberon.get_anatomy_by_cell_graph( k )
     #Should get back digestive system UBERON:0001007
     assert len(results) > 0
@@ -28,7 +28,7 @@ def test_cell_to_anatomy_super(uberon):
 
 
 def test_cell_to_anatomy(uberon):
-    k = KNode('CL:0000097',node_types.CELL)
+    k = KNode('CL:0000097', type=node_types.CELL)
     results = uberon.get_anatomy_by_cell_graph( k )
     #Mast cells are part of the immune system
     assert len(results) == 1
@@ -37,7 +37,7 @@ def test_cell_to_anatomy(uberon):
     assert node.id == 'UBERON:0002405'
 
 def test_anatomy_to_cell(uberon):
-    k = KNode('UBERON:0002405',node_types.ANATOMY,'Immune system')
+    k = KNode('UBERON:0002405', type=node_types.ANATOMY, name='Immune system')
     results = uberon.get_cell_by_anatomy_graph( k )
     #Mast cells are part of the immune system
     assert len(results) > 0
@@ -47,14 +47,14 @@ def test_anatomy_to_cell(uberon):
     assert 'CL:0000097' in identifiers
 
 def test_anatomy_to_cell_upcast(uberon):
-    k = KNode('CL:0000192',node_types.ANATOMY,'Smooth Muscle Cell')
+    k = KNode('CL:0000192', type=node_types.ANATOMY, name='Smooth Muscle Cell')
     results = uberon.get_cell_by_anatomy_graph( k )
     #There's no cell that's part of another cell?
     assert len(results) == 0
 
 def test_pheno_to_anatomy(uberon):
     #Arrhythmia occurs in...
-    k = KNode('HP:0011675',node_types.PHENOTYPE)
+    k = KNode('HP:0011675', type=node_types.PHENOTYPE)
     results = uberon.get_anatomy_by_phenotype_graph( k )
     #anatomical features
     ntypes = set([n.type for e,n in results])
@@ -68,7 +68,7 @@ def test_pheno_to_anatomy(uberon):
 
 def test_anat_to_pheno(uberon):
     #Arrhythmia occurs in...
-    k = KNode('UBERON:0000948', node_types.ANATOMY)
+    k = KNode('UBERON:0000948', type=node_types.ANATOMY)
     results = uberon.get_phenotype_by_anatomy_graph( k )
     #phenos
     ntypes = set([n.type for e,n in results])
@@ -82,7 +82,7 @@ def test_anat_to_pheno(uberon):
 
 def test_non_HP_pheno_to_anatomy(uberon):
     #Arrhythmia occurs in...
-    k = KNode('xx:0011675',node_types.PHENOTYPE)
+    k = KNode('xx:0011675', type=node_types.PHENOTYPE)
     results = uberon.get_anatomy_by_phenotype_graph( k )
     assert len(results) == 0
 

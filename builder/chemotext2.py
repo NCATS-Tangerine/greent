@@ -63,6 +63,7 @@ class Chemotext2Support():
                 logging.getLogger('application').debug('  "{}"-"{}": {} ({})'.format(p_a, p_b, r, maxr) ) 
         logging.getLogger('application').debug(' "{}"-"{}": {}'.format(besta, bestb, maxr) ) 
         if maxr > -1:
+            raise RuntimeError('The following KEdge constructor looks somewhat suspect.')
             ke= KEdge( 'chemotext2', 'term_to_term', { 'similarity':maxr, 'terms':[besta, bestb] }, is_support = True )
             ke.source_node = node_a
             ke.target_node = node_b

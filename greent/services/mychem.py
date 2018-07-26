@@ -1,6 +1,6 @@
 import requests
 from greent import node_types
-from greent.graph_components import KNode, KEdge, LabeledID
+from greent.graph_components import KNode, LabeledID
 from greent.service import Service
 from greent.util import Text, LoggingUtil
 import logging,json
@@ -32,13 +32,13 @@ class MyChem(Service):
                         if outcome['case_count'] <=5:
                             continue
                         if min(outcome['prr_95_ci']) > 1:
-                            predicate = LabeledID(identifier="RO:0003302",label= "causes_or_contributes_to")
+                            predicate = LabeledID(identifier="RO:0003302", label="causes_or_contributes_to")
                         elif max(outcome['prr_95_ci']) < 1:
-                            predicate = LabeledID(identifier="RO:0002559",label= "prevents")
+                            predicate = LabeledID(identifier="RO:0002559", label="prevents")
                         else:
                             continue
                         meddra_id = f"MedDRA:{outcome['meddra_code']}"
-                        obj_node = KNode(meddra_id, node_type = node_types.DISEASE_OR_PHENOTYPE, label=outcome['name'])
+                        obj_node = KNode(meddra_id, type=node_types.DISEASE_OR_PHENOTYPE, name=outcome['name'])
                         props={'prr':outcome['prr'], 'ror': outcome['ror'], 'case_count': outcome['case_count']}
                         edge = self.create_edge(drug_node, obj_node, 'mychem.get_adverse_events',  cid, predicate, url = murl, properties=props)
                         return_results.append( (edge, obj_node) )
@@ -85,15 +85,15 @@ class MyChem(Service):
                             continue
                         print(outcome['name'], outcome['case_count'], outcome['prr_95_ci'])
                         if outcome['case_count'] > 5 and min(outcome['prr_95_ci']) > 1:
-                            predicate = LabeledID(identifier="RO:0003302",label= "causes_or_contributes_to")
+                            predicate = LabeledID(identifier="RO:0003302", label="causes_or_contributes_to")
                         elif outcome['case_count'] > 5 and max(outcome['prr_95_ci']) < 1:
-                            predicate = LabeledID(identifier="RO:0002559",label= "prevents")
+                            predicate = LabeledID(identifier="RO:0002559", label="prevents")
                         else:
                             continue
                         drug_node=self.make_drug_node(hit)
                         if drug_node is None:
                             continue
-                            #obj_node = KNode(meddra_id, node_type = node_types.DISEASE_OR_PHENOTYPE, label=outcome['name'])
+                            #obj_node = KNode(meddra_id, node_type = node_types.DISEASE_OR_PHENOTYPE, name=outcome['name'])
                         props={'prr':outcome['prr'], 'ror': outcome['ror'], 'case_count': outcome['case_count']}
                         edge = self.create_edge(drug_node, input_node, 'mychem.get_adverse_events', mname , predicate, url = murl, properties=props)
                         return_results.append( (edge, drug_node) )
@@ -104,10 +104,10 @@ class MyChem(Service):
         fails, chebi.  Failing that, complain bitterly."""
         if 'chembl' in hit_element:
             chembl=hit_element['chembl']
-            return KNode(f"CHEMBL:{chembl['molecule_chembl_id']}", node_types.DRUG, chembl['pref_name'])
+            return KNode(f"CHEMBL:{chembl['molecule_chembl_id']}", type=node_types.DRUG, name=chembl['pref_name'])
         if 'chebi' in hit_element:
             chebi = hit_element['chebi']
-            return KNode(chebi['chebi_id'], node_types.DRUG, chebi['chebi_name'])
+            return KNode(chebi['chebi_id'], type=node_types.DRUG, name=chebi['chebi_name'])
         logger.error('hit from mychem.info did not return a chembl or a chebi element')
         logger.error(f'got these keys: {list(hit_element.keys())}')
         return None

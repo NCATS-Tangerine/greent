@@ -23,7 +23,7 @@ def synonymize(node, gt):
 
 def get_synonyms(node, gt, distance=2):
     #OXO doesn't know about every kind of curie.  So let's see if it knows about our node identifier
-    synonyms = get_synonyms_with_curie_check(node.curie, gt, distance=distance)
+    synonyms = get_synonyms_with_curie_check(node.id, gt, distance=distance)
     if len(synonyms) == 0:
         #OXO didn't know about it.  So we're going to call oxo with our (valid) synonyms
         #Because of this, we're likely to end up with a mix of Strings and LabeledID

@@ -8,7 +8,6 @@ from builder.gamma import Gamma
 from flasgger import Swagger
 from flask import Flask, jsonify, g, Response
 from greent import node_types
-from greent.graph_components import KNode,KEdge
 from greent.rosetta import Rosetta
 #from builder.userquery import UserQuery
 try:

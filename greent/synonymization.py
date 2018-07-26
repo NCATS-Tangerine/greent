@@ -9,7 +9,7 @@ from greent.synonymizers import hgnc_synonymizer
 from greent.synonymizers import oxo_synonymizer
 from greent.synonymizers import substance_synonymizer
 from greent.synonymizers import disease_synonymizer
-from builder.question import LabeledThing
+from builder.question import LabeledID
 
 
 #The mapping from a node type to the synonymizing module
@@ -38,9 +38,9 @@ class Synonymizer:
         
     def synonymize(self, node):
         """Given a node, determine its type and dispatch it to the correct synonymizer"""
-        logger.debug('syn {} {}'.format(node.curie,node.type))
+        logger.debug('syn {} {}'.format(node.id, node.type))
         if node.type in synonymizers:
-            key = f"synonymize({node.curie})"
+            key = f"synonymize({node.id})"
             synonyms = self.rosetta.cache.get(key)
             if synonyms is not None:
                 logger.debug (f"cache hit: {key}")
@@ -63,9 +63,9 @@ class Synonymizer:
             smap[labeledid.identifier].append(labeledid.label)
         for lid,labels in smap.items():
             if len(labels) > 1 and (None in labels):
-                node.synonyms.remove(LabeledThing(identifier=lid, label=None))
+                node.synonyms.remove(LabeledID(identifier=lid, label=None))
             if len(labels) > 1 and ('' in labels):
-                node.synonyms.remove(LabeledThing(identifier=lid, label=''))
+                node.synonyms.remove(LabeledID(identifier=lid, label=''))
         #Now find the bset one for an id
         type_curies = self.concepts.get(node.type).id_prefixes
         #Now start looking for the best curies
@@ -82,10 +82,10 @@ class Synonymizer:
                     if len(ids_with_labels) > 0:
                         potential_identifiers = ids_with_labels
                     potential_identifiers.sort()
-                node.curie = potential_identifiers[0].identifier
+                node.id = potential_identifiers[0].identifier
                 node.name = potential_identifiers[0].label
                 break
-        if node.curie.startswith('DOID'):
+        if node.id.startswith('DOID'):
             logger.warn("We are ending up with a DOID here")
             logger.warn(node.id)
             logger.warn(node.synonyms)

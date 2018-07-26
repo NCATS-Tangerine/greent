@@ -1,7 +1,6 @@
 import json
 import pytest
 from greent.conftest import conf
-from greent.graph_components import KNode
 from greent.services.ctd import CTD
 from greent.servicecontext import ServiceContext
 from greent import node_types

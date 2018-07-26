@@ -209,6 +209,7 @@ class TranslatorRegistry(Service):
         return DataStructure.to_named_tuple ('ServiceMetadata', metadata) if len(metadata) > 0 else None
 
     def new_edge (self, source, function, properties, source_node=None, target_node=None):
+        raise RuntimeError('The following KEdge constructor looks very suspect.')
         edge = KEdge (source, function, properties)
         edge.source_node = source_node
         edge.target_node = target_node
@@ -279,7 +280,7 @@ class TranslatorRegistry(Service):
                                 node_type = get_node_type (out_concept)
                                 if curie and node_type:
                                     #print (f" ------> node type {node_type} id {val} ")
-                                    new_node = KNode(curie, node_type)
+                                    new_node = KNode(curie, type=node_type)
                                     result.append (
                                         ( self.new_edge(source=self.name,
                                                         function=predicate,

@@ -1,7 +1,7 @@
 import requests
 from greent.services.onto import Onto
 from greent.service import Service
-from greent.graph_components import KNode, KEdge
+from greent.graph_components import KNode
 from greent.util import LoggingUtil
 from greent import node_types
 
@@ -73,7 +73,7 @@ class Mondo2(Onto):
         is_genetic, ancestors = self.is_genetic_disease(disease)
         return [
             (self.get_edge({}, 'is_gentic_condition'),
-             KNode(ancestor, node_types.GENETIC_CONDITION, label= super(Mondo2,self).get_label(ancestor) ) ) for ancestor in ancestors
+             KNode(ancestor, type=node_types.GENETIC_CONDITION, name=super(Mondo2,self).get_label(ancestor) ) ) for ancestor in ancestors
             ] if is_genetic else []
 
     """ No indication anyone ever calls these three. And the fourth is called internally by something we're replacing. """
