@@ -28,7 +28,7 @@ synonymizers = {
     node_types.ANATOMY:oxo_synonymizer,
 }
 
-logger = LoggingUtil.init_logging(__name__, level=logging.INFO, format='medium')
+logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG, format='medium')
 
 class Synonymizer:
 
@@ -83,8 +83,20 @@ class Synonymizer:
                         potential_identifiers = ids_with_labels
                     potential_identifiers.sort()
                 node.id = potential_identifiers[0].identifier
-                node.name = potential_identifiers[0].label
+                #Only replace the label if we have a label.
+                if potential_identifiers[0].label != '':
+                    node.name = potential_identifiers[0].label
                 break
+        #Remove any synonyms with extraneous prefixes.  The point of this is not so much to remove
+        # unknown prefixes, as to make sure that if we got e.g. a meddra, and we downcast it to a disease,
+        # that we don't end up with HP's in the equivalent ids.
+        bad_synonyms = set()
+        for synonym in node.synonyms:
+            prefix = Text.get_curie(synonym)
+            if prefix not in type_curies:
+                bad_synonyms.add(synonym)
+        for bs in bad_synonyms:
+            node.synonyms.remove(bs)
         if node.id.startswith('DOID'):
             logger.warn("We are ending up with a DOID here")
             logger.warn(node.id)

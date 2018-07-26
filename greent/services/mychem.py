@@ -26,23 +26,66 @@ class MyChem(Service):
                 #print(json.dumps(hit,indent=4))
                 if 'aeolus' in hit:
                     aeolus = hit['aeolus']
-                    for outcome in aeolus['outcomes']:
-                        #I think it makes sense to do some filtering here.  I don't want anything unless the lower
-                        # CI bound is > 1, and if I have enough counts (at least 5)
-                        if outcome['case_count'] <=5:
+                    if 'outcomes' in aeolus:
+                        for outcome in aeolus['outcomes']:
+                            #I think it makes sense to do some filtering here.  I don't want anything unless the lower
+                            # CI bound is > 1, and if I have enough counts (at least 5)
+                            if outcome['case_count'] <=5:
+                                continue
+                            if min(outcome['prr_95_ci']) > 1:
+                                predicate = LabeledID(identifier="RO:0003302",label= "causes_or_contributes_to")
+                            elif max(outcome['prr_95_ci']) < 1:
+                                predicate = LabeledID(identifier="RO:0002559",label= "prevents")
+                            else:
+                                continue
+                            meddra_id = f"MedDRA:{outcome['meddra_code']}"
+                            obj_node = KNode(meddra_id, node_type = node_types.DISEASE_OR_PHENOTYPE, label=outcome['name'])
+                            props={'prr':outcome['prr'], 'ror': outcome['ror'], 'case_count': outcome['case_count']}
+                            edge = self.create_edge(drug_node, obj_node, 'mychem.get_adverse_events',  cid, predicate, url = murl, properties=props)
+                            return_results.append( (edge, obj_node) )
+                    if 'indications' in aeolus:
+                        for indication in aeolus['indications']:
+                            if indication['count'] < 25:
+                                continue
+                            predicate = LabeledID(identifier="RO:0002606", label = "treats")
+                            meddra_id = f"MedDRA:{outcome['meddra_code']}"
+                            obj_node = KNode(meddra_id, node_type = node_types.DISEASE_OR_PHENOTYPE, label=outcome['name'])
+                            edge = self.create_edge(drug_node, obj_node, 'mychem.get_adverse_events',  cid, predicate, url = murl, properties=props)
+                            return_results.append( (edge, obj_node) )
+        return return_results
+
+    def get_drugcentral(self,drug_node):
+        #Don't need to worry about paging in this one, since we'll just return one drug (the one we're asking for)
+        #and mychem pages by drug.
+        chemblids = drug_node.get_synonyms_by_prefix('CHEMBL')
+        return_results = []
+        for cid in chemblids:
+            ident = Text.un_curie(cid)
+            murl = f'{self.url}query?q=chembl.molecule_hierarchy.molecule_chembl_id:{ident}&fields=drugcentral'
+            result = requests.get(murl).json()
+            for hit in result['hits']:
+                if 'drugcentral' in hit:
+                    dc = hit['drugcentral']
+                    for ci in dc['drug_use']['contraindication']:
+                        if 'umls_cui' not in ci:
                             continue
-                        if min(outcome['prr_95_ci']) > 1:
-                            predicate = LabeledID(identifier="RO:0003302", label="causes_or_contributes_to")
-                        elif max(outcome['prr_95_ci']) < 1:
-                            predicate = LabeledID(identifier="RO:0002559", label="prevents")
-                        else:
+                        predicate = LabeledID(identifier="DrugCentral:0000001", label="contraindication")
+                        umls = f"UMLS:{ci['umls_cui']}"
+                        obj_node = KNode(umls, node_type=node_types.DISEASE_OR_PHENOTYPE, label=ci['concept_name'])
+                        edge = self.create_edge(drug_node, obj_node, 'mychem.get_drugcentral', cid, predicate, url=murl )
+                        return_results.append( (edge, obj_node) )
+                    for ind in dc['drug_use']['indication']:
+                        if 'umls_cui' not in ind:
                             continue
-                        meddra_id = f"MedDRA:{outcome['meddra_code']}"
-                        obj_node = KNode(meddra_id, type=node_types.DISEASE_OR_PHENOTYPE, name=outcome['name'])
-                        props={'prr':outcome['prr'], 'ror': outcome['ror'], 'case_count': outcome['case_count']}
-                        edge = self.create_edge(drug_node, obj_node, 'mychem.get_adverse_events',  cid, predicate, url = murl, properties=props)
+                        predicate = LabeledID(identifier="RO:0002606", label="treats")
+                        umls = f"UMLS:{ind['umls_cui']}"
+                        obj_node = KNode(umls, node_type=node_types.DISEASE_OR_PHENOTYPE, label=ind['concept_name'])
+                        edge = self.create_edge(drug_node, obj_node, 'mychem.get_drugcentral',  cid, predicate, url = murl)
                         return_results.append( (edge, obj_node) )
         return return_results
+
+
+
 
     def query(self,url):
         result = requests.get(url).json()

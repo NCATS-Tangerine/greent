@@ -8,6 +8,10 @@ class Onto(CachedService):
     """ An abstraction for generic questions about ontologies. """
     def __init__(self, name, context):
         super(Onto,self).__init__(name, context)
+        self.name = name
+    def get_ids(self):
+        obj = self.get(f"{self.url}/id_list/{self.name.upper()}")
+        return obj
     def is_a(self,identifier,candidate_ancestor):
         obj = self.get(f"{self.url}/is_a/{identifier}/{candidate_ancestor}/")
         #print (f"obj: {json.dumps(obj, indent=2)}")

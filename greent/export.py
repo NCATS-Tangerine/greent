@@ -85,11 +85,10 @@ def export_edge_chunk(tx,edgelist,edgelabel):
     What defines the edge are the identifiers of its nodes, and the source.function that created it."""
     cypher = f"""UNWIND $batches as row
             MATCH (a:{node_types.ROOT_ENTITY} {{id: row.source_id}}),(b:{node_types.ROOT_ENTITY} {{id: row.target_id}})
-            MERGE (a)-[r:{edgelabel} {{edge_source: row.provided_by}}]-(b)
+            MERGE (a)-[r:{edgelabel} {{edge_source: row.provided_by, relation_label: row.original_predicate_label}}]-(b)
             set r.source_database=row.database
             set r.ctime=row.ctime 
             set r.predicate_id=row.standard_id 
-            set r.relation_label=row.original_predicate_label
             set r.relation=row.original_predicate_id 
             set r.publications=row.publications
             """

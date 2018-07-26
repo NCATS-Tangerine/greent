@@ -34,8 +34,11 @@ def synonymize_with_OXO(node,gt):
     if len(mondos) == 0:
         doids = {s.identifier for s in node.synonyms if s.identifier.split(':')[0].upper() == 'DOID'}
         for doid in doids:
-            moremondos = gt.mondo.get_mondo_id_and_label(doid)
-            synonyms.update(moremondos)
+            mids,label = gt.mondo.get_mondo_id_and_label(doid)
+            #moremondos comes out as a list of identifiers and one label
+            moremondos = [ LabeledID( mid, label) for mid in mids ]
+            if len(moremondos) > 0:
+                synonyms.update(moremondos)
     return synonyms
 
 

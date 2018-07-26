@@ -40,7 +40,8 @@ def create_connection(rosetta):
     user = context.config['POSTGRES_USER']
     port = context.config['POSTGRES_PORT']
     host = context.config['POSTGRES_HOST']
-    return psycopg2.connect(dbname=db, user=user, host=host, port=port)
+    pw = context.config['POSTGRES_PASSWORD']
+    return psycopg2.connect(dbname=db, user=user, host=host, port=port,password=pw)
 
 
 def dump(k, v, pipe):
@@ -52,7 +53,7 @@ def dump(k, v, pipe):
 
 
 def update_prefixes(p1, p2, redis):
-    key = 'OnmicorpPrefixes'
+    key = 'OmnicorpPrefixes'
     value = redis.get(key)
     if value is None:
         pairset = set()

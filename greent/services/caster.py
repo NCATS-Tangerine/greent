@@ -28,6 +28,9 @@ class Caster(Service):
         logger.debug(f'results {results}')
         good_results = list(filter(lambda y: type_check(y[1]), results))
         for edge,node in good_results:
+            #This node is going to get returned as a new node in program, so it will get
+            #synonimized and therefore normalized.  If that changes, there's a problem, because
+            #we might need to clean up bad prefixes at some point.
             node.type = output_type
         return good_results
 

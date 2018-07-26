@@ -68,6 +68,8 @@
     disease_or_phenotypic_feature:
       - link  : adverse_events
         op    : mychem.get_adverse_events
+      - link  : drugcentral
+        op    : mychem.get_drugcentral
   disease_or_phenotypic_feature:
     chemical_substance:
       - link  : exposures

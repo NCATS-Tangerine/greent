@@ -114,6 +114,9 @@ class KEdge(FromDictMixin):
 
         super().__init__(*args, **kwargs)
 
+        if self.provided_by is None:
+            raise 'Invalid source?'
+
         self.validate_publications()
 
     def load_attribute(self, key, value):
@@ -123,7 +126,7 @@ class KEdge(FromDictMixin):
             return super().load_attribute(key, value)
 
     def __key(self):
-        return (self.source_id, self.target_id, self.provided_by)
+        return (self.source_id, self.target_id, self.provided_by, self.original_predicate)
 
     def __eq__(self, other):
         return self.__key() == other.__key()
