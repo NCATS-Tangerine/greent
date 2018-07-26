@@ -11,3 +11,5 @@ greent/.pytest_cache/*
 greent/test/.pytest_cache/*
 q2-drugandcondition-list.txt
 .vscode
+builder/cache
+.DS_Store
