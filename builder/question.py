@@ -18,7 +18,7 @@ from greent.util import LoggingUtil
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
 @swagger.definition('Node')
-class Node(FromDictMixin):
+class QNode(FromDictMixin):
     """
     Node Object
     ---
@@ -97,7 +97,7 @@ class LabeledID(FromDictMixin):
         return self.identifier > other.identifier
 
 @swagger.definition('Edge')
-class Edge(FromDictMixin):
+class QEdge(FromDictMixin):
     """
     Edge Object
     ---
@@ -199,8 +199,8 @@ class Question(FromDictMixin):
     def load_attribute(self, key, value):
         if key == 'machine_question':
             return {
-                'nodes': [Node(n) for n in value['nodes']],
-                'edges': [Edge(e, id=idx) for idx, e in enumerate(value['edges'])]
+                'nodes': [QNode(n) for n in value['nodes']],
+                'edges': [QEdge(e, id=idx) for idx, e in enumerate(value['edges'])]
             }
         else:
             return super().load_attribute(key, value)
