@@ -11,7 +11,7 @@ import pika
 from greent.util import LoggingUtil
 from greent.export import BufferedWriter
 from builder.buildmain import setup
-from builder.question import Node, Edge
+from greent.graph_components import KNode, KEdge
 
 config = {
     'broker_url': "redis://127.0.0.1:6379/1"
@@ -42,9 +42,9 @@ def callback(ch, method, properties, body):
     graph = json.loads(body)
     with BufferedWriter(rosetta) as writer:
         for node in graph['nodes']:
-            writer.write_node(Node(node))
+            writer.write_node(KNode(node))
         for edge in graph['edges']:
-            writer.write_edge(Edge(edge))
+            writer.write_edge(KEdge(edge))
 
 channel.basic_consume(callback,
                       queue='neo4j',
