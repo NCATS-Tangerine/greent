@@ -70,7 +70,6 @@ This simple snippet demonstrates usage via the Python API:
 
 ```
 
-from greent.graph_components import elements_to_json
 from greent.rosetta import Rosetta
 
 rosetta = Rosetta ()

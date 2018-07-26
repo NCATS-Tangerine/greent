@@ -38,6 +38,7 @@ class FromDictMixin():
 
 def recursive_dump(value):
     # recursively call dump() for nested objects to generate a json-serializable dict
+    # this is not entirely reversible because there is no distinction between sets and lists in dict form
     if isinstance(value, dict):
         return {key:recursive_dump(value[key]) for key in value}
     elif isinstance(value, list):

@@ -11,7 +11,6 @@ from greent.util import LoggingUtil
 from greent import node_types
 from greent.export import BufferedWriter
 from greent.cache import Cache
-from builder.question import Node, Edge, LabeledID
 from greent.graph_components import KEdge
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
