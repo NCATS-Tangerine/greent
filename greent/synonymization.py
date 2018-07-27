@@ -92,7 +92,7 @@ class Synonymizer:
         # that we don't end up with HP's in the equivalent ids.
         bad_synonyms = set()
         for synonym in node.synonyms:
-            prefix = Text.get_curie(synonym)
+            prefix = Text.get_curie(synonym.identifier)
             if prefix not in type_curies:
                 bad_synonyms.add(synonym)
         for bs in bad_synonyms:
