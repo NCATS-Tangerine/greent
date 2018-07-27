@@ -35,7 +35,7 @@ def query():
     AND ALL( r in relationships(p) WHERE  EXISTS(r.op) )FOREACH (n in relationships(p) | SET n.marked = FALSE)
     RETURN p, EXTRACT( r in relationships(p) | startNode(r) ) 
     """
-def test_two_sided_query(type_graph, query, expected):
+def x_test_two_sided_query(type_graph, query, expected):
     transitions = type_graph.get_transitions (query)
     print (f"len of expected: {len(expected)}")
     print (f"transitions: {json.dumps(transitions)}")
