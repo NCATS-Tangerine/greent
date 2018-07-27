@@ -39,7 +39,7 @@ class MyChem(Service):
                             else:
                                 continue
                             meddra_id = f"MedDRA:{outcome['meddra_code']}"
-                            obj_node = KNode(meddra_id, node_type = node_types.DISEASE_OR_PHENOTYPE, label=outcome['name'])
+                            obj_node = KNode(meddra_id, type=node_types.DISEASE_OR_PHENOTYPE, name=outcome['name'])
                             props={'prr':outcome['prr'], 'ror': outcome['ror'], 'case_count': outcome['case_count']}
                             edge = self.create_edge(drug_node, obj_node, 'mychem.get_adverse_events',  cid, predicate, url = murl, properties=props)
                             return_results.append( (edge, obj_node) )
@@ -49,7 +49,7 @@ class MyChem(Service):
                                 continue
                             predicate = LabeledID(identifier="RO:0002606", label = "treats")
                             meddra_id = f"MedDRA:{outcome['meddra_code']}"
-                            obj_node = KNode(meddra_id, node_type = node_types.DISEASE_OR_PHENOTYPE, label=outcome['name'])
+                            obj_node = KNode(meddra_id, type=node_types.DISEASE_OR_PHENOTYPE, name=outcome['name'])
                             edge = self.create_edge(drug_node, obj_node, 'mychem.get_adverse_events',  cid, predicate, url = murl, properties=props)
                             return_results.append( (edge, obj_node) )
         return return_results
@@ -71,7 +71,7 @@ class MyChem(Service):
                             continue
                         predicate = LabeledID(identifier="DrugCentral:0000001", label="contraindication")
                         umls = f"UMLS:{ci['umls_cui']}"
-                        obj_node = KNode(umls, node_type=node_types.DISEASE_OR_PHENOTYPE, label=ci['concept_name'])
+                        obj_node = KNode(umls, type=node_types.DISEASE_OR_PHENOTYPE, name=ci['concept_name'])
                         edge = self.create_edge(drug_node, obj_node, 'mychem.get_drugcentral', cid, predicate, url=murl )
                         return_results.append( (edge, obj_node) )
                     for ind in dc['drug_use']['indication']:
@@ -79,7 +79,7 @@ class MyChem(Service):
                             continue
                         predicate = LabeledID(identifier="RO:0002606", label="treats")
                         umls = f"UMLS:{ind['umls_cui']}"
-                        obj_node = KNode(umls, node_type=node_types.DISEASE_OR_PHENOTYPE, label=ind['concept_name'])
+                        obj_node = KNode(umls, type=node_types.DISEASE_OR_PHENOTYPE, name=ind['concept_name'])
                         edge = self.create_edge(drug_node, obj_node, 'mychem.get_drugcentral',  cid, predicate, url = murl)
                         return_results.append( (edge, obj_node) )
         return return_results
@@ -136,7 +136,7 @@ class MyChem(Service):
                         drug_node=self.make_drug_node(hit)
                         if drug_node is None:
                             continue
-                            #obj_node = KNode(meddra_id, node_type = node_types.DISEASE_OR_PHENOTYPE, name=outcome['name'])
+                            #obj_node = KNode(meddra_id, type=node_types.DISEASE_OR_PHENOTYPE, name=outcome['name'])
                         props={'prr':outcome['prr'], 'ror': outcome['ror'], 'case_count': outcome['case_count']}
                         edge = self.create_edge(drug_node, input_node, 'mychem.get_adverse_events', mname , predicate, url = murl, properties=props)
                         return_results.append( (edge, drug_node) )

@@ -168,7 +168,7 @@ class CTD(Service):
                 predicate_label = r['InteractionActions']
                 predicate = LabeledID(identifier=self.get_ctd_predicate_identifier(predicate_label), label=predicate_label)
                 #Should this be substance?
-                drug_node = KNode(f"MESH:{r['ChemicalID']}", type=node_types.DRUG, label=f"{r['ChemicalName']}")
+                drug_node = KNode(f"MESH:{r['ChemicalID']}", type=node_types.DRUG, name=f"{r['ChemicalName']}")
                 if sum([s in predicate.identifier for s in self.g2d_strings]) > 0:
                     subject = gene_node
                     obj = drug_node

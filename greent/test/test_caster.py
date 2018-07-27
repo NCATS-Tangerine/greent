@@ -7,7 +7,7 @@ def test_drugcentral(rosetta):
     fname='caster.output_filter(mychem~get_drugcentral,disease,typecheck~is_disease)'
     func = rosetta.get_ops(fname)
     assert func is not None
-    node=KNode('CHEMBL:CHEMBL159',node_types.DRUG)
+    node = KNode('CHEMBL:CHEMBL159', type=node_types.DRUG)
     results = func(node)
     for e,n in results:
         assert e.edge_source=='mychem.get_drugcentral'
@@ -18,7 +18,7 @@ def test_complicated(rosetta):
     func = rosetta.get_ops(fname)
     assert func is not None
     node = KNode('HP:0007354', type=node_types.PHENOTYPE)
-    node.add_synonyms( set( [LabeledID('DOID:332','ALS')] ) )
+    node.add_synonyms( set( [LabeledID(identifier='DOID:332', label='ALS')] ) )
     results = func(node)
     assert results is not None
 

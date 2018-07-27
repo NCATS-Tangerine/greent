@@ -10,13 +10,13 @@ def ctd(rosetta):
     return ctd
 
 def test_gene_to_drug_and_back(ctd):
-    input_node = KNode('MESH:D003976', node_types.GENE, label='Diazinon')
+    input_node = KNode('MESH:D003976', type=node_types.GENE, name='Diazinon')
     results = ctd.drug_to_gene(input_node)
-    results= list(filter( lambda en: en[1].identifier=='NCBIGENE:5243', results ))
+    results= list(filter( lambda en: en[1].id=='NCBIGENE:5243', results ))
     dgedges = set([ e.original_predicate.label for e,n in results ])
-    input_node_2 = KNode('NCBIGENE:5243', node_types.GENE, label='ABCB1')
+    input_node_2 = KNode('NCBIGENE:5243', type=node_types.GENE, name='ABCB1')
     results = ctd.gene_to_drug(input_node_2)
-    results= list(filter( lambda en: en[1].identifier=='MESH:D003976', results ))
+    results= list(filter( lambda en: en[1].id=='MESH:D003976', results ))
     gdedges = set([ e.original_predicate.label for e,n in results ])
     for dge in dgedges:
         print('Drug->Gene',dge)
@@ -72,7 +72,7 @@ def test_drug_to_gene_synonym(ctd):
 def test_gene_to_drug_unique(ctd):
     input_node=KNode("NCBIGENE:345", type=node_types.GENE) #APOC3
     results = ctd.gene_to_drug(input_node)
-    outputs = [ (e.standard_predicate,n.id) for e,n in results]
+    outputs = [(e.standard_predicate,n.id) for e,n in results]
     total = len(outputs)
     unique = len(set(outputs))
     found = False
@@ -85,7 +85,7 @@ def test_gene_to_drug_unique(ctd):
 def test_gene_to_drug_ACHE(ctd):
     input_node = KNode("NCBIGENE:43", type=node_types.GENE) #ACHE
     results = ctd.gene_to_drug(input_node)
-    outputs = [ (e.standard_predicate,n.identifier) for e,n in results]
+    outputs = [(e.standard_predicate, n.id) for e, n in results]
     total = len(outputs)
     unique = len(set(outputs))
     found = False

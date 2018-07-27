@@ -21,8 +21,8 @@ logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 # If we add other drug name resolvers then things may change. Adding other functions that simply use compound ids
 # should be ok, as long as these two paths resolve whatever the name of interest is.
 def synonymize(node,gt):
-    logger.debug("Synonymize: {}".format(node.identifier))
-    curie = Text.get_curie(node.identifier)
+    logger.debug("Synonymize: {}".format(node.id))
+    curie = Text.get_curie(node.id)
     synonyms = set()
     if curie == 'CHEMBL':
         synonyms.update(synonymize_with_UniChem(node,gt))
@@ -41,7 +41,7 @@ def synonymize_with_OXO(node,gt):
     return oxo_synonymizer.synonymize(node,gt)
 
 def synonymize_with_UniChem(node,gt):
-    logger.debug(" UniChem: {}".format(node.identifier))
+    logger.debug(" UniChem: {}".format(node.id))
     all_synonyms = set()
     for synonym in node.synonyms:
         curie = Text.get_curie(synonym.identifier)

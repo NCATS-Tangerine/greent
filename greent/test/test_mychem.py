@@ -12,18 +12,18 @@ def mychem(rosetta):
     return mychem
 
 def test_drugcentral(mychem):
-    node = KNode('CHEMBL:CHEMBL118',node_types.DRUG, label='Celecoxib') #Celecoxib
+    node = KNode('CHEMBL:CHEMBL118', type=node_types.DRUG, name='Celecoxib') #Celecoxib
     results = mychem.get_drugcentral(node)
     found1 = False
     found2 = False
     for e,n in results:
-        if n.identifier == 'UMLS:C0007222':
+        if n.id == 'UMLS:C0007222':
             found1 = True
             assert e.original_predicate.label == 'contraindication'
-        if n.identifier == 'UMLS:C0003873':
+        if n.id == 'UMLS:C0003873':
             found2 = True
             assert e.original_predicate.label == 'treats'
-        assert e.edge_source == 'mychem.get_drugcentral'
+        assert e.provided_by == 'mychem.get_drugcentral'
     assert found1
     assert found2
 
