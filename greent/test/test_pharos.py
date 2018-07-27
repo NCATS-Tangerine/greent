@@ -40,9 +40,9 @@ def test_drug_get_gene(pharos):
 
 def test_gene_get_drug(pharos,rosetta):
     gene_node = KNode('HGNC:9605', type=node_types.GENE)
-    synonyms = synonymize(gene_node,rosetta.core)
-    print(synonyms)
-    gene_node.add_synonyms(synonyms)
+    rosetta.synonymizer.synonymize(gene_node)
+    print(gene_node.synonyms)
+    
     output = pharos.gene_get_drug(gene_node)
     identifiers = [ output_i[1].id for output_i in output ]
     assert 'CHEMBL:CHEMBL118'in identifiers
