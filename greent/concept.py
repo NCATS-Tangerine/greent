@@ -147,7 +147,7 @@ class ConceptModelLoader:
             self.model.add_item (concept)
 
         #THIS is a hack
-        self.model.get('gene').id_prefixes = ['HGNC','NCBIGENE','ENSEMBL','MGI','ZFIN']
+        self.model.get('gene').id_prefixes = ['HGNC','NCBIGENE','ENSEMBL','MGI','ZFIN','UNIPROTKB']
 
         for obj in model_obj['slots']:
             relationship = self.parse_slot(obj)
