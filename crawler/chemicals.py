@@ -49,7 +49,7 @@ def load_chemicals(rosetta, refresh=False):
     with open('chemconc.txt','w') as outf:
         for key in concord:
             outf.write(f'{key}\t{concord[key]}\n')
-    dump_cache(concord,rosetta)
+    #dump_cache(concord,rosetta)
 
 def load_pairs(fname,prefix):
     pairs = []
@@ -59,9 +59,16 @@ def load_pairs(fname,prefix):
             mesh = f"MESH:{x[0]}"
             if x[1].startswith('['):
                 pre_ids = x[1][1:-1].split(',')
-                pre_ids = [pids[1:-1] for pids in pre_ids] #remove ' marks around ids
+                pre_ids = [pids.strip()[1:-1] for pids in pre_ids] #remove spaces and ' marks around ids
             else:
                 pre_ids = [x[1]]
+            for pid in pre_ids:
+                if "'" in pid:
+                    print("!")
+                    print(pid)
+                    print(fname)
+                    print(prefix)
+                    exit()
             ids = [ f'{prefix}:{pid}' for pid in pre_ids ]
             for identifier in ids:
                 pairs.append( (mesh,identifier) )
@@ -73,6 +80,9 @@ def uni_glom(unichem_data,prefix1,prefix2,chemdict):
     if len(n[-1]) == 0:
         n = n[:-1]
     pairs = [ ni.split('\t') for ni in n ]
+    for p in pairs:
+        if p[0].startswith("'") or p[1].startswith("'"):
+            print('UNI_GLOM {prefix1} {prefix2} {p}')
     curiepairs = [ (f'{prefix1}:{p[0]}',f'{prefix2}:{p[1]}') for p in pairs]
     glom(chemdict,curiepairs)
 
