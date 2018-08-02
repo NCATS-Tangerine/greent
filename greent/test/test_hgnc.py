@@ -18,7 +18,7 @@ def test_ncbi_to_uniprot(hgnc):
     results = hgnc.ncbigene_to_uniprotkb( input_knode )
     assert(len(results) == 1)
     node = results[0][1]
-    assert node.node_type == node_types.GENE
+    assert node.type == node_types.GENE
     assert Text.get_curie(node.identifier).upper() == 'UNIPROTKB'
     assert Text.un_curie(node.identifier) == 'P10721'
     '''

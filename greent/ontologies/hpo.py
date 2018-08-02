@@ -1,6 +1,6 @@
 from greent.service import Service
 from ontobio.ontol_factory import OntologyFactory
-from greent.graph_components import KNode, KEdge
+from greent.graph_components import KNode
 from greent.util import LoggingUtil
 from greent import node_types
 import datetime
@@ -63,7 +63,7 @@ class HPO(Service):
                          ancestor.
                  The list of Mondo identifiers for the object, which have the term as an ancestor"""
         #TODO: The return signature is funky, fix it.
-        obj_id = obj.identifier
+        obj_id = obj.id
         obj_ids = self.get_hp_id(obj_id)
         return_objects=[]
         for obj_id in obj_ids:

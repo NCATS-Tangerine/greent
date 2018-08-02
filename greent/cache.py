@@ -84,3 +84,5 @@ class Cache:
                     stream.write (self.serializer.dumps (value))
                 self.cache[key] = value
 
+    def flush(self):
+        self.redis.flushdb()

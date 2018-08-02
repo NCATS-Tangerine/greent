@@ -5,7 +5,7 @@ API definitions
 from builder.api.setup import swagger
 from builder.util import FromDictMixin
 @swagger.definition('Node')
-class Node(FromDictMixin):
+class QNode(FromDictMixin):
     """
     Node Object
     ---
@@ -31,7 +31,7 @@ class Node(FromDictMixin):
         return {**vars(self)}
 
 @swagger.definition('Edge')
-class Edge(FromDictMixin):
+class QEdge(FromDictMixin):
     """
     Edge Object
     ---
@@ -89,6 +89,7 @@ class Question(FromDictMixin):
               - id: 0
                 type: disease
                 curie: "MONDO:0005737"
+                name: "Ebola hemorrhagic fever"
               - id: 1
                 type: gene
               - id: 2
@@ -114,9 +115,9 @@ class Question(FromDictMixin):
 
     def preprocess(self, key, value):
         if key == 'nodes':
-            return [Node(n) for n in value]
+            return [QNode(n) for n in value]
         elif key == 'edges':
-            return [Edge(e) for e in value]
+            return [QEdge(e) for e in value]
 
     def dump(self):
         return {**vars(self)}

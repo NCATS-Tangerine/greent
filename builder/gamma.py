@@ -1,7 +1,6 @@
 import json
 import os
 import requests
-from builder.knowledgeQuery import KnowledgeQuery
 from greent.services.ndex import NDEx
 from greent.rosetta import Rosetta
 
@@ -10,7 +9,6 @@ class Gamma:
    """ A high level interface to the system including knowledge map, cache, reasoner, and NDEx. """
    def __init__(self, config="greent.conf", debug=False):
       self.rosetta = Rosetta (debug=debug, greentConf=config)
-      self.knowledge = KnowledgeQuery ()
       self.ndex = None
       ndex_creds = os.path.expanduser("~/.ndex")
       if os.path.exists (ndex_creds):

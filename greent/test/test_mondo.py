@@ -10,7 +10,7 @@ def mondo():
     return mondo
 
 def test_huntington_is_genetic(mondo):
-    huntington = KNode('OMIM:143100',node_types.DISEASE)
+    huntington = KNode('OMIM:143100', type=node_types.DISEASE)
     assert mondo.is_genetic_disease(huntington)
 
 def test_lookup(mondo):

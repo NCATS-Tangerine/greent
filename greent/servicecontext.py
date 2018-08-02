@@ -1,7 +1,6 @@
 import os
 from greent.cache import Cache
 from greent.core import GreenT
-from greent.graph_components import KEdge, KNode
 from greent.config import Config
 from greent.util import LoggingUtil
 import socket
@@ -17,7 +16,7 @@ class ServiceContext:
         self.core = GreenT (self,rosetta)
         
         # Initiaize the cache.
-        redis_conf = self.config["results"]
+        redis_conf = self.config["cache"]
         self.cache = Cache (
             redis_host = redis_conf.get ("host"),
             redis_port = redis_conf.get ("port"),

@@ -12,7 +12,7 @@ from collections import defaultdict
 from greent.servicecontext import ServiceContext
 from greent.graph import Frame
 from greent.graph import TypeGraph
-from greent.graph_components import KNode, KEdge, elements_to_json
+from greent.graph_components import KNode, KEdge
 from greent.identifiers import Identifiers
 from greent.program import Program
 from greent.program import QueryDefinition
@@ -169,7 +169,7 @@ class Rosetta:
         """
 
         """ Convert inputs to be structured like edges-and-nodes returned by a previous services. """
-        next_nodes = {key: [(None, KNode(val, key)) for val in val_list] for key, val_list in inputs.items()}
+        next_nodes = {key: [(None, KNode(val, type=key)) for val in val_list] for key, val_list in inputs.items()}
         logger.debug(f"inputs: {next_nodes}")
 
         """ Validated the input program. """
@@ -201,7 +201,7 @@ class Rosetta:
                 for op_name, operator in frame.ops.items():
 
                     """ Generate a cache key. """
-                    key = f"{operator.op}({source_node.identifier})"
+                    key = f"{operator.op}({source_node.id})"
                     try:
                         logger.debug(f"  --op: {key}")
 
@@ -227,10 +227,10 @@ class Rosetta:
                                 if index < len(program) - 1:
                                     target_concept_name = program[index + 1].name
                                     prefixes = self.type_graph.concept_model.get(target_concept_name).id_prefixes
-                                    valid = any([node.identifier.upper().startswith(p.upper()) for p in prefixes])
+                                    valid = any([node.id.upper().startswith(p.upper()) for p in prefixes])
                                     if not valid:
                                         logger.debug(
-                                            f"Operator {operator} wired to type: {concept_name} returned node with id: {node.identifier}")
+                                            f"Operator {operator} wired to type: {concept_name} returned node with id: {node.id}")
 
                             """ Cache the annotated and validated response. """
                             self.cache.set(key, response)
@@ -263,7 +263,7 @@ class Rosetta:
         for program in programs:
             g = program.run_program()
             graph += g
-            print(elements_to_json(g))
+            # print(elements_to_json(g))
         return graph
 
     def n2chem(self, name):
@@ -282,7 +282,7 @@ def execute_query(args, outputs, rosetta):
     """ Lower case all output values. """
     expect = list(map(lambda v: v.lower(), outputs['nodes']))
     """ Make a list of result ids. """
-    ids = [e.target_node.identifier.lower() for e in blackboard]
+    ids = [e.target_node.id.lower() for e in blackboard]
     logger.debug(f"Received {len(ids)} nodes.")
     logger.debug(f"Expected {len(expect)} nodes.")
     logger.debug(f"  ==> ids: {ids}")

@@ -2,6 +2,7 @@ from greent.util import Text
 from greent.synonymizers import oxo_synonymizer
 from greent.util import LoggingUtil
 from greent.graph_components import LabeledID
+from builder.question import LabeledID
 import logging
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
@@ -20,8 +21,8 @@ logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 # If we add other drug name resolvers then things may change. Adding other functions that simply use compound ids
 # should be ok, as long as these two paths resolve whatever the name of interest is.
 def synonymize(node,gt):
-    logger.debug("Synonymize: {}".format(node.identifier))
-    curie = Text.get_curie(node.identifier)
+    logger.debug("Synonymize: {}".format(node.id))
+    curie = Text.get_curie(node.id)
     synonyms = set()
     if curie == 'CHEMBL':
         synonyms.update(synonymize_with_UniChem(node,gt))
@@ -40,13 +41,13 @@ def synonymize_with_OXO(node,gt):
     return oxo_synonymizer.synonymize(node,gt)
 
 def synonymize_with_UniChem(node,gt):
-    logger.debug(" UniChem: {}".format(node.identifier))
+    logger.debug(" UniChem: {}".format(node.id))
     all_synonyms = set()
     for synonym in node.synonyms:
         curie = Text.get_curie(synonym.identifier)
         if curie in ('CHEMBL', 'CHEBI', 'DRUGBANK', 'PUBCHEM'):
             new_synonyms = gt.unichem.get_synonyms( synonym.identifier )
-            labeled_synonyms = [ LabeledID(s,synonym.label) for s in new_synonyms]
+            labeled_synonyms = [LabeledID(identifier=s, label=synonym.label) for s in new_synonyms]
             all_synonyms.update(labeled_synonyms)
     #node.add_synonyms( all_synonyms )
     return all_synonyms

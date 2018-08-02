@@ -45,9 +45,9 @@ class Chemotext2Support():
     def term_to_term(self,node_a,node_b,limit = 10000):
         """Given two terms, find articles in chemotext that connect them, and return as a KEdge.
         If nothing is found, return None"""
-        logging.getLogger('application').debug('chemotext2: "{}" to "{}"'.format(node_a.label, node_b.label))
-        phrases_a = self.generate_phrases(node_a.label)
-        phrases_b = self.generate_phrases(node_b.label)
+        logging.getLogger('application').debug('chemotext2: "{}" to "{}"'.format(node_a.name, node_b.name))
+        phrases_a = self.generate_phrases(node_a.name)
+        phrases_b = self.generate_phrases(node_b.name)
         maxr = -1
         besta = ''
         bestb = ''
@@ -63,6 +63,7 @@ class Chemotext2Support():
                 logging.getLogger('application').debug('  "{}"-"{}": {} ({})'.format(p_a, p_b, r, maxr) ) 
         logging.getLogger('application').debug(' "{}"-"{}": {}'.format(besta, bestb, maxr) ) 
         if maxr > -1:
+            raise RuntimeError('The following KEdge constructor looks somewhat suspect.')
             ke= KEdge( 'chemotext2', 'term_to_term', { 'similarity':maxr, 'terms':[besta, bestb] }, is_support = True )
             ke.source_node = node_a
             ke.target_node = node_b

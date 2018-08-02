@@ -2,7 +2,7 @@ from greent.service import Service
 from greent.triplestore import TripleStore
 from greent.util import LoggingUtil
 from greent.util import Text
-from greent.graph_components import KEdge, KNode, LabeledID
+from greent.graph_components import KNode, LabeledID
 from greent import node_types
 
 logger = LoggingUtil.init_logging(__name__)
@@ -21,13 +21,13 @@ class ChemBioKS(Service):
 
     #Used in our lookup stuff
     def graph_drugname_to_pubchem( self, drugname_node):
-            drug_name = Text.un_curie (drugname_node.identifier)
+            drug_name = Text.un_curie (drugname_node.id)
             response = self.drugname_to_pubchem(drug_name)
-            predicate=LabeledID('rdfs:ID', 'identifies')
+            predicate=LabeledID(identifier='rdfs:ID', label='identifies')
             results = []
             for r in response:
-                node = KNode( "PUBCHEM:{}".format( r['drugID'].split('/')[-1]), node_types.DRUG, label=r['drugName'])
-                edge = self.create_edge(drugname_node,node,'chembio.graph_drugname_to_pubchem',drugname_node.identifier,predicate)
+                node = KNode( "PUBCHEM:{}".format( r['drugID'].split('/')[-1]), type=node_types.DRUG, name=r['drugName'])
+                edge = self.create_edge(drugname_node,node,'chembio.graph_drugname_to_pubchem',drugname_node.id,predicate)
                 results.append( (edge,node) )
             return results
 
@@ -91,9 +91,9 @@ class ChemBioKS(Service):
     def get_drugs_by_condition_graph (self, conditions):
         drugs = self.get_drugs_by_condition (conditions.identifier)
         results = []
-        predicate=LabeledID("RO:0002302", "is_treated_by_substance")
+        predicate=LabeledID(identifier="RO:0002302", label="is_treated_by_substance")
         for r in drugs:
-            node = KNode (r['drugID'].split('/')[-1:][0], node_types.DRUG, r['drugGenericName'])
+            node = KNode (r['drugID'].split('/')[-1:][0], type=node_types.DRUG, name=r['drugGenericName'])
             edge = self.create_edge(conditions, node, 'chembio.get_drugs_by_condition_graph', conditions.identifier, predicate, publications= r['diseasePMIDS'])
             results.append ( (edge, node) )
         #logger.debug ("chembio drugs by condition: {}".format (results))
@@ -226,19 +226,19 @@ class ChemBioKS(Service):
             """)
 
     def graph_get_genes_by_disease (self, disease): #reasoner
-        disease = disease.identifier.split (':')[1].lower ()
+        disease = disease.id.split (':')[1].lower ()
         response = self.get_genes_pathways_by_disease ([ disease ])
         results = []
-        predicate=LabeledID("RO:0002326","contributes_to")
+        predicate=LabeledID(identifier="RO:0002326", label="contributes_to")
         for r in response:
-            node = KNode ("UNIPROT:{0}".format (r['uniprotGene'].split('/')[-1:][0]),  node_types.GENE)
-            edge = self.create_edge (node,disease,'chembio.graph_get_genes_by_disease',disease.identifier, predicate)
+            node = KNode ("UNIPROT:{0}".format (r['uniprotGene'].split('/')[-1:][0]),  type=node_types.GENE)
+            edge = self.create_edge (node,disease,'chembio.graph_get_genes_by_disease',disease.id, predicate)
             results.append ( (edge, node) )
         return results
 
     def graph_get_pathways_by_gene (self, gene): #reasoner        
         response = self.triplestore.query_template (
-            inputs = { "gene" : gene.identifier.split(':')[1].upper () },
+            inputs = { "gene" : gene.id.split(':')[1].upper () },
             outputs = [ 'keggPath' ],
             template_text="""
             prefix kegg:      <http://chem2bio2rdf.org/kegg/resource/>
@@ -262,10 +262,10 @@ class ChemBioKS(Service):
                }
             } LIMIT 2000""")
         results = []
-        predicate=LabeledID('RO:0000056', 'participates_in')
+        predicate=LabeledID(identifier='RO:0000056', label='participates_in')
         for r in response:
-            node = KNode ("KEGG:{0}".format (r['keggPath'].split('/')[-1:][0]), node_types.PATHWAY)
-            edge = self.create_edge (gene,node,'chembio.graph_get_pathways_by_gene',gene.identifier, predicate)
+            node = KNode ("KEGG:{0}".format (r['keggPath'].split('/')[-1:][0]), type=node_types.PATHWAY)
+            edge = self.create_edge (gene,node,'chembio.graph_get_pathways_by_gene',gene.id, predicate)
             results.append ( (edge, node) )
         return results
 
@@ -286,18 +286,18 @@ class ChemBioKS(Service):
                ?ctd_disease ctd:diseaseid               ?diseaseID ;
                             ctd:cid                     ?pubchemCID .
             }""")
-        predicate=LabeledID('SIO:001257', 'chemical to gene association')
+        predicate=LabeledID(identifier='SIO:001257', label='chemical to gene association')
         results = []
         for r in response:
-            node = KNode ("UNIPROT:{0}".format (r['uniprotGeneID'].split('/')[-1:][0]), node_types.GENE)
-            edge = self.create_edge(drugbank,node,'chembio.graph_drugbank_to_uniprot',predicate, drugbank.identifier)
+            node = KNode ("UNIPROT:{0}".format (r['uniprotGeneID'].split('/')[-1:][0]), type=node_types.GENE)
+            edge = self.create_edge(drugbank,node,'chembio.graph_drugbank_to_uniprot',predicate, drugbank.id)
             results.append(edge,node)
         return results
 
     def graph_diseasename_to_uniprot (self, disease):
         results = []
         response = self.triplestore.query_template (
-            inputs = { "diseaseName" : Text.un_curie (disease.identifier) },
+            inputs = { "diseaseName" : Text.un_curie (disease.id) },
             outputs = [ "pubChemCID" ],
             template_text = """
             prefix ctd: <http://chem2bio2rdf.org/ctd/resource/>
@@ -309,7 +309,7 @@ class ChemBioKS(Service):
             } LIMIT 1""")
         if len(response) > 0: # This is a disease.
             response = self.triplestore.query_template (
-                inputs = { "diseaseName" : Text.un_curie(disease.identifier) },
+                inputs = { "diseaseName" : Text.un_curie(disease.id) },
                 outputs = [ "disPmids", "chemPmids", "uniprotSym" ],
                 template_text = """
                 prefix ctd: <http://chem2bio2rdf.org/ctd/resource/>
@@ -324,21 +324,21 @@ class ChemBioKS(Service):
                                ctd:pubmedids   ?disPmids.
                   filter regex(lcase(str(?diseaseNameRec)), lcase(?diseaseName))
                 } LIMIT 500""")
-            predicate=LabeledID('NCIT:R176', 'disease to gene association')
+            predicate=LabeledID(identifier='NCIT:R176', label='disease to gene association')
             for r in response:
                 chemPmids = r['chemPmids']
                 disPmids = r['disPmids']
                 pmids = chemPmids + "|" + disPmids
-                node = KNode ("UNIPROT:{0}".format (r['uniprotSym'].split('/')[-1:][0]), node_types.GENE)
-                edge = self.create_edge (disease,node, 'chembio.graph_diseasename_to_uniprot', disease.identifier,predicate,
+                node = KNode ("UNIPROT:{0}".format (r['uniprotSym'].split('/')[-1:][0]), type=node_types.GENE)
+                edge = self.create_edge (disease,node, 'chembio.graph_diseasename_to_uniprot', disease.id,predicate,
                                          publications=pmids)
                 results.append ( (edge, node) )
         return results
 
     def graph_diseaseid_to_uniprot (self, drugbank):
-        print( drugbank.identifier.lower() )
+        print( drugbank.id.lower() )
         response = self.triplestore.query_template (
-            inputs = { "diseaseID" : drugbank.identifier.lower () },
+            inputs = { "diseaseID" : drugbank.id.lower () },
             outputs = [ "uniprotGeneID" ],
             template_text = """
             prefix drugbank:      <http://chem2bio2rdf.org/drugbank/resource/>
@@ -352,11 +352,11 @@ class ChemBioKS(Service):
                ?ctd_disease ctd:diseaseid               ?diseaseID ;
                             ctd:cid                     ?pubchemCID .
             }""")
-        predicate=LabeledID('NCIT:R176', 'disease to gene association')
+        predicate=LabeledID(identifier='NCIT:R176', label='disease to gene association')
         results = []
         for r in response:
-            node = KNode ("UNIPROT:{0}".format (r['uniprotGeneID'].split('/')[-1:][0]), node_types.GENE)
-            edge = self.create_edge(drugbank,node,'chembio.graph_diseaseid_to_uniprot',drugbank.identifier,predicate)
+            node = KNode ("UNIPROT:{0}".format (r['uniprotGeneID'].split('/')[-1:][0]), type=node_types.GENE)
+            edge = self.create_edge(drugbank,node,'chembio.graph_diseaseid_to_uniprot',drugbank.id,predicate)
             results.append((edge,node))
         return results
 
@@ -369,17 +369,17 @@ class ChemBioKS(Service):
     #        'pubmedids'  : r['pubmedids']
     def graph_pubchem_to_ncbigene( self, pubchem_node):
         #The compound mesh coming back from here is very out of date.  Ignore.
-        pubchemid = Text.un_curie (pubchem_node.identifier)
+        pubchemid = Text.un_curie (pubchem_node.id)
         response = self.pubchem_to_ncbigene(pubchemid)
-        predicate=LabeledID('CTD:interacts_with', 'interacts')
+        predicate=LabeledID(identifier='CTD:interacts_with', label='interacts')
         retvals = []
         for r in response:
             props = {}
             props['interaction'] = r['interaction']
             props['interactionTypes'] = r['interactionTypes']
             props['publications'] = r['pubmedids'].split('|')
-            node = KNode( "NCBIGene:{}".format( r['NCBIGene']), node_types.GENE)
-            edge = self.create_edge(pubchem_node, node,'chembio.graph_pubchem_to_ncbigene',pubchem_node.identifier,
+            node = KNode( "NCBIGene:{}".format( r['NCBIGene']), type=node_types.GENE)
+            edge = self.create_edge(pubchem_node, node,'chembio.graph_pubchem_to_ncbigene',pubchem_node.id,
                                     predicate,publications=[f'PMID:{x}' for x in r['pubmedids'].split('|')])
             retvals.append( (edge,node) )
         return retvals

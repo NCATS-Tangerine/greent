@@ -7,7 +7,6 @@ import requests
 import yaml
 import shutil
 from lru import LRU
-from greent.graph_components import KNode,KEdge,elements_to_json
 from greent.services.bionames import BioNames
 from greent.servicecontext import ServiceContext
 from flask import Flask, jsonify, g, Response

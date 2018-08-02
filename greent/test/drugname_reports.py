@@ -18,7 +18,7 @@ def check_all_drugnames_chembio():
     n_no_pub = 0
     n_no_ncbi = 0
     for name in uniq:
-        input_node = KNode("DRUG_NAME:{}".format(name), node_types.DRUG_NAME)
+        input_node = KNode("DRUG_NAME:{}".format(name), type=node_types.DRUG_NAME)
         try:
             drug_node = cb.graph_drugname_to_pubchem(input_node)[0][1]
             ident = drug_node.identifier
@@ -48,7 +48,7 @@ def test_all_drugs_ctd():
     n_no_ctd = 0
     n_no_gene = 0
     for name in uniq:
-        input_node = KNode("DRUG_NAME:{}".format(name), node_types.DRUG_NAME)
+        input_node = KNode("DRUG_NAME:{}".format(name), type=node_types.DRUG_NAME)
         results = ctd.drugname_to_ctd(input_node)
         try:
             drug_node = results[0][1]
@@ -80,7 +80,7 @@ def test_all_drugs_pharos():
     n_no_pharos = 0
     n_no_hgnc = 0
     for name in uniq:
-        input_node = KNode("DRUG_NAME:{}".format(name), node_types.DRUG_NAME)
+        input_node = KNode("DRUG_NAME:{}".format(name), type=node_types.DRUG_NAME)
         try:
             results = pharos.drugname_to_pharos(input_node)
             #print(name, results)

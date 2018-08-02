@@ -16,7 +16,7 @@ class TypeCheck(Service):
 
     def is_cell(self, node):
         """This is a very cheesy approach.  Once we have a generic ontology browser hooked in, we can reformulate"""
-        curie_prefix = Text.get_curie(node.identifier)
+        curie_prefix = Text.get_curie(node.id)
         return curie_prefix == 'CL'
 
     #The way caster works, these nodes won't necessarily be synonymized yet.  So it may just

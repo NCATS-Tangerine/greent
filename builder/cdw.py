@@ -18,15 +18,15 @@ class CDWSupport():
 
     def prepare(self,nodes):
         for node in nodes:
-            if (node.node_type == node_types.DISEASE) or (node.node_type == node_types.GENETIC_CONDITION):
-                split_curie = node.identifier.split(':')
+            if (node.type == node_types.DISEASE) or (node.type == node_types.GENETIC_CONDITION):
+                split_curie = node.id.split(':')
                 if self.oxo.is_valid_curie_prefix( split_curie[0] ):
-                    results = self.oxo.get_specific_synonym_expanding( node.identifier, 'ICD9CM' )
+                    results = self.oxo.get_specific_synonym_expanding( node.id, 'ICD9CM' )
                     if len(results) == 0:
-                        logging.getLogger('application').warn('No ICD9 found for term: %s' % node.identifier)
+                        logging.getLogger('application').warn('No ICD9 found for term: %s' % node.id)
                     else:
                         for r in results:
-                            logging.getLogger('application').debug('ICD9 for {}: {}'.format( node.identifier, r['curie']))
+                            logging.getLogger('application').debug('ICD9 for {}: {}'.format( node.id, r['curie']))
                             if ( '-' in r['curie'] ):
                                 logging.getLogger('application').warn('ICD9 has a dash: {}'.format(r['curie']) )
                             node.synonyms.add( r['curie'] )
@@ -65,6 +65,7 @@ class CDWSupport():
         k,c = cooc_list[0]
         #TODO: fix this up with details
         c[ 'icd9' ] = list(k) 
+        raise RuntimeError('The following KEdge constructor looks somewhat suspect.')
         ke= KEdge( 'cdw', 'term_to_term', c,  is_support = True )
         ke.source_node = node_a
         ke.target_node = node_b
@@ -109,8 +110,8 @@ def test():
     rosetta = Rosetta()
     gt = rosetta.core
     cdw = CDWSupport(gt)
-    #node = KNode( 'MESH:D008175', node_type=node_types.GENETIC_CONDITION )
-    node = KNode( 'DOID:9352', node_type=node_types.DISEASE )
+    #node = KNode( 'MESH:D008175', type=node_types.GENETIC_CONDITION )
+    node = KNode( 'DOID:9352', type=node_types.DISEASE )
     cdw.prepare( [node] )
 
 def test_edge():
@@ -120,9 +121,9 @@ def test_edge():
     rosetta = Rosetta()
     gt = rosetta.core
     cdw = CDWSupport(gt)
-    #node = KNode( 'MESH:D008175', node_type=node_types.GENETIC_CONDITION )
-    nodea = KNode( 'DOID:11476', node_type=node_types.DISEASE )
-    nodeb = KNode( 'Orphanet:90318', node_type=node_types.DISEASE )
+    #node = KNode( 'MESH:D008175', type=node_types.GENETIC_CONDITION )
+    nodea = KNode( 'DOID:11476', type=node_types.DISEASE )
+    nodeb = KNode( 'Orphanet:90318', type=node_types.DISEASE )
     cdw.prepare( [nodea,nodeb] )
     e = cdw.term_to_term( nodea,nodeb) 
     print (e)

@@ -4,7 +4,7 @@ from pprint import pprint
 from greent.neo4jbase import Neo4JREST
 from greent.util import Munge
 from greent.util import Text
-from greent.graph_components import KEdge, KNode, LabeledID
+from greent.graph_components import KNode, LabeledID
 from greent import node_types
 from datetime import datetime as dt
 
@@ -30,12 +30,12 @@ class HetIO(Neo4JREST):
         gene_identifier = Text.un_curie(gene_identifiers[0])
         nodes,edges = self.query ( "MATCH (a:Anatomy)-[ar]-(g:Gene) WHERE g.identifier={0} RETURN a, ar, g LIMIT 200".format (gene_identifier),
                               labels=['Anatomy'], kinds=['node','relationship'])
-        node_ids = [ LabeledID(node['identifier'],node['name']) for node in nodes ]
+        node_ids = [ LabeledID(identifier=node['identifier'], label=node['name']) for node in nodes ]
         edge_ids = [ edge['type'] for edge in edges ]
         results = []
         for node_id, predicate_label in zip(node_ids,edge_ids):
-            predicate = LabeledID(f'hetio:{predicate_label}', predicate_label)
-            anatomy = KNode(node_id.identifier, node_types.ANATOMY, label=node_id.label)
+            predicate = LabeledID(identifier=f'hetio:{predicate_label}', label=predicate_label)
+            anatomy = KNode(node_id.identifier, type=node_types.ANATOMY, name=node_id.label)
             #These edges all go from anatomy to gene
             edge = self.create_edge(anatomy, gene,'hetio.gene_to_anatomy',gene_identifier,predicate)
             results.append((edge, anatomy))
@@ -46,12 +46,12 @@ class HetIO(Neo4JREST):
         anat_identifier = anat_identifiers[0]
         nodes,edges = self.query ( "MATCH (a:Anatomy)-[ar]-(g:Gene) WHERE a.identifier='{0}' RETURN a, ar, g ".format (anat_identifier),
                               labels=['Gene'], kinds=['node','relationship'])
-        node_ids = [ LabeledID(f"NCBIGENE:{node['identifier']}",node['name']) for node in nodes ]
+        node_ids = [ LabeledID(identifier=f"NCBIGENE:{node['identifier']}", label=node['name']) for node in nodes ]
         edge_ids = [ edge['type'] for edge in edges ]
         results = []
         for node_id, predicate_label in zip(node_ids,edge_ids):
-            predicate = LabeledID(f'hetio:{predicate_label}', predicate_label)
-            gene = KNode(node_id.identifier, node_types.GENE, label=node_id.label)
+            predicate = LabeledID(identifier=f'hetio:{predicate_label}', label=predicate_label)
+            gene = KNode(node_id.identifier, type=node_types.GENE, name=node_id.label)
             #These edges all go from anatomy to gene
             edge = self.create_edge(anat, gene,'hetio.anatomy_to_gene',anat_identifier,predicate)
             results.append((edge, gene))
@@ -60,11 +60,11 @@ class HetIO(Neo4JREST):
     #TODO: this is not to a cell, but a cellular component.  REmoving it from the yaml until we can fix it up
     def gene_to_cellular_component (self, gene):
         result = self.query (
-            "MATCH (g:Gene)-[r]-(c:CellularComponent) WHERE g.name='{0}' RETURN g, r, c LIMIT 200".format (Text.un_curie (gene.identifier)),
+            "MATCH (g:Gene)-[r]-(c:CellularComponent) WHERE g.name='{0}' RETURN g, r, c LIMIT 200".format (Text.un_curie (gene.id)),
             labels=['CellularComponent'],
             node_properties=['identifier','name'])
         anatomies = []
-        return [ ( self.get_edge ({ 'res' : r }, predicate='affects'), KNode(r['identifier'], node_types.CELLULAR_COMPONENT,r['name']) ) for r in result ]
+        return [ ( self.get_edge ({ 'res' : r }, predicate='affects'), KNode(r['identifier'], type=node_types.CELLULAR_COMPONENT, name=r['name']) ) for r in result ]
 
     #TODO: implement the reverse too
     def gene_to_disease (self, gene):
@@ -75,13 +75,13 @@ class HetIO(Neo4JREST):
         nodes, edges = self.query (
             "MATCH (d:Disease)-[a1]-(g:Gene) WHERE g.identifier={0} RETURN a1,d".format (gene_identifier),
             labels=['Disease'], kinds=['node','relationship'])
-        node_ids = [ LabeledID(node['identifier'],node['name']) for node in nodes ]
+        node_ids = [ LabeledID(identifier=node['identifier'], label=node['name']) for node in nodes ]
         edge_ids = [ edge['type'] for edge in edges ]
         results = []
         #These edges all go from disease to gene
         for node_id, predicate_label in zip(node_ids,edge_ids):
-            predicate = LabeledID(f'hetio:{predicate_label}', predicate_label)
-            disease = KNode(node_id.identifier, node_types.DISEASE,label=node_id.label)
+            predicate = LabeledID(identifier=f'hetio:{predicate_label}', label=predicate_label)
+            disease = KNode(node_id.identifier, type=node_types.DISEASE, name=node_id.label)
             edge = self.create_edge(disease, gene,'hetio.gene_to_disease',gene_identifier,predicate)
             results.append( (edge, disease) )
         return results
@@ -93,12 +93,12 @@ class HetIO(Neo4JREST):
         disease_identifier = disease_identifiers[0]
         query = """MATCH (d:Disease{identifier:'%s'})-[r]-(s:Symptom) RETURN d,r,s""" % (disease_identifier)
         nodes,edges = self.query (query, labels=['Symptom'], kinds=['node','relationship'])
-        node_ids = [ LabeledID(f"MESH:{node['identifier']}", node['name']) for node in nodes ]
+        node_ids = [ LabeledID(identifier=f"MESH:{node['identifier']}", label=node['name']) for node in nodes ]
         edge_ids = [ edge['type'] for edge in edges ]
         results = []
         for node_id, predicate_label in zip(node_ids,edge_ids):
-            predicate = LabeledID(f'hetio:{predicate_label}', predicate_label)
-            phenotype = KNode(node_id.identifier, node_types.PHENOTYPE,label=node_id.label)
+            predicate = LabeledID(identifier=f'hetio:{predicate_label}', label=predicate_label)
+            phenotype = KNode(node_id.identifier, type=node_types.PHENOTYPE, name=node_id.label)
             edge = self.create_edge(disease, phenotype, 'hetio.disease_to_phenotype', disease_identifier, predicate)
             results.append( (edge, phenotype) )
         return results

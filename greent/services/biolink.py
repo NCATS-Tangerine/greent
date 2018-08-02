@@ -4,8 +4,9 @@ from greent.service import Service
 from greent.ontologies.mondo2 import Mondo2
 from greent.ontologies.go2 import GO2
 from greent.util import Text
-from greent.graph_components import KNode, KEdge,LabeledID
+from greent.graph_components import KNode, LabeledID
 from greent import node_types
+from builder.question import LabeledID
 from datetime import datetime as dt
 import logging
 import time
@@ -59,11 +60,11 @@ class Biolink(Service):
                     if pubid_prefix == 'PMID':
                         pubs.append(pub['id'])
             if reverse:
-                source_node = KNode(association['subject']['id'], target_node_type, association['subject']['label'])
+                source_node = KNode(association['subject']['id'], type=target_node_type, name=association['subject']['label'])
                 target_node = input_node
                 newnode = source_node
             else:
-                target_node = KNode(association['object']['id'], target_node_type, association['object']['label'])
+                target_node = KNode(association['object']['id'], type=target_node_type, name=association['object']['label'])
                 source_node = input_node
                 newnode = target_node
             #Deal with biolink's occasional propensity to return Null relations
@@ -82,7 +83,7 @@ class Biolink(Service):
             if predicate_label is None:
                 predicate_label = f'biolink:{function}'
             #now back to the show
-            predicate = LabeledID(identifier=predicate_id,label= predicate_label)
+            predicate = LabeledID(identifier=predicate_id, label=predicate_label)
             edge = self.create_edge(source_node, target_node, f'biolink.{function}',  input_identifier, predicate,  publications = pubs, url = url)
             edge_nodes.append((edge, newnode))
         return edge_nodes
@@ -91,7 +92,7 @@ class Biolink(Service):
     def gene_get_disease(self, gene_node):
         """Given a gene specified as a curie, return associated diseases."""
         #Biolink is pretty forgiving on gene inputs, and our genes should have HGNC as their identifiers nearly always
-        ehgnc = urllib.parse.quote_plus(gene_node.identifier)
+        ehgnc = urllib.parse.quote_plus(gene_node.id)
         logging.getLogger('application').debug('          biolink: %s/bioentity/gene/%s/diseases' % (self.url, ehgnc))
         urlcall = '%s/bioentity/gene/%s/diseases' % (self.url, ehgnc)
         r = self.query(urlcall)
@@ -100,10 +101,10 @@ class Biolink(Service):
 
     def disease_get_phenotype(self, disease):
         #Biolink should understand any of our disease inputs here.
-        url = "{0}/bioentity/disease/{1}/phenotypes/".format(self.url, disease.identifier)
+        url = "{0}/bioentity/disease/{1}/phenotypes/".format(self.url, disease.id)
         response = self.query(url)
         #response = requests.get(url).json()
-        return self.process_associations(response, 'disease_get_phenotype', node_types.PHENOTYPE, disease.identifier, url, disease)
+        return self.process_associations(response, 'disease_get_phenotype', node_types.PHENOTYPE, disease.id, url, disease)
 
     def gene_get_go(self, gene):
         # this function is very finicky.  gene must be in uniprotkb, and the curie prefix must be correctly capitalized
@@ -122,18 +123,18 @@ class Biolink(Service):
         if response is None:
             return []
         edges_nodes = self.process_associations(response, 'gene_get_process_or_function', node_types.PROCESS_OR_FUNCTION, input_id, url,gene)
-        process_or_function_results = list(filter(lambda x: self.go.is_biological_process(x[1].identifier) or
-                                                  self.go.is_molecular_function(x[1].identifier), edges_nodes))
+        process_or_function_results = list(filter(lambda x: self.go.is_biological_process(x[1].id) or
+                                                  self.go.is_molecular_function(x[1].id), edges_nodes))
         return process_or_function_results
 
     def gene_get_pathways(self, gene):
-        url = "{0}/bioentity/gene/{1}/pathways/".format(self.url, gene.identifier)
+        url = "{0}/bioentity/gene/{1}/pathways/".format(self.url, gene.id)
         #response = requests.get(url).json()
         response = self.query(url)
-        return self.process_associations(response, 'gene_get_pathways', node_types.PATHWAY, gene.identifier, url,gene)
+        return self.process_associations(response, 'gene_get_pathways', node_types.PATHWAY, gene.id, url,gene)
 
     def pathway_get_gene(self, pathway):
-        url = "{0}/bioentity/pathway/{1}/genes/".format(self.url, pathway.identifier)
+        url = "{0}/bioentity/pathway/{1}/genes/".format(self.url, pathway.id)
         #response = requests.get(url).json()
         response = self.query(url)
-        return self.process_associations(response, 'pathway_get_genes', node_types.GENE, url, pathway.identifier, pathway, reverse=True)
+        return self.process_associations(response, 'pathway_get_genes', node_types.GENE, url, pathway.id, pathway, reverse=True)

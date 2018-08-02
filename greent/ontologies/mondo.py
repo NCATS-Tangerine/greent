@@ -1,6 +1,6 @@
 from greent.service import Service
 from ontobio.ontol_factory import OntologyFactory
-from greent.graph_components import KNode, KEdge
+from greent.graph_components import KNode
 from greent.util import LoggingUtil
 from greent import node_types
 
@@ -93,7 +93,7 @@ class Mondo(Service):
                          ancestor.
                  The list of Mondo identifiers for the object, which have the term as an ancestor"""
         #TODO: The return signature is funky, fix it.
-        obj_id = obj.identifier
+        obj_id = obj.id
         obj_ids = self.get_mondo_id(obj_id)
         return_objects=[]
         for obj_id in obj_ids:
@@ -104,7 +104,7 @@ class Mondo(Service):
         return len(return_objects) > 0, return_objects
 
 #    def disease_is_genetic_condition(self, node):
-#        return self.is_genetic_disease(node.identifier)
+#        return self.is_genetic_disease(node.id)
 
     def is_genetic_disease(self,obj):
         """Checks mondo to find whether the subject has DOID:630 as an ancestor"""
@@ -126,16 +126,16 @@ class Mondo(Service):
                     new_object_id = new_object_id.replace (orphanet_prefix, 'ORPHANET.GENETIC_CONDITION:')
                 elif new_object_id.startswith ('DOID:'):
                     new_object_id = new_object_id.replace ('DOID:', 'DOID.GENETIC_CONDITION:')
-                relations.append ( (self.get_edge ({}, 'is_genetic_condition'), KNode (new_object_id, node_types.GENETIC_CONDITION) ))
+                relations.append ( (self.get_edge ({}, 'is_genetic_condition'), KNode (new_object_id, type=node_types.GENETIC_CONDITION) ))
         return relations
 
     def doid_get_orphanet_genetic_condition (self, disease):
         results = self.doid_get_genetic_condition (disease)
-        return [ r for r in results if r[1].identifier.startswith ('ORPHANET.GENETIC_CONDITION') ]
+        return [ r for r in results if r[1].id.startswith ('ORPHANET.GENETIC_CONDITION') ]
     
     def doid_get_doid_genetic_condition (self, disease):
         results = self.doid_get_genetic_condition (disease)
-        return [ r for r in results if r[1].identifier.startswith ('DOID.GENETIC_CONDITION') ]
+        return [ r for r in results if r[1].id.startswith ('DOID.GENETIC_CONDITION') ]
 
     def substring_search(self,name):
         ciname = '(?i){}'.format(name)

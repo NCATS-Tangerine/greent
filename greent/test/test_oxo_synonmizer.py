@@ -4,7 +4,7 @@ from greent.conftest import rosetta
 from greent import node_types
 
 def test_neuron(rosetta):
-    node = KNode("CL:0000540", node_types.CELL)
+    node = KNode("CL:0000540", type=node_types.CELL)
     synonymize(node,rosetta.core)
     assert len(node.synonyms) >  10
     #we're no longer so pathological about trying to get meshIDs so in this case we don't get one
@@ -16,7 +16,7 @@ def test_neuron(rosetta):
     assert mid == 'UMLS:C0027882' \
 
 def test_phenotype(rosetta):
-    node = KNode("MEDDRA:10014408", node_types.PHENOTYPE)
+    node = KNode("MEDDRA:10014408", type=node_types.PHENOTYPE)
     synonymize(node,rosetta.core)
     assert len(node.synonyms) >  10
     hpsyns = node.get_synonyms_by_prefix("HP")
@@ -24,7 +24,7 @@ def test_phenotype(rosetta):
     print(hpsyns)
 
 def test_names(rosetta):
-    node = KNode('HP:0002527', node_type = node_types.PHENOTYPE, label='Falls')
+    node = KNode('HP:0002527', type=node_types.PHENOTYPE, name='Falls')
     synonymize(node,rosetta.core)
     print( node.synonyms )
     msyns = node.get_labeled_ids_by_prefix("MedDRA")

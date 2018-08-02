@@ -1,4 +1,3 @@
-from greent.graph_components import KNode
 from greent.conftest import rosetta
 from greent import node_types
 from greent.util import Text

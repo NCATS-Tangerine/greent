@@ -32,14 +32,14 @@ def pull_uniprot_kb():
 
 def json_2_identifiers(gene_dict):
     symbol = gene_dict['symbol']
-    hgnc_id = LabeledID(gene_dict['hgnc_id'],symbol)
+    hgnc_id = LabeledID(identifier=gene_dict['hgnc_id'], label=symbol)
     idset = set([hgnc_id])
     if 'entrez_id' in gene_dict:
-        idset.add( LabeledID(f"NCBIGENE:{gene_dict['entrez_id']}", symbol))
+        idset.add( LabeledID(identifier=f"NCBIGENE:{gene_dict['entrez_id']}", label=symbol))
     if 'uniprot_ids' in gene_dict:
-        idset.update([LabeledID(f"UniProtKB:{uniprotkbid}", symbol) for uniprotkbid in gene_dict['uniprot_ids']])
+        idset.update([LabeledID(identifier=f"UniProtKB:{uniprotkbid}", label=symbol) for uniprotkbid in gene_dict['uniprot_ids']])
     if 'ensembl_gene_id' in gene_dict:
-        idset.add( LabeledID(f"ENSEMBL:{gene_dict['ensembl_gene_id']}", symbol))
+        idset.add( LabeledID(identifier=f"ENSEMBL:{gene_dict['ensembl_gene_id']}", label=symbol))
     return idset
 
 def load_genes(rosetta):
@@ -112,7 +112,7 @@ def synonymize_genes():
                 #We're still going to toss the uniprotkb in there, because, we're going to end up looking for
                 # it later anyway
                 still_unmapped += 1
-                ids_to_synonyms[uniprot_id] = set([LabeledID(uniprot_id,None)])
+                ids_to_synonyms[uniprot_id] = set([LabeledID(identifier=uniprot_id, label=None)])
     logger.debug(f'There were {premapped} UniProt Ids already mapped in HGNC')
     logger.debug(f'There were {isoforms} UniProt Ids that are just isoforms')
     logger.debug(f'There were {unpremapped} UniProt Ids not already mapped in HGNC')

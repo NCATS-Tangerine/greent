@@ -1,7 +1,7 @@
 import requests
 from greent.services.onto import Onto
 from greent.service import Service
-from greent.graph_components import KNode, KEdge
+from greent.graph_components import KNode
 from greent.util import LoggingUtil
 from greent import node_types
 
@@ -55,7 +55,7 @@ class Mondo2(Onto):
     
     def has_ancestor(self,obj, terms):
         """ Is is_a(obj,t) true for any t in terms ? """
-        ids = self.get_mondo_id(obj.identifier)        
+        ids = self.get_mondo_id(obj.id)        
         results = [ i for i in ids for candidate_ancestor in terms if super(Mondo2,self).is_a(i, candidate_ancestor) ] \
                  if terms else []
         return len(results) > 0, results
@@ -73,17 +73,17 @@ class Mondo2(Onto):
         is_genetic, ancestors = self.is_genetic_disease(disease)
         return [
             (self.get_edge({}, 'is_gentic_condition'),
-             KNode(ancestor, node_types.GENETIC_CONDITION, label= super(Mondo2,self).get_label(ancestor) ) ) for ancestor in ancestors
+             KNode(ancestor, type=node_types.GENETIC_CONDITION, name=super(Mondo2,self).get_label(ancestor) ) ) for ancestor in ancestors
             ] if is_genetic else []
 
     """ No indication anyone ever calls these three. And the fourth is called internally by something we're replacing. """
     def doid_get_orphanet_genetic_condition (self, disease):
         results = self.doid_get_genetic_condition (disease)
-        return [ r for r in results if r[1].identifier.startswith ('ORPHANET.GENETIC_CONDITION') ]
+        return [ r for r in results if r[1].id.startswith ('ORPHANET.GENETIC_CONDITION') ]
     
     def doid_get_doid_genetic_condition (self, disease):
         results = self.doid_get_genetic_condition (disease)
-        return [ r for r in results if r[1].identifier.startswith ('DOID.GENETIC_CONDITION') ]
+        return [ r for r in results if r[1].id.startswith ('DOID.GENETIC_CONDITION') ]
 
     def substring_search(self,name):
         ciname = '(?i){}'.format(name)
