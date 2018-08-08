@@ -20,5 +20,7 @@ def glom(conc_set, newgroups):
 def dump_cache(concord,rosetta):
     for chem_id in concord:
         key = f"synonymize({chem_id})"
+        if "'" in key:
+            print(key)
         value = concord[chem_id]
         rosetta.cache.set(key,value)
