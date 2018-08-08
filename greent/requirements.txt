@@ -39,7 +39,7 @@ pysolr==3.7.0
 pytest==3.4.2
 python-dateutil==2.7.0
 pytz==2018.3
-PyYAML==3.12
+PyYAML==3.13
 rdflib==4.2.2
 redis==2.10.6
 requests==2.18.4

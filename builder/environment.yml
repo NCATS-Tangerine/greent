@@ -113,7 +113,7 @@ dependencies:
     - pygments==2.2.0
     - pyld==1.0.3
     - pysolr==3.7.0
-    - pyyaml==3.12
+    - pyyaml==3.13
     - pyzmq==16.0.2
     - qtconsole==4.3.1
     - rdflib==4.2.2

@@ -72,7 +72,7 @@ pyswip-alt==0.2.3
 python-dateutil==2.6.1
 python-termstyle==0.1.10
 pytz==2017.2
-PyYAML==3.12
+PyYAML==3.13
 pyzmq==16.0.2
 qtconsole==4.3.1
 rdflib==4.2.2
