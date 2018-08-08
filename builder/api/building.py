@@ -7,6 +7,7 @@ import json
 import requests
 import logging
 
+import redis
 from flask import request
 from flask_restful import Resource, reqparse
 
@@ -81,22 +82,28 @@ class TaskStatus(Resource):
                       - state
                       - result
                     properties:
-                        task-id:
+                        task_id:
                             type: string
-                            description: Task ID
-                        state:
+                        status:
                             type: string
                             description: Short task status
                         result:
-                            type: string
+                            type: ???
                             description: Result of completed task OR intermediate status message
                         traceback:
                             type: string
                             description: Traceback, in case of task failure
         """
-        polling_url = f'http://{os.environ["FLOWER_HOST"]}:{os.environ["BUILDER_FLOWER_PORT"]}/api/task/result/{task_id}'
-        response = requests.get(polling_url, auth=(os.environ['FLOWER_USER'], os.environ['FLOWER_PASSWORD']))
-        return response.json(), 200
+
+        r = redis.Redis(
+            host=os.environ['RESULTS_HOST'],
+            port=os.environ['RESULTS_PORT'],
+            db=os.environ['BUILDER_RESULTS_DB'])
+        value = r.get(f'celery-task-meta-{task_id}')
+        if value is None:
+            return 'Task not found', 404
+        result = json.loads(value)
+        return result, 200
 
 api.add_resource(TaskStatus, '/task/<task_id>')
 
