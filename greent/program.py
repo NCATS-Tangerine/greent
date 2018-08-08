@@ -48,7 +48,7 @@ class Program:
         #self.excluded_identifiers=set()
         self.excluded_identifiers=set(['UBERON:0000468'])
 
-        response = requests.get(f"{os.environ['FLOWER_BROKER_API']}queues/")
+        response = requests.get(f"{os.environ['BROKER_API']}queues/")
         queues = response.json()
         num_consumers = [q['consumers'] for q in queues if q['name'] == 'neo4j']
         if num_consumers and num_consumers[0]:

@@ -105,5 +105,4 @@ Werkzeug==0.12.2
 widgetsnbextension==2.0.1
 celery>=4.1.0
 flask_restful>=0.3.6
-flower>=0.9.2
 -e git+https://github.com/Supervisor/supervisor@master#egg=supervisor

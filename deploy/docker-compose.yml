@@ -21,7 +21,6 @@ services:
       - CACHE_HOST=cache
     ports:
       - "${BUILDER_PORT}:${BUILDER_PORT}"
-      - "${BUILDER_FLOWER_PORT}:${BUILDER_FLOWER_PORT}"
       - "${BUILDER_SUPERVISOR_PORT}:${BUILDER_SUPERVISOR_PORT}"
     volumes:
       - ../../logs:/home/murphy/logs
