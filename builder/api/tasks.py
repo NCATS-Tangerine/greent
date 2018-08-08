@@ -28,6 +28,7 @@ celery = Celery(app.name)
 celery.conf.update(
     broker_url=os.environ["CELERY_BROKER_URL"],
     result_backend=os.environ["CELERY_RESULT_BACKEND"],
+    task_track_started=True,
 )
 celery.conf.task_queues = (
     Queue('update', routing_key='update'),
