@@ -36,11 +36,11 @@ def create_omnicache(rosetta):
 
 def create_connection(rosetta):
     context = rosetta.service_context
-    db = context.config['POSTGRES_DB']
-    user = context.config['POSTGRES_USER']
-    port = context.config['POSTGRES_PORT']
-    host = context.config['POSTGRES_HOST']
-    pw = context.config['POSTGRES_PASSWORD']
+    db = context.config['OMNICORP_DB']
+    user = context.config['OMNICORP_USER']
+    port = context.config['OMNICORP_PORT']
+    host = context.config['OMNICORP_HOST']
+    pw = context.config['OMNICORP_PASSWORD']
     return psycopg2.connect(dbname=db, user=user, host=host, port=port,password=pw)
 
 

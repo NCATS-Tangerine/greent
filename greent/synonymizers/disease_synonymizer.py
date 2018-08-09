@@ -1,6 +1,6 @@
 from greent.util import Text
 from greent.synonymizers import oxo_synonymizer
-from greent.graph_components import  LabeledID
+#from greent.graph_components import  LabeledID
 from builder.question import LabeledID
 
 #2/20/2018, OXO doesn't yet understand MONDOs.

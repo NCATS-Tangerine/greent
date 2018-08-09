@@ -16,6 +16,8 @@ class MyChem(Service):
         #Don't need to worry about paging in this one, since we'll just return one drug (the one we're asking for)
         #and mychem pages by drug.
         chemblids = drug_node.get_synonyms_by_prefix('CHEMBL')
+        if len(chemblids) == 0:
+            logger.warn('no chembl ids')
         return_results = []
         for cid in chemblids:
             ident = Text.un_curie(cid)
@@ -58,6 +60,8 @@ class MyChem(Service):
         #Don't need to worry about paging in this one, since we'll just return one drug (the one we're asking for)
         #and mychem pages by drug.
         chemblids = drug_node.get_synonyms_by_prefix('CHEMBL')
+        if len(chemblids) == 0:
+            logger.warn('no chembl ids')
         return_results = []
         for cid in chemblids:
             ident = Text.un_curie(cid)
@@ -83,9 +87,6 @@ class MyChem(Service):
                         edge = self.create_edge(drug_node, obj_node, 'mychem.get_drugcentral',  cid, predicate, url = murl)
                         return_results.append( (edge, obj_node) )
         return return_results
-
-
-
 
     def query(self,url):
         result = requests.get(url).json()
