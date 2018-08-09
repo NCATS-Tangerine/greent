@@ -18,7 +18,6 @@ from greent.async import AsyncUtil
 from greent.async import Operation
 from greent.graph_components import KEdge, KNode, LabeledID
 from greent import node_types
-from simplejson.scanner import JSONDecodeError
 
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 

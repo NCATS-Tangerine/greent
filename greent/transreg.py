@@ -24,7 +24,6 @@ from greent.util import Text
 from pprint import pprint
 from greent.graph_components import KNode,KEdge
 from greent import node_types
-from jsonpath_rw import jsonpath, parse
 from pyld import jsonld
 
 logger = LoggingUtil.init_logging (__name__, level=logging.DEBUG)

@@ -8,8 +8,6 @@ import datetime
 import os
 import yaml
 from collections import namedtuple
-from bravado.client import SwaggerClient
-from bravado.requests_client import RequestsClient
 import copy
 
 #loggers = {}

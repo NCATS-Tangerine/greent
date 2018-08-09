@@ -23,8 +23,7 @@ RUN git clone https://github.com/NCATS-Gamma/robokop-interfaces.git
 WORKDIR /home/murphy/robokop-interfaces
 
 ## Install all requirements
-RUN pip install -r ./greent/requirements.txt --src /usr/local/src
-RUN pip install -r ./builder/requirements.txt --src /usr/local/src
+RUN pip install -r ./requirements.txt --src /usr/local/src
 
 ## Finish up
 ENV HOME=/home/murphy
