@@ -1,8 +1,0 @@
-
-language: python
-python:
-  - "3.6"
-# command to install dependencies
-install: "pip install -r greent/requirements.txt"
-# command to run tests
-script: "cd NCATS-Tangerine/greent; PYTHONPATH=$PWD green"
