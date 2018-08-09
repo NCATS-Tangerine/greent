@@ -1,10 +1,13 @@
 from collections import defaultdict
 from functools import singledispatch
 from greent import node_types
-from greent.util import Text
+from greent.util import Text, LoggingUtil
 from typing import NamedTuple
 from builder.question import LabeledID
 from builder.util import FromDictMixin
+import logging
+
+logger = LoggingUtil.init_logging (__name__, level=logging.DEBUG)
 
 class KNode(FromDictMixin):
     """Used as the node object in KnowledgeGraph.

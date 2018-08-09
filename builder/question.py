@@ -50,6 +50,9 @@ class QNode(FromDictMixin):
 
         super().__init__(*args, **kwargs)
 
+    def __repr__(self):
+        return f'{self.type} ({self.curie})'
+
     def concept_cypher_signature(self, id, known=False):
         if self.type and not known:
             return f"({id}:Concept {{name: '{self.type}'}})"
@@ -92,6 +95,10 @@ class LabeledID(FromDictMixin):
         self.label = None
 
         super().__init__(*args, **kwargs)
+
+
+    def __repr__(self):
+        return f'({self.identifier},{self.label})'
 
     def __gt__(self, other):
         return self.identifier > other.identifier

@@ -1,5 +1,8 @@
 from greent.service import Service
-from greent.util import Text
+from greent.util import Text, LoggingUtil
+import logging
+
+logger = LoggingUtil.init_logging(__name__, logging.INFO)
 
 class TypeCheck(Service):
     """Service that has the ability to determine whether a given ID corresponds to a particular class or not.

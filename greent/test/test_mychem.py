@@ -34,6 +34,11 @@ def test_drug_adverse_events(mychem):
     #    print(n)
     assert len(results) > 0
 
+def test_atorvastatin(mychem):
+    node = KNode('CHEMBL:CHEMBL1487', type=node_types.DRUG) #Escitalopram
+    results = mychem.get_adverse_events(node)
+    assert len(results) > 0
+
 def x_test_event_to_drug(mychem):
     node = KNode('MONDO:0002050', type=node_types.DISEASE, name='Mental Depression')
     node.add_synonyms( set( [LabeledID(identifier='MedDRA:10002855', label='Depression')]))
