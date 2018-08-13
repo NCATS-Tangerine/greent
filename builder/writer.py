@@ -7,19 +7,12 @@ from datetime import datetime
 import logging
 import json
 
-from celery import Celery
 import pika
 
 from greent.util import LoggingUtil
 from greent.export import BufferedWriter
 from builder.buildmain import setup
 from greent.graph_components import KNode, KEdge
-
-config = {
-    'broker_url': "redis://127.0.0.1:6379/1"
-}
-celery = Celery('celery')
-celery.conf.update(config)
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 

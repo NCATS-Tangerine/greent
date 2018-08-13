@@ -4,7 +4,6 @@ from greent.rosetta import Rosetta
 from greent.export import BufferedWriter
 from builder.userquery import UserQuery
 import argparse
-import networkx as nx
 import logging
 import sys
 from importlib import import_module
