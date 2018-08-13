@@ -18,6 +18,7 @@ synonymizers = {
     node_types.DISEASE:disease_synonymizer,
     node_types.GENETIC_CONDITION:disease_synonymizer,
     node_types.PHENOTYPE:oxo_synonymizer,
+    node_types.DISEASE_OR_PHENOTYPE:disease_synonymizer,
     node_types.DRUG:substance_synonymizer,
     #These ones don't do anything, but we should at least pick up MeSH identifiers where we can.
     node_types.PATHWAY:oxo_synonymizer,
