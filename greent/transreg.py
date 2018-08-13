@@ -3,7 +3,6 @@ import json
 import logging
 import requests
 import traceback
-import pytest
 import re
 import os
 import sys

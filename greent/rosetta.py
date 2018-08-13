@@ -3,7 +3,6 @@ import json
 import logging
 import operator
 import os
-import pytest
 import re
 import sys
 import traceback
