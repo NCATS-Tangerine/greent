@@ -13,4 +13,5 @@ celery
 ndex2
 ontobio
 pronto
+pika
 -e git+https://github.com/Supervisor/supervisor@master#egg=supervisor

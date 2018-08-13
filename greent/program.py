@@ -53,9 +53,9 @@ class Program:
         num_consumers = [q['consumers'] for q in queues if q['name'] == 'neo4j']
         if num_consumers and num_consumers[0]:
             import pika
-            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='127.0.0.1',
+            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=os.environ['BROKER_HOST'],
                 virtual_host='builder',
-                credentials=pika.credentials.PlainCredentials('murphy', 'pword')))
+                credentials=pika.credentials.PlainCredentials(os.environ['BROKER_USER'], os.environ['BROKER_PASSWORD'])))
             self.channel = self.connection.channel()
             self.channel.queue_declare(queue='neo4j')
         else:
