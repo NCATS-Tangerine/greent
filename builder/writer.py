@@ -13,8 +13,9 @@ from greent.util import LoggingUtil
 from greent.export import BufferedWriter
 from builder.buildmain import setup
 from greent.graph_components import KNode, KEdge
+from builder.api import logging_config
 
-logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
+logger = LoggingUtil.init_logging("builder.writer", level=logging.DEBUG)
 
 greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
 sys.path.insert(0, greent_path)
@@ -29,9 +30,8 @@ channel.queue_declare(queue='neo4j')
 
 def callback(ch, method, properties, body):
     body = body.decode()
-    print(f" [x] Received {body}")
+    # logger.info(f" [x] Received {body}")
     if isinstance(body, str) and body == 'flush':
-        with BufferedWriter(rosetta) as writer:
             writer.flush()
         return
     graph = json.loads(body)
@@ -45,5 +45,6 @@ channel.basic_consume(callback,
                       queue='neo4j',
                       no_ack=True)
 
-print(' [*] Waiting for messages. To exit press CTRL+C')
+logger.info(' [*] Waiting for messages.')
+print('To exit press CTRL+C')
 channel.start_consuming()
