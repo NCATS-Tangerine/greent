@@ -28,18 +28,19 @@ channel = connection.channel()
 
 channel.queue_declare(queue='neo4j')
 
+writer = BufferedWriter(rosetta)
+
 def callback(ch, method, properties, body):
     body = body.decode()
     # logger.info(f" [x] Received {body}")
     if isinstance(body, str) and body == 'flush':
-            writer.flush()
+        writer.flush()
         return
     graph = json.loads(body)
-    with BufferedWriter(rosetta) as writer:
-        for node in graph['nodes']:
-            writer.write_node(KNode(node))
-        for edge in graph['edges']:
-            writer.write_edge(KEdge(edge))
+    for node in graph['nodes']:
+        writer.write_node(KNode(node))
+    for edge in graph['edges']:
+        writer.write_edge(KEdge(edge))
 
 channel.basic_consume(callback,
                       queue='neo4j',
