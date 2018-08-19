@@ -100,6 +100,7 @@ class Program:
                 self.rosetta.cache.set(key, results)
                 logger.debug(f"cache.set-> {key} length:{len(results)}")
                 logger.debug(f"    {[node for _, node in results]}")
+            results = list(filter(lambda x: x[1].id not in self.excluded_identifiers, results))
             for edge, node in results:
                 self.process_node(node, history, edge)
 

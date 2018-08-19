@@ -18,7 +18,9 @@ class QuickGo(Service):
     def get_predicate(self, p_label):
         if p_label.startswith('NOT'):
             return None
-        labels2identifiers={'occurs_in': 'BFO:0000066',
+        labels2identifiers={
+                'regulates_o_occurs_in': 'BFO:0000066',
+                'occurs_in': 'BFO:0000066',
                 'enables': 'RO:0002327',
                 'involved_in': 'RO:0002331',
                 'contributes_to': 'RO:0002326',
@@ -120,16 +122,21 @@ class QuickGo(Service):
         and they can have an extension like occurs_in(celltype). Technically, that occurs_in only relates to that
         particular gene/go combination.  But it's the only way to traverse from neurotransmitter release to neurons 
         that is currently available"""
-        url = '{0}/QuickGO/services/annotation/search?includeFields=goName&goId=GO:{1}&taxonId=9606&extension=occurs_in(CL)'.format( self.url, Text.un_curie(go_node.id)) 
+        # I used to be able to call with extension=occurs_in(CL) but this doesn't work any more.
+        # So now I will call without that, and just look for things with good extensions.  In this case
+        # occurs_in and regulates_o_occurs_in look good.
+        url = '{0}/QuickGO/services/annotation/search?includeFields=goName&goId=GO:{1}&taxonId=9606'.format( self.url, Text.un_curie(go_node.id))
         call_results = self.page_calls(url)
         cell_ids = set()
         results = []
         for r in call_results:
+            if r['extensions'] is None:
+                continue
             for e in r['extensions']:
                 for c in e['connectedXrefs']:
                     if c['db'] == 'CL':
                         if c['id'] not in cell_ids:
-                            predicate = self.get_predicate(c['qualifier'])
+                            predicate = self.get_predicate(c['relation'])
                             if predicate is None:
                                 continue
                             #Bummer, don't get a name
@@ -140,7 +147,7 @@ class QuickGo(Service):
         return results
 
     def cell_to_go_term_annotation_extensions(self,cell_node):
-        url=f'{self.url}/QuickGO/services/annotation/search?includeFields=goName&aspect=biological_process,molecular_function&extension={cell_node.id}'
+        url=f'{self.url}/QuickGO/services/annotation/search?includeFields=goName&aspect=biological_process,molecular_function&extension=occurs_in({cell_node.id})'
         call_results = self.page_calls(url)
         go_ids = set([ (r['goId'],r['goName']) for r in call_results ])
         predicate=self.get_predicate('occurs_in')

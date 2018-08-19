@@ -70,22 +70,46 @@ class MyChem(Service):
             for hit in result['hits']:
                 if 'drugcentral' in hit:
                     dc = hit['drugcentral']
-                    for ci in dc['drug_use']['contraindication']:
-                        if 'umls_cui' not in ci:
-                            continue
-                        predicate = LabeledID(identifier="DrugCentral:0000001", label="contraindication")
-                        umls = f"UMLS:{ci['umls_cui']}"
-                        obj_node = KNode(umls, type=node_types.DISEASE_OR_PHENOTYPE, name=ci['concept_name'])
-                        edge = self.create_edge(drug_node, obj_node, 'mychem.get_drugcentral', cid, predicate, url=murl )
-                        return_results.append( (edge, obj_node) )
-                    for ind in dc['drug_use']['indication']:
-                        if 'umls_cui' not in ind:
-                            continue
-                        predicate = LabeledID(identifier="RO:0002606", label="treats")
-                        umls = f"UMLS:{ind['umls_cui']}"
-                        obj_node = KNode(umls, type=node_types.DISEASE_OR_PHENOTYPE, name=ind['concept_name'])
-                        edge = self.create_edge(drug_node, obj_node, 'mychem.get_drugcentral',  cid, predicate, url = murl)
-                        return_results.append( (edge, obj_node) )
+                    if 'drug_use' in dc and 'contraindication' in dc['drug_use']:
+                        element=dc['drug_use']['contraindication']
+                        if isinstance(element,list):
+                            contraindications = element
+                        else:
+                            contraindications = [element]
+                        for ci in contraindications:
+                            if 'umls_cui' not in ci:
+                                continue
+                            predicate = LabeledID(identifier="DrugCentral:0000001", label="contraindication")
+                            try:
+                                umls = f"UMLS:{ci['umls_cui']}"
+                            except:
+                                logger.error('Problem getting UMLS (contraindication)')
+                                logger.error(murl)
+                                logger.error(ci)
+                                continue
+                            obj_node = KNode(umls, type=node_types.DISEASE_OR_PHENOTYPE, name=ci['concept_name'])
+                            edge = self.create_edge(drug_node, obj_node, 'mychem.get_drugcentral', cid, predicate, url=murl )
+                            return_results.append( (edge, obj_node) )
+                    if 'drug_use' in dc and 'indication' in dc['drug_use']:
+                        element=dc['drug_use']['indication']
+                        if isinstance(element,list):
+                            indications = element
+                        else:
+                            indications = [element]
+                        for ind in indications:
+                            if 'umls_cui' not in ind:
+                                continue
+                            predicate = LabeledID(identifier="RO:0002606", label="treats")
+                            try:
+                                umls = f"UMLS:{ind['umls_cui']}"
+                            except:
+                                logger.error('Problem getting UMLS (indication)')
+                                logger.error(murl)
+                                logger.error(ind)
+                                continue
+                            obj_node = KNode(umls, type=node_types.DISEASE_OR_PHENOTYPE, name=ind['concept_name'])
+                            edge = self.create_edge(drug_node, obj_node, 'mychem.get_drugcentral',  cid, predicate, url = murl)
+                            return_results.append( (edge, obj_node) )
         return return_results
 
     def query(self,url):

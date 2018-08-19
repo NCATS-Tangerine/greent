@@ -31,7 +31,9 @@ def synonymize(node,gt):
         synonyms.update(synonymize_with_OXO(node,gt))
         #synonymize_with_CTD(node,gt)
     else:
+        logger.debug("Trying OXO")
         synonyms.update(synonymize_with_OXO(node,gt))
+        logger.debug("Trying UniChem")
         synonyms.update(synonymize_with_UniChem(node,gt))
         #synonymize_with_CTD(node,gt)
     return synonyms

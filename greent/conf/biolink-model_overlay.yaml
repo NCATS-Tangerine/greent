@@ -66,6 +66,7 @@ classes:
       - DRUGBANK
       - PUBCHEM
       - MESH
+      - HMDB
       - INCHI
       - INCHIKEY
       - PUBCHEM.COMPOUND
@@ -82,6 +83,25 @@ classes:
       - DRUGBANK
       - PUBCHEM
       - MESH
+      - HMDB
+      - INCHI
+      - INCHIKEY
+      - UNII
+      - PUBCHEM.COMPOUND
+      - KEGG.COMPOUND
+      - KEGG.DRUG
+      - PHAROS.DRUG
+      - DRUG.INTERACTION
+      - CTD
+
+  - name: metabolite
+    id_prefixes:
+      - CHEBI
+      - CHEMBL
+      - DRUGBANK
+      - PUBCHEM
+      - MESH
+      - HMDB
       - INCHI
       - INCHIKEY
       - UNII
@@ -95,6 +115,7 @@ classes:
   - name: anatomical entity
     id_prefixes:
       - UBERON
+      - UMLS
 
   - name: gene
     id_prefixes:
@@ -102,6 +123,7 @@ classes:
       - NCBIGENE
       - ENSEMBL
       - UniProtKB
+      - EC
       - RNAcentral
       - MGI
       - ZFIN
@@ -111,6 +133,7 @@ classes:
     id_prefixes: 
       - KEGG
       - REACTOME
+      - SMPDB
       - PHARMGKB.PATHWAYS
       - WIKIPATHWAYS
       - BIOCARTA.PATHWAY

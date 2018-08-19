@@ -9,6 +9,7 @@ from greent.services.chembio import ChemBioKS
 from greent.services.chemotext import Chemotext
 from greent.services.ctd import CTD
 from greent.services.hetio import HetIO
+from greent.services.hmdb_beacon import HMDB
 from greent.services.hgnc import HGNC
 from greent.services.mychem import MyChem
 from greent.services.onto import Onto
@@ -47,6 +48,7 @@ class GreenT:
             "go"               : lambda :  GO2(self.service_context),
             "hetio"            : lambda :  HetIO (self.service_context),
             "hgnc"             : lambda :  HGNC(self.service_context),
+            "hmdb"             : lambda :  HMDB(self.service_context),
             "hpo"              : lambda :  HPO2 (self.service_context),
             "mondo"            : lambda :  Mondo2(self.service_context),
             "mychem"           : lambda :  MyChem(self.service_context),

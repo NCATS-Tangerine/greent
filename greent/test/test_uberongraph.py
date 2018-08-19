@@ -31,10 +31,9 @@ def test_cell_to_anatomy(uberon):
     k = KNode('CL:0000097', type=node_types.CELL)
     results = uberon.get_anatomy_by_cell_graph( k )
     #Mast cells are part of the immune system
-    assert len(results) == 1
-    node = results[0][1]
-    assert node.type  == node_types.ANATOMY
-    assert node.id == 'UBERON:0002405'
+    assert len(results) >= 1
+    idents = [ ke[1].id for ke in results ]
+    assert 'UBERON:0002405' in idents
 
 def test_anatomy_to_cell(uberon):
     k = KNode('UBERON:0002405', type=node_types.ANATOMY, name='Immune system')

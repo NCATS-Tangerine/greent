@@ -11,6 +11,7 @@ from datetime import datetime as dt
 import logging
 import time
 
+#TODO: include pagination
 
 class Biolink(Service):
     """ Preliminary interface to Biolink. Will move to automated Translator Registry invocation over time. """
@@ -20,6 +21,31 @@ class Biolink(Service):
         self.checker = context.core.mondo
         self.go = context.core.go
         self.label2id = {'colocalizes_with': 'RO:0002325', 'contributes_to': 'RO:0002326'}
+
+
+    def page_calls(self,url):
+        rows = 100
+        start = 1
+        allassociations = []
+        startchar = '?'
+        if '?' in url:
+            startchar = '&'
+        while True:
+            page_url = url+f'{startchar}rows={rows}&start={start}'
+            response = self.query(page_url)
+            if response is None:
+                break
+            if 'associations' not in response:
+                break
+            if len(response['associations']) == 0:
+                break
+            allassociations += response['associations']
+            if len(response['associations']) < rows:
+                #got back a partial page, must be the end
+                break
+            start += rows
+        return allassociations
+
 
     #TODO: share the retry logic in Service?
     def query(self,url):
@@ -33,7 +59,7 @@ class Biolink(Service):
         while num_tries < max_tries:
             try:
                 r = requests.get(url)
-                if r.status_code == 500:
+                if r.status_code == 500 or r.status_code == 404:
                     return None
                 #Anything else, it's either good or we want to retry on exception.
                 return r.json()
@@ -43,7 +69,7 @@ class Biolink(Service):
         return None
  
         
-    def process_associations(self, r, function, target_node_type, input_identifier, url, input_node, reverse=False):
+    def process_associations(self, associations, function, target_node_type, input_identifier, url, input_node, reverse=False):
         """Given a response from biolink, create our edge and node structures.
         Sometimes (as in pathway->Genes) biolink returns the query as the object, rather
         than the subject.  reverse=True will handle this case, bringing back the subject
@@ -51,7 +77,7 @@ class Biolink(Service):
         We could instead try to see if the subject id matched our input id, etc... if the same
         function sometimes spun things around."""
         edge_nodes = []
-        for association in r['associations']:
+        for association in associations:
             pubs = []
             if 'publications' in association and association['publications'] is not None:
                 for pub in association['publications']:
@@ -95,28 +121,39 @@ class Biolink(Service):
         ehgnc = urllib.parse.quote_plus(gene_node.id)
         logging.getLogger('application').debug('          biolink: %s/bioentity/gene/%s/diseases' % (self.url, ehgnc))
         urlcall = '%s/bioentity/gene/%s/diseases' % (self.url, ehgnc)
-        r = self.query(urlcall)
+        r = self.page_calls(urlcall)
         #r = requests.get(urlcall).json()
         return self.process_associations(r, 'gene_get_disease', node_types.DISEASE, ehgnc, urlcall, gene_node)
 
     def disease_get_phenotype(self, disease):
         #Biolink should understand any of our disease inputs here.
         url = "{0}/bioentity/disease/{1}/phenotypes/".format(self.url, disease.id)
-        response = self.query(url)
+        response = self.page_calls(url)
         #response = requests.get(url).json()
         return self.process_associations(response, 'disease_get_phenotype', node_types.PHENOTYPE, disease.id, url, disease)
 
     def gene_get_go(self, gene):
-        # this function is very finicky.  gene must be in uniprotkb, and the curie prefix must be correctly capitalized
-        # TODO: Not actually true anymore, seems to handle most CURIEs.
-        uniprot_id = None
+        # This biolink function should be able to take an HGNC or other gene id, and convert to UniProtKB in the
+        # backend.  This somewhat works, but it's not 100%.  For instance, there is a test in test_biolink model
+        # that tries to look up HGNC for KIT, and it returns an empty result.
+        # And furthermore, there are often many UniProt ids for a gene.  Many of them will return a 500 (unrecognized)
+        # for the function.  So: we need to send UniProt (until we can be sure that the mappings are solid)
+        # and we need to send them all.
+        # But if, for some reason we don't have any UNIPROTKB, we might as well give the gene ID a shot.
         uniprot_ids = gene.get_synonyms_by_prefix('UNIPROTKB')
         if len(uniprot_ids) == 0:
+            gene_id = gene.id
+            url = "{0}/bioentity/gene/{1}/function/".format(self.url, gene_id)
+            response = self.page_calls(url)
+            return response,url,gene_id
+        else:
+            for uniprot_id in uniprot_ids:
+                gene_id = 'UniProtKB:{0}'.format(Text.un_curie(uniprot_id))
+                url = "{0}/bioentity/gene/{1}/function/".format(self.url, gene_id)
+                response = self.page_calls(url)
+                if response is not None and len(response) > 0:
+                    return response,url,gene_id
             return None,None,None
-        uniprot_id = list(uniprot_ids)[0]
-        url = "{0}/bioentity/gene/UniProtKB:{1}/function/".format(self.url, Text.un_curie(uniprot_id))
-        response = self.query(url)
-        return response,url,uniprot_id
 
     def gene_get_process_or_function(self,gene):
         response,url,input_id = self.gene_get_go(gene)
@@ -130,11 +167,11 @@ class Biolink(Service):
     def gene_get_pathways(self, gene):
         url = "{0}/bioentity/gene/{1}/pathways/".format(self.url, gene.id)
         #response = requests.get(url).json()
-        response = self.query(url)
+        response = self.page_calls(url)
         return self.process_associations(response, 'gene_get_pathways', node_types.PATHWAY, gene.id, url,gene)
 
     def pathway_get_gene(self, pathway):
         url = "{0}/bioentity/pathway/{1}/genes/".format(self.url, pathway.id)
         #response = requests.get(url).json()
-        response = self.query(url)
+        response = self.page_calls(url)
         return self.process_associations(response, 'pathway_get_genes', node_types.GENE, url, pathway.id, pathway, reverse=True)
