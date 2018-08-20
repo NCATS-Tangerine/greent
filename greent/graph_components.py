@@ -124,7 +124,7 @@ class KEdge(FromDictMixin):
 
     def load_attribute(self, key, value):
         if key == 'original_predicate' or key == 'standard_predicate':
-            return LabeledID(value) if isinstance(value, dict) else value
+            return LabeledID(**value) if isinstance(value, dict) else value
         else:
             return super().load_attribute(key, value)
 
