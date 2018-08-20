@@ -10,6 +10,7 @@ import hashlib
 import warnings
 import logging
 import time
+from typing import NamedTuple
 
 from builder.api.setup import swagger
 from builder.util import FromDictMixin
@@ -71,12 +72,12 @@ class QNode(FromDictMixin):
 
     def load_attribute(self, key, value):
         if key == 'synonyms':
-            return {LabeledID(v) if isinstance(v, dict) else v for v in value}
+            return {LabeledID(**v) if isinstance(v, dict) else v for v in value}
         else:
             return super().load_attribute(key, value)
 
 @swagger.definition('LabeledID')
-class LabeledID(FromDictMixin):
+class LabeledID(NamedTuple):
     """
     Labeled Thing Object
     ---
@@ -90,12 +91,8 @@ class LabeledID(FromDictMixin):
             label:
                 type: string
     """
-    def __init__(self, *args, **kwargs):
-        self.identifier = None
-        self.label = None
-
-        super().__init__(*args, **kwargs)
-
+    identifier: str
+    label: str = ''
 
     def __repr__(self):
         return f'({self.identifier},{self.label})'
@@ -168,7 +165,7 @@ class QEdge(FromDictMixin):
 
     def load_attribute(self, key, value):
         if key == 'original_predicate' or key == 'standard_predicate':
-            return LabeledID(value) if isinstance(value, dict) else value
+            return LabeledID(**value) if isinstance(value, dict) else value
         else:
             return super().load_attribute(key, value)
 
