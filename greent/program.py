@@ -3,6 +3,7 @@ import traceback
 import calendar
 import json
 import os
+import pickle
 
 import requests
 from collections import defaultdict
@@ -145,8 +146,8 @@ class Program:
             else:
                 self.channel.basic_publish(exchange='',
                     routing_key='neo4j',
-                    body=json.dumps({'nodes': [node.dump()], 'edges': []}))
-            print(" [x] Sent node")
+                body=pickle.dumps({'nodes': [node], 'edges': []}))
+        logger.debug(f"Sent node {node.id}")
 
         # make sure the edge is queued for creation AFTER the node
         if edge:
@@ -156,8 +157,8 @@ class Program:
             else:
                 self.channel.basic_publish(exchange='',
                     routing_key='neo4j',
-                    body=json.dumps({'nodes': [], 'edges': [edge.dump()]}))
-            print(" [x] Sent edge")
+                    body=pickle.dumps({'nodes': [], 'edges': [edge]}))
+            logger.debug(f"Sent edge {edge.source_id}->{edge.target_id}")
 
         # quit if we've closed a loop
         if history[-1] in history[:-1]:
@@ -199,7 +200,7 @@ class Program:
         if self.channel is not None:
             self.channel.basic_publish(exchange='',
                 routing_key='neo4j',
-                body='flush')
+                body=pickle.dumps('flush'))
         return
 
     def get_path_descriptor(self):

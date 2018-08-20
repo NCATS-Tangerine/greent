@@ -6,6 +6,7 @@ from time import sleep, strftime
 from datetime import datetime
 import logging
 import json
+import pickle
 
 import pika
 
@@ -31,16 +32,18 @@ channel.queue_declare(queue='neo4j')
 writer = BufferedWriter(rosetta)
 
 def callback(ch, method, properties, body):
-    body = body.decode()
     # logger.info(f" [x] Received {body}")
-    if isinstance(body, str) and body == 'flush':
+    graph = pickle.loads(body)
+    if isinstance(graph, str) and graph == 'flush':
+        logger.debug('Flushing buffer...')
         writer.flush()
         return
-    graph = json.loads(body)
     for node in graph['nodes']:
-        writer.write_node(KNode(node))
+        logger.debug(f'Writing node {node.id}')
+        writer.write_node(node)
     for edge in graph['edges']:
-        writer.write_edge(KEdge(edge))
+        logger.debug(f'Writing edge {edge.source_id}->{edge.target_id}')
+        writer.write_edge(edge)
 
 channel.basic_consume(callback,
                       queue='neo4j',
