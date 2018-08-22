@@ -40,9 +40,9 @@ class Program:
         self.transitions = plan
         self.rosetta = rosetta
         self.cache = Cache(
-            redis_host=os.environ['CACHE_HOST'],
-            redis_port=os.environ['CACHE_PORT'],
-            redis_db=1)
+            redis_host=os.environ['BUILD_CACHE_HOST'],
+            redis_port=os.environ['BUILD_CACHE_PORT'],
+            redis_db=os.environ['BUILD_CACHE_DB'])
 
         self.cache.flush()
         self.log_program()
@@ -54,7 +54,8 @@ class Program:
         num_consumers = [q['consumers'] for q in queues if q['name'] == 'neo4j']
         if num_consumers and num_consumers[0]:
             import pika
-            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=os.environ['BROKER_HOST'],
+            self.connection = pika.BlockingConnection(pika.ConnectionParameters(
+                host=os.environ['BROKER_HOST'],
                 virtual_host='builder',
                 credentials=pika.credentials.PlainCredentials(os.environ['BROKER_USER'], os.environ['BROKER_PASSWORD'])))
             self.channel = self.connection.channel()
@@ -91,7 +92,11 @@ class Program:
         op_name = link['op']
         key = f"{op_name}({source_node.id})"
         try:
-            results = self.rosetta.cache.get(key)
+            try:
+                results = self.rosetta.cache.get(key)
+            except Exception as e:
+                # logger.warning(e)
+                results = None
             if results is not None:
                 logger.debug(f"cache hit: {key} size:{len(results)}")
             else:
@@ -141,12 +146,13 @@ class Program:
             completed = set()
             self.cache.set(key, completed)
 
-            if self.channel is None:
-                with BufferedWriter(self.rosetta) as writer:
-                    writer.write_node(node)
-            else:
-                self.channel.basic_publish(exchange='',
-                    routing_key='neo4j',
+        if self.channel is None:
+            with BufferedWriter(self.rosetta) as writer:
+                writer.write_node(node)
+        else:
+            self.channel.basic_publish(
+                exchange='',
+                routing_key='neo4j',
                 body=pickle.dumps({'nodes': [node], 'edges': []}))
         logger.debug(f"Sent node {node.id}")
 
@@ -156,7 +162,8 @@ class Program:
                 with BufferedWriter(self.rosetta) as writer:
                     writer.write_edge(edge)
             else:
-                self.channel.basic_publish(exchange='',
+                self.channel.basic_publish(
+                    exchange='',
                     routing_key='neo4j',
                     body=pickle.dumps({'nodes': [], 'edges': [edge]}))
             logger.debug(f"Sent edge {edge.source_id}->{edge.target_id}")
@@ -190,7 +197,7 @@ class Program:
             for link in links:
                 print("-"*len(history)+"Executing: ", link['op'])
                 self.process_op(link, node, history+str(target_id))
-        
+
     #CAN I SOMEHOW CAPTURE PATHS HERE>>>>
 
     def run_program(self):
@@ -199,7 +206,8 @@ class Program:
         logger.debug(f"Running program {self.program_number}")
         self.initialize_instance_nodes()
         if self.channel is not None:
-            self.channel.basic_publish(exchange='',
+            self.channel.basic_publish(
+                exchange='',
                 routing_key='neo4j',
                 body=pickle.dumps('flush'))
         return

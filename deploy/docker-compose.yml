@@ -1,10 +1,13 @@
 version: "3"
 services:
-    #cache:
-    #image: redis
-    #ports:
-    #  - "${CACHE_PORT}:${CACHE_PORT}"
-    #command: --port ${CACHE_PORT}
+  cache:
+    image: redis
+    ports:
+      - "${BUILD_CACHE_PORT}:${BUILD_CACHE_PORT}"
+    volumes:
+      - ../../redis_data:/data
+    entrypoint: redis-server
+    command: --port ${BUILD_CACHE_PORT}
 
   interfaces:
     # image: patrickkwang/robokop-interfaces
@@ -18,7 +21,7 @@ services:
       - NEO4J_HOST=neo4j
       - BROKER_HOST=broker
       - RESULTS_HOST=results
-        #- CACHE_HOST=cache
+      - BUILD_CACHE_HOST=cache
     ports:
       - "${BUILDER_PORT}:${BUILDER_PORT}"
       - "${BUILDER_SUPERVISOR_PORT}:${BUILDER_SUPERVISOR_PORT}"

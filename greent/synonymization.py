@@ -39,10 +39,16 @@ class Synonymizer:
         
     def synonymize(self, node):
         """Given a node, determine its type and dispatch it to the correct synonymizer"""
-        logger.debug('syn {} {}'.format(node.id, node.type))
+        # logger.debug('syn {} {}'.format(node.id, node.type))
         key = f"synonymize({node.id})"
         #check the cache. If it's not in there, try to generate it
-        synonyms = self.rosetta.cache.get(key)
+        try:
+            synonyms = self.rosetta.cache.get(key)
+        except Exception as e:
+            # catch and log all errors
+            # e.g. when the cached value cannot be reconciled with the LabeledID class
+            logger.warning(e)
+            synonyms = None
         if synonyms is not None:
             logger.debug (f"cache hit: {key}")
         else:
@@ -53,7 +59,7 @@ class Synonymizer:
             else:
                 logger.warn (f"No synonymizer registered for concept: {node.type}")
         if synonyms is not None:
-            logger.debug(f"Number of synonyms:{len(synonyms)}")
+            # logger.debug(f"Number of synonyms:{len(synonyms)}")
             #for s in synonyms:
             #    logger.debug(f"New syn: {s}")
             node.add_synonyms(synonyms)
