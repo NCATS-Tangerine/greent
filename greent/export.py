@@ -43,7 +43,7 @@ class BufferedWriter:
         if node.id in self.written_nodes:
             return
         if node.name is None or node.name == '':
-            logger.error(f"Node {node.id} is missing a label")
+            logger.warning(f"Node {node.id} is missing a label")
         self.written_nodes.add(node.id)
         typednodes = self.node_queues[node.type]
         typednodes.append(node)

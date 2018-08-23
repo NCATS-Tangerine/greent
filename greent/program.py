@@ -48,7 +48,20 @@ class Program:
         self.cache.flush()
         self.log_program()
         #self.excluded_identifiers=set()
-        self.excluded_identifiers=set(['UBERON:0000468'])
+        """
+        EXCLUSION CANDIDATES:
+        0000468 multi-cellular organism
+        0002405 immune system
+        0001016 nervous system
+        0001017 central nervous system
+        0001007 digestive system
+        0004535 cardiovascular system
+        0000949 endocrine system
+        0000079 male reproductive system
+        0001434 skeletal system
+        0000178 blood
+        """
+        self.excluded_identifiers = {'UBERON:0000468'}
 
         response = requests.get(f"{os.environ['BROKER_API']}queues/")
         queues = response.json()

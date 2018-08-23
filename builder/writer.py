@@ -22,9 +22,11 @@ greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..')
 sys.path.insert(0, greent_path)
 rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
 
-connection = pika.BlockingConnection(pika.ConnectionParameters(host=os.environ['BROKER_HOST'],
+connection = pika.BlockingConnection(pika.ConnectionParameters(
+    host=os.environ['BROKER_HOST'],
     virtual_host='builder',
-    credentials=pika.credentials.PlainCredentials(os.environ['BROKER_USER'], os.environ['BROKER_PASSWORD'])))
+    credentials=pika.credentials.PlainCredentials(os.environ['BROKER_USER'], os.environ['BROKER_PASSWORD'])
+))
 channel = connection.channel()
 
 channel.queue_declare(queue='neo4j')
@@ -39,10 +41,10 @@ def callback(ch, method, properties, body):
         writer.flush()
         return
     for node in graph['nodes']:
-        logger.debug(f'Writing node {node.id}')
+        # logger.debug(f'Writing node {node.id}')
         writer.write_node(node)
     for edge in graph['edges']:
-        logger.debug(f'Writing edge {edge.source_id}->{edge.target_id}')
+        # logger.debug(f'Writing edge {edge.source_id}->{edge.target_id}')
         writer.write_edge(edge)
 
 channel.basic_consume(callback,
