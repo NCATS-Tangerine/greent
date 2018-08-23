@@ -4,6 +4,7 @@ import calendar
 import json
 import os
 import pickle
+import pika
 
 import requests
 from collections import defaultdict
@@ -53,8 +54,8 @@ class Program:
         queues = response.json()
         num_consumers = [q['consumers'] for q in queues if q['name'] == 'neo4j']
         if num_consumers and num_consumers[0]:
-            import pika
             self.connection = pika.BlockingConnection(pika.ConnectionParameters(
+                heartbeat=600,
                 host=os.environ['BROKER_HOST'],
                 virtual_host='builder',
                 credentials=pika.credentials.PlainCredentials(os.environ['BROKER_USER'], os.environ['BROKER_PASSWORD'])))
@@ -110,6 +111,8 @@ class Program:
             for edge, node in results:
                 self.process_node(node, history, edge)
 
+        except pika.exceptions.ChannelClosed:
+            raise
         except Exception as e:
             traceback.print_exc()
             log_text = f"  -- {key}"
