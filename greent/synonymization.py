@@ -73,9 +73,11 @@ class Synonymizer:
         for labeledid in node.synonyms:
             smap[labeledid.identifier].append(labeledid.label)
         for lid,labels in smap.items():
-            if len(labels) > 1 and (None in labels):
+            num_left = len(labels)
+            if num_left > 1 and None in labels:
                 node.synonyms.remove(LabeledID(identifier=lid, label=None))
-            if len(labels) > 1 and ('' in labels):
+                num_left -= 1
+            if num_left > 1 and '' in labels:
                 node.synonyms.remove(LabeledID(identifier=lid, label=''))
         #Now find the bset one for an id
         type_curies = self.concepts.get(node.type).id_prefixes
@@ -116,4 +118,3 @@ class Synonymizer:
             logger.warn(node.id)
             logger.warn(node.synonyms)
             logger.warn(node.type)
-
