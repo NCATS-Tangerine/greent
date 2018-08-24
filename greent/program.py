@@ -63,8 +63,9 @@ class Program:
         0001434 skeletal system
         0000178 blood
         GO:0044267 cellular protein metabolic processes
+        GO:0005515 protein binding
         """
-        self.excluded_identifiers = {'UBERON:0000468', 'GO:0044267'}
+        self.excluded_identifiers = {'UBERON:0000468', 'GO:0044267', 'GO:0005515'}
 
         response = requests.get(f"{os.environ['BROKER_API']}queues/")
         queues = response.json()
@@ -119,12 +120,13 @@ class Program:
                 logger.debug(f"cache hit: {key} size:{len(results)}")
             else:
                 logger.debug(f"exec op: {key}")
-                start = dt.now()
                 op = self.rosetta.get_ops(op_name)
+                start = dt.now()
+                results = op(source_node)
                 end = dt.now()
+                logger.debug(f'Call {key} took {end-start}')
                 if (end-start) > maxtime:
                     logger.warn(f"Call {key} exceeded {maxtime}")
-                results = op(source_node)
                 self.rosetta.cache.set(key, results)
                 logger.debug(f"cache.set-> {key} length:{len(results)}")
                 logger.debug(f"    {[node for _, node in results]}")
