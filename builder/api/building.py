@@ -2,10 +2,12 @@
 
 """Flask REST API server for builder"""
 
+import sys
 import os
 import json
 import requests
 import logging
+from typing import NamedTuple
 
 import redis
 from flask import request
@@ -15,7 +17,13 @@ from builder.api.setup import app, api
 from builder.api.tasks import update_kg
 import builder.api.logging_config
 import greent.node_types as node_types
+from greent.synonymization import Synonymizer
 import builder.api.definitions
+from builder.buildmain import setup
+from greent.graph_components import KNode
+from greent.util import LoggingUtil
+
+logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
 class UpdateKG(Resource):
     def post(self):
@@ -59,6 +67,61 @@ class UpdateKG(Resource):
         return {'task id': task.id}, 202
 
 api.add_resource(UpdateKG, '/')
+
+class Synonymize(Resource):
+    def post(self, node_id, node_type):
+        """
+        Get the status of a task
+        ---
+        tags: [util]
+        parameters:
+          - in: path
+            name: node_id
+            description: curie of the node
+            type: string
+            required: true
+            default: MONDO:0005737
+          - in: path
+            name: node_type
+            description: type of the node
+            type: string
+            required: true
+            default: disease
+        responses:
+            200:
+                description: Synonymized node
+                schema:
+                    type: object
+                    properties:
+                        id:
+                            type: string
+                        name:
+                            type: string
+                        type:
+                            type: string
+                        synonyms:
+                            type: array
+                            items:
+                                type: string
+        """
+        greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
+        sys.path.insert(0, greent_path)
+        rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
+
+        node = KNode(id=node_id, type=node_type, name='')
+
+        synonymizer = Synonymizer(rosetta.type_graph.concept_model, rosetta)
+        synonymizer.synonymize(node)
+
+        result = {
+            'id': node.id,
+            'name': node.name,
+            'type': node.type,
+            'synonyms': list(node.synonyms)
+        }
+        return result, 200
+
+api.add_resource(Synonymize, '/synonymize/<node_id>/<node_type>/')
 
 class TaskStatus(Resource):
     def get(self, task_id):
