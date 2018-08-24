@@ -33,10 +33,11 @@ class Cache:
     def __init__(self, cache_path="cache",
                  serializer=PickleCacheSerializer,
                  redis_host="localhost", redis_port=6379, redis_db=0,
-                 enabled=True):
+                 enabled=True, prefix=''):
         
         """ Connect to cache. """
         self.enabled = enabled
+        self.prefix = prefix
         try:
             self.redis = redis.StrictRedis(host=redis_host, port=redis_port, db=redis_db)
             self.redis.get ('x')
@@ -55,6 +56,7 @@ class Cache:
         """ Get a cached item by key. """
         #if any(map(lambda v : v in key.lower(), [ "go:", "mondo:", "hp:" ])):
         #    return None
+        key = self.prefix + key
         result = None
         if self.enabled:
             if key in self.cache:
@@ -73,6 +75,7 @@ class Cache:
     
     def set(self, key, value):
         """ Add an item to the cache. """
+        key = self.prefix + key
         if self.enabled:
             if self.redis:
                 if value is not None:
@@ -85,4 +88,9 @@ class Cache:
                 self.cache[key] = value
 
     def flush(self):
-        self.redis.flushdb()
+        if self.prefix:
+            keys = self.redis.keys(f'{self.prefix}*')
+            if keys:
+                self.redis.delete(*keys)
+        else:
+            self.redis.flushdb()
