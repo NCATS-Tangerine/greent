@@ -51,6 +51,13 @@ def test_anatomy_to_cell_upcast(uberon):
     #There's no cell that's part of another cell?
     assert len(results) == 0
 
+def test_pheno_to_anatomy_7354(uberon):
+    #Arrhythmia occurs in...
+    k = KNode('HP:0007354', type=node_types.PHENOTYPE)
+    results = uberon.get_anatomy_by_phenotype_graph( k )
+    assert len(results) > 0
+
+
 def test_pheno_to_anatomy(uberon):
     #Arrhythmia occurs in...
     k = KNode('HP:0011675', type=node_types.PHENOTYPE)

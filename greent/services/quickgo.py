@@ -4,7 +4,6 @@ from greent.service import Service
 from greent.util import Text,LoggingUtil
 from greent.graph_components import KNode,LabeledID
 from greent import node_types
-from datetime import datetime as dt
 import time
 
 logger = LoggingUtil.init_logging(__name__)
@@ -79,7 +78,8 @@ class QuickGo(Service):
         while num_tries < max_tries:
             try:
                 return requests.get(url).json()
-            except:
+            except Exception as e:
+                logger.warn(e)
                 num_tries += 1
                 time.sleep(wait_time)
         return None

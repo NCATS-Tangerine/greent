@@ -5,6 +5,8 @@ import json
 import os
 import pickle
 import pika
+from datetime import datetime as dt
+from datetime import timedelta
 
 import requests
 from collections import defaultdict
@@ -50,7 +52,7 @@ class Program:
         #self.excluded_identifiers=set()
         """
         EXCLUSION CANDIDATES:
-        0000468 multi-cellular organism
+        UBERON:0000468 multi-cellular organism
         0002405 immune system
         0001016 nervous system
         0001017 central nervous system
@@ -60,8 +62,9 @@ class Program:
         0000079 male reproductive system
         0001434 skeletal system
         0000178 blood
+        GO:0044267 cellular protein metabolic processes
         """
-        self.excluded_identifiers = {'UBERON:0000468'}
+        self.excluded_identifiers = {'UBERON:0000468', 'GO:0044267'}
 
         response = requests.get(f"{os.environ['BROKER_API']}queues/")
         queues = response.json()
@@ -105,6 +108,7 @@ class Program:
     def process_op(self, link, source_node, history):
         op_name = link['op']
         key = f"{op_name}({source_node.id})"
+        maxtime = timedelta(minutes=2)
         try:
             try:
                 results = self.rosetta.cache.get(key)
@@ -115,7 +119,11 @@ class Program:
                 logger.debug(f"cache hit: {key} size:{len(results)}")
             else:
                 logger.debug(f"exec op: {key}")
+                start = dt.now()
                 op = self.rosetta.get_ops(op_name)
+                end = dt.now()
+                if (end-start) > maxtime:
+                    logger.warn(f"Call {key} exceeded {maxtime}")
                 results = op(source_node)
                 self.rosetta.cache.set(key, results)
                 logger.debug(f"cache.set-> {key} length:{len(results)}")
@@ -170,7 +178,7 @@ class Program:
                 exchange='',
                 routing_key='neo4j',
                 body=pickle.dumps({'nodes': [node], 'edges': []}))
-        logger.debug(f"Sent node {node.id}")
+        #logger.debug(f"Sent node {node.id}")
 
         # make sure the edge is queued for creation AFTER the node
         if edge:
@@ -182,7 +190,7 @@ class Program:
                     exchange='',
                     routing_key='neo4j',
                     body=pickle.dumps({'nodes': [], 'edges': [edge]}))
-            logger.debug(f"Sent edge {edge.source_id}->{edge.target_id}")
+            #logger.debug(f"Sent edge {edge.source_id}->{edge.target_id}")
 
         # quit if we've closed a loop
         if history[-1] in history[:-1]:

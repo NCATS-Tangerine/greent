@@ -96,8 +96,14 @@ class HMDB(Service):
     def enzyme_to_metabolite(self,enzyme_node):
         return self.A_to_B(enzyme_node, 'UniProtKB', node_types.DRUG, 'enzyme_to_metabolite')
 
+    def pathway_to_metabolite(self,pathway_node):
+        return self.A_to_B(pathway_node, 'SMPDB', node_types.DRUG, 'enzyme_to_pathway')
+
     def metabolite_to_enzyme(self,metabolite_node):
         return self.A_to_B(metabolite_node, 'HMDB', node_types.GENE, 'metabolite_to_enzyme')
    
     def metabolite_to_disease(self,metabolite_node):
         return self.A_to_B(metabolite_node, 'HMDB', node_types.DISEASE, 'metabolite_to_disease')
+
+    def metabolite_to_pathway(self,metabolite_node):
+        return self.A_to_B(metabolite_node, 'HMDB', node_types.PATHWAY, 'metabolite_to_pathway')

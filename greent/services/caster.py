@@ -20,12 +20,7 @@ class Caster(Service):
         return results
 
     def output_filter(self, base_function, output_type, type_check, node):
-        logger.debug(f'base_function {base_function}')
-        logger.debug(f'output_type {output_type}')
-        logger.debug(f'type_check {type_check}')
-        logger.debug(f'node {node}')
         results = base_function(node)
-        logger.debug(f'results {results}')
         good_results = list(filter(lambda y: type_check(y[1]), results))
         for edge,node in good_results:
             #This node is going to get returned as a new node in program, so it will get
@@ -82,6 +77,6 @@ class Caster(Service):
             return operator.attrgetter(fname)(self.core)
 
     def __getattr__(self,attr):
-        logger.debug("getattr: {}".format(attr))
+        #logger.debug("getattr: {}".format(attr))
         return self.create_function(attr)
 

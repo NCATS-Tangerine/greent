@@ -3,7 +3,7 @@ from io import BytesIO
 from json import loads
 from gzip import decompress
 from collections import defaultdict
-from greent.graph_components import LabeledID
+from builder.question import LabeledID
 from greent.util import LoggingUtil
 import logging
 
@@ -41,7 +41,8 @@ def json_2_identifiers(gene_dict):
     if 'ensembl_gene_id' in gene_dict:
         idset.add( LabeledID(identifier=f"ENSEMBL:{gene_dict['ensembl_gene_id']}", label=symbol))
     if 'enzyme_id' in gene_dict:
-        idset.add( LabeledID(f"EC:{gene_dict['enzyme_id']}",symbol ) )
+        for eid in gene_dict['enzyme_id']:
+            idset.add( LabeledID(identifier=f'EC:{eid}',label=symbol ) )
     return idset
 
 def load_genes(rosetta):
@@ -50,11 +51,15 @@ def load_genes(rosetta):
     cache so that it will be found by subsequent synonymize calls.
     """
     ids_to_synonyms = synonymize_genes()
+    #outf=open('geneout.txt','w')
     for gene_id in ids_to_synonyms:
         key = f"synonymize({gene_id})"
         value = ids_to_synonyms[gene_id]
+        #outf.write(f'KEY:{key}\n')
+        #outf.write(f'VALUE: {value}\n')
         rosetta.cache.set(key,value)
     logger.debug(f'Added {len(ids_to_synonyms)} gene symbols to the cache')
+    #outf.close()
 
 def synonymize_genes():
     """

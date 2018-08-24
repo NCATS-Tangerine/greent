@@ -11,7 +11,7 @@ def quickgo(rosetta):
     quickgo = rosetta.core.quickgo
     return quickgo
 
-def test_xontology_relationships(quickgo):
+def xtest_xontology_relationships(quickgo):
     #Mast Cell Chemotaxis
     r = quickgo.go_term_to_cell_xontology_relationships (KNode("GO:0002551", type=node_types.PROCESS))
     assert len(r) == 1
@@ -31,7 +31,7 @@ def x_test_extensions(quickgo):
     assert len(myedges) == 1
     assert myedges[0][0].standard_predicate is not None
 
-def test_extensions_2(quickgo):
+def xtest_extensions_2(quickgo):
     #positive regulation of action potential
     r = quickgo.go_term_to_cell_annotation_extensions (KNode("GO:0045760", type=node_types.PROCESS))
     types = set([n.type for e,n in r])
@@ -42,7 +42,23 @@ def test_extensions_2(quickgo):
         assert len(myedges) == 1
         assert myedges[0][0].standard_predicate is not None
 
-def test_reverse_extensions(quickgo):
+def test_extensions_long(quickgo):
+    import datetime as dt
+    now = dt.datetime.now()
+    #positive regulation of action potential
+    r = quickgo.go_term_to_cell_annotation_extensions (KNode("GO:0044267", type=node_types.PROCESS))
+    later = dt.datetime.now()
+    print(later-now)
+    assert False
+    #types = set([n.type for e,n in r])
+    assert len(r) > 0
+    #assert node_types.CELL in types
+    #for cell_id in ['CL:0000746', 'CL:2000097']:
+    #    myedges = list(filter( lambda en: en[1].id==cell_id, r))
+    #    assert len(myedges) == 1
+    #    assert myedges[0][0].standard_predicate is not None
+
+def xtest_reverse_extensions(quickgo):
     r = quickgo.cell_to_go_term_annotation_extensions(KNode("CL:0002131", type=node_types.CELL))
     types = set([n.type for e,n in r])
     assert len(types) == 1
@@ -52,7 +68,7 @@ def test_reverse_extensions(quickgo):
     assert myedges[0][0].standard_predicate is not None
     assert myedges[0][1].name=='cellular response to epinephrine stimulus'
 
-def test_extensions_bp(quickgo):
+def xtest_extensions_bp(quickgo):
     #Neurotransmitter secretion
     r = quickgo.go_term_to_cell_annotation_extensions (KNode("GO.BIOLOGICAL_PROCESS:0007269", type=node_types.PROCESS))
     types = set([n.type for e,n in r])
