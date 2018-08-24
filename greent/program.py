@@ -7,6 +7,7 @@ import pickle
 import pika
 from datetime import datetime as dt
 from datetime import timedelta
+import hashlib
 
 import requests
 from collections import defaultdict
@@ -42,10 +43,12 @@ class Program:
         self.concept_nodes = nodes
         self.transitions = plan
         self.rosetta = rosetta
+        self.prefix = hashlib.md5((str(plan) + str(nodes)).encode()).hexdigest()
         self.cache = Cache(
             redis_host=os.environ['BUILD_CACHE_HOST'],
             redis_port=os.environ['BUILD_CACHE_PORT'],
-            redis_db=os.environ['BUILD_CACHE_DB'])
+            redis_db=os.environ['BUILD_CACHE_DB'],
+            prefix=self.prefix)
 
         self.cache.flush()
         self.log_program()
