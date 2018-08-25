@@ -19,7 +19,6 @@ from greent import node_types
 
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
-
 class Pharos(Service):
     def __init__(self, context):
         super(Pharos, self).__init__("pharos", context)
@@ -103,9 +102,7 @@ class Pharos(Service):
 
     def drugid_to_identifiers(self,refid):
         url = 'https://pharos.nih.gov/idg/api/v1/ligands(%s)/synonyms' % refid
-        logger.debug(f'lookup chembl in pharos ({refid})')
         result = requests.get(url).json()
-        logger.debug('returned')
         chemblid = None
         label = None
         for element in result:
@@ -113,7 +110,6 @@ class Pharos(Service):
                 label = element['term']
             if element['label'] == 'CHEMBL ID':
                 chemblid = f"CHEMBL:{element['term']}"
-        logger.debug('ok')
         return chemblid, label
 
     def gene_get_drug(self, gene_node):
@@ -127,12 +123,9 @@ class Pharos(Service):
                 url = 'https://pharos.nih.gov/idg/api/v1/targets(%s)?view=full' % pharosid
                 r = requests.get(url)
                 try:
-                    logger.debug(f'calling ({pharosid})')
                     result = r.json()
-                    logger.debug('responded')
                 except:
                     #If pharos doesn't know the identifier, it just 404s.  move to the next
-                    logger.debug('fail')
                     continue 
                 actions = set()  # for testing
                 predicate = LabeledID(identifier='PHAROS:drug_targets', label='is_target')
@@ -148,7 +141,6 @@ class Pharos(Service):
                             resolved_edge_nodes.append( (edge,drug_node) )
             except:
                 logger.debug("Error encountered calling pharos with",s)
-        logger.debug('all done')
         return resolved_edge_nodes
 
 

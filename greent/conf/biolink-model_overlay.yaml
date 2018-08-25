@@ -67,14 +67,13 @@ classes:
       - PUBCHEM
       - MESH
       - HMDB
+      - KEGG.COMPOUND
       - INCHI
       - INCHIKEY
       - PUBCHEM.COMPOUND
-      - KEGG.COMPOUND
       - KEGG.DRUG
       - PHAROS.DRUG
       - DRUG.INTERACTION
-      - CTD
 
   - name: drug
     id_prefixes:
@@ -171,12 +170,14 @@ slots:
     #In the model, here for the hetio mappings
   - name: positively regulates, entity to entity
     mappings:
+      - RO:0002450
       - hetio:UPREGULATES_AuG
       - hetio:UPREGULATES_DuG
 
     #In the model, here for the hetio mappings
   - name: negatively regulates, entity to entity
     mappings:
+      - RO:0002449
       - hetio:DOWNREGULATES_AdG
       - hetio:DOWNREGULATES_DdG
 

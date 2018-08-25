@@ -17,10 +17,12 @@ def glom(conc_set, newgroups):
         for element in newset:
             conc_set[element] = newset
 
-def dump_cache(concord,rosetta):
+def dump_cache(concord,rosetta,outf=None):
     for chem_id in concord:
         key = f"synonymize({chem_id})"
         if "'" in key:
             print(key)
         value = concord[chem_id]
+        if outf is not None:
+            outf.write(f'{key}: {value}\n')
         rosetta.cache.set(key,value)

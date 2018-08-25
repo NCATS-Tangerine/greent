@@ -11,6 +11,7 @@ from greent.services.ctd import CTD
 from greent.services.hetio import HetIO
 from greent.services.hmdb_beacon import HMDB
 from greent.services.hgnc import HGNC
+from greent.services.kegg import KEGG
 from greent.services.mychem import MyChem
 from greent.services.onto import Onto
 #from greent.services.omnicorp import OmniCorp
@@ -50,6 +51,7 @@ class GreenT:
             "hgnc"             : lambda :  HGNC(self.service_context),
             "hmdb"             : lambda :  HMDB(self.service_context),
             "hpo"              : lambda :  HPO2 (self.service_context),
+            "kegg"             : lambda :  KEGG (self.service_context),
             "mondo"            : lambda :  Mondo2(self.service_context),
             "mychem"           : lambda :  MyChem(self.service_context),
             "omnicorp"         : lambda :  OmniCorp (self.service_context),
