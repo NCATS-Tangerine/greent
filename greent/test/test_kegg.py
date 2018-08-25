@@ -42,9 +42,5 @@ def test_chem_to_enzyme(kegg):
 def test_enzyme_to_chem(kegg):
     enzyme = KNode('EC:1.11.1.9', name="who", type=node_types.GENE)
     results = kegg.enzyme_get_chemicals(enzyme)
-    assert len(results) >= 5
-    #edge=results[0][0]
-    #node=results[0][1]
-    #assert node.id == 'EC:1.11.1.9'
-    #hete = KNode('KEGG.COMPOUND:C04805', name="5-HETE", type=node_types.DRUG)
+    assert len(results) == 8
 
