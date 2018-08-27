@@ -166,11 +166,11 @@ class Program:
         # print(node.dump())
         # if edge:
         #     print(edge.dump())
-        print("-"*len(history)+"History: ", history)
+        #print("-"*len(history)+"History: ", history)
 
         # only add a node if it wasn't cached
         completed = self.cache.get(key) # set of nodes we've been from here
-        print("-"*len(history)+"Completed: ", completed)
+        #print("-"*len(history)+"Completed: ", completed)
         if completed is None:
             completed = set()
             self.cache.set(key, completed)
@@ -183,7 +183,7 @@ class Program:
                 exchange='',
                 routing_key='neo4j',
                 body=pickle.dumps({'nodes': [node], 'edges': []}))
-        logger.debug(f"Sent node {node.id}")
+        #logger.debug(f"Sent node {node.id}")
 
         # make sure the edge is queued for creation AFTER the node
         if edge:
@@ -195,11 +195,11 @@ class Program:
                     exchange='',
                     routing_key='neo4j',
                     body=pickle.dumps({'nodes': [], 'edges': [edge]}))
-            logger.debug(f"Sent edge {edge.source_id}->{edge.target_id}")
+            #logger.debug(f"Sent edge {edge.source_id}->{edge.target_id}")
 
         # quit if we've closed a loop
         if history[-1] in history[:-1]:
-            print("-"*len(history)+"Closed a loop!")
+            #print("-"*len(history)+"Closed a loop!")
             return
 
         source_id = int(history[-1])
@@ -222,9 +222,9 @@ class Program:
             completed.add(target_id)
             self.cache.set(key, completed)
             links = self.transitions[source_id][target_id]
-            print("-"*len(history)+f"Destination: {target_id}")
+            #print("-"*len(history)+f"Destination: {target_id}")
             for link in links:
-                print("-"*len(history)+"Executing: ", link['op'])
+                #print("-"*len(history)+"Executing: ", link['op'])
                 self.process_op(link, node, history+str(target_id))
 
     #CAN I SOMEHOW CAPTURE PATHS HERE>>>>

@@ -101,8 +101,10 @@ class Pharos(Service):
         return results
 
     def drugid_to_identifiers(self,refid):
+        logger.debug(f'drugid_to_identifier {refid}')
         url = 'https://pharos.nih.gov/idg/api/v1/ligands(%s)/synonyms' % refid
         result = requests.get(url).json()
+        logger.debug('back')
         chemblid = None
         label = None
         for element in result:
@@ -110,6 +112,7 @@ class Pharos(Service):
                 label = element['term']
             if element['label'] == 'CHEMBL ID':
                 chemblid = f"CHEMBL:{element['term']}"
+        logger.debug('out')
         return chemblid, label
 
     def gene_get_drug(self, gene_node):
@@ -118,14 +121,17 @@ class Pharos(Service):
         identifiers = gene_node.get_synonyms_by_prefix('UNIPROTKB')
         for s in identifiers:
             try:
+                logger.debug(f'Call with {s}')
                 pharosid = Text.un_curie(s)
                 original_edge_nodes = []
                 url = 'https://pharos.nih.gov/idg/api/v1/targets(%s)?view=full' % pharosid
                 r = requests.get(url)
                 try:
                     result = r.json()
+                    logger.debug('back')
                 except:
                     #If pharos doesn't know the identifier, it just 404s.  move to the next
+                    logger.debug('404')
                     continue 
                 actions = set()  # for testing
                 predicate = LabeledID(identifier='PHAROS:drug_targets', label='is_target')
@@ -141,6 +147,7 @@ class Pharos(Service):
                             resolved_edge_nodes.append( (edge,drug_node) )
             except:
                 logger.debug("Error encountered calling pharos with",s)
+            logger.debug('ok')
         return resolved_edge_nodes
 
 
