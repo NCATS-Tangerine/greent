@@ -69,6 +69,7 @@ class Synonymizer:
         """Given a node, which will have many potential identifiers, choose the best identifier to be the node ID,
         where 'best' is defined by the order in which identifiers appear in the id prefix configurations within the concept model."""
         #If we have two synonyms with the same id, but one has no label, chuck it
+        logger.debug(f'Normalizing {node.id}')
         smap = defaultdict(list)
         for labeledid in node.synonyms:
             smap[labeledid.identifier].append(labeledid.label)
@@ -118,3 +119,4 @@ class Synonymizer:
             logger.warn(node.id)
             logger.warn(node.synonyms)
             logger.warn(node.type)
+        logger.debug(f' to {node.id}')

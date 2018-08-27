@@ -61,7 +61,7 @@ class HMDB(Service):
         pred_label = json_node['relation']
         return LabeledID(identifier=pred_id, label=pred_label), False
 
-    def request_statement(self,input_identifier,node_type,fname):
+    def request_statement(self,old_node,input_identifier,node_type,fname):
         url = f'{self.url}/statements?s={input_identifier}&categories={self.concepts_robo2hmdb[node_type]}'
         raw_results = requests.get(url).json()
         results = []
@@ -73,8 +73,10 @@ class HMDB(Service):
                 continue
             if subject_node.id == input_identifier:
                 new_node = object_node
+                subject_node = old_node
             elif object_node.id == input_identifier:
                 new_node = subject_node
+                object_node = old_node
             else:
                 raise Exception("Something has gone wrong in the identifiers")
             edge = self.create_edge(subject_node, object_node, f'hmdb.{fname}',
@@ -86,7 +88,7 @@ class HMDB(Service):
         input_ids = node.get_synonyms_by_prefix(prefix)
         results = []
         for iid in input_ids:
-            en = self.request_statement(iid,target_type,fname)
+            en = self.request_statement(node,iid,target_type,fname)
             results.extend(en)
         return results
 

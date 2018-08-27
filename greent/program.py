@@ -75,7 +75,7 @@ class Program:
         num_consumers = [q['consumers'] for q in queues if q['name'] == 'neo4j']
         if num_consumers and num_consumers[0]:
             self.connection = pika.BlockingConnection(pika.ConnectionParameters(
-                heartbeat=600,
+                heartbeat=0,
                 host=os.environ['BROKER_HOST'],
                 virtual_host='builder',
                 credentials=pika.credentials.PlainCredentials(os.environ['BROKER_USER'], os.environ['BROKER_PASSWORD'])))
@@ -183,7 +183,7 @@ class Program:
                 exchange='',
                 routing_key='neo4j',
                 body=pickle.dumps({'nodes': [node], 'edges': []}))
-        #logger.debug(f"Sent node {node.id}")
+        logger.debug(f"Sent node {node.id}")
 
         # make sure the edge is queued for creation AFTER the node
         if edge:
@@ -195,7 +195,7 @@ class Program:
                     exchange='',
                     routing_key='neo4j',
                     body=pickle.dumps({'nodes': [], 'edges': [edge]}))
-            #logger.debug(f"Sent edge {edge.source_id}->{edge.target_id}")
+            logger.debug(f"Sent edge {edge.source_id}->{edge.target_id}")
 
         # quit if we've closed a loop
         if history[-1] in history[:-1]:
