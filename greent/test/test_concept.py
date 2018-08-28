@@ -50,4 +50,9 @@ def test_id_prefixes(rosetta):
     # after that, it's made up of cellular component( go ), cell (cl, umls) and gross anatomical structure (uberon, po, fao)
     # these get interleaved & deduped
     assert concept_model.get(node_types.ANATOMICAL_ENTITY).id_prefixes == ['UBERON','UMLS','GO','CL','PO','FAO']
+    dop = concept_model.get(node_types.DISEASE_OR_PHENOTYPIC_FEATURE).id_prefixes[:2]
+    assert 'MONDO' in dop
+    assert 'HP' in dop
+    assert concept_model.get(node_types.BIOLOGICAL_PROCESS).id_prefixes[0] == 'GO'
+    assert concept_model.get(node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY).id_prefixes[0] == 'GO'
 
