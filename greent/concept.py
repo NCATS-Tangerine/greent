@@ -2,6 +2,8 @@ import os
 from greent.util import Resource
 from greent.graph_components import LabeledID
 from collections import defaultdict
+import itertools
+from collections import OrderedDict
 
 #TODO: should all of this be done with some sort of canned semantic tools?
 class Concept:
@@ -63,7 +65,17 @@ class ConceptModel:
             self.model_loaders[self.name] ()
         else:
             raise ValueError (f"A concept model loader for concept model {self.name} must be defined.")
-        
+
+        #Identifiers are specified at different points in the yaml.  We need to make sure that the set of identifiers
+        # gets propagated to all the nodes.  Because every subclass is also a superclass, the identifiers used for
+        # a subtype have to also be usable for the supertype. For instance, CL (for cell) must also be allowed
+        # for an anatomical entity, because every cell is an anatomical entity.  For convenience, we also want to
+        # allow for the case when we specify something like chemical_substance, and have its ids pushed down to
+        # drug and metabolite in a consistent way.  If we push up and then down, we'll end up with everything can be
+        # anything.  So we need to push down and then up.  If we push down, we should only push down into
+        # empty concepts (i.e. those that do not already have an id_mapping.
+        self.create_id_prefixes()
+
         """ Design discussions are ongoing about how best to model concepts with respect to ids. Manual annotation
         provides the most reliable and granular approach but is time intensive. It's unclear when this standard might
         be met. Another approach is to reason about concepts based on identifiers. This overloads the semantics of 
@@ -74,6 +86,33 @@ class ConceptModel:
         self.the_map = Resource.load_yaml (identifier_map_path)['identifier_map']
         #for c in self.by_name.values ():
         #    print (f"by name {c}")
+
+    def create_id_prefixes(self):
+        top_set = self.get_roots()
+        while len(top_set) > 0:
+            next = top_set.pop()
+            children = [self.get(c) for c in self.get_children(next.name)]
+            top_set.extend(children)
+            if len(next.id_prefixes) > 0:
+                for child in children:
+                    if len(child.id_prefixes) == 0:
+                        child.id_prefixes.extend(next.id_prefixes)
+        roots = self.get_roots()
+        for root in roots:
+            self.recursive_combine_id_maps(root)
+
+    def recursive_combine_id_maps(self,concept):
+        #First, get the combined children identifiers
+        children = [self.get(c) for c in self.get_children(concept.name)]
+        child_prefixes = ( self.recursive_combine_id_maps(child) for child in children )
+        #interleave the children.  We don't have a smarter way ATM
+        combined_prefixes=[x for x in itertools.chain(*itertools.zip_longest(*child_prefixes)) if x is not None]
+        #Add new items to the end of the current id_prefixes
+        concept.id_prefixes.extend(combined_prefixes)
+        #This can leave us with some repeat identifiers, uniqueify, but preserve order:
+        concept.id_prefixes = list(OrderedDict.fromkeys(concept.id_prefixes))
+        return concept.id_prefixes
+
     def get (self, concept_name):
         return self.by_name[concept_name]
     
@@ -150,14 +189,11 @@ class ConceptModelLoader:
             #Update only adds/overwrites keys at the top level. Here, it just overwrites "Classes" rather than updating classes.
             #model_obj.update (model_overlay)
             #This version recursively updates throughout the hierarchy of dicts, updating lists also
-            Resource.deepupdate(model_obj, model_overlay)
-
+            # if we specify id_prefixes in the overlay, ignore what's in the original yaml.
+            Resource.deepupdate(model_obj, model_overlay, overwrite_keys = ['id_prefixes'])
         for obj in model_obj["classes"]:
             concept = self.parse_item (obj)
             self.model.add_item (concept)
-
-        #THIS is a hack
-        self.model.get('gene').id_prefixes = ['HGNC','NCBIGENE','ENSEMBL','MGI','ZFIN','UNIPROTKB']
 
         for obj in model_obj['slots']:
             relationship = self.parse_slot(obj)

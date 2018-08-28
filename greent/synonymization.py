@@ -44,7 +44,6 @@ class Synonymizer:
 
 
     def recursive_set_synonymizer(self,node_type):
-        print(node_type)
         if node_type in self.synonymizers:
             return self.synonymizers[node_type]
         #not in there, make it the union of its children
@@ -103,7 +102,7 @@ class Synonymizer:
                 num_left -= 1
             if num_left > 1 and '' in labels:
                 node.synonyms.remove(LabeledID(identifier=lid, label=''))
-        #Now find the bset one for an id
+        #Now find the best one for an id
         type_curies = self.concepts.get(node.type).id_prefixes
         #Now start looking for the best curies
         synonyms_by_curie = defaultdict(list)

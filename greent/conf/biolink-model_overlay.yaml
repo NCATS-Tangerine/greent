@@ -11,16 +11,6 @@ classes:
       A disease that is caused by genetic modifications where those modifications are inherited from a parent's genome.
     mappings:
       - "MONDO:0003847"
-    id_prefixes:
-      - MONDO
-      - DOID
-      - OMIM
-      - ORPHANET
-      - EFO
-      - UMLS
-      - MESH
-      - MEDDRA
-      - PHAROS.DISEASE
 
 #The following modifications are to connect biolink concepts to identifier prefixes. 
 #There needs to be a better place to do this.  The problem is that for e.g. gene,
@@ -45,55 +35,7 @@ classes:
       - UMLS
       - MEDDRA
 
-  - name: disease or phenotypic feature
-    id_prefixes: #Adding identifiers for ROBOKOP
-        - MONDO
-        - DOID
-        - HP
-        - OMIM
-        - ORPHANET
-        - EFO
-        - NCIT
-        - UMLS
-        - MESH
-        - MEDDRA
-        - PHAROS.DISEASE 
-
   - name: chemical substance
-    id_prefixes:
-      - CHEBI
-      - CHEMBL
-      - DRUGBANK
-      - PUBCHEM
-      - MESH
-      - HMDB
-      - KEGG.COMPOUND
-      - INCHI
-      - INCHIKEY
-      - PUBCHEM.COMPOUND
-      - KEGG.DRUG
-      - PHAROS.DRUG
-      - DRUG.INTERACTION
-
-  - name: drug
-    id_prefixes:
-      - CHEBI
-      - CHEMBL
-      - DRUGBANK
-      - PUBCHEM
-      - MESH
-      - HMDB
-      - INCHI
-      - INCHIKEY
-      - UNII
-      - PUBCHEM.COMPOUND
-      - KEGG.COMPOUND
-      - KEGG.DRUG
-      - PHAROS.DRUG
-      - DRUG.INTERACTION
-      - CTD
-
-  - name: metabolite
     id_prefixes:
       - CHEBI
       - CHEMBL
@@ -116,6 +58,11 @@ classes:
       - UBERON
       - UMLS
 
+  - name: cell
+    id_prefixes:
+      - CL
+      - UMLS
+
   - name: gene
     id_prefixes:
       - HGNC
@@ -127,7 +74,6 @@ classes:
       - MGI
       - ZFIN
 
-         
   - name: pathway
     id_prefixes: 
       - KEGG

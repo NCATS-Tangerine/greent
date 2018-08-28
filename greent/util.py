@@ -106,7 +106,7 @@ class Resource:
     @staticmethod
     # Modified from:
     # Copyright Ferry Boender, released under the MIT license.
-    def deepupdate(target, src):
+    def deepupdate(target, src, overwrite_keys = []):
         """Deep update target dict with src
         For each k,v in src: if k doesn't exist in target, it is deep copied from
         src to target. Otherwise, if v is a list, target[k] is extended with
@@ -115,21 +115,25 @@ class Resource:
 
         Updated to deal with yaml structure: if you have a list of yaml dicts,
         want to merge them by "name"
+
+        If there are particular keys you want to overwrite instead of merge, send in overwrite_keys
         """
         if type(src) == dict:
             for k, v in src.items():
-                if type(v) == list:
+                if k in overwrite_keys:
+                    target[k] = copy.deepcopy(v)
+                elif type(v) == list:
                     if not k in target:
                         target[k] = copy.deepcopy(v)
                     elif type(v[0]) == dict:
-                        Resource.deepupdate(target[k],v)
+                        Resource.deepupdate(target[k],v,overwrite_keys)
                     else:
                         target[k].extend(v)
                 elif type(v) == dict:
                     if not k in target:
                         target[k] = copy.deepcopy(v)
                     else:
-                        Resource.deepupdate(target[k], v)
+                        Resource.deepupdate(target[k], v,overwrite_keys)
                 elif type(v) == set:
                     if not k in target:
                         target[k] = v.copy()
@@ -143,7 +147,7 @@ class Resource:
             target_elements = { x['name']: x for x in target }
             for name in src_elements:
                 if name in target_elements:
-                    Resource.deepupdate(target_elements[name], src_elements[name])
+                    Resource.deepupdate(target_elements[name], src_elements[name],overwrite_keys)
                 else:
                     target.append( src_elements[name] )
 
