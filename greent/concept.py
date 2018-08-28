@@ -118,6 +118,16 @@ class ConceptModel:
         parents = set( [concept.is_a for name,concept in self.by_name.items()] )
         return list(filter( lambda x: x is not None and x.is_a is None, parents))
 
+    def get_parent(self,concept_name):
+        """Return the parent of a concept"""
+        return self.get(concept_name).is_a.name
+
+    def get_children(self,concept_name):
+        """Return the children of a concept"""
+        children_name_concept = list( filter(lambda item: item[1].is_a is not None and item[1].is_a.name == concept_name, self.by_name.items() ))
+        children = [x[0] for x in children_name_concept]
+        return children
+
     def standardize_relationship(self,relationship):
         xref = relationship.identifier
         r = self.relations_by_xref[xref]

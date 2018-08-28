@@ -12,21 +12,11 @@ from greent.synonymizers import disease_synonymizer
 from builder.question import LabeledID
 
 
-#The mapping from a node type to the synonymizing module
-synonymizers = {
-    node_types.GENE:hgnc_synonymizer,
-    node_types.DISEASE:disease_synonymizer,
-    node_types.GENETIC_CONDITION:disease_synonymizer,
-    node_types.PHENOTYPIC_FEATURE:oxo_synonymizer,
-    node_types.DISEASE_OR_PHENOTYPIC_FEATURE:disease_synonymizer,
-    node_types.CHEMICAL_SUBSTANCE:substance_synonymizer,
-    #These ones don't do anything, but we should at least pick up MeSH identifiers where we can.
-    node_types.PATHWAY:oxo_synonymizer,
-    node_types.BIOLOGICAL_PROCESS:oxo_synonymizer,
-    node_types.MOLECULAR_ACTIVITY:oxo_synonymizer,
-    node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY:oxo_synonymizer,
-    node_types.CELL:cell_synonymizer,
-    node_types.ANATOMICAL_ENTITY:oxo_synonymizer
+fixed_synonymizers = {
+    node_types.GENE:set([hgnc_synonymizer]),
+    node_types.DISEASE:set([disease_synonymizer]),
+    node_types.CHEMICAL_SUBSTANCE:set([substance_synonymizer]),
+    node_types.CELL:set([cell_synonymizer]),
 }
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG, format='medium')
@@ -36,7 +26,39 @@ class Synonymizer:
     def __init__(self, concepts, rosetta):
         self.rosetta = rosetta
         self.concepts = concepts
-        
+        self.create_synonymizers()
+
+    def create_synonymizers(self):
+        self.synonymizers = fixed_synonymizers
+        top_set = [s.name for s in self.concepts.get_roots()]
+        while len(top_set) > 0:
+            next = top_set.pop()
+            children = self.concepts.get_children(next)
+            top_set.extend(children)
+            if next in self.synonymizers:
+                for child in children:
+                    self.synonymizers[child] = self.synonymizers[next]
+        roots = [s.name for s in self.concepts.get_roots()]
+        for root in roots:
+            self.recursive_set_synonymizer(root)
+
+
+    def recursive_set_synonymizer(self,node_type):
+        print(node_type)
+        if node_type in self.synonymizers:
+            return self.synonymizers[node_type]
+        #not in there, make it the union of its children
+        children = self.concepts.get_children(node_type)
+        #but if there are no children, just use oxo
+        if len(children) == 0:
+            self.synonymizers[node_type] = set([oxo_synonymizer])
+        else:
+            synset = set()
+            for c in children:
+                synset.update( self.recursive_set_synonymizer(c) )
+            self.synonymizers[node_type] = synset
+        return self.synonymizers[node_type]
+
     def synonymize(self, node):
         """Given a node, determine its type and dispatch it to the correct synonymizer"""
         # logger.debug('syn {} {}'.format(node.id, node.type))
@@ -53,8 +75,10 @@ class Synonymizer:
             logger.debug (f"cache hit: {key}")
         else:
             logger.debug (f"exec op: {key}")
-            if node.type in synonymizers:
-                synonyms = synonymizers[node.type].synonymize(node, self.rosetta.core)
+            if node.type in self.synonymizers:
+                synonyms = set()
+                for s in self.synonymizers[node.type]:
+                    synonyms.update( s.synonymize(node, self.rosetta.core) )
                 self.rosetta.cache.set (key, synonyms)
             else:
                 logger.warn (f"No synonymizer registered for concept: {node.type}")

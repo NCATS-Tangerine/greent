@@ -184,7 +184,7 @@ class Concepts(Resource):
                     items:
                         type: string
         """
-        concepts = list(node_types.node_types - {'UnspecifiedType'})
+        concepts = list(node_types.node_types - {'unspecified'})
         return concepts
 
 api.add_resource(Concepts, '/concepts')
