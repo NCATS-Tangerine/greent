@@ -16,7 +16,7 @@ from greent.identifiers import Identifiers
 from greent.program import Program
 from greent.program import QueryDefinition
 from greent.synonymization import Synonymizer
-from greent.transreg import TranslatorRegistry
+#from greent.transreg import TranslatorRegistry
 from greent.util import LoggingUtil
 from greent.util import Text
 

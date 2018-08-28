@@ -41,7 +41,7 @@ class MyChem(Service):
                             else:
                                 continue
                             meddra_id = f"MedDRA:{outcome['meddra_code']}"
-                            obj_node = KNode(meddra_id, type=node_types.DISEASE_OR_PHENOTYPE, name=outcome['name'])
+                            obj_node = KNode(meddra_id, type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE, name=outcome['name'])
                             props={'prr':outcome['prr'], 'ror': outcome['ror'], 'case_count': outcome['case_count']}
                             edge = self.create_edge(drug_node, obj_node, 'mychem.get_adverse_events',  cid, predicate, url = murl, properties=props)
                             return_results.append( (edge, obj_node) )
@@ -51,7 +51,7 @@ class MyChem(Service):
                                 continue
                             predicate = LabeledID(identifier="RO:0002606", label = "treats")
                             meddra_id = f"MedDRA:{outcome['meddra_code']}"
-                            obj_node = KNode(meddra_id, type=node_types.DISEASE_OR_PHENOTYPE, name=outcome['name'])
+                            obj_node = KNode(meddra_id, type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE, name=outcome['name'])
                             edge = self.create_edge(drug_node, obj_node, 'mychem.get_adverse_events',  cid, predicate, url = murl, properties=props)
                             return_results.append( (edge, obj_node) )
         return return_results
@@ -87,7 +87,7 @@ class MyChem(Service):
                                 logger.error(murl)
                                 logger.error(ci)
                                 continue
-                            obj_node = KNode(umls, type=node_types.DISEASE_OR_PHENOTYPE, name=ci['concept_name'])
+                            obj_node = KNode(umls, type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE, name=ci['concept_name'])
                             edge = self.create_edge(drug_node, obj_node, 'mychem.get_drugcentral', cid, predicate, url=murl )
                             return_results.append( (edge, obj_node) )
                     if 'drug_use' in dc and 'indication' in dc['drug_use']:
@@ -107,7 +107,7 @@ class MyChem(Service):
                                 logger.error(murl)
                                 logger.error(ind)
                                 continue
-                            obj_node = KNode(umls, type=node_types.DISEASE_OR_PHENOTYPE, name=ind['concept_name'])
+                            obj_node = KNode(umls, type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE, name=ind['concept_name'])
                             edge = self.create_edge(drug_node, obj_node, 'mychem.get_drugcentral',  cid, predicate, url = murl)
                             return_results.append( (edge, obj_node) )
         return return_results
@@ -161,7 +161,7 @@ class MyChem(Service):
                         drug_node=self.make_drug_node(hit)
                         if drug_node is None:
                             continue
-                            #obj_node = KNode(meddra_id, type=node_types.DISEASE_OR_PHENOTYPE, name=outcome['name'])
+                            #obj_node = KNode(meddra_id, type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE, name=outcome['name'])
                         props={'prr':outcome['prr'], 'ror': outcome['ror'], 'case_count': outcome['case_count']}
                         edge = self.create_edge(drug_node, input_node, 'mychem.get_adverse_events', mname , predicate, url = murl, properties=props)
                         return_results.append( (edge, drug_node) )
@@ -172,10 +172,10 @@ class MyChem(Service):
         fails, chebi.  Failing that, complain bitterly."""
         if 'chembl' in hit_element:
             chembl=hit_element['chembl']
-            return KNode(f"CHEMBL:{chembl['molecule_chembl_id']}", type=node_types.DRUG, name=chembl['pref_name'])
+            return KNode(f"CHEMBL:{chembl['molecule_chembl_id']}", type=node_types.CHEMICAL_SUBSTANCE, name=chembl['pref_name'])
         if 'chebi' in hit_element:
             chebi = hit_element['chebi']
-            return KNode(chebi['chebi_id'], type=node_types.DRUG, name=chebi['chebi_name'])
+            return KNode(chebi['chebi_id'], type=node_types.CHEMICAL_SUBSTANCE, name=chebi['chebi_name'])
         logger.error('hit from mychem.info did not return a chembl or a chebi element')
         logger.error(f'got these keys: {list(hit_element.keys())}')
         return None

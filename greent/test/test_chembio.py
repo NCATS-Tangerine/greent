@@ -17,5 +17,5 @@ def test_name_lookup(chembio):
     results = chembio.graph_drugname_to_pubchem( input_node )
     edge,node = results[0]
     assert node.id=='PUBCHEM:5291'
-    assert node.type == node_types.DRUG
+    assert node.type == node_types.CHEMICAL_SUBSTANCE
 '''

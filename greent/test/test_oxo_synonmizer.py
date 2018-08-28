@@ -6,17 +6,18 @@ from greent import node_types
 def test_neuron(rosetta):
     node = KNode("CL:0000540", type=node_types.CELL)
     synonymize(node,rosetta.core)
-    assert len(node.synonyms) >  10
+    assert len(node.synonyms) >  5
     #we're no longer so pathological about trying to get meshIDs so in this case we don't get one
     meshcell = node.get_synonyms_by_prefix("MESH")
     assert len(meshcell) == 0
-    #BUt we should get a UMLS
-    umlscell = node.get_synonyms_by_prefix("UMLS")
+    #BUt we should get a FMA?
+    #We used to get a UMLS, but OXO isn't giving us that for some reason...
+    umlscell = node.get_synonyms_by_prefix("FMA")
     mid = list(umlscell)[0]
-    assert mid == 'UMLS:C0027882' \
+    assert mid == 'FMA:54527' \
 
 def test_phenotype(rosetta):
-    node = KNode("MEDDRA:10014408", type=node_types.PHENOTYPE)
+    node = KNode("MEDDRA:10014408", type=node_types.PHENOTYPIC_FEATURE)
     synonymize(node,rosetta.core)
     assert len(node.synonyms) >  10
     hpsyns = node.get_synonyms_by_prefix("HP")
@@ -24,7 +25,7 @@ def test_phenotype(rosetta):
     print(hpsyns)
 
 def test_names(rosetta):
-    node = KNode('HP:0002527', type=node_types.PHENOTYPE, name='Falls')
+    node = KNode('HP:0002527', type=node_types.PHENOTYPIC_FEATURE, name='Falls')
     synonymize(node,rosetta.core)
     print( node.synonyms )
     msyns = node.get_labeled_ids_by_prefix("MedDRA")

@@ -1,21 +1,186 @@
-DRUG='chemical_substance'
-GENE='gene'
-PATHWAY='pathway'
-PROCESS='biological_process'
-FUNCTION='molecular_activity'
-PROCESS_OR_FUNCTION='biological_process_or_activity'
-CELL='cell'
-ANATOMY='anatomical_entity'
-PHENOTYPE='phenotypic_feature'
-DISEASE='disease'
-DISEASE_OR_PHENOTYPE='disease_or_phenotypic_feature'
-GENETIC_CONDITION='genetic_condition'
-UNSPECIFIED = 'UnspecifiedType'
+BIOLOGICAL_SEX = 'biological_sex'
+PHENOTYPIC_SEX = 'phenotypic_sex'
+GENOTYPIC_SEX = 'genotypic_sex'
+SEVERITY_VALUE = 'severity_value'
+FREQUENCY_VALUE = 'frequency_value'
+CLINICAL_MODIFIER = 'clinical_modifier'
+ONSET = 'onset'
+SENSTIVITY_QUANTIFIER = 'senstivity_quantifier'
+SPECIFICITY_QUANTIFIER = 'specificity_quantifier'
+PATHOGNOMONICITY_QUANTIFIER = 'pathognomonicity_quantifier'
+FREQUENCY_QUANTIFIER = 'frequency_quantifier'
+NAMED_THING = 'named_thing'
+BIOLOGICAL_ENTITY = 'biological_entity'
+ONTOLOGY_CLASS = 'ontology_class'
+GENE_ONTOLOGY_CLASS = 'gene_ontology_class'
+THING_WITH_TAXON = 'thing_with_taxon'
+ORGANISM_TAXON = 'organism_taxon'
+ORGANISMAL_ENTITY = 'organismal_entity'
+INDIVIDUAL_ORGANISM = 'individual_organism'
+CASE = 'case'
+POPULATION_OF_INDIVIDUAL_ORGANISMS = 'population_of_individual_organisms'
+BIOSAMPLE = 'biosample'
+DISEASE_OR_PHENOTYPIC_FEATURE = 'disease_or_phenotypic_feature'
+DISEASE = 'disease'
+PHENOTYPIC_FEATURE = 'phenotypic_feature'
+ENVIRONMENT = 'environment'
+INFORMATION_CONTENT_ENTITY = 'information_content_entity'
+CONFIDENCE_LEVEL = 'confidence_level'
+EVIDENCE_TYPE = 'evidence_type'
+PUBLICATION = 'publication'
+ADMINISTRATIVE_ENTITY = 'administrative_entity'
+PROVIDER = 'provider'
+MOLECULAR_ENTITY = 'molecular_entity'
+CHEMICAL_SUBSTANCE = 'chemical_substance'
+DRUG = 'drug'
+METABOLITE = 'metabolite'
+ATTRIBUTE = 'attribute'
+ANATOMICAL_ENTITY = 'anatomical_entity'
+LIFE_STAGE = 'life_stage'
+PLANETARY_ENTITY = 'planetary_entity'
+ENVIRONMENTAL_PROCESS = 'environmental_process'
+ENVIRONMENTAL_FEATURE = 'environmental_feature'
+CLINICAL_ENTITY = 'clinical_entity'
+CLINICAL_TRIAL = 'clinical_trial'
+CLINICAL_INTERVENTION = 'clinical_intervention'
+DEVICE = 'device'
+GENOMIC_ENTITY = 'genomic_entity'
+GENOME = 'genome'
+TRANSCRIPT = 'transcript'
+EXON = 'exon'
+CODING_SEQUENCE = 'coding_sequence'
+MACROMOLECULAR_MACHINE = 'macromolecular_machine'
+GENE_OR_GENE_PRODUCT = 'gene_or_gene_product'
+GENE = 'gene'
+GENE_PRODUCT = 'gene_product'
+PROTEIN = 'protein'
+GENE_PRODUCT_ISOFORM = 'gene_product_isoform'
+PROTEIN_ISOFORM = 'protein_isoform'
+RNA_PRODUCT = 'RNA_product'
+RNA_PRODUCT_ISOFORM = 'RNA_product_isoform'
+NONCODING_RNA_PRODUCT = 'noncoding_RNA_product'
+MICRORNA = 'microRNA'
+MACROMOLECULAR_COMPLEX = 'macromolecular_complex'
+GENE_GROUPING = 'gene_grouping'
+GENE_FAMILY = 'gene_family'
+ZYGOSITY = 'zygosity'
+GENOTYPE = 'genotype'
+HAPLOTYPE = 'haplotype'
+SEQUENCE_VARIANT = 'sequence_variant'
+DRUG_EXPOSURE = 'drug_exposure'
+TREATMENT = 'treatment'
+GEOGRAPHIC_LOCATION = 'geographic_location'
+GEOGRAPHIC_LOCATION_AT_TIME = 'geographic_location_at_time'
+MOLECULAR_INTERACTION = 'molecular_interaction'
+MODEL_TO_DISEASE_MIXIN = 'model_to_disease_mixin'
+GENOMIC_SEQUENCE_LOCALIZATION = 'genomic_sequence_localization'
+OCCURRENT = 'occurrent'
+BIOLOGICAL_PROCESS_OR_ACTIVITY = 'biological_process_or_activity'
+MOLECULAR_ACTIVITY = 'molecular_activity'
+ACTIVITY_AND_BEHAVIOR = 'activity_and_behavior'
+PROCEDURE = 'procedure'
+PHENOMENON = 'phenomenon'
+BIOLOGICAL_PROCESS = 'biological_process'
+PATHWAY = 'pathway'
+PHYSIOLOGICAL_PROCESS = 'physiological_process'
+CELLULAR_COMPONENT = 'cellular_component'
+CELL = 'cell'
+CELL_LINE = 'cell_line'
+GROSS_ANATOMICAL_STRUCTURE = 'gross_anatomical_structure'
+GENETIC_CONDITION = 'genetic_condition'
+UNSPECIFIED = 'unspecified'
 
-#The root of all biolink_model entities, which every node in neo4j will also have as a label.
-#used to specify constraints/indices
+#The root of all biolink_model entities, which every node in neo4j will also have as a label. used to specify constraints/indices
 ROOT_ENTITY = 'named_thing'
 
-node_types = set([DRUG, GENE, PATHWAY, PROCESS, FUNCTION, PROCESS_OR_FUNCTION, CELL, ANATOMY, PHENOTYPE, DISEASE, DISEASE_OR_PHENOTYPE, GENETIC_CONDITION, UNSPECIFIED])
-
-type_codes = { 'S': DRUG, 'G':GENE, 'P':PROCESS_OR_FUNCTION, 'C':CELL, 'A':ANATOMY, 'T':PHENOTYPE, 'D':DISEASE, 'X':GENETIC_CONDITION , 'W': PATHWAY, '?': UNSPECIFIED}
+node_types = set([BIOLOGICAL_SEX,
+PHENOTYPIC_SEX,
+GENOTYPIC_SEX,
+SEVERITY_VALUE,
+FREQUENCY_VALUE,
+CLINICAL_MODIFIER,
+ONSET,
+SENSTIVITY_QUANTIFIER,
+SPECIFICITY_QUANTIFIER,
+PATHOGNOMONICITY_QUANTIFIER,
+FREQUENCY_QUANTIFIER,
+NAMED_THING,
+BIOLOGICAL_ENTITY,
+ONTOLOGY_CLASS,
+GENE_ONTOLOGY_CLASS,
+THING_WITH_TAXON,
+ORGANISM_TAXON,
+ORGANISMAL_ENTITY,
+INDIVIDUAL_ORGANISM,
+CASE,
+POPULATION_OF_INDIVIDUAL_ORGANISMS,
+BIOSAMPLE,
+DISEASE_OR_PHENOTYPIC_FEATURE,
+DISEASE,
+PHENOTYPIC_FEATURE,
+ENVIRONMENT,
+INFORMATION_CONTENT_ENTITY,
+CONFIDENCE_LEVEL,
+EVIDENCE_TYPE,
+PUBLICATION,
+ADMINISTRATIVE_ENTITY,
+PROVIDER,
+MOLECULAR_ENTITY,
+CHEMICAL_SUBSTANCE,
+DRUG,
+METABOLITE,
+ATTRIBUTE,
+ANATOMICAL_ENTITY,
+LIFE_STAGE,
+PLANETARY_ENTITY,
+ENVIRONMENTAL_PROCESS,
+ENVIRONMENTAL_FEATURE,
+CLINICAL_ENTITY,
+CLINICAL_TRIAL,
+CLINICAL_INTERVENTION,
+DEVICE,
+GENOMIC_ENTITY,
+GENOME,
+TRANSCRIPT,
+EXON,
+CODING_SEQUENCE,
+MACROMOLECULAR_MACHINE,
+GENE_OR_GENE_PRODUCT,
+GENE,
+GENE_PRODUCT,
+PROTEIN,
+GENE_PRODUCT_ISOFORM,
+PROTEIN_ISOFORM,
+RNA_PRODUCT,
+RNA_PRODUCT_ISOFORM,
+NONCODING_RNA_PRODUCT,
+MICRORNA,
+MACROMOLECULAR_COMPLEX,
+GENE_GROUPING,
+GENE_FAMILY,
+ZYGOSITY,
+GENOTYPE,
+HAPLOTYPE,
+SEQUENCE_VARIANT,
+DRUG_EXPOSURE,
+TREATMENT,
+GEOGRAPHIC_LOCATION,
+GEOGRAPHIC_LOCATION_AT_TIME,
+MOLECULAR_INTERACTION,
+MODEL_TO_DISEASE_MIXIN,
+GENOMIC_SEQUENCE_LOCALIZATION,
+OCCURRENT,
+BIOLOGICAL_PROCESS_OR_ACTIVITY,
+MOLECULAR_ACTIVITY,
+ACTIVITY_AND_BEHAVIOR,
+PROCEDURE,
+PHENOMENON,
+BIOLOGICAL_PROCESS,
+PATHWAY,
+PHYSIOLOGICAL_PROCESS,
+CELLULAR_COMPONENT,
+CELL,
+CELL_LINE,
+GROSS_ANATOMICAL_STRUCTURE,
+GENETIC_CONDITION,
+UNSPECIFIED])

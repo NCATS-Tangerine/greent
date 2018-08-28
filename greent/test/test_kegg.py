@@ -11,7 +11,7 @@ def kegg(rosetta):
     return kegg
 
 def test_chem_to_reaction(kegg):
-    hete = KNode('KEGG.COMPOUND:C04805', name="5-HETE", type=node_types.DRUG)
+    hete = KNode('KEGG.COMPOUND:C04805', name="5-HETE", type=node_types.CHEMICAL_SUBSTANCE)
     results = kegg.chemical_get_reaction(hete)
     assert len(results)  == 1
     assert results[0] == 'rn:R07034'
@@ -32,7 +32,7 @@ def test_get_reaction(kegg):
     assert 'C04805' in reaction['products']
 
 def test_chem_to_enzyme(kegg):
-    hete = KNode('KEGG.COMPOUND:C04805', name="5-HETE", type=node_types.DRUG)
+    hete = KNode('KEGG.COMPOUND:C04805', name="5-HETE", type=node_types.CHEMICAL_SUBSTANCE)
     results = kegg.chemical_get_enzyme(hete)
     assert len(results) == 1
     edge=results[0][0]

@@ -130,7 +130,7 @@ class Biolink(Service):
         url = "{0}/bioentity/disease/{1}/phenotypes/".format(self.url, disease.id)
         response = self.page_calls(url)
         #response = requests.get(url).json()
-        return self.process_associations(response, 'disease_get_phenotype', node_types.PHENOTYPE, disease.id, url, disease)
+        return self.process_associations(response, 'disease_get_phenotype', node_types.PHENOTYPIC_FEATURE, disease.id, url, disease)
 
     def gene_get_go(self, gene):
         # This biolink function should be able to take an HGNC or other gene id, and convert to UniProtKB in the
@@ -159,7 +159,7 @@ class Biolink(Service):
         response,url,input_id = self.gene_get_go(gene)
         if response is None:
             return []
-        edges_nodes = self.process_associations(response, 'gene_get_process_or_function', node_types.PROCESS_OR_FUNCTION, input_id, url,gene)
+        edges_nodes = self.process_associations(response, 'gene_get_process_or_function', node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, input_id, url,gene)
         process_or_function_results = list(filter(lambda x: self.go.is_biological_process(x[1].id) or
                                                   self.go.is_molecular_function(x[1].id), edges_nodes))
         return process_or_function_results

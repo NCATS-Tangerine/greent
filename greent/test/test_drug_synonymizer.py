@@ -4,13 +4,13 @@ from greent.conftest import rosetta
 from greent import node_types
 
 def test_mesh_synonymization(rosetta):
-    node = KNode('MESH:C032942', type=node_types.DRUG)
+    node = KNode('MESH:C032942', type=node_types.CHEMICAL_SUBSTANCE)
     synonyms = synonymize(node,rosetta.core)
     for s in synonyms:
         assert isinstance(s, LabeledID)
 
 def test_chembl_synonymization(rosetta):
-    node = KNode('CHEMBL:CHEMBL744', type=node_types.DRUG)
+    node = KNode('CHEMBL:CHEMBL744', type=node_types.CHEMICAL_SUBSTANCE)
     synonyms = synonymize(node,rosetta.core)
     for s in synonyms:
         assert isinstance(s, LabeledID)
@@ -20,7 +20,7 @@ def test_from_each(rosetta):
     start_identifiers=['MESH:D000068816','CHEMBL:CHEMBL1265','PUBCHEM:60164']
     #And we should be able to start with any and get the others
     for start in start_identifiers:
-        node = KNode(start, type=node_types.DRUG, name='Adapalene')
+        node = KNode(start, type=node_types.CHEMICAL_SUBSTANCE, name='Adapalene')
         synonyms = synonymize(node,rosetta.core)
         sids = [ s.identifier for s in synonyms ]
         #for start_id in start_identifiers:

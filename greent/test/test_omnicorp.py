@@ -18,7 +18,7 @@ def test_name(omnicorpus):
     assert oboid == 'http://purl.obolibrary.org/obo/CL_0000097'
 
 def test_imatinib_asthma(omnicorpus):
-    drug_node = KNode('CHEBI:45783', type=node_types.DRUG)
+    drug_node = KNode('CHEBI:45783', type=node_types.CHEMICAL_SUBSTANCE)
     disease_node = KNode('MONDO:0004979', type=node_types.DISEASE)
     pmids = omnicorpus.get_shared_pmids( drug_node, disease_node )
     assert len(pmids) > 0
@@ -33,7 +33,7 @@ def test_two_disease(omnicorpus):
 def test_list(omnicorpus):
     node = KNode('CL:0000097', type=node_types.CELL)
     disease_node = KNode('MONDO:0004979', type=node_types.DISEASE)
-    drug_node = KNode('CHEBI:45783', type=node_types.DRUG)
+    drug_node = KNode('CHEBI:45783', type=node_types.CHEMICAL_SUBSTANCE)
     nodes = [ node, disease_node, drug_node ]
     results = omnicorpus.get_all_shared_pmids( nodes )
     assert len(results) == 3
@@ -48,8 +48,8 @@ def test_list(omnicorpus):
     assert 'CHEBI:45783' in ids
 
 def test_list_returns_zero(omnicorpus):
-    disease_node = KNode('UBERON:0013694', type=node_types.ANATOMY)
-    go_node = KNode('GO:0045892', type=node_types.PROCESS)
+    disease_node = KNode('UBERON:0013694', type=node_types.ANATOMICAL_ENTITY)
+    go_node = KNode('GO:0045892', type=node_types.BIOLOGICAL_PROCESS)
     nodes = [ disease_node, go_node]
     results = omnicorpus.get_all_shared_pmids( nodes )
     assert len(results) == 1
@@ -58,8 +58,8 @@ def test_list_returns_zero(omnicorpus):
 def test_list_with_bad_curie(omnicorpus):
     node = KNode('CL:0000097', type=node_types.CELL)
     disease_node = KNode('MONDO:0004979', type=node_types.DISEASE)
-    drug_node = KNode('CHEBI:45783', type=node_types.DRUG)
-    stinker = KNode('FAKEO:102830', type=node_types.DRUG)
+    drug_node = KNode('CHEBI:45783', type=node_types.CHEMICAL_SUBSTANCE)
+    stinker = KNode('FAKEO:102830', type=node_types.CHEMICAL_SUBSTANCE)
     nodes = [ node, disease_node, drug_node , stinker]
     results = omnicorpus.get_all_shared_pmids( nodes )
     assert len(results) == 6

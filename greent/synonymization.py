@@ -17,16 +17,16 @@ synonymizers = {
     node_types.GENE:hgnc_synonymizer,
     node_types.DISEASE:disease_synonymizer,
     node_types.GENETIC_CONDITION:disease_synonymizer,
-    node_types.PHENOTYPE:oxo_synonymizer,
-    node_types.DISEASE_OR_PHENOTYPE:disease_synonymizer,
-    node_types.DRUG:substance_synonymizer,
+    node_types.PHENOTYPIC_FEATURE:oxo_synonymizer,
+    node_types.DISEASE_OR_PHENOTYPIC_FEATURE:disease_synonymizer,
+    node_types.CHEMICAL_SUBSTANCE:substance_synonymizer,
     #These ones don't do anything, but we should at least pick up MeSH identifiers where we can.
     node_types.PATHWAY:oxo_synonymizer,
-    node_types.PROCESS:oxo_synonymizer,
-    node_types.FUNCTION:oxo_synonymizer,
-    node_types.PROCESS_OR_FUNCTION:oxo_synonymizer,
+    node_types.BIOLOGICAL_PROCESS:oxo_synonymizer,
+    node_types.MOLECULAR_ACTIVITY:oxo_synonymizer,
+    node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY:oxo_synonymizer,
     node_types.CELL:cell_synonymizer,
-    node_types.ANATOMY:oxo_synonymizer,
+    node_types.ANATOMICAL_ENTITY:oxo_synonymizer
 }
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG, format='medium')

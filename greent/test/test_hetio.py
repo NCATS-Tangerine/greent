@@ -26,7 +26,7 @@ def test_gene_to_anatomy(hetio):
     assert 'UBERON:0001007' in identifiers
 
 def test_anatomy_to_gene(hetio):
-    relations = hetio.anatomy_to_gene(KNode('UBERON:0001007', type=node_types.ANATOMY))
+    relations = hetio.anatomy_to_gene(KNode('UBERON:0001007', type=node_types.ANATOMICAL_ENTITY))
     nts = [node.type for r,node in relations]
     for nt in nts:
         assert nt == node_types.GENE

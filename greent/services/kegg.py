@@ -99,7 +99,7 @@ class KEGG(Service):
     def add_chem_results(self,chem_ids, predicate, enzyme_node, input_identifier, results, rset):
         for chem_id in chem_ids:
             if chem_id not in rset:
-                chem_node = KNode(f'KEGG.COMPOUND:{chem_id}', type=node_types.DRUG)
+                chem_node = KNode(f'KEGG.COMPOUND:{chem_id}', type=node_types.CHEMICAL_SUBSTANCE)
                 edge = self.create_edge(enzyme_node, chem_node, f'kegg.enzyme_get_chemicals',  input_identifier, predicate)
                 results.append( (edge, chem_node))
                 rset.add(chem_id)
