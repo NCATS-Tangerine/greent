@@ -7,6 +7,7 @@ import os
 import json
 import requests
 import logging
+import yaml
 from typing import NamedTuple
 
 import redis
@@ -22,6 +23,8 @@ import builder.api.definitions
 from builder.buildmain import setup
 from greent.graph_components import KNode
 from greent.util import LoggingUtil
+
+rosetta_config_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "rosetta.yml")
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
@@ -169,6 +172,57 @@ class TaskStatus(Resource):
         return result, 200
 
 api.add_resource(TaskStatus, '/task/<task_id>')
+
+class Operations(Resource):
+    def get(self):
+        """
+        Get a JSON list of all edges in the type graph
+        ---
+        tags: [util]
+        responses:
+            200:
+                description: Operations
+                schema:
+                    type: array
+                    items:
+                        type: string
+        """
+        with open(rosetta_config_file, 'r') as stream:
+            config = yaml.load(stream)
+        
+        operators = config["@operators"]
+
+        return operators
+
+api.add_resource(Operations, '/operations')
+
+class Connections(Resource):
+    def get(self):
+        """
+        Get a simplified list of all edges in the type graph
+        ---
+        tags: [util]
+        responses:
+            200:
+                description: Operations
+                schema:
+                    type: array
+                    items:
+                        type: string
+        """
+        with open(rosetta_config_file, 'r') as stream:
+            config = yaml.load(stream)
+        
+        operations = config["@operators"]
+
+        s = []
+        for start in operations:
+            for stop in operations[start]:
+                s.append(f"{start} -> {stop}")
+
+        return s
+
+api.add_resource(Connections, '/connections')
 
 class Concepts(Resource):
     def get(self):
