@@ -103,7 +103,7 @@ class CTD(Service):
 
     def drugname_string_to_drug(self, drugname):
         identifiers = self.drugname_string_to_drug_identifier(drugname)
-        return [ KNode(identifier, type=node_types.DRUG) for identifier in identifiers ]
+        return [ KNode(identifier, type=node_types.CHEMICAL_SUBSTANCE) for identifier in identifiers ]
 
     def standardize_predicate(self, predicate, sourcenode=None, targetnode=None):
         """CTD has a little more work to do than the standard service."""
@@ -168,7 +168,7 @@ class CTD(Service):
                 predicate_label = r['InteractionActions']
                 predicate = LabeledID(identifier=self.get_ctd_predicate_identifier(predicate_label), label=predicate_label)
                 #Should this be substance?
-                drug_node = KNode(f"MESH:{r['ChemicalID']}", type=node_types.DRUG, name=f"{r['ChemicalName']}")
+                drug_node = KNode(f"MESH:{r['ChemicalID']}", type=node_types.CHEMICAL_SUBSTANCE, name=f"{r['ChemicalName']}")
                 if sum([s in predicate.identifier for s in self.g2d_strings]) > 0:
                     subject = gene_node
                     obj = drug_node
@@ -177,7 +177,9 @@ class CTD(Service):
                     obj = gene_node
                 edge = self.create_edge(subject,obj,'ctd.gene_to_drug',identifier,predicate,
                                         publications=[f"PMID:{r['PubMedIDs']}"],url=url,properties=props)
-                key = (drug_node.id, predicate.label)
+                #This is what we'd like it to be, but right now there's not enough real specificity on the predicates
+                #key = (drug_node.id, edge.standard_predicate.label)
+                key = (drug_node.id, edge.original_predicate.label)
                 if key not in unique:
                     output.append( (edge,drug_node) )
                     unique.add(key)
@@ -196,7 +198,7 @@ class CTD(Service):
                     continue
                 predicate = LabeledID(identifier=f"CTD:{''.join(predicate_label.split())}", label=predicate_label)
                 #Should this be substance?
-                drug_node = KNode(f"MESH:{r['exposurestressorid']}", type=node_types.DRUG, name=r['exposurestressorname'])
+                drug_node = KNode(f"MESH:{r['exposurestressorid']}", type=node_types.CHEMICAL_SUBSTANCE, name=r['exposurestressorname'])
                 edge = self.create_edge(drug_node,disease_node,'ctd.disease_to_exposure',identifier,predicate,
                                         publications=[f"PMID:{r['reference']}"],url=url)
                 key = (drug_node.id, edge.standard_predicate)
@@ -219,7 +221,7 @@ class CTD(Service):
                 predicate = LabeledID(identifier=f'CTD:{predicate_label}', label=predicate_label)
                 refs = [f'PMID:{pmid}' for pmid in r['PubMedIDs'].split('|')]
                 #Should this be substance?
-                drug_node = KNode(f"MESH:{r['ChemicalID']}", type=node_types.DRUG, name=r['ChemicalName'])
+                drug_node = KNode(f"MESH:{r['ChemicalID']}", type=node_types.CHEMICAL_SUBSTANCE, name=r['ChemicalName'])
                 edge = self.create_edge(drug_node,disease_node,'ctd.disease_to_chemical',identifier,predicate,
                                         publications=refs,url=url)
                 key = (drug_node.id, edge.standard_predicate)

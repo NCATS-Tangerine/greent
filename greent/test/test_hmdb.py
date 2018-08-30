@@ -38,21 +38,21 @@ def test_pathway_to_metabolite(hmdb):
 
 
 def test_metabolite_to_disease(hmdb):
-    hete = KNode('HMDB:HMDB0011134', type=node_types.DRUG)
+    hete = KNode('HMDB:HMDB0011134', type=node_types.CHEMICAL_SUBSTANCE)
     results = hmdb.metabolite_to_disease(hete)
     assert len(results) > 0
     node_labels=[node.name for edge,node in results]
     assert 'Asthma' in node_labels
 
 def test_metabolite_to_enzyme(hmdb):
-    hete = KNode('HMDB:HMDB0011134', type=node_types.DRUG)
+    hete = KNode('HMDB:HMDB0011134', type=node_types.CHEMICAL_SUBSTANCE)
     results = hmdb.metabolite_to_enzyme(hete)
     assert len(results) > 0
     node_ids=[node.id for edge,node in results]
     assert 'UniProtKB:Q96SL4' in node_ids
 
 def test_metabolite_to_pathway(hmdb):
-    hete = KNode('HMDB:HMDB0011134', type=node_types.DRUG)
+    hete = KNode('HMDB:HMDB0011134', type=node_types.CHEMICAL_SUBSTANCE)
     results = hmdb.metabolite_to_pathway(hete)
     assert len(results) > 0
     node_ids=[node.id for edge,node in results]

@@ -69,7 +69,7 @@ class TranslatorKnowledgeBeaconAggregator(Service):
             for a in r['aliases']:
                 if a.startswith ("DRUGBANK:"):
                     if not a in seen:
-                        result.append ( ( self.get_edge (r, predicate='name_to_drugbank'), KNode(a, type=node_types.DRUG) ) )
+                        result.append ( ( self.get_edge (r, predicate='name_to_drugbank'), KNode(a, type=node_types.CHEMICAL_SUBSTANCE) ) )
                         seen[a] = a
         return list(set(result))
         

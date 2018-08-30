@@ -19,11 +19,11 @@ class OmniCorp(Service):
 
     def __init__(self, context): #triplestore):
         super(OmniCorp, self).__init__("omnicorp", context)
-        db = context.config['POSTGRES_DB']
-        user = context.config['POSTGRES_USER']
-        port = context.config['POSTGRES_PORT']
-        host = context.config['POSTGRES_HOST']
-        password = context.config['POSTGRES_PASSWORD']
+        db = context.config['OMNICORP_DB']
+        user = context.config['OMNICORP_USER']
+        port = context.config['OMNICORP_PORT']
+        host = context.config['OMNICORP_HOST']
+        password = context.config['OMNICORP_PASSWORD']
         self.prefixes = set(['UBERON', 'BSPO', 'PATO', 'GO', 'MONDO', 'HP', 'ENVO', 'OBI', 'CL', 'SO', 'CHEBI', 'HGNC', 'MESH'])
         self.conn = psycopg2.connect(dbname=db, user=user, host=host, port=port, password=password)
         self.nsingle = 0

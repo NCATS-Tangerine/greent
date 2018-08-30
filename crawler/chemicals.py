@@ -105,7 +105,7 @@ def glom(cpairs, chemdict):
 
 def load_unichem():
     chemcord = {}
-    prefixes={1:'CHEMBL', 2:'DRUGBANK', 7:'CHEBI', 14:'UNII',  18:'HMDB', 22:'PUBCHEM'}
+    prefixes={1:'CHEMBL', 2:'DRUGBANK', 6:'KEGG.COMPOUND', 7:'CHEBI', 14:'UNII',  18:'HMDB', 22:'PUBCHEM'}
     #
     keys=list(prefixes.keys())
     keys.sort()

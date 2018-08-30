@@ -16,17 +16,17 @@ class HMDB(Service):
         super(HMDB, self).__init__("hmdb", context)
         self.concepts_robo2hmdb = {node_types.DISEASE: 'disease',
                               node_types.PATHWAY: 'pathway',
-                              node_types.DISEASE_OR_PHENOTYPE: 'disease',
+                              node_types.DISEASE_OR_PHENOTYPIC_FEATURE: 'disease',
                               node_types.GENETIC_CONDITION: 'disease',
                               node_types.GENE: 'protein',
-                              node_types.DRUG: 'metabolite',
-                              node_types.ANATOMY: 'gross anatomical structure'}
+                              node_types.CHEMICAL_SUBSTANCE: 'metabolite',
+                              node_types.ANATOMICAL_ENTITY: 'gross anatomical structure'}
         #We're not auto-inverting because the map is not 1:1
         self.concepts_hmdb2robo = {'disease':node_types.DISEASE,
                                    'pathway':node_types.PATHWAY,
                                    'protein':node_types.GENE,
-                                   'metabolite':node_types.DRUG,
-                                   'gross anatomical structure':node_types.ANATOMY}
+                                   'metabolite':node_types.CHEMICAL_SUBSTANCE,
+                                   'gross anatomical structure':node_types.ANATOMICAL_ENTITY}
         #These are all the predicates you can get
         self.predicates = { "related to": "SEMMEDDB:ASSOCIATED_WITH",
                             "participates in": "RO:0000056",
@@ -61,7 +61,7 @@ class HMDB(Service):
         pred_label = json_node['relation']
         return LabeledID(identifier=pred_id, label=pred_label), False
 
-    def request_statement(self,input_identifier,node_type,fname):
+    def request_statement(self,old_node,input_identifier,node_type,fname):
         url = f'{self.url}/statements?s={input_identifier}&categories={self.concepts_robo2hmdb[node_type]}'
         raw_results = requests.get(url).json()
         results = []
@@ -73,8 +73,10 @@ class HMDB(Service):
                 continue
             if subject_node.id == input_identifier:
                 new_node = object_node
+                subject_node = old_node
             elif object_node.id == input_identifier:
                 new_node = subject_node
+                object_node = old_node
             else:
                 raise Exception("Something has gone wrong in the identifiers")
             edge = self.create_edge(subject_node, object_node, f'hmdb.{fname}',
@@ -86,18 +88,18 @@ class HMDB(Service):
         input_ids = node.get_synonyms_by_prefix(prefix)
         results = []
         for iid in input_ids:
-            en = self.request_statement(iid,target_type,fname)
+            en = self.request_statement(node,iid,target_type,fname)
             results.extend(en)
         return results
 
     def disease_to_metabolite(self,disease_node):
-        return self.A_to_B(disease_node, 'UMLS', node_types.DRUG, 'disease_to_metabolite')
+        return self.A_to_B(disease_node, 'UMLS', node_types.CHEMICAL_SUBSTANCE, 'disease_to_metabolite')
 
     def enzyme_to_metabolite(self,enzyme_node):
-        return self.A_to_B(enzyme_node, 'UniProtKB', node_types.DRUG, 'enzyme_to_metabolite')
+        return self.A_to_B(enzyme_node, 'UniProtKB', node_types.CHEMICAL_SUBSTANCE, 'enzyme_to_metabolite')
 
     def pathway_to_metabolite(self,pathway_node):
-        return self.A_to_B(pathway_node, 'SMPDB', node_types.DRUG, 'enzyme_to_pathway')
+        return self.A_to_B(pathway_node, 'SMPDB', node_types.CHEMICAL_SUBSTANCE, 'enzyme_to_pathway')
 
     def metabolite_to_enzyme(self,metabolite_node):
         return self.A_to_B(metabolite_node, 'HMDB', node_types.GENE, 'metabolite_to_enzyme')

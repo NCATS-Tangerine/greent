@@ -7,17 +7,17 @@ def test_drugcentral(rosetta):
     fname='caster.output_filter(mychem~get_drugcentral,disease,typecheck~is_disease)'
     func = rosetta.get_ops(fname)
     assert func is not None
-    node = KNode('CHEMBL:CHEMBL159', type=node_types.DRUG)
+    node = KNode('CHEMBL:CHEMBL159', type=node_types.CHEMICAL_SUBSTANCE)
     results = func(node)
     for e,n in results:
-        assert e.edge_source=='mychem.get_drugcentral'
+        assert e.provided_by=='mychem.get_drugcentral'
 
 def test_complicated(rosetta):
     """make sure that a very complicated cast gets everything to the right place"""
     fname='caster.output_filter(input_filter(upcast(hetio~disease_to_phenotype,disease_or_phenotypic_feature),disease,typecheck~is_disease),disease,typecheck~is_disease)'
     func = rosetta.get_ops(fname)
     assert func is not None
-    node = KNode('HP:0007354', type=node_types.PHENOTYPE)
+    node = KNode('HP:0007354', type=node_types.PHENOTYPIC_FEATURE)
     node.add_synonyms( set( [LabeledID(identifier='DOID:332', label='ALS')] ) )
     results = func(node)
     assert results is not None
@@ -33,7 +33,6 @@ def test_output_filter(rosetta):
         assert node.type == node_types.GENETIC_CONDITION
     gc_identifiers = [ node.id for edge,node in results]
     #These are genetic conditions associated with PPARG
-    assert 'MONDO:0007455' in gc_identifiers
     assert 'MONDO:0011448' in gc_identifiers
     assert 'MONDO:0018883' in gc_identifiers
     assert 'MONDO:0019245' in gc_identifiers
@@ -50,7 +49,7 @@ def test_upcast(rosetta):
     results = func(KNode('HGNC:9236', type=node_types.GENE))
     assert len(results) > 0
     for edge,node in results:
-        assert node.type == node_types.PROCESS
+        assert node.type == node_types.BIOLOGICAL_PROCESS
 
 def test_null_input_filter(rosetta):
     """According to biolink model, pathway is_a biological process.  So if we have a process, we can try to
@@ -59,7 +58,7 @@ def test_null_input_filter(rosetta):
     fname='caster.input_filter(biolink~pathway_get_gene,pathway)'
     func = rosetta.get_ops(fname)
     assert func is not None
-    results = func(KNode('KEGG-path:maphsa04211', type=node_types.PROCESS)) #one of the results from the above
+    results = func(KNode('KEGG-path:maphsa04211', type=node_types.BIOLOGICAL_PROCESS)) #one of the results from the above
     assert len(results) > 0
     for edge,node in results:
         assert node.type == node_types.GENE
@@ -74,11 +73,11 @@ def test_input_filter(rosetta):
     fname='caster.input_filter(uberongraph~get_anatomy_by_cell_graph,cell,typecheck~is_cell)'
     func = rosetta.get_ops(fname)
     assert func is not None
-    results = func(KNode('CL:0000169', type=node_types.ANATOMY)) #Type-B pancreatic cell cast as an anatomy
+    results = func(KNode('CL:0000169', type=node_types.ANATOMICAL_ENTITY)) #Type-B pancreatic cell cast as an anatomy
     assert len(results) > 0
     anat_ids = [node.id for edge,node in results]
     assert 'UBERON:0001264' in anat_ids #pancreas
-    results = func(KNode('UBERON:0001264', type=node_types.ANATOMY)) #PANCREAS
+    results = func(KNode('UBERON:0001264', type=node_types.ANATOMICAL_ENTITY)) #PANCREAS
     assert len(results) == 0
 
 def test_nested(rosetta):

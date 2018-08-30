@@ -12,7 +12,7 @@ def mychem(rosetta):
     return mychem
 
 def test_drugcentral(mychem):
-    node = KNode('CHEMBL:CHEMBL118', type=node_types.DRUG, name='Celecoxib') #Celecoxib
+    node = KNode('CHEMBL:CHEMBL118', type=node_types.CHEMICAL_SUBSTANCE, name='Celecoxib') #Celecoxib
     results = mychem.get_drugcentral(node)
     found1 = False
     found2 = False
@@ -28,14 +28,14 @@ def test_drugcentral(mychem):
     assert found2
 
 def test_drug_adverse_events(mychem):
-    node = KNode('CHEMBL:CHEMBL1508', type=node_types.DRUG) #Escitalopram
+    node = KNode('CHEMBL:CHEMBL1508', type=node_types.CHEMICAL_SUBSTANCE) #Escitalopram
     results = mychem.get_adverse_events(node)
     #for e,n in results:
     #    print(n)
     assert len(results) > 0
 
 def test_atorvastatin(mychem):
-    node = KNode('CHEMBL:CHEMBL1487', type=node_types.DRUG) #Escitalopram
+    node = KNode('CHEMBL:CHEMBL1487', type=node_types.CHEMICAL_SUBSTANCE) #Escitalopram
     results = mychem.get_adverse_events(node)
     assert len(results) > 0
 
@@ -46,7 +46,7 @@ def x_test_event_to_drug(mychem):
     assert len(results) > 0
 
 def x_test_event_to_drug(mychem):
-    node = KNode('HP:0002018', type=node_types.PHENOTYPE, name='Nausea')
+    node = KNode('HP:0002018', type=node_types.PHENOTYPIC_FEATURE, name='Nausea')
     node.add_synonyms( set( [LabeledID(identifier='MedDRA:10028813', label='Nausea')]))
     results = mychem.get_drug_from_adverse_events(node)
     assert len(results) > 0
@@ -59,7 +59,7 @@ def x_test_with_pheno_filter(rosetta):
     func = rosetta.get_ops(fname)
     assert func is not None
     #Escitalopram
-    results = func(KNode('CHEMBL:CHEMBL1508', type=node_types.DRUG))
+    results = func(KNode('CHEMBL:CHEMBL1508', type=node_types.CHEMICAL_SUBSTANCE))
     assert len(results) > 0
 
 

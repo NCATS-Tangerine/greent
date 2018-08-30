@@ -39,20 +39,21 @@ def generate_query(pathway, start_identifiers, start_name = None, end_identifier
     return query
 
 
-conceptsAndIds = [
-  ("anatomical_entity", "A"),
-  ("biological_process_or_activity", "P"),
-  ("cell", "C"),
-  ("chemical_substance", "S"),
-  ("disease", "D"),
-  ("gene", "G"),
-  ("phenotypic_feature", "T"),
-  ("genetic_condition", "X")
-]
-map = {c[1]:c[0] for c in conceptsAndIds}
+#conceptsAndIds = [
+#  ("anatomical_entity", "A"),
+#  ("biological_process_or_activity", "P"),
+#  ("cell", "C"),
+#  ("chemical_substance", "S"),
+#  ("disease", "D"),
+#  ("gene", "G"),
+#  ("phenotypic_feature", "T"),
+#  ("genetic_condition", "X")
+#]
+#map = {c[1]:c[0] for c in conceptsAndIds}
 
 def build_spec(spec_sequence, start_name, start_id, end_name=None, end_id=None):
-    sequence_ids = [map[c] for c in spec_sequence]
+    sequence_ids = spec_sequence.split(',')
+    #sequence_ids = [map[c] for c in spec_sequence]
     
     machine_question = {'nodes': [], 'edges': []}
     node, edge = build_step(sequence_ids[0], start_name, start_id, id=0)
@@ -138,18 +139,19 @@ def setup(config):
 
 
 helpstring = """Execute a query across all configured data sources.  The query is defined 
-using the -p argument, which takes a string.  Each character in the string 
-represents one high-level type of node that will be sequentially included 
+using the -p argument, which takes a comma-delimited string.  Each element in the string 
+represents one high-level type of node that will be sequentially included. The strings are the 
+snake_case biolink-names such as: 
 denoted as:
-S: Substance (Drug)
-G: Gene
-P: Process (Pathway)
-C: Cell Type
-A: Anatomical Feature
-T: Phenotype
-D: Disease
-X: Genetic Condition
-?: Unspecified Node
+chemical_substance
+gene
+biological_process_or_activity
+cell
+anatomical_entity
+phenotypic_feature
+disease
+genetic_condition
+unspecified
 
 It is also possible to specify indirect transitions by including 
 parenthetical values between these letters containing the number of 
@@ -158,17 +160,15 @@ be denoted (1-1), but it is not necessary to include between
 every node.
 
 Examples:
-    DGX        Go directly from Disease, to Gene, to Genetic Condition.
-    D(1-2)X    Go from Disease to Genetic Condition, either directly (1)
-               or via another node (of any type) in between
-    SGPCATD    Construct a Clinical Outcome Pathway, moving from a Drug 
-               to a Gene to a Process to a Cell Type to an Anatomical 
-               Feature to a Phenotype to a Disease. Each with no 
-               intermediary nodes
-    SG(2-5)D   Go from a Drug to a Gene, through 2 to 5 other transitions, and 
-               to a Disease.
+    disease,gene,genetic_condition     Go directly from Disease, to Gene, to Genetic Condition.
+    disease,(1-2),genetic_condition    Go from Disease to Genetic Condition, either directly (1)
+                                       or via another node (of any type) in between
+    chemical_substance,gene,biological_process_or_activity,cell,anatomical_entity,phenotypic_feature,disease    
+                                       Construct a Clinical Outcome Pathway, moving from a Drug 
+                                       to a Gene to a Process to a Cell Type to an Anatomical 
+                                       Feature to a Phenotype to a Disease. Each with no 
+                                       intermediary nodes
 """
-
 
 def main():
     parser = argparse.ArgumentParser(description=helpstring,

@@ -21,7 +21,7 @@ def test_string_to_info_wackycap(pharos):
 
 def test_drug_get_gene(pharos):
     #pharos should find chembl in the synonyms
-    node = KNode('DB:FakeyName', type=node_types.DRUG)
+    node = KNode('DB:FakeyName', type=node_types.CHEMICAL_SUBSTANCE)
     node.add_synonyms([LabeledID(identifier='CHEMBL:CHEMBL118', label='blahbalh')])
     results = pharos.drug_get_gene(node)
     #we get results
@@ -37,6 +37,15 @@ def test_drug_get_gene(pharos):
     assert len(prefixes) == 1
     #PTGS2 (COX2) (HGNC:9605) should be in there
     assert 'HGNC:9605' in identifiers
+
+def xtest_gene_get_drug_long(pharos,rosetta):
+    gene_node = KNode('HGNC:6871', type=node_types.GENE)
+    rosetta.synonymizer.synonymize(gene_node)
+    print(gene_node.synonyms)
+    #output = pharos.gene_get_drug(gene_node)
+    #identifiers = [ output_i[1].id for output_i in output ]
+    #assert 'CHEMBL:CHEMBL118'in identifiers
+    #assert False
 
 def test_gene_get_drug(pharos,rosetta):
     gene_node = KNode('HGNC:9605', type=node_types.GENE)

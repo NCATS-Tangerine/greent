@@ -19,7 +19,6 @@ from greent import node_types
 
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
-
 class Pharos(Service):
     def __init__(self, context):
         super(Pharos, self).__init__("pharos", context)
@@ -95,17 +94,17 @@ class Pharos(Service):
         results = []
         predicate = LabeledID(identifier='RDFS:id', label='identifies')
         for pharosid, pharoslabel in pharosids:
-            newnode = KNode(pharosid, type=node_types.DRUG, name=pharoslabel)
+            newnode = KNode(pharosid, type=node_types.CHEMICAL_SUBSTANCE, name=pharoslabel)
             raise RuntimeError('namenode.id is probably not a ctime...')
             newedge = KEdge(namenode, newnode, 'pharos.drugname_to_pharos', namenode.id, predicate)
             results.append((newedge, newnode))
         return results
 
     def drugid_to_identifiers(self,refid):
+        logger.debug(f'drugid_to_identifier {refid}')
         url = 'https://pharos.nih.gov/idg/api/v1/ligands(%s)/synonyms' % refid
-        logger.debug(f'lookup chembl in pharos ({refid})')
         result = requests.get(url).json()
-        logger.debug('returned')
+        logger.debug('back')
         chemblid = None
         label = None
         for element in result:
@@ -113,7 +112,7 @@ class Pharos(Service):
                 label = element['term']
             if element['label'] == 'CHEMBL ID':
                 chemblid = f"CHEMBL:{element['term']}"
-        logger.debug('ok')
+        logger.debug('out')
         return chemblid, label
 
     def gene_get_drug(self, gene_node):
@@ -122,17 +121,17 @@ class Pharos(Service):
         identifiers = gene_node.get_synonyms_by_prefix('UNIPROTKB')
         for s in identifiers:
             try:
+                logger.debug(f'Call with {s}')
                 pharosid = Text.un_curie(s)
                 original_edge_nodes = []
                 url = 'https://pharos.nih.gov/idg/api/v1/targets(%s)?view=full' % pharosid
                 r = requests.get(url)
                 try:
-                    logger.debug(f'calling ({pharosid})')
                     result = r.json()
-                    logger.debug('responded')
+                    logger.debug('back')
                 except:
                     #If pharos doesn't know the identifier, it just 404s.  move to the next
-                    logger.debug('fail')
+                    logger.debug('404')
                     continue 
                 actions = set()  # for testing
                 predicate = LabeledID(identifier='PHAROS:drug_targets', label='is_target')
@@ -142,13 +141,13 @@ class Pharos(Service):
                         pharos_drug_id = link['refid']
                         chembl_id, label = self.drugid_to_identifiers(pharos_drug_id)
                         if chembl_id is not None:
-                            drug_node = KNode(chembl_id, type=node_types.DRUG, name=label)
+                            drug_node = KNode(chembl_id, type=node_types.CHEMICAL_SUBSTANCE, name=label)
                             edge = self.create_edge(drug_node,gene_node, 'pharos.gene_get_drug',
                                     pharosid,predicate, url=url)
                             resolved_edge_nodes.append( (edge,drug_node) )
             except:
                 logger.debug("Error encountered calling pharos with",s)
-        logger.debug('all done')
+            logger.debug('ok')
         return resolved_edge_nodes
 
 

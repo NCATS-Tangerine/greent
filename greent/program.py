@@ -7,6 +7,7 @@ import pickle
 import pika
 from datetime import datetime as dt
 from datetime import timedelta
+import hashlib
 
 import requests
 from collections import defaultdict
@@ -42,10 +43,12 @@ class Program:
         self.concept_nodes = nodes
         self.transitions = plan
         self.rosetta = rosetta
+        self.prefix = hashlib.md5((str(plan) + str(nodes)).encode()).hexdigest()
         self.cache = Cache(
             redis_host=os.environ['BUILD_CACHE_HOST'],
             redis_port=os.environ['BUILD_CACHE_PORT'],
-            redis_db=os.environ['BUILD_CACHE_DB'])
+            redis_db=os.environ['BUILD_CACHE_DB'],
+            prefix=self.prefix)
 
         self.cache.flush()
         self.log_program()
@@ -72,7 +75,7 @@ class Program:
         num_consumers = [q['consumers'] for q in queues if q['name'] == 'neo4j']
         if num_consumers and num_consumers[0]:
             self.connection = pika.BlockingConnection(pika.ConnectionParameters(
-                heartbeat=600,
+                heartbeat=0,
                 host=os.environ['BROKER_HOST'],
                 virtual_host='builder',
                 credentials=pika.credentials.PlainCredentials(os.environ['BROKER_USER'], os.environ['BROKER_PASSWORD'])))
@@ -163,11 +166,11 @@ class Program:
         # print(node.dump())
         # if edge:
         #     print(edge.dump())
-        print("-"*len(history)+"History: ", history)
+        #print("-"*len(history)+"History: ", history)
 
         # only add a node if it wasn't cached
         completed = self.cache.get(key) # set of nodes we've been from here
-        print("-"*len(history)+"Completed: ", completed)
+        #print("-"*len(history)+"Completed: ", completed)
         if completed is None:
             completed = set()
             self.cache.set(key, completed)
@@ -196,7 +199,7 @@ class Program:
 
         # quit if we've closed a loop
         if history[-1] in history[:-1]:
-            print("-"*len(history)+"Closed a loop!")
+            #print("-"*len(history)+"Closed a loop!")
             return
 
         source_id = int(history[-1])
@@ -219,9 +222,9 @@ class Program:
             completed.add(target_id)
             self.cache.set(key, completed)
             links = self.transitions[source_id][target_id]
-            print("-"*len(history)+f"Destination: {target_id}")
+            #print("-"*len(history)+f"Destination: {target_id}")
             for link in links:
-                print("-"*len(history)+"Executing: ", link['op'])
+                #print("-"*len(history)+"Executing: ", link['op'])
                 self.process_op(link, node, history+str(target_id))
 
     #CAN I SOMEHOW CAPTURE PATHS HERE>>>>

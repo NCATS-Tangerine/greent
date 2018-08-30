@@ -70,11 +70,11 @@ def lookup_drug_by_name( drug_name, greent ):
 
 
 def lookup_identifier( name, name_type, greent ):
-    if name_type == node_types.DRUG:
+    if name_type == node_types.CHEMICAL_SUBSTANCE:
         return lookup_drug_by_name( name, greent )
     elif name_type == node_types.DISEASE:
         return lookup_disease_by_name( name, greent )
-    elif name_type == node_types.PHENOTYPE:
+    elif name_type == node_types.PHENOTYPIC_FEATURE:
         return lookup_phenotype_by_name( name, greent )
     else:
         raise ValueError('Only Drugs, Diseases, and Phenotypes may be used as named nodes')

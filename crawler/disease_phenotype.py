@@ -8,7 +8,8 @@ def load_diseases_and_phenotypes(rosetta):
     glom(dicts,mondo_sets)
     glom(dicts,hpo_sets)
     glom(dicts,meddra_umls)
-    dump_cache(dicts,rosetta)
+    with open('disease.txt','w') as outf:
+        dump_cache(dicts,rosetta,outf)
 
 def build_sets(o):
     sets = []

@@ -85,10 +85,25 @@
     gene:
       - link  : disease_to_gene
         op    : pharos.disease_get_gene
+    metabolite:
+      - link  : disease_to_metabolite
+        op    : hmdb.disease_to_metabolite
   drug:
     gene:
       - link  : drug_to_gene
         op    : pharos.drug_get_gene
+  metabolite:
+    gene:
+      - link  : metabolite_to_gene
+        op    : hmdb.metabolite_to_enzyme
+      - link  : chemical_to_gene
+        op    : kegg.chemical_get_enzyme
+    disease:
+      - link  : metabolite_to_disease
+        op    : hmdb.metabolite_to_disease
+    pathway:
+      - link  : metabolite_to_pathway
+        op    : hmdb.metabolite_to_pathway
   gene:
     anatomical_entity:
       - link  : gene_to_anatomy
@@ -106,6 +121,11 @@
         op    : ctd.gene_to_drug
       - link  : gene_get_drug
         op    : pharos.gene_get_drug
+    metabolite:
+      - link  : enzyme_to_metabolite
+        op    : hmdb.enzyme_to_metabolite
+      - link  : enzyme_to_metabolite
+        op    : kegg.enzyme_get_chemicals
     pathway:
       - link  : gene_to_pathway
         op    : biolink.gene_get_pathways
@@ -118,6 +138,9 @@
     gene:
       - link  : pathway_to_gene
         op    : biolink.pathway_get_gene
+    metabolite:
+      - link  : pathway_to_metabolite
+        op    : hmdb.pathway_to_metabolite
   phenotypic_feature:
     anatomical_entity:
       - link  : phenotype_to_anatomy

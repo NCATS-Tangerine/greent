@@ -76,7 +76,7 @@ def test():
     gt = rosetta.core
     support = ChemotextSupport(gt)
     from greent.graph_components import KNode
-    node = KNode('HP:0000964', type=node_types.PHENOTYPE, name='Eczema')
+    node = KNode('HP:0000964', type=node_types.PHENOTYPIC_FEATURE, name='Eczema')
     # node.mesh_identifiers.append( { 'curie': 'MeSH:D004485', 'label': 'Eczema' } )
     support.add_chemotext_terms( [node] )
     # import json
@@ -88,8 +88,8 @@ def test2():
     gt = rosetta.core
     support = ChemotextSupport(gt)
     from greent.graph_components import KNode
-    node_a = KNode('CTD:1,2-linoleoylphosphatidylcholine', type=node_types.DRUG, name='1,2-linoleoylphosphatidylcholine')
-    node_b = KNode('CTD:Hydrogen Peroxide', type=node_types.DRUG, name='Hydrogen Peroxide')
+    node_a = KNode('CTD:1,2-linoleoylphosphatidylcholine', type=node_types.CHEMICAL_SUBSTANCE, name='1,2-linoleoylphosphatidylcholine')
+    node_b = KNode('CTD:Hydrogen Peroxide', type=node_types.CHEMICAL_SUBSTANCE, name='Hydrogen Peroxide')
     #node.mesh_identifiers.append( { 'curie': 'MeSH:D004485', 'label': 'Eczema' } )
     #support.add_chemotext_terms( [node] )
     #import json

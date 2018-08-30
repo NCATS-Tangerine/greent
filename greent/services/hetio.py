@@ -35,7 +35,7 @@ class HetIO(Neo4JREST):
         results = []
         for node_id, predicate_label in zip(node_ids,edge_ids):
             predicate = LabeledID(identifier=f'hetio:{predicate_label}', label=predicate_label)
-            anatomy = KNode(node_id.identifier, type=node_types.ANATOMY, name=node_id.label)
+            anatomy = KNode(node_id.identifier, type=node_types.ANATOMICAL_ENTITY, name=node_id.label)
             #These edges all go from anatomy to gene
             edge = self.create_edge(anatomy, gene,'hetio.gene_to_anatomy',gene_identifier,predicate)
             results.append((edge, anatomy))
@@ -98,7 +98,7 @@ class HetIO(Neo4JREST):
         results = []
         for node_id, predicate_label in zip(node_ids,edge_ids):
             predicate = LabeledID(identifier=f'hetio:{predicate_label}', label=predicate_label)
-            phenotype = KNode(node_id.identifier, type=node_types.PHENOTYPE, name=node_id.label)
+            phenotype = KNode(node_id.identifier, type=node_types.PHENOTYPIC_FEATURE, name=node_id.label)
             edge = self.create_edge(disease, phenotype, 'hetio.disease_to_phenotype', disease_identifier, predicate)
             results.append( (edge, phenotype) )
         return results

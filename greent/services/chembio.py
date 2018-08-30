@@ -26,7 +26,7 @@ class ChemBioKS(Service):
             predicate=LabeledID(identifier='rdfs:ID', label='identifies')
             results = []
             for r in response:
-                node = KNode( "PUBCHEM:{}".format( r['drugID'].split('/')[-1]), type=node_types.DRUG, name=r['drugName'])
+                node = KNode( "PUBCHEM:{}".format( r['drugID'].split('/')[-1]), type=node_types.CHEMICAL_SUBSTANCE, name=r['drugName'])
                 edge = self.create_edge(drugname_node,node,'chembio.graph_drugname_to_pubchem',drugname_node.id,predicate)
                 results.append( (edge,node) )
             return results
@@ -93,7 +93,7 @@ class ChemBioKS(Service):
         results = []
         predicate=LabeledID(identifier="RO:0002302", label="is_treated_by_substance")
         for r in drugs:
-            node = KNode (r['drugID'].split('/')[-1:][0], type=node_types.DRUG, name=r['drugGenericName'])
+            node = KNode (r['drugID'].split('/')[-1:][0], type=node_types.CHEMICAL_SUBSTANCE, name=r['drugGenericName'])
             edge = self.create_edge(conditions, node, 'chembio.get_drugs_by_condition_graph', conditions.identifier, predicate, publications= r['diseasePMIDS'])
             results.append ( (edge, node) )
         #logger.debug ("chembio drugs by condition: {}".format (results))

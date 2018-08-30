@@ -50,14 +50,14 @@ def test_gene_to_process(biolink):
     #At that point, change to assert len(results) > 0, and take out all the UniProt jazz in the client.
     assert len(results) == 0
     for ke, kn in results:
-        assert kn.type == node_types.PROCESS_OR_FUNCTION
+        assert kn.type == node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY
         assert Text.get_curie(kn.id) == "GO"
 
 def test_gene_to_process2(biolink):
     KIT_protein = KNode('UniProtKB:Q14994', type=node_types.GENE)
     results = biolink.gene_get_process_or_function(KIT_protein)
     for ke, kn in results:
-        assert kn.type == node_types.PROCESS_OR_FUNCTION
+        assert kn.type == node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY
         assert Text.get_curie(kn.id) == "GO"
 
 def test_disease_to_phenotypes(biolink):

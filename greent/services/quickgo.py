@@ -152,7 +152,7 @@ class QuickGo(Service):
         go_ids = set([ (r['goId'],r['goName']) for r in call_results ])
         predicate=self.get_predicate('occurs_in')
         #Don't get a name for the go term.. there is a goName field, but it's always NULL.
-        nodes = [ KNode(idlabel[0], type=node_types.PROCESS_OR_FUNCTION, name=idlabel[1]) for idlabel in go_ids ]
+        nodes = [ KNode(idlabel[0], type=node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, name=idlabel[1]) for idlabel in go_ids ]
         edges = [ self.create_edge(go_node, cell_node, 'quickgo.cell_to_go_term_annotation_extensions', cell_node.id, predicate, url = url) for go_node in nodes ] 
         return list(zip(edges,nodes))
 
