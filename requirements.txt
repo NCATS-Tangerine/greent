@@ -14,4 +14,5 @@ ndex2
 ontobio
 pronto
 pika
+mysql-connector
 -e git+https://github.com/Supervisor/supervisor@master#egg=supervisor
