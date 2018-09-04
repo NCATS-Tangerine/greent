@@ -12,7 +12,7 @@ import hashlib
 import requests
 from collections import defaultdict
 from greent.graph_components import KNode
-from greent.util import LoggingUtil
+from greent.util import LoggingUtil, Text
 from greent import node_types
 from greent.export import BufferedWriter
 from greent.cache import Cache
@@ -111,7 +111,7 @@ class Program:
 
     def process_op(self, link, source_node, history):
         op_name = link['op']
-        key = f"{op_name}({source_node.id})"
+        key = f"{op_name}({Text.upper_curie(source_node.id)})"
         maxtime = timedelta(minutes=2)
         try:
             try:

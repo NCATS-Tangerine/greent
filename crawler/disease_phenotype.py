@@ -1,7 +1,8 @@
 from crawler.crawl_util import glom, dump_cache
+from builder.question import LabeledID
 
 def load_diseases_and_phenotypes(rosetta):
-    mondo_sets = build_sets(rosetta.core.mondo)
+    mondo_sets = build_exact_sets(rosetta.core.mondo)
     hpo_sets = build_sets(rosetta.core.hpo)
     meddra_umls = read_meddra()
     dicts = {}
@@ -11,6 +12,20 @@ def load_diseases_and_phenotypes(rosetta):
     with open('disease.txt','w') as outf:
         dump_cache(dicts,rosetta,outf)
 
+def build_exact_sets(o):
+    sets = []
+    mids = o.get_ids()
+    for mid in mids:
+        #FWIW, ICD codes tend to be mapped to multiple MONDO identifiers, leading to mass confusion. So we
+        #just excise them here.  It's possible that we'll want to revisit this decision in the future.  If so,
+        #then we probably will want to set a 'glommable' and 'not glommable' set.
+        dbx = set( filter( lambda x: not x.startswith('ICD'), o.get_exact_matches(mid) ) )
+        label = o.get_label(mid)
+        dbx.add(LabeledID(mid,label))
+        sets.append(dbx)
+    return sets
+
+
 def build_sets(o):
     sets = []
     mids = o.get_ids()
@@ -19,7 +34,8 @@ def build_sets(o):
         #just excise them here.  It's possible that we'll want to revisit this decision in the future.  If so,
         #then we probably will want to set a 'glommable' and 'not glommable' set.
         dbx = set([x['id'] for x in o.get_xrefs(mid) if not x['id'].startswith('ICD')])
-        dbx.add(mid)
+        label = o.get_label(mid)
+        dbx.add(LabeledID(mid,label))
         sets.append(dbx)
     return sets
 

@@ -61,3 +61,13 @@ def test_disease_get_gene(pharos,rosetta):
     output = pharos.disease_get_gene(disease_node)
     identifiers = [ output_i[1].id for output_i in output ]
     assert 'HGNC:7897' in identifiers
+
+def test_disease_gene_mondo(pharos,rosetta):
+    d_node = KNode('MONDO:0008903', type=node_types.DISEASE)
+    rosetta.synonymizer.synonymize(d_node)
+    print(d_node.synonyms)
+    output = pharos.disease_get_gene(d_node)
+    identifiers = [ output_i[1].id for output_i in output ]
+    #assert 'CHEMBL:CHEMBL118'in identifiers
+    print(identifiers)
+    assert False

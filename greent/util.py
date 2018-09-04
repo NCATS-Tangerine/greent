@@ -68,6 +68,14 @@ class Text:
         resu =  '_'.join( dedash.split() )
         return resu
 
+    @staticmethod
+    def upper_curie(text):
+        if ':' not in text:
+            return text
+        p = text.split(':')
+        return f'{p[0].upper()}:{p[1]}'
+
+
 
 class Resource:
     @staticmethod

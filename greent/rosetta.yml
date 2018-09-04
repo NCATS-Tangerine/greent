@@ -116,6 +116,8 @@
         op    : biolink.gene_get_disease
       - link  : gene_to_disease
         op    : hetio.gene_to_disease
+      - link  : gene_to_disease
+        op    : pharos.gene_get_disease
     chemical_substance:
       - link  : gene_to_drug
         op    : ctd.gene_to_drug

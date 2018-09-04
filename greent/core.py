@@ -18,6 +18,7 @@ from greent.services.onto import Onto
 from greent.services.omnicorp_postgres import OmniCorp
 from greent.services.oxo import OXO
 from greent.services.pharos import Pharos
+from greent.services.pharos_mysql import PharosMySQL
 from greent.services.quickgo import QuickGo
 from greent.services.tkba import TranslatorKnowledgeBeaconAggregator
 from greent.services.typecheck import TypeCheck
@@ -57,7 +58,8 @@ class GreenT:
             "omnicorp"         : lambda :  OmniCorp (self.service_context),
             "oxo"              : lambda :  OXO (self.service_context),
             "onto"             : lambda :  Onto ("onto", self.service_context),
-            "pharos"           : lambda :  Pharos (self.service_context),
+            #"pharos"           : lambda :  Pharos (self.service_context),
+            "pharos"           : lambda :  PharosMySQL (self.service_context),
             "quickgo"          : lambda :  QuickGo (self.service_context),
             "tkba"             : lambda :  TranslatorKnowledgeBeaconAggregator (self.service_context),
             "typecheck"        : lambda :  TypeCheck(self.service_context, self, rosetta),

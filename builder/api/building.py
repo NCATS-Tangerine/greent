@@ -64,8 +64,9 @@ class UpdateKG(Resource):
                     schema:
                         $ref: '#/definitions/Question'
         """
-        logger = logging.getLogger('builder')
+        #logger = logging.getLogger('builder')
         logger.info("Queueing 'KG update' task...")
+        logger.info(request.json)
         task = update_kg.apply_async(args=[request.json])
         return {'task id': task.id}, 202
 
@@ -74,7 +75,7 @@ api.add_resource(UpdateKG, '/')
 class Synonymize(Resource):
     def post(self, node_id, node_type):
         """
-        Get the status of a task
+        Return the best identifier for a concept, and its known synonyms
         ---
         tags: [util]
         parameters:

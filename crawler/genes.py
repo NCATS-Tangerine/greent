@@ -4,7 +4,7 @@ from json import loads
 from gzip import decompress
 from collections import defaultdict
 from builder.question import LabeledID
-from greent.util import LoggingUtil
+from greent.util import LoggingUtil,Text
 import logging
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
@@ -53,7 +53,7 @@ def load_genes(rosetta):
     ids_to_synonyms = synonymize_genes()
     #outf=open('geneout.txt','w')
     for gene_id in ids_to_synonyms:
-        key = f"synonymize({gene_id})"
+        key = f"synonymize({Text.upper_curie(gene_id)})"
         value = ids_to_synonyms[gene_id]
         #outf.write(f'KEY:{key}\n')
         #outf.write(f'VALUE: {value}\n')

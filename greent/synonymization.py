@@ -61,7 +61,7 @@ class Synonymizer:
     def synonymize(self, node):
         """Given a node, determine its type and dispatch it to the correct synonymizer"""
         # logger.debug('syn {} {}'.format(node.id, node.type))
-        key = f"synonymize({node.id})"
+        key = f"synonymize({Text.upper_curie(node.id)})"
         #check the cache. If it's not in there, try to generate it
         try:
             synonyms = self.rosetta.cache.get(key)
