@@ -49,7 +49,6 @@ def update_kg(self, question_json):
     Update the shared knowledge graph with respect to a question
     '''
 
-    logger.info('HI')
     greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
     sys.path.insert(0, greent_path)
     rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
