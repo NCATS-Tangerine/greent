@@ -35,6 +35,7 @@ class UniChem(Service):
  
     # Identifiers going into and coming out from the service are not curies, just identifiers
     def get_synonyms(self, identifier):
+        logger.debug('Hi, Unichem')
         curie = Text.get_curie(identifier)
         if curie not in self.curie_to_sourceid:
             return set()
