@@ -10,6 +10,15 @@ def ctd(rosetta):
     ctd = rosetta.core.ctd
     return ctd
 
+def test_disease_to_chemical(rosetta,ctd):
+    input_node = KNode("MONDO:0004979", type=node_types.DISEASE, name='Asthma')
+    rosetta.synonymizer.synonymize(input_node)
+    print(input_node.synonyms)
+    results = ctd.disease_to_chemical(input_node)
+    assert len(results) > 10
+    for edge, node in results:
+        assert node.type == node_types.CHEMICAL_SUBSTANCE
+        assert edge.standard_predicate.identifier != 'GAMMA:0'
 
 def test_gene_to_drug_and_back(ctd):
     input_node = KNode('MESH:D003976', type=node_types.GENE, name='Diazinon')
@@ -48,13 +57,6 @@ def test_drugname_to_mesh_synonym(ctd):
     assert nodes[0].type == node_types.CHEMICAL_SUBSTANCE
     assert nodes[0].id == 'MESH:C506698'
 
-
-def test_drugname_to_mesh_synonym_bar(ctd):
-    """Make sure we can find a synonym in a long string of synonyms"""
-    nodes = ctd.drugname_string_to_drug('DFLDEHPROSTA')
-    assert len(nodes) == 1
-    assert nodes[0].type == node_types.CHEMICAL_SUBSTANCE
-    assert nodes[0].id == 'MESH:C024526'
 
 
 def test_drug_to_gene_simple(ctd):
@@ -156,9 +158,4 @@ def test_disease_to_exposure(ctd):
     assert ddt.name == 'DDT'
 
 
-def test_disease_to_chemical(ctd):
-    input_node = KNode("MESH:D001249", type=node_types.DISEASE, name='Asthma')
-    results = ctd.disease_to_chemical(input_node)
-    for edge, node in results:
-        assert node.type == node_types.CHEMICAL_SUBSTANCE
-        assert edge.standard_predicate.identifier != 'GAMMA:0'
+

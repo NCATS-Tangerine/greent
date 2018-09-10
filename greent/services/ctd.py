@@ -212,7 +212,7 @@ class CTD(Service):
         identifiers = disease_node.get_synonyms_by_prefix('MESH')
         for identifier in identifiers:
             unique = set()
-            url = f"{self.url}CTD_chemicals_diseases_DiseaseID/{Text.un_curie(identifier)}/"
+            url = f"{self.url}CTD_chemicals_diseases_DiseaseID/{identifier}/"
             obj = requests.get (url).json ()
             for r in obj:
                 predicate_label = r['DirectEvidence']

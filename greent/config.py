@@ -49,11 +49,14 @@ class Config(dict):
         '''
         key_var = re.sub('[\W]', '', key)
         name = self.prefix+'_'+key_var if self.prefix else key_var
+        #print(f"Config looking for {name}")
         try:
             env_name = name.upper()
+            #print ("IN ENVI")
             return os.environ[env_name]
         except KeyError:
             value = self.conf[key]
+            #print(f'GOT {value}')
             if isinstance(value, dict):
                 return Config(value, prefix=name)
             else:

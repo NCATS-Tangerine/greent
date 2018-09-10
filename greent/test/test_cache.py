@@ -37,3 +37,10 @@ def xtest_go(rosetta):
     biolink = rosetta.core.biolink
     r=biolink.gene_get_process_or_function(node)
     assert len(r) > 0
+
+def test_umls(rosetta):
+    node = KNode("UMLS:C0015625",label="Fanconi Anemia", type=node_types.DISEASE)
+    rosetta.synonymizer.synonymize(node)
+    print(node.synonyms)
+    assert node.id == 'MONDO:0019339'
+
