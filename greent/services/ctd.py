@@ -219,7 +219,7 @@ class CTD(Service):
             url = f"{self.url}CTD_chemicals_diseases_DiseaseID/{identifier}/"
             obj = requests.get (url).json ()
             logger.info(url)
-            logger.info(len(r))
+            logger.info(len(obj))
             for r in obj:
                 predicate_label = r['DirectEvidence']
                 if predicate_label == '':
