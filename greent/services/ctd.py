@@ -186,12 +186,15 @@ class CTD(Service):
         return output
 
     def disease_to_exposure(self, disease_node):
+        logger.info("disease-to-exposure")
         output = []
         identifiers = disease_node.get_synonyms_by_prefix('MESH')
         for identifier in identifiers:
             unique = set()
             url = f"{self.url}CTD_exposure_events_diseaseid/{Text.un_curie(identifier)}/"
             obj = requests.get (url).json ()
+            logger.info(url)
+            logger.info(len(obj))
             for r in obj:
                 predicate_label = r['outcomerelationship']
                 if predicate_label == 'no correlation':
@@ -208,12 +211,15 @@ class CTD(Service):
         return output
 
     def disease_to_chemical(self, disease_node):
+        logger.info("disease_to_chemical")
         output = []
         identifiers = disease_node.get_synonyms_by_prefix('MESH')
         for identifier in identifiers:
             unique = set()
             url = f"{self.url}CTD_chemicals_diseases_DiseaseID/{identifier}/"
             obj = requests.get (url).json ()
+            logger.info(url)
+            logger.info(len(r))
             for r in obj:
                 predicate_label = r['DirectEvidence']
                 if predicate_label == '':

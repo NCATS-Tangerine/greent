@@ -11,6 +11,10 @@ def test_GO(rosetta):
     s = rosetta.synonymizer.synonymize( node )
     assert True
 
+def test_drug_with_mesh(rosetta):
+    node = KNode('MESH:D000393',name="notsure",type = node_types.CHEMICAL_SUBSTANCE)
+    s = rosetta.synonymizer.synonymize(node)
+    assert True
 
 def test_which_one(rosetta):
     print( rosetta.synonymizer.synonymizers[node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY])
