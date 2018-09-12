@@ -223,6 +223,7 @@ class CTD(Service):
             for r in obj:
                 predicate_label = r['DirectEvidence']
                 if predicate_label == '':
+                    continue
                     predicate_label = 'inferred'
                 predicate = LabeledID(identifier=f'CTD:{predicate_label}', label=predicate_label)
                 refs = [f'PMID:{pmid}' for pmid in r['PubMedIDs'].split('|')]

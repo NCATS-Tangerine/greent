@@ -112,8 +112,12 @@ class Synonymize(Resource):
 
         node = KNode(id=node_id, type=node_type, name='')
 
-        synonymizer = Synonymizer(rosetta.type_graph.concept_model, rosetta)
-        synonymizer.synonymize(node)
+        try:
+            synonymizer = Synonymizer(rosetta.type_graph.concept_model, rosetta)
+            synonymizer.synonymize(node)
+        except Exception as e:
+            logger.error(e)
+            return e.message, 500
 
         result = {
             'id': node.id,

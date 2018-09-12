@@ -132,6 +132,13 @@ class Biolink(Service):
         #response = requests.get(url).json()
         return self.process_associations(response, 'disease_get_phenotype', node_types.PHENOTYPIC_FEATURE, disease.id, url, disease)
 
+    def phenotype_get_disease(self,phenotype):
+        url = "{0}/bioentity/phenotype/{1}/diseases/".format(self.url, phenotype.id)
+        response = self.page_calls(url)
+        #response = requests.get(url).json()
+        return self.process_associations(response, 'phenotype_get_disease', node_types.DISEASE, phenotype.id, url, phenotype)
+
+
     def gene_get_go(self, gene):
         # This biolink function should be able to take an HGNC or other gene id, and convert to UniProtKB in the
         # backend.  This somewhat works, but it's not 100%.  For instance, there is a test in test_biolink model

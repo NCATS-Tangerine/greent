@@ -5,6 +5,7 @@ from multiprocessing import Pool
 from functools import partial
 from crawl_util import pull_via_ftp
 from json import loads
+from greent.graph_components import KNode
 
 def get_identifiers(input_type,rosetta):
     lids = []
@@ -15,6 +16,16 @@ def get_identifiers(input_type,rosetta):
                 label = rosetta.core.mondo.get_label(ident)
                 if label is not None and not label.startswith('obsolete'):
                     lids.append(LabeledID(ident,label))
+    if input_type == node_types.GENETIC_CONDITION:
+        identifiers_disease = rosetta.core.mondo.get_ids()
+        for ident in identifiers_disease:
+            print(ident)
+            if ident != 'MONDO:0000001':
+                if rosetta.core.mondo.is_genetic_disease(KNode(ident,type=node_types.DISEASE)):
+                    label = rosetta.core.mondo.get_label(ident)
+                    if label is not None and not label.startswith('obsolete'):
+                        print(ident,label,len(lids))
+                        lids.append(LabeledID(ident,label))
     if input_type == node_types.GENE:
         data = pull_via_ftp('ftp.ebi.ac.uk', '/pub/databases/genenames/new/json', 'hgnc_complete_set.json')
         hgnc_json = loads( data.decode() )

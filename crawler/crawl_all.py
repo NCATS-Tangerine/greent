@@ -20,7 +20,9 @@ def crawl():
     #load_chemicals(rosetta,refresh=False)
     #load_diseases_and_phenotypes(rosetta)
     #poolrun(node_types.DISEASE, node_types.PHENOTYPIC_FEATURE, rosetta)
+    #poolrun(node_types.GENETIC_CONDITION, node_types.PHENOTYPIC_FEATURE, rosetta)
     poolrun(node_types.GENE, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, rosetta)
+    poolrun(node_types.DISEASE, node_types.GENE, rosetta)
     #create_omnicache(rosetta)
 
 if __name__=='__main__':
