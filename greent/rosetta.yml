@@ -147,10 +147,9 @@
     anatomical_entity:
       - link  : phenotype_to_anatomy
         op    : uberongraph.get_anatomy_by_phenotype_graph
-# This biolink function seems screwy.  It doesn't return diseases that give the phenotype in disease_get_phenotyp
-#    disease:
-#      - link  : phenotype_to_disease
-#        op    : biolink.phenotype_get_disease
+    disease:
+      - link  : phenotype_to_disease
+        op    : biolink.phenotype_get_disease
 
 '@type_checks':
   genetic_condition: mondo.is_genetic_disease
