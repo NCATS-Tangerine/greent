@@ -86,7 +86,8 @@ def test_pathways(biolink):
     gene_ids = [ pk.id for pe,pk in presults ]
     assert gene_id in gene_ids
 
-def test_phenotype_to_disease(biolink):
+#This isn't how this works.  
+def xtest_phenotype_to_disease(biolink):
     glucose_intolerance = KNode('HP:0000833',type=node_types.PHENOTYPIC_FEATURE,name="glucose_intolerance")
     results = biolink.phenotype_get_disease(glucose_intolerance)
     for e, k in results:
