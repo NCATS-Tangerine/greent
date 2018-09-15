@@ -5,8 +5,7 @@ from greent.conftest import rosetta
 def test_omnicorp(rosetta):
     pref = rosetta.cache.get('OmnicorpPrefixes')
     print(pref)
-    print(type(pref))
-    assert 0
+    assert len(pref) > 10
 
 def x_test_cache(rosetta):
     #syns = rosetta.cache.get("synonymize(UMLS:C0004096)")

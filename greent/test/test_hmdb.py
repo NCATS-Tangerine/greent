@@ -12,7 +12,8 @@ def hmdb(rosetta):
     return hmdb
 
 def test_metabolite_to_disease_with_syn(rosetta,hmdb):
-    chem = KNode('CHEBI:84268', type = node_types.CHEMICAL_SUBSTANCE)
+    #chem = KNode('CHEBI:84268', type = node_types.CHEMICAL_SUBSTANCE)
+    chem = KNode('CHEBI:18357', type = node_types.CHEMICAL_SUBSTANCE)
     rosetta.synonymizer.synonymize(chem)
     results = hmdb.metabolite_to_disease(chem)
     for e,n in results:

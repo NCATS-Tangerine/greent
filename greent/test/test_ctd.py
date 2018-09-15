@@ -15,7 +15,8 @@ def test_disease_to_chemical(rosetta,ctd):
     rosetta.synonymizer.synonymize(input_node)
     print(input_node.synonyms)
     results = ctd.disease_to_chemical(input_node)
-    assert len(results) > 1000
+    #Now, we're not returning the inferred ones.
+    assert len(results) > 100
     for edge, node in results:
         assert node.type == node_types.CHEMICAL_SUBSTANCE
         assert edge.standard_predicate.identifier != 'GAMMA:0'

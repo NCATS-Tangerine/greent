@@ -22,7 +22,6 @@ class PharosMySQL(Service):
             cursor = self.db.cursor(dictionary = True, buffered = True)
             cursor.execute(query)
             for result in cursor:
-                print(result)
                 did = result['did']
                 label = result['name']
                 disease_node = KNode(did, type=node_types.DISEASE, name=label)
@@ -104,7 +103,6 @@ class PharosMySQL(Service):
                     for pharos_id in pharos_ids:
                         cursor = self.db.cursor(dictionary = True, buffered = True)
                         query = f"select distinct x.value, p.sym  from disease d join xref x on x.protein_id = d.target_id join protein p on d.target_id = p.id where x.xtype = 'HGNC' and d.did='{pharos_id}';"
-                        print(query)
                         cursor.execute(query)
                         for result in cursor:
                             label = result['sym']
