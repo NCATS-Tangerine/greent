@@ -6,6 +6,7 @@ from functools import partial
 from crawl_util import pull_via_ftp
 from json import loads
 from greent.graph_components import KNode
+import requests
 
 def get_identifiers(input_type,rosetta):
     lids = []
@@ -16,7 +17,7 @@ def get_identifiers(input_type,rosetta):
                 label = rosetta.core.mondo.get_label(ident)
                 if label is not None and not label.startswith('obsolete'):
                     lids.append(LabeledID(ident,label))
-    if input_type == node_types.GENETIC_CONDITION:
+    elif input_type == node_types.GENETIC_CONDITION:
         identifiers_disease = rosetta.core.mondo.get_ids()
         for ident in identifiers_disease:
             print(ident)
@@ -26,17 +27,21 @@ def get_identifiers(input_type,rosetta):
                     if label is not None and not label.startswith('obsolete'):
                         print(ident,label,len(lids))
                         lids.append(LabeledID(ident,label))
-    if input_type == node_types.GENE:
+    elif input_type == node_types.GENE:
         data = pull_via_ftp('ftp.ebi.ac.uk', '/pub/databases/genenames/new/json', 'hgnc_complete_set.json')
         hgnc_json = loads( data.decode() )
         hgnc_genes = hgnc_json['response']['docs']
         for gene_dict in hgnc_genes:
             symbol = gene_dict['symbol']
             lids.append( LabeledID(identifier=gene_dict['hgnc_id'], label=symbol) )
+    elif input_type == node_types.CHEMICAL_SUBSTANCE:
+        identifiers = requests.get("http://onto.renci.org/descendants/CHEBI:23367").json()['descendants']
+        for ident in identifiers:
+            res = requests.get(f'http://onto.renci.org/label/{ident}/').json()
+            lids.append(LabeledID(ident,res['label']))
     else:
         print(f'Not configured for input type: {input_type}')
     return lids
-
 
 def do_one(itype,otype,identifier):
     print(identifier.identifier)

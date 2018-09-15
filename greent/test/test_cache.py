@@ -2,6 +2,12 @@ from greent.graph_components import KNode
 from greent import node_types
 from greent.conftest import rosetta
 
+def test_omnicorp(rosetta):
+    pref = rosetta.cache.get('OmnicorpPrefixes')
+    print(pref)
+    print(type(pref))
+    assert 0
+
 def x_test_cache(rosetta):
     #syns = rosetta.cache.get("synonymize(UMLS:C0004096)")
     #print(syns)
@@ -13,7 +19,7 @@ def x_test_cache(rosetta):
     print (s3)
     assert 0
 
-def test_go_6293(rosetta):
+def xtest_go_6293(rosetta):
     node = KNode("HGNC:6293",label="KCNN4", type=node_types.GENE)
     #s3 = rosetta.cache.get('synonymize(HGNC:10593)')
     rosetta.synonymizer.synonymize(node)
@@ -21,7 +27,7 @@ def test_go_6293(rosetta):
     r=biolink.gene_get_process_or_function(node)
     assert len(r) > 0
 
-def test_go_1504(rosetta):
+def xtest_go_1504(rosetta):
     node = KNode("HGNC:1504",label="---",type=node_types.GENE)
     s3 = rosetta.cache.get('synonymize(HGNC:10593)')
     rosetta.synonymizer.synonymize(node)
@@ -29,7 +35,7 @@ def test_go_1504(rosetta):
     r=biolink.gene_get_process_or_function(node)
     assert len(r) > 0
 
-def xtest_go(rosetta):
+def xxtest_go(rosetta):
     node = KNode("HGNC:10593",label="SCN5A",type=node_types.GENE)
     s3 = rosetta.cache.get('synonymize(HGNC:10593)')
     rosetta.synonymizer.synonymize(node)
@@ -38,7 +44,7 @@ def xtest_go(rosetta):
     r=biolink.gene_get_process_or_function(node)
     assert len(r) > 0
 
-def test_umls(rosetta):
+def xtest_umls(rosetta):
     node = KNode("UMLS:C0015625",label="Fanconi Anemia", type=node_types.DISEASE)
     rosetta.synonymizer.synonymize(node)
     print(node.synonyms)

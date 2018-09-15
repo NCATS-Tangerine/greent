@@ -3,6 +3,8 @@ from greent.services.oxo import OXO
 from greent.servicecontext import ServiceContext
 from greent import node_types
 #from greent.util import Text
+from greent.conftest import rosetta
+from greent.graph_components import KNode
 
 @pytest.fixture(scope='module')
 def oxo():
@@ -44,4 +46,5 @@ def test_synonyms_hp(oxo):
     assert len(all_results) > 0
     for result in all_results:
         assert 'label' in result
+
 

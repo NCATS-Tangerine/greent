@@ -21,9 +21,19 @@ def crawl():
     #load_diseases_and_phenotypes(rosetta)
     #poolrun(node_types.DISEASE, node_types.PHENOTYPIC_FEATURE, rosetta)
     #poolrun(node_types.GENETIC_CONDITION, node_types.PHENOTYPIC_FEATURE, rosetta)
-    poolrun(node_types.GENE, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, rosetta)
-    poolrun(node_types.DISEASE, node_types.GENE, rosetta)
+    #poolrun(node_types.GENE, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, rosetta)
+    #poolrun(node_types.DISEASE, node_types.GENE, rosetta)
+    #poolrun(node_types.DISEASE, node_types.CHEMICAL_SUBSTANCE, rosetta)
+    poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.DISEASE, rosetta)
     #create_omnicache(rosetta)
+
+#
+# Use this to clean up: should probably 
+#
+# MATCH (n)
+# WHERE size((n)--())=0
+# DELETE (n)
+#
 
 if __name__=='__main__':
     crawl()

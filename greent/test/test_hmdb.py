@@ -11,6 +11,15 @@ def hmdb(rosetta):
     hmdb = rosetta.core.hmdb
     return hmdb
 
+def test_metabolite_to_disease_with_syn(rosetta,hmdb):
+    chem = KNode('CHEBI:84268', type = node_types.CHEMICAL_SUBSTANCE)
+    rosetta.synonymizer.synonymize(chem)
+    results = hmdb.metabolite_to_disease(chem)
+    for e,n in results:
+        print(f'*{n.id}*')
+        rosetta.synonymizer.synonymize(n)
+    assert True
+
 def test_disease_to_metabolite(hmdb):
     asthma = KNode('UMLS:C0004096', type=node_types.DISEASE)
     results = hmdb.disease_to_metabolite(asthma)
