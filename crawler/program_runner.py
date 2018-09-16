@@ -27,6 +27,12 @@ def get_identifiers(input_type,rosetta):
                     if label is not None and not label.startswith('obsolete'):
                         print(ident,label,len(lids))
                         lids.append(LabeledID(ident,label))
+    elif input_type == node_types.ANATOMICAL_ENTITY:
+        identifiers = requests.get("http://onto.renci.org/descendants/UBERON:0001062").json()['descendants']
+        for ident in identifiers:
+            if ident not in ['UBERON:0000468']:
+                res = requests.get(f'http://onto.renci.org/label/{ident}/').json()
+                lids.append(LabeledID(ident,res['label']))
     elif input_type == node_types.GENE:
         data = pull_via_ftp('ftp.ebi.ac.uk', '/pub/databases/genenames/new/json', 'hgnc_complete_set.json')
         hgnc_json = loads( data.decode() )
