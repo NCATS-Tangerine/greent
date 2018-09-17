@@ -5,7 +5,7 @@ description: Entity and association taxonomy and datamodel for life-sciences dat
 classes:
   
     #Not in biolink-model
-  - name: genetic condition
+  genetic condition:
     is_a: disease
     description: >-
       A disease that is caused by genetic modifications where those modifications are inherited from a parent's genome.
@@ -16,7 +16,7 @@ classes:
 #There needs to be a better place to do this.  The problem is that for e.g. gene,
 # these get put into the main file, in a different order.  When we merge, things get messed
 # up.
-  - name: disease
+  disease:
     id_prefixes: #Adding identifiers for ROBOKOP
         - MONDO
         - DOID
@@ -28,14 +28,14 @@ classes:
         - MEDDRA
         - PHAROS.DISEASE 
 
-  - name: phenotypic feature
+  phenotypic feature:
     id_prefixes:
       - HP
       - NCIT
       - UMLS
       - MEDDRA
 
-  - name: chemical substance
+  chemical substance:
     id_prefixes:
       - CHEBI
       - CHEMBL
@@ -53,17 +53,17 @@ classes:
       - DRUG.INTERACTION
       - CTD
 
-  - name: anatomical entity
+  anatomical entity:
     id_prefixes:
       - UBERON
       - UMLS
 
-  - name: cell
+  cell:
     id_prefixes:
       - CL
       - UMLS
 
-  - name: gene
+  gene:
     id_prefixes:
       - HGNC
       - NCBIGENE
@@ -74,7 +74,7 @@ classes:
       - MGI
       - ZFIN
 
-  - name: pathway
+  pathway:
     id_prefixes: 
       - KEGG
       - REACTOME
@@ -88,47 +88,47 @@ classes:
 
 slots:
 
-  - name: id
+  id:
     mappings:
       - rdfs:ID
 
-  - name: gene associated with condition
+  gene associated with condition:
     mappings:
       - BIOLINK:0000001 # Minting id for this
       - GENO:0000840 # pathogenic_for_condition
       - GENO:0000841 # likely_pathogenic_for_condition
 
-  - name: actively involved in
+  actively involved in:
     mappings:
       - biolink:gene_get_process             # biolink returns no relation_id or an identifier that is not a curie
       - biolink:gene_get_process_or_function # biolink returns no relation_id or an identifier that is not a curie
 
-  - name: capable of
+  capable of:
     mappings:
       - biolink:gene_get_function            # biolink returns no relation_id or an identifier that is not a curie
 
-  - name: affects
+  affects:
     mappings:
       - GO:acts_on_population_of
       - CTD:inferred
       - CTD:prediction/hypothesis
 
     #In the model, here for the hetio mappings
-  - name: positively regulates, entity to entity
+  positively regulates, entity to entity:
     mappings:
       - RO:0002450
       - hetio:UPREGULATES_AuG
       - hetio:UPREGULATES_DuG
 
     #In the model, here for the hetio mappings
-  - name: negatively regulates, entity to entity
+  negatively regulates, entity to entity:
     mappings:
       - RO:0002449
       - hetio:DOWNREGULATES_AdG
       - hetio:DOWNREGULATES_DdG
 
-    #Need to replace
-  - name: directly interacts with
+    #Need to replace. Can probably remove the CTD stuff with the new CTD ones.
+  directly interacts with:
     mappings:
       - SIO:000203                # Connected to (is that really a good mapping?)
       - chembio:interacts
@@ -178,67 +178,260 @@ slots:
       - CTD:decreases^transport
       - CTD:increases^transport
 
+  #New CTD Stuff
+  affects abundance of:
+    mappings:
+      - CTD:somehow_affects_abundance_of
+
+  increases abundance of:
+    mappings:
+      - CTD:positively_affects_abundance_of
+
+  decreases abundance of:
+    mappings:
+      - CTD:negatively_affects_abundance_of
+
+  affects activity of:
+    mappings:
+      - CTD:somehow_affects_activity_of
+
+  increases activity of:
+    mappings:
+      - CTD:positively_affects_activity_of
+
+  decreases activity of:
+    mappings:
+      - CTD:negatively_affects_activity_of
+
+  affects expression of:
+    mappings:
+      - CTD:somehow_affects_expression_of
+
+  increases expression of:
+    mappings:
+      - CTD:positively_affects_expression_of
+
+  decreases expression of:
+    mappings:
+      - CTD:negatively_affects_expression_of
+
+  affects folding of:
+    mappings:
+      - CTD:somehow_affects_folding_of
+
+  increases folding of:
+    mappings:
+      - CTD:positively_affects_folding_of
+
+  decreases folding of:
+    mappings:
+      - CTD:negatively_affects_folding_of
+
+  affects localization of:
+    mappings:
+      - CTD:somehow_affects_localization_of
+
+  increases localization of:
+    mappings:
+      - CTD:positively_affects_localization_of
+
+  decreases localization of:
+    mappings:
+      - CTD:negatively_affects_localization_of
+
+  affects metabolic processing of:
+    mappings:
+      - CTD:somehow_affects_metabolic_processing_of
+
+  increases metabolic processing of:
+    mappings:
+      - CTD:positively_affects_metabolic_processing_of
+
+  decreases metabolic processing of:
+    mappings:
+      - CTD:negatively_affects_metabolic_processing_of
+
+  affects molecular modification of:
+    mappings:
+      - CTD:somehow_affects_molecular_modification_of
+
+  increases molecular modification of:
+    mappings:
+      - CTD:positively_affects_molecular_modification_of
+
+  decreases molecular modification of:
+    mappings:
+      - CTD:negatively_affects_molecular_modification_of
+
+  affects synthesis of:
+    mappings:
+      - CTD:somehow_affects_synthesis_of
+
+  increases synthesis of:
+    mappings:
+      - CTD:positively_affects_synthesis_of
+
+  decreases synthesis of:
+    mappings:
+      - CTD:negatively_affects_synthesis_of
+
+  affects degradation of:
+    mappings:
+      - CTD:somehow_affects_degradation_of
+
+  increases degradation of:
+    mappings:
+      - CTD:positively_affects_degradation_of
+
+  decreases degradation of:
+    mappings:
+      - CTD:negatively_affects_degradation_of
+
+  affects mutation rate of:
+     mappings:
+      - CTD:somehow_affects_mutation_rate_of
+
+  increases mutation rate of:
+     mappings:
+      - CTD:positively_affects_mutation_rate_of
+
+  decreases mutation rate of:
+     mappings:
+      - CTD:negatively_affects_mutation_rate_of
+
+  affects response to:
+    mappings:
+      - CTD:somehow_affects_response_to
+
+  increases response to:
+    mappings:
+      - CTD:positively_affects_response_to
+
+  decreases response to:
+    mappings:
+      - CTD:negatively_affects_response_to
+
+  affects splicing of:
+    mappings:
+      - CTD:somehow_affects_splicing_of
+
+  increases splicing of:
+    mappings:
+      - CTD:positively_affects_splicing_of
+
+  decreases splicing of:
+    mappings:
+      - CTD:negatively_affects_splicing_of
+
+  affects stability of:
+    mappings:
+      - CTD:somehow_affects_stability_of
+
+  increases stability of:
+    mappings:
+      - CTD:positively_affects_stability_of
+
+  decreases stability of:
+    mappings:
+      - CTD:negatively_affects_stability_of
+
+  affects transport of:
+    mappings:
+      - CTD:somehow_affects_transport_of
+
+  increases transport of:
+    mappings:
+      - CTD:positively_affects_transport_of
+
+  decreases transport of:
+    mappings:
+      - CTD:negatively_affects_transport_of
+
+  affects secretion of:
+    mappings:
+      - CTD:somehow_affects_secretion_of
+
+  increases secretion of:
+    mappings:
+      - CTD:positively_affects_secretion_of
+
+  decreases secretion of:
+    mappings:
+      - CTD:negatively_affects_secretion_of
+
+  affects uptake of:
+    mappings:
+      - CTD:somehow_affects_uptake_of
+
+  increases uptake of:
+    mappings:
+      - CTD:positively_affects_uptake_of
+
+  decreases uptake of:
+    mappings:
+      - CTD:negatively_affects_uptake_of
+
     # in translator_minimal, here for other mappings
-  - name: has phenotype
+  has phenotype:
     mappings:
       - hetio:PRESENTS_DpS
       - GAMMA:0000002 # inverse of UPHENO:0000001, which I can't seem to find an inverse of anywhere.
 
     #In translator_minimal
-  - name: coexists with
+  coexists with:
     mappings:
       - RO:0002325  # colocalizes_with
 
     #In translator_minimal now, here for hetio
-  - name: expresses
+  expresses:
     description: >-
         inverse of expressed in 
     mappings:
       - RO:0002292
       - hetio:EXPRESSES_AeG
 
-  - name: located in
+  located in:
     mappings:
       - GO:regulates_o_occurs_in
       - RO:0002231 # has_start_location
       - RO:0002338 # has_target_start_location
 
-  - name: contributes to
+  contributes to:
     mappings:
       - RO:0003302 #Causes or contributes to
       - RO:0002327 #enables
       - CTD:marker/mechanism
       - CTD:positivecorrelation
 
-  - name: treats
+  treats:
     mappings:
       - CTD:therapeutic
       - CTD:negativecorrelation
 
-  - name: produces
+  produces:
     mappings:
       - GO:regulates_o_results_in_acquisition_of_features_of
 
-  - name: participates in
+  participates in:
     mappings:
       - GO:mediated_by
 
   #the following are not in the original biolink model
   
-  - name: disease to gene association
+  disease to gene association:
     is_a: association
     mappings:
       - NCIT:R176 #disease_mapped_to_gene/gene_mapped_to_disease
       - PHAROS:gene_involved
       - hetio:ASSOCIATES_DaG
 
-  - name: results in motion of
+  results in motion of:
     domain: process
     range: entity #?
     mappings:
       - RO:0002565
 
-  - name: results in developmental progression of
+  results in developmental progression of:
     mappings:
       - RO:0002295
       - RO:0002296   # Probably should handle this some other way...

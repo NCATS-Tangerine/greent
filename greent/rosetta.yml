@@ -64,7 +64,8 @@
       - link  : chemical_targets_gene
         op    : chembio.graph_pubchem_to_ncbigene
       - link  : drug_to_gene
-        op    : ctd.drug_to_gene
+        #op    : ctd.drug_to_gene
+        op    : ctd.drug_to_gene_expanded
     disease_or_phenotypic_feature:
       - link  : adverse_events
         op    : mychem.get_adverse_events
@@ -120,7 +121,8 @@
         op    : pharos.gene_get_disease
     chemical_substance:
       - link  : gene_to_drug
-        op    : ctd.gene_to_drug
+        #op    : ctd.gene_to_drug
+        op    : ctd.gene_to_drug_expanded
       - link  : gene_get_drug
         op    : pharos.gene_get_drug
     metabolite:

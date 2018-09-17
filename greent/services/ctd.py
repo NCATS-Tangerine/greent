@@ -149,6 +149,32 @@ class CTD(Service):
                 output.append( (edge,gene_node) )
         return output
 
+    def drug_to_gene_expanded(self, drug):
+        output = []
+        identifiers = drug.get_synonyms_by_prefix('MESH')
+        for identifier in identifiers:
+            url=f"{self.url}CTD_chem_gene_expanded_chemicalID/mesh:{Text.un_curie(identifier)}/"
+            print(url)
+            result = requests.get(url)
+            print(result.status_code)
+            obj=result.json()
+            for r in obj:
+                #Let's only keep humans for now:
+                if r['taxonID'] != 'ncbitaxon:9606':
+                    continue
+                predicate_label = r['degree']+' '+r['interaction']
+                predicate = LabeledID(identifier=f'CTD:{Text.snakify(predicate_label)}', label=predicate_label)
+                gene_node = KNode(Text.upper_curie(r['geneID']), name=r['gene_label'],type=node_types.GENE)
+                direction = r['direction']
+                if direction == '->':
+                    subject = drug
+                    object = gene_node
+                else:
+                    subject = gene_node
+                    object = drug
+                edge = self.create_edge(subject,object,'ctd.drug_to_gene_extended',identifier,predicate )
+                output.append( (edge,gene_node) )
+        return output
 
     def gene_to_drug(self, gene_node):
         output = []
@@ -177,6 +203,39 @@ class CTD(Service):
                     obj = gene_node
                 edge = self.create_edge(subject,obj,'ctd.gene_to_drug',identifier,predicate,
                                         publications=[f"PMID:{r['PubMedIDs']}"],url=url,properties=props)
+                #This is what we'd like it to be, but right now there's not enough real specificity on the predicates
+                #key = (drug_node.id, edge.standard_predicate.label)
+                key = (drug_node.id, edge.original_predicate.label)
+                if key not in unique:
+                    output.append( (edge,drug_node) )
+                    unique.add(key)
+        return output
+
+
+    def gene_to_drug_expanded(self, gene_node):
+        output = []
+        identifiers = gene_node.get_synonyms_by_prefix('NCBIGENE')
+        for identifier in identifiers:
+            unique = set()
+            geneid = Text.un_curie(identifier)
+            url = f"{self.url}/CTD_chem_gene_expanded_geneID/ncbigene:{geneid}/"
+            obj = requests.get (url).json ()
+            for r in obj:
+                #Let's only keep humans for now:
+                if r['taxonID'] != 'ncbitaxon:9606':
+                    continue
+                predicate_label = r['degree']+' '+r['interaction']
+                predicate = LabeledID(identifier=f'CTD:{Text.snakify(predicate_label)}', label=predicate_label)
+                #Should this be substance?
+                drug_node = KNode(Text.upper_curie(r['chemicalID']), type=node_types.CHEMICAL_SUBSTANCE, name=r['chem_label'])
+                direction = r['direction']
+                if direction == '->':
+                    subject = drug_node
+                    object = gene_node
+                else:
+                    subject = gene_node
+                    object = drug_node
+                edge = self.create_edge(subject,object,'ctd.gene_to_drug_extended',identifier,predicate )
                 #This is what we'd like it to be, but right now there's not enough real specificity on the predicates
                 #key = (drug_node.id, edge.standard_predicate.label)
                 key = (drug_node.id, edge.original_predicate.label)

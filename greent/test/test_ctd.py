@@ -10,6 +10,24 @@ def ctd(rosetta):
     ctd = rosetta.core.ctd
     return ctd
 
+def test_expanded_drug_to_gene(ctd):
+    input_node = KNode("MESH:D003976", type=node_types.CHEMICAL_SUBSTANCE, name="Diazinon")
+    results = ctd.drug_to_gene_expanded(input_node)
+    for edge,node in results:
+        assert node.type == node_types.GENE
+        assert edge.standard_predicate.identifier != 'GAMMA:0'
+
+def test_expanded_gene_to_drug(ctd,rosetta):
+    input_node = KNode("HGNC:4558", type=node_types.GENE, name="GPX6")
+    rosetta.synonymizer.synonymize(input_node)
+    results = ctd.gene_to_drug_expanded(input_node)
+    assert len(results) > 0
+    for edge,node in results:
+        assert node.type == node_types.CHEMICAL_SUBSTANCE
+        assert edge.standard_predicate.identifier != 'GAMMA:0'
+        print(edge, edge.standard_predicate)
+    assert 0
+
 def test_disease_to_chemical(rosetta,ctd):
     input_node = KNode("MONDO:0004979", type=node_types.DISEASE, name='Asthma')
     rosetta.synonymizer.synonymize(input_node)

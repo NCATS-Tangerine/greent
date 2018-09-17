@@ -21,6 +21,13 @@ def test_metabolite_to_disease_with_syn(rosetta,hmdb):
         rosetta.synonymizer.synonymize(n)
     assert True
 
+def test_metabolite_to_enzyme_with_syn(rosetta,hmdb):
+    chem = KNode('CHEBI:27732', type=node_types.CHEMICAL_SUBSTANCE)
+    rosetta.synonymizer.synonymize(chem)
+    print(chem.synonyms)
+    results = hmdb.metabolite_to_enzyme(chem)
+    assert len(results) > 0
+
 def test_disease_to_metabolite(hmdb):
     asthma = KNode('UMLS:C0004096', type=node_types.DISEASE)
     results = hmdb.disease_to_metabolite(asthma)
