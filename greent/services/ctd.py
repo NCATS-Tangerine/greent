@@ -136,7 +136,9 @@ class CTD(Service):
                     continue
                 props = {"description": r[ 'Interaction' ]}
                 predicate_label = r['InteractionActions']
-                predicate = LabeledID(identifier=self.get_ctd_predicate_identifier(predicate_label), label=predicate_label)
+                if '|' in predicate_label:
+                    continue
+                predicate = LabeledID(identifier=f'CTD:{predicate_label}', label=predicate_label)
                 gene_node = KNode(f"NCBIGENE:{r['GeneID']}", type=node_types.GENE)
                 if sum([s in predicate.identifier for s in self.g2d_strings]) > 0:
                     subject = gene_node
@@ -192,7 +194,9 @@ class CTD(Service):
                     continue
                 props = {"description": r[ 'Interaction' ]}
                 predicate_label = r['InteractionActions']
-                predicate = LabeledID(identifier=self.get_ctd_predicate_identifier(predicate_label), label=predicate_label)
+                if '|' in predicate_label:
+                    continue
+                predicate = LabeledID(identifier=f'CTD:{predicate_label}', label=predicate_label)
                 #Should this be substance?
                 drug_node = KNode(f"MESH:{r['ChemicalID']}", type=node_types.CHEMICAL_SUBSTANCE, name=f"{r['ChemicalName']}")
                 if sum([s in predicate.identifier for s in self.g2d_strings]) > 0:

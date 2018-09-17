@@ -127,249 +127,359 @@ slots:
       - hetio:DOWNREGULATES_AdG
       - hetio:DOWNREGULATES_DdG
 
-    #Need to replace. Can probably remove the CTD stuff with the new CTD ones.
   directly interacts with:
     mappings:
       - SIO:000203                # Connected to (is that really a good mapping?)
       - chembio:interacts
       - CTD:interacts_with
-      - CTD:affects^activity
       - CTD:affects^binding
-      - CTD:affects^expression
-      - CTD:affects^folding
-      - CTD:affects^localization
-      - CTD:affects^metabolic process
-      - CTD:affects^mutagenesis
-      - CTD:affects^reaction
-      - CTD:affects^RNA splicing
-      - CTD:affects^splicing
-      - CTD:affects^stability
-      - CTD:affects^secretion
-      - CTD:decreases^activity
-      - CTD:decreases^expression
-      - CTD:decreases^folding
-      - CTD:decreases^localization
-      - CTD:decreases^metabolic process
-      - CTD:decreases^mutagenesis
-      - CTD:decreases^reaction
-      - CTD:decreases^RNA splicing
-      - CTD:decreases^splicing
-      - CTD:decreases^stability
-      - CTD:decreases^secretion
-      - CTD:increases^activity
-      - CTD:increases^expression
-      - CTD:increases^folding
-      - CTD:increases^localization
-      - CTD:increases^metabolic process
-      - CTD:increases^mutagenesis
-      - CTD:increases^reaction
-      - CTD:increases^RNA splicing
-      - CTD:increases^splicing
-      - CTD:increases^stability
-      - CTD:increases^secretion
       - PHAROS:drug_targets
-      - CTD:affects^response to substance   # I think that these CTD are in the wrong place. Need Matt's view here. These all go gene->drug
-      - CTD:decreases^response to substance
-      - CTD:increases^response to substance
-      - CTD:affects^abundance
-      - CTD:decreases^abundance
-      - CTD:increases^abundance
-      - CTD:affects^transport
-      - CTD:decreases^transport
-      - CTD:increases^transport
 
   #New CTD Stuff
   affects abundance of:
     mappings:
       - CTD:somehow_affects_abundance_of
+      - CTD:affects^abundance
 
   increases abundance of:
     mappings:
       - CTD:positively_affects_abundance_of
+      - CTD:increases^abundance
 
   decreases abundance of:
     mappings:
       - CTD:negatively_affects_abundance_of
+      - CTD:decreases^abundance
 
   affects activity of:
     mappings:
       - CTD:somehow_affects_activity_of
+      - CTD:affects^activity
 
   increases activity of:
     mappings:
       - CTD:positively_affects_activity_of
+      - CTD:increases^activity
 
   decreases activity of:
     mappings:
       - CTD:negatively_affects_activity_of
+      - CTD:decreases^activity
 
   affects expression of:
     mappings:
       - CTD:somehow_affects_expression_of
+      - CTD:affects^expression
 
   increases expression of:
     mappings:
       - CTD:positively_affects_expression_of
+      - CTD:increases^expression
 
   decreases expression of:
     mappings:
       - CTD:negatively_affects_expression_of
+      - CTD:decreases^expression
 
   affects folding of:
     mappings:
       - CTD:somehow_affects_folding_of
+      - CTD:affects^folding
 
   increases folding of:
     mappings:
       - CTD:positively_affects_folding_of
+      - CTD:increases^folding
 
   decreases folding of:
     mappings:
       - CTD:negatively_affects_folding_of
+      - CTD:decreases^folding
 
   affects localization of:
     mappings:
       - CTD:somehow_affects_localization_of
+      - CTD:affects^localization
 
   increases localization of:
     mappings:
       - CTD:positively_affects_localization_of
+      - CTD:increases^localization
 
   decreases localization of:
     mappings:
       - CTD:negatively_affects_localization_of
+      - CTD:decreases^localization
 
   affects metabolic processing of:
     mappings:
       - CTD:somehow_affects_metabolic_processing_of
+      - CTD:affects^metabolic processing
 
   increases metabolic processing of:
     mappings:
       - CTD:positively_affects_metabolic_processing_of
+      - CTD:increases^metabolic processing
 
   decreases metabolic processing of:
     mappings:
       - CTD:negatively_affects_metabolic_processing_of
+      - CTD:decreases^metabolic processing
 
   affects molecular modification of:
     mappings:
       - CTD:somehow_affects_molecular_modification_of
+      - CTD:affects^acetylation
+      - CTD:affects^acylation
+      - CTD:affects^alkylation
+      - CTD:affects^amination
+      - CTD:affects^carbamoylation
+      - CTD:affects^ethylation
+      - CTD:affects^glutathionylation
+      - CTD:affects^glycation
+      - CTD:affects^glycosylation
+      - CTD:affects^glucuronidation
+      - CTD:affects^N-linked glycosylation
+      - CTD:affects^O-linked glycosylation
+      - CTD:affects^hydroxylation
+      - CTD:affects^lipidation
+      - CTD:affects^farnesylation
+      - CTD:affects^geranoylation
+      - CTD:affects^myristoylation
+      - CTD:affects^palmitoylation
+      - CTD:affects^prenylation
+      - CTD:affects^methylation
+      - CTD:affects^nitrosation
+      - CTD:affects^nucleotidylation
+      - CTD:affects^phosphorylation
+      - CTD:affects^ribosylation
+      - CTD:affects^ADP-ribosylation
+      - CTD:affects^sulfation
+      - CTD:affects^sumoylation
+      - CTD:affects^ubiquitination
+      - CTD:affects^oxidation
+      - CTD:affects^reduction
+      - CTD:affects^carboxylation
 
   increases molecular modification of:
     mappings:
       - CTD:positively_affects_molecular_modification_of
+      - CTD:increases^acetylation
+      - CTD:increases^acylation
+      - CTD:increases^alkylation
+      - CTD:increases^amination
+      - CTD:increases^carbamoylation
+      - CTD:increases^ethylation
+      - CTD:increases^glutathionylation
+      - CTD:increases^glycation
+      - CTD:increases^glycosylation
+      - CTD:increases^glucuronidation
+      - CTD:increases^N-linked glycosylation
+      - CTD:increases^O-linked glycosylation
+      - CTD:increases^hydroxylation
+      - CTD:increases^lipidation
+      - CTD:increases^farnesylation
+      - CTD:increases^geranoylation
+      - CTD:increases^myristoylation
+      - CTD:increases^palmitoylation
+      - CTD:increases^prenylation
+      - CTD:increases^methylation
+      - CTD:increases^nitrosation
+      - CTD:increases^nucleotidylation
+      - CTD:increases^phosphorylation
+      - CTD:increases^ribosylation
+      - CTD:increases^ADP-ribosylation
+      - CTD:increases^sulfation
+      - CTD:increases^sumoylation
+      - CTD:increases^ubiquitination
+      - CTD:increases^oxidation
+      - CTD:increases^reduction
+      - CTD:increases^carboxylation
 
   decreases molecular modification of:
     mappings:
       - CTD:negatively_affects_molecular_modification_of
+      - CTD:decreases^acetylation
+      - CTD:decreases^acylation
+      - CTD:decreases^alkylation
+      - CTD:decreases^amination
+      - CTD:decreases^carbamoylation
+      - CTD:decreases^ethylation
+      - CTD:decreases^glutathionylation
+      - CTD:decreases^glycation
+      - CTD:decreases^glycosylation
+      - CTD:decreases^glucuronidation
+      - CTD:decreases^N-linked glycosylation
+      - CTD:decreases^O-linked glycosylation
+      - CTD:decreases^hydroxylation
+      - CTD:decreases^lipidation
+      - CTD:decreases^farnesylation
+      - CTD:decreases^geranoylation
+      - CTD:decreases^myristoylation
+      - CTD:decreases^palmitoylation
+      - CTD:decreases^prenylation
+      - CTD:decreases^methylation
+      - CTD:decreases^nitrosation
+      - CTD:decreases^nucleotidylation
+      - CTD:decreases^phosphorylation
+      - CTD:decreases^ribosylation
+      - CTD:decreases^ADP-ribosylation
+      - CTD:decreases^sulfation
+      - CTD:decreases^sumoylation
+      - CTD:decreases^ubiquitination
+      - CTD:decreases^oxidation
+      - CTD:decreases^reduction
+      - CTD:decreases^carboxylation
 
   affects synthesis of:
     mappings:
       - CTD:somehow_affects_synthesis_of
+      - CTD:affects^chemical synthesis
 
   increases synthesis of:
     mappings:
       - CTD:positively_affects_synthesis_of
+      - CTD:increases^chemical synthesis
 
   decreases synthesis of:
     mappings:
       - CTD:negatively_affects_synthesis_of
+      - CTD:decreases^chemical synthesis
 
   affects degradation of:
     mappings:
       - CTD:somehow_affects_degradation_of
+      - CTD:affects^degradation
+      - CTD:affects^cleavage
+      - CTD:affects^hydrolysis
 
   increases degradation of:
     mappings:
       - CTD:positively_affects_degradation_of
+      - CTD:increases^degradation
+      - CTD:increases^cleavage
+      - CTD:increases^hydrolysis
 
   decreases degradation of:
     mappings:
       - CTD:negatively_affects_degradation_of
+      - CTD:decreases^degradation
+      - CTD:decreases^cleavage
+      - CTD:decreases^hydrolysis
 
   affects mutation rate of:
      mappings:
       - CTD:somehow_affects_mutation_rate_of
+      - CTD:affects^mutagenesis
 
   increases mutation rate of:
      mappings:
       - CTD:positively_affects_mutation_rate_of
+      - CTD:increases^mutagenesis
 
   decreases mutation rate of:
      mappings:
       - CTD:negatively_affects_mutation_rate_of
+      - CTD:decreases^mutagenesis
 
   affects response to:
     mappings:
       - CTD:somehow_affects_response_to
+      - CTD:affects^response to substance
 
   increases response to:
     mappings:
       - CTD:positively_affects_response_to
+      - CTD:increases^response to substance
 
   decreases response to:
     mappings:
       - CTD:negatively_affects_response_to
+      - CTD:decreases^response to substance
 
   affects splicing of:
     mappings:
       - CTD:somehow_affects_splicing_of
+      - CTD:affects^RNA splicing
+      - CTD:affects^splicing
 
   increases splicing of:
     mappings:
       - CTD:positively_affects_splicing_of
+      - CTD:increases^RNA splicing
+      - CTD:increases^splicing
 
   decreases splicing of:
     mappings:
       - CTD:negatively_affects_splicing_of
+      - CTD:decreases^RNA splicing
+      - CTD:decreases^splicing
 
   affects stability of:
     mappings:
       - CTD:somehow_affects_stability_of
+      - CTD:affects^stability
 
   increases stability of:
     mappings:
       - CTD:positively_affects_stability_of
+      - CTD:increases^stability
 
   decreases stability of:
     mappings:
       - CTD:negatively_affects_stability_of
+      - CTD:decreases^stability
 
   affects transport of:
     mappings:
       - CTD:somehow_affects_transport_of
+      - CTD:affects^transport
 
   increases transport of:
     mappings:
       - CTD:positively_affects_transport_of
+      - CTD:increases^transport
 
   decreases transport of:
     mappings:
       - CTD:negatively_affects_transport_of
+      - CTD:decreases^transport
 
   affects secretion of:
     mappings:
       - CTD:somehow_affects_secretion_of
+      - CTD:affects^secretion
+      - CTD:affects^export
 
   increases secretion of:
     mappings:
       - CTD:positively_affects_secretion_of
+      - CTD:increases^secretion
+      - CTD:increases^export
 
   decreases secretion of:
     mappings:
       - CTD:negatively_affects_secretion_of
+      - CTD:decreases^secretion
+      - CTD:decreases^export
 
   affects uptake of:
     mappings:
       - CTD:somehow_affects_uptake_of
+      - CTD:affects^uptake
+      - CTD:affects^import
 
   increases uptake of:
     mappings:
       - CTD:positively_affects_uptake_of
+      - CTD:increases^uptake
+      - CTD:increases^import
 
   decreases uptake of:
     mappings:
       - CTD:negatively_affects_uptake_of
+      - CTD:decreases^uptake
+      - CTD:decreases^import
 
     # in translator_minimal, here for other mappings
   has phenotype:
