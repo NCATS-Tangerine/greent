@@ -17,6 +17,7 @@ from builder.api.setup import app
 from builder.question import Question
 
 from greent import node_types
+from greent.util import LoggingUtil
 
 from builder.buildmain import run_query, generate_query, run
 from builder.pathlex import tokenize_path
@@ -39,14 +40,15 @@ def setup_celery_logging(**kwargs):
     pass
 celery.log.setup()
 
-logger = logging.getLogger(__name__)
+#logger = logging.getLogger(__name__)
+logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
 @celery.task(bind=True, queue='update')
 def update_kg(self, question_json):
     '''
     Update the shared knowledge graph with respect to a question
     '''
-    
+
     greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
     sys.path.insert(0, greent_path)
     rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))

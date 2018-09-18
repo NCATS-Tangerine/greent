@@ -12,13 +12,6 @@ from greent.synonymizers import disease_synonymizer
 from builder.question import LabeledID
 
 
-fixed_synonymizers = {
-    node_types.GENE:set([hgnc_synonymizer]),
-    node_types.DISEASE:set([disease_synonymizer]),
-    node_types.CHEMICAL_SUBSTANCE:set([substance_synonymizer]),
-    node_types.CELL:set([cell_synonymizer]),
-}
-
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG, format='medium')
 
 class Synonymizer:
@@ -26,10 +19,16 @@ class Synonymizer:
     def __init__(self, concepts, rosetta):
         self.rosetta = rosetta
         self.concepts = concepts
+        self.fixed_synonymizers = {
+            node_types.GENE:set([hgnc_synonymizer]),
+            node_types.DISEASE:set([disease_synonymizer]),
+            node_types.CHEMICAL_SUBSTANCE:set([substance_synonymizer]),
+            node_types.CELL:set([cell_synonymizer]),
+        }
         self.create_synonymizers()
 
     def create_synonymizers(self):
-        self.synonymizers = fixed_synonymizers
+        self.synonymizers = self.fixed_synonymizers
         top_set = [s.name for s in self.concepts.get_roots()]
         while len(top_set) > 0:
             next = top_set.pop()
@@ -61,7 +60,7 @@ class Synonymizer:
     def synonymize(self, node):
         """Given a node, determine its type and dispatch it to the correct synonymizer"""
         # logger.debug('syn {} {}'.format(node.id, node.type))
-        key = f"synonymize({node.id})"
+        key = f"synonymize({Text.upper_curie(node.id)})"
         #check the cache. If it's not in there, try to generate it
         try:
             synonyms = self.rosetta.cache.get(key)

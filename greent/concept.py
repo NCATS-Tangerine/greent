@@ -191,12 +191,12 @@ class ConceptModelLoader:
             #This version recursively updates throughout the hierarchy of dicts, updating lists also
             # if we specify id_prefixes in the overlay, ignore what's in the original yaml.
             Resource.deepupdate(model_obj, model_overlay, overwrite_keys = ['id_prefixes'])
-        for obj in model_obj["classes"]:
-            concept = self.parse_item (obj)
+        for name,obj in model_obj["classes"].items():
+            concept = self.parse_item (name,obj)
             self.model.add_item (concept)
 
-        for obj in model_obj['slots']:
-            relationship = self.parse_slot(obj)
+        for name,obj in model_obj['slots'].items():
+            relationship = self.parse_slot(name,obj)
             self.model.add_relationship(relationship)
 
     def parse_item (self, obj):
@@ -210,15 +210,15 @@ class BiolinkConceptModelLoader (ConceptModelLoader):
     def __init__(self, name, concept_model):
         super(BiolinkConceptModelLoader, self).__init__(name, concept_model)
                 
-    def parse_item (self, obj):
-        name = obj["name"].replace (" ", "_")
+    def parse_item (self, originalname, obj):
+        name = originalname.replace (" ", "_")
         is_a = obj["is_a"].replace (" ", "_") if "is_a" in obj else None
         id_prefixes = obj["id_prefixes"] if "id_prefixes" in obj else []
         parent = self.model.by_name [is_a] if is_a in self.model.by_name else None
         return Concept (name = name, is_a = parent, id_prefixes = id_prefixes)
 
-    def parse_slot(self,obj):
-        name = obj["name"].replace (" ", "_")
+    def parse_slot(self,originalname,obj):
+        name = originalname.replace (" ", "_")
         mappings = obj["mappings"] if "mappings" in obj else []
         is_a = obj["is_a"].replace (" ", "_") if "is_a" in obj else None
         parent = self.model.relations_by_name [is_a] if is_a in self.model.relations_by_name else None

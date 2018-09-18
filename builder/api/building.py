@@ -56,7 +56,6 @@ class UpdateKG(Resource):
                                     type: string
                                     description: task ID to poll for KG update status
         """
-        logger = logging.getLogger('builder')
         logger.info("Queueing 'KG update' task...")
         task = update_kg.apply_async(args=[request.json])
         return {'task id': task.id}, 202
@@ -66,7 +65,7 @@ api.add_resource(UpdateKG, '/')
 class Synonymize(Resource):
     def post(self, node_id, node_type):
         """
-        Get the status of a task
+        Return the best identifier for a concept, and its known synonyms
         ---
         tags: [util]
         parameters:
@@ -109,8 +108,12 @@ class Synonymize(Resource):
 
         node = KNode(id=node_id, type=node_type, name='')
 
-        synonymizer = Synonymizer(rosetta.type_graph.concept_model, rosetta)
-        synonymizer.synonymize(node)
+        try:
+            synonymizer = Synonymizer(rosetta.type_graph.concept_model, rosetta)
+            synonymizer.synonymize(node)
+        except Exception as e:
+            logger.error(e)
+            return e.message, 500
 
         result = {
             'id': node.id,

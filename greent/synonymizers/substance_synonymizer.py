@@ -46,7 +46,9 @@ def synonymize_with_UniChem(node,gt):
     logger.debug(" UniChem: {}".format(node.id))
     all_synonyms = set()
     for synonym in node.synonyms:
+        logger.debug(f"  {synonym}")
         curie = Text.get_curie(synonym.identifier)
+        logger.debug(f"    {curie}")
         if curie in ('CHEMBL', 'CHEBI', 'DRUGBANK', 'PUBCHEM'):
             new_synonyms = gt.unichem.get_synonyms( synonym.identifier )
             labeled_synonyms = [LabeledID(identifier=s, label=synonym.label) for s in new_synonyms]

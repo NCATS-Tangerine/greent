@@ -64,7 +64,8 @@ class Pharos(Service):
             for synonym in result:
                 if synonym['label'] == 'HGNC':
                     result = synonym['term']
-        except:
+        except Exception as e:
+            logger.error(e)
             pass
         return result
 
@@ -188,17 +189,20 @@ class Pharos(Service):
             logging.getLogger('application').debug("Identifier:" + subject.id)
             original_edge_nodes = []
             url='https://pharos.nih.gov/idg/api/v1/diseases/%s?view=full' % pharosid
+            logger.info(url)
             r = requests.get(url)
             result = r.json()
             predicate=LabeledID(identifier='PHAROS:gene_involved', label='gene_involved')
             for link in result['links']:
                 if link['kind'] == 'ix.idg.models.Target':
                     pharos_target_id = int(link['refid'])
+                    logger.info(f"Pharos ID: {pharos_target_id}")
                     hgnc = self.target_to_hgnc(pharos_target_id)
                     if hgnc is not None:
                         hgnc_node = KNode(hgnc, type=node_types.GENE)
                         edge = self.create_edge(subject,hgnc_node,'pharos.disease_get_gene',pharosid,predicate,url=url)
                         resolved_edge_nodes.append((edge, hgnc_node))
+                        logger.info(f" HGNC ID: {hgnc}")
                     else:
                         logging.getLogger('application').warn('Did not get HGNC for pharosID %d' % pharos_target_id)
             return resolved_edge_nodes

@@ -72,6 +72,14 @@ def test_pheno_to_anatomy(uberon):
     assert 'UBERON:0000948' in identifiers #heart
     assert 'UBERON:0001981' in identifiers #blood vessel
 
+def test_anat_to_pheno_odd(uberon):
+    k = KNode('UBERON:3000111',type=node_types.ANATOMICAL_ENTITY)
+    results = uberon.get_phenotype_by_anatomy_graph(k)
+    if len(results) > 0:
+        ntypes = set([n.type for e,n in results])
+        assert len(ntypes) == 1
+        assert node_types.PHENOTYPIC_FEATURE in ntypes
+
 def test_anat_to_pheno(uberon):
     #Arrhythmia occurs in...
     k = KNode('UBERON:0000948', type=node_types.ANATOMICAL_ENTITY)

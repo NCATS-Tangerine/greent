@@ -136,7 +136,9 @@ class CTD(Service):
                     continue
                 props = {"description": r[ 'Interaction' ]}
                 predicate_label = r['InteractionActions']
-                predicate = LabeledID(identifier=self.get_ctd_predicate_identifier(predicate_label), label=predicate_label)
+                if '|' in predicate_label:
+                    continue
+                predicate = LabeledID(identifier=f'CTD:{predicate_label}', label=predicate_label)
                 gene_node = KNode(f"NCBIGENE:{r['GeneID']}", type=node_types.GENE)
                 if sum([s in predicate.identifier for s in self.g2d_strings]) > 0:
                     subject = gene_node
@@ -149,6 +151,32 @@ class CTD(Service):
                 output.append( (edge,gene_node) )
         return output
 
+    def drug_to_gene_expanded(self, drug):
+        output = []
+        identifiers = drug.get_synonyms_by_prefix('MESH')
+        for identifier in identifiers:
+            url=f"{self.url}CTD_chem_gene_expanded_chemicalID/mesh:{Text.un_curie(identifier)}/"
+            print(url)
+            result = requests.get(url)
+            print(result.status_code)
+            obj=result.json()
+            for r in obj:
+                #Let's only keep humans for now:
+                if r['taxonID'] != 'ncbitaxon:9606':
+                    continue
+                predicate_label = r['degree']+' '+r['interaction']
+                predicate = LabeledID(identifier=f'CTD:{Text.snakify(predicate_label)}', label=predicate_label)
+                gene_node = KNode(Text.upper_curie(r['geneID']), name=r['gene_label'],type=node_types.GENE)
+                direction = r['direction']
+                if direction == '->':
+                    subject = drug
+                    object = gene_node
+                else:
+                    subject = gene_node
+                    object = drug
+                edge = self.create_edge(subject,object,'ctd.drug_to_gene_extended',identifier,predicate )
+                output.append( (edge,gene_node) )
+        return output
 
     def gene_to_drug(self, gene_node):
         output = []
@@ -166,7 +194,9 @@ class CTD(Service):
                     continue
                 props = {"description": r[ 'Interaction' ]}
                 predicate_label = r['InteractionActions']
-                predicate = LabeledID(identifier=self.get_ctd_predicate_identifier(predicate_label), label=predicate_label)
+                if '|' in predicate_label:
+                    continue
+                predicate = LabeledID(identifier=f'CTD:{predicate_label}', label=predicate_label)
                 #Should this be substance?
                 drug_node = KNode(f"MESH:{r['ChemicalID']}", type=node_types.CHEMICAL_SUBSTANCE, name=f"{r['ChemicalName']}")
                 if sum([s in predicate.identifier for s in self.g2d_strings]) > 0:
@@ -185,13 +215,49 @@ class CTD(Service):
                     unique.add(key)
         return output
 
+
+    def gene_to_drug_expanded(self, gene_node):
+        output = []
+        identifiers = gene_node.get_synonyms_by_prefix('NCBIGENE')
+        for identifier in identifiers:
+            unique = set()
+            geneid = Text.un_curie(identifier)
+            url = f"{self.url}/CTD_chem_gene_expanded_geneID/ncbigene:{geneid}/"
+            obj = requests.get (url).json ()
+            for r in obj:
+                #Let's only keep humans for now:
+                if r['taxonID'] != 'ncbitaxon:9606':
+                    continue
+                predicate_label = r['degree']+' '+r['interaction']
+                predicate = LabeledID(identifier=f'CTD:{Text.snakify(predicate_label)}', label=predicate_label)
+                #Should this be substance?
+                drug_node = KNode(Text.upper_curie(r['chemicalID']), type=node_types.CHEMICAL_SUBSTANCE, name=r['chem_label'])
+                direction = r['direction']
+                if direction == '->':
+                    subject = drug_node
+                    object = gene_node
+                else:
+                    subject = gene_node
+                    object = drug_node
+                edge = self.create_edge(subject,object,'ctd.gene_to_drug_extended',identifier,predicate )
+                #This is what we'd like it to be, but right now there's not enough real specificity on the predicates
+                #key = (drug_node.id, edge.standard_predicate.label)
+                key = (drug_node.id, edge.original_predicate.label)
+                if key not in unique:
+                    output.append( (edge,drug_node) )
+                    unique.add(key)
+        return output
+
     def disease_to_exposure(self, disease_node):
+        logger.info("disease-to-exposure")
         output = []
         identifiers = disease_node.get_synonyms_by_prefix('MESH')
         for identifier in identifiers:
             unique = set()
             url = f"{self.url}CTD_exposure_events_diseaseid/{Text.un_curie(identifier)}/"
             obj = requests.get (url).json ()
+            logger.info(url)
+            logger.info(len(obj))
             for r in obj:
                 predicate_label = r['outcomerelationship']
                 if predicate_label == 'no correlation':
@@ -208,15 +274,19 @@ class CTD(Service):
         return output
 
     def disease_to_chemical(self, disease_node):
+        logger.info("disease_to_chemical")
         output = []
         identifiers = disease_node.get_synonyms_by_prefix('MESH')
         for identifier in identifiers:
             unique = set()
-            url = f"{self.url}CTD_chemicals_diseases_DiseaseID/{Text.un_curie(identifier)}/"
+            url = f"{self.url}CTD_chemicals_diseases_DiseaseID/{identifier}/"
             obj = requests.get (url).json ()
+            logger.info(url)
+            logger.info(len(obj))
             for r in obj:
                 predicate_label = r['DirectEvidence']
                 if predicate_label == '':
+                    continue
                     predicate_label = 'inferred'
                 predicate = LabeledID(identifier=f'CTD:{predicate_label}', label=predicate_label)
                 refs = [f'PMID:{pmid}' for pmid in r['PubMedIDs'].split('|')]

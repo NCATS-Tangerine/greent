@@ -142,7 +142,7 @@ helpstring = """Execute a query across all configured data sources.  The query i
 using the -p argument, which takes a comma-delimited string.  Each element in the string 
 represents one high-level type of node that will be sequentially included. The strings are the 
 snake_case biolink-names such as: 
-denoted as:
+
 chemical_substance
 gene
 biological_process_or_activity

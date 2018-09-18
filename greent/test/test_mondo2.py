@@ -8,6 +8,10 @@ from greent import node_types
 def mondo2():
     return Mondo2(ServiceContext.create_context())
 
+def test_is_genetic_diabetes_genetic(mondo2):
+    rgd = KNode('MONDO:0015967',name='rare genetic disease', type=node_types.DISEASE)
+    assert mondo2.is_genetic_disease(rgd)
+
 def test_huntington_is_genetic(mondo2):
     huntington = KNode('OMIM:143100', type=node_types.DISEASE)
     assert mondo2.is_genetic_disease(huntington)

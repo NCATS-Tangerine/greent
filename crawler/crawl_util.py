@@ -1,3 +1,18 @@
+from ftplib import FTP
+from greent.util import Text
+from builder.question import LabeledID
+from io import BytesIO
+
+def pull_via_ftp(ftpsite, ftpdir, ftpfile):
+    ftp = FTP(ftpsite)
+    ftp.login()
+    ftp.cwd(ftpdir)
+    with BytesIO() as data:
+        ftp.retrbinary(f'RETR {ftpfile}', data.write)
+        binary = data.getvalue()
+    ftp.quit()
+    return binary
+
 def glom(conc_set, newgroups):
     """We want to construct sets containing equivalent identifiers.
     conc_set is a dictionary where the values are these equivlent identifier sets and
@@ -18,11 +33,17 @@ def glom(conc_set, newgroups):
             conc_set[element] = newset
 
 def dump_cache(concord,rosetta,outf=None):
-    for chem_id in concord:
-        key = f"synonymize({chem_id})"
+    for element in concord:
+        if isinstance(element,LabeledID):
+            element_id = element.identifier
+        else:
+            element_id = element
+        key = f"synonymize({Text.upper_curie(element_id)})"
         if "'" in key:
             print(key)
-        value = concord[chem_id]
+        value = concord[element]
         if outf is not None:
             outf.write(f'{key}: {value}\n')
+        if 'UMLS:C0015625' in key:
+            print(key, value)
         rosetta.cache.set(key,value)

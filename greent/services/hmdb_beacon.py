@@ -47,6 +47,8 @@ class HMDB(Service):
 
     def make_node(self,json_node):
         identifier = json_node['id']
+        if identifier == '' or identifier is None:
+            return None
         label = json_node['name']
         node_types = json_node['categories']
         if len(node_types) > 1:
@@ -69,6 +71,8 @@ class HMDB(Service):
             subject_node = self.make_node(triple['subject'])
             predicate,negated = self.make_predicate(triple['predicate'])
             object_node = self.make_node(triple['object'])
+            if subject_node is None or object_node is None:
+                continue
             if negated:
                 continue
             if subject_node.id == input_identifier:

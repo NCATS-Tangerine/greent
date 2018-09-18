@@ -43,6 +43,13 @@ class Onto(CachedService):
                 else:
                     result.append (xref)
         return result
+    def get_exact_matches(self,identifier):
+        """ Get exact matches.  Seems to be mostly a MONDO thing """
+        obj = self.get(f"{self.url}/exactMatch/{identifier}")
+        result = []
+        if 'exact matches' in obj:
+            result.extend(obj['exact matches'])
+        return result
     def get_synonyms(self,identifier,curie_pattern=None):
         return self.get(f"{self.url}/synonyms/{identifier}/")
     def lookup(self,identifier):
