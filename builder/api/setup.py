@@ -13,7 +13,7 @@ api = Api(api_blueprint)
 app.register_blueprint(api_blueprint)
 
 template = {
-    "openapi": "2.0", #3.0.1",
+    "openapi": "3.0.1",
     "info": {
         "title": "ROBOKOP Builder",
         "description": "An API connecting questions with biomedical knowledge services",
