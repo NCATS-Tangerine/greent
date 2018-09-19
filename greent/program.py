@@ -36,14 +36,14 @@ class QueryDefinition:
 
 class Program:
 
-    def __init__(self, plan, nodes, rosetta, program_number):
+    def __init__(self, plan, machine_question, rosetta, program_number):
         # Plan comes from typegraph and contains
         # transitions: a map from a node index to an (operation, output index) pair
         self.program_number = program_number
-        self.concept_nodes = nodes
+        self.machine_question = machine_question
         self.transitions = plan
         self.rosetta = rosetta
-        self.prefix = hashlib.md5((str(plan) + str(nodes)).encode()).hexdigest()
+        self.prefix = hashlib.md5((str(plan) + str(machine_question['nodes'])).encode()).hexdigest()
         self.cache = Cache(
             redis_host=os.environ['BUILD_CACHE_HOST'],
             redis_port=os.environ['BUILD_CACHE_PORT'],
@@ -93,7 +93,7 @@ class Program:
     def log_program(self):
         logstring = f'Program {self.program_number}\n'
         logstring += 'Nodes: \n'
-        for i,cn in enumerate(self.concept_nodes):
+        for i,cn in enumerate(self.machine_question['nodes']):
             logstring+=f' {i}: {cn}\n'
         logstring += 'Transitions:\n'
         for k in self.transitions:
@@ -103,7 +103,7 @@ class Program:
     def initialize_instance_nodes(self):
         # No error checking here. You should have caught any malformed questions before this point.
         logger.debug("Initializing program {}".format(self.program_number))
-        for n in self.concept_nodes:
+        for n in self.machine_question['nodes']:
             if not n.curie:
                 continue
             start_node = KNode(n.curie, type=n.type, name=n.name)
@@ -136,7 +136,9 @@ class Program:
                 logger.debug(f"    {[node for _, node in results]}")
             results = list(filter(lambda x: x[1].id not in self.excluded_identifiers, results))
             for edge, node in results:
-                self.process_node(node, history, edge)
+                edge_label = Text.snakify(edge.standard_predicate.label)
+                if link['predicate'] is None or edge_label == link['predicate']:
+                    self.process_node(node, history, edge)
 
         except pika.exceptions.ChannelClosed:
             raise
@@ -252,7 +254,7 @@ class Program:
         used = set()
         node_num = 0
         used.add(node_num)
-        while len(used) != len(self.concept_nodes):
+        while len(used) != len(self.machine_question['nodes']):
             next = None
             if node_num in self.transitions:
                 putative_next = self.transitions[node_num]['to']
