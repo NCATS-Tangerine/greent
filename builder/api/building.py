@@ -34,35 +34,27 @@ class UpdateKG(Resource):
         Update the cached knowledge graph 
         ---
         tags: [build]
-        parameters:
-          - in: body
+        requestBody:
             name: question
             description: The machine-readable question graph.
-            schema:
-                $ref: '#/definitions/Question'
-            required: true
-        responses:
-            202:
-                description: Update started...
-                schema:
-                    type: object
-                    required:
-                      - task id
-                    properties:
-                        task id:
-                            type: string
-                            description: task ID to poll for KG update status
-        """
-        # replace `parameters`` with this when OAS 3.0 is fully supported by Swagger UI
-        # https://github.com/swagger-api/swagger-ui/issues/3641
-        """
-        requestBody:
-            description: The machine-readable question graph.
-            required: true
             content:
                 application/json:
                     schema:
                         $ref: '#/definitions/Question'
+            required: true
+        responses:
+            202:
+                description: Update started...
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required:
+                            - task id
+                            properties:
+                                task id:
+                                    type: string
+                                    description: task ID to poll for KG update status
         """
         logger.info("Queueing 'KG update' task...")
         task = update_kg.apply_async(args=[request.json])
@@ -80,31 +72,35 @@ class Synonymize(Resource):
           - in: path
             name: node_id
             description: curie of the node
-            type: string
+            schema:
+                type: string
             required: true
             default: MONDO:0005737
           - in: path
             name: node_type
             description: type of the node
-            type: string
+            schema:
+                type: string
             required: true
             default: disease
         responses:
             200:
                 description: Synonymized node
-                schema:
-                    type: object
-                    properties:
-                        id:
-                            type: string
-                        name:
-                            type: string
-                        type:
-                            type: string
-                        synonyms:
-                            type: array
-                            items:
-                                type: string
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                id:
+                                    type: string
+                                name:
+                                    type: string
+                                type:
+                                    type: string
+                                synonyms:
+                                    type: array
+                                    items:
+                                        type: string
         """
         greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
         sys.path.insert(0, greent_path)
@@ -138,30 +134,33 @@ class TaskStatus(Resource):
         parameters:
           - in: path
             name: task_id
-            description: ID of the task
-            type: string
+            description: "ID of the task"
+            schema:
+                type: string
             required: true
         responses:
             200:
                 description: Task status
-                schema:
-                    type: object
-                    required:
-                      - task-id
-                      - state
-                      - result
-                    properties:
-                        task_id:
-                            type: string
-                        status:
-                            type: string
-                            description: Short task status
-                        result:
-                            type: ???
-                            description: Result of completed task OR intermediate status message
-                        traceback:
-                            type: string
-                            description: Traceback, in case of task failure
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required:
+                            - task-id
+                            - state
+                            - result
+                            properties:
+                                task_id:
+                                    type: string
+                                status:
+                                    type: string
+                                    description: Short task status
+                                result:
+                                    type: ???
+                                    description: Result of completed task OR intermediate status message
+                                traceback:
+                                    type: string
+                                    description: Traceback, in case of task failure
         """
 
         r = redis.Redis(
@@ -185,10 +184,12 @@ class Operations(Resource):
         responses:
             200:
                 description: Operations
-                schema:
-                    type: array
-                    items:
-                        type: string
+                content:
+                    application/json:
+                        schema:
+                            type: array
+                            items:
+                                type: string
         """
         with open(rosetta_config_file, 'r') as stream:
             config = yaml.load(stream)
@@ -208,10 +209,12 @@ class Connections(Resource):
         responses:
             200:
                 description: Operations
-                schema:
-                    type: array
-                    items:
-                        type: string
+                content:
+                    application/json:
+                        schema:
+                            type: array
+                            items:
+                                type: string
         """
         with open(rosetta_config_file, 'r') as stream:
             config = yaml.load(stream)
@@ -236,10 +239,12 @@ class Concepts(Resource):
         responses:
             200:
                 description: Concepts
-                schema:
-                    type: array
-                    items:
-                        type: string
+                content:
+                    application/json:
+                        schema:
+                            type: array
+                            items:
+                                type: string
         """
         concepts = list(node_types.node_types - {'unspecified'})
         return concepts
