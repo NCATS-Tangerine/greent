@@ -11,6 +11,13 @@ def test_GO(rosetta):
     s = rosetta.synonymizer.synonymize( node )
     assert True
 
+def test_HGNC(rosetta):
+    node = KNode('HGNC:795',name="ATM",type = node_types.GENE)
+    s = rosetta.synonymizer.synonymize( node )
+    print(node.synonyms)
+    assert True
+
+
 def test_drug_with_mesh(rosetta):
     node = KNode('MESH:D000393',name="notsure",type = node_types.CHEMICAL_SUBSTANCE)
     s = rosetta.synonymizer.synonymize(node)

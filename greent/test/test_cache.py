@@ -7,6 +7,17 @@ def test_omnicorp(rosetta):
     print(pref)
     assert len(pref) > 10
 
+def test_cache(rosetta):
+    syns = rosetta.cache.get("synonymize(CHEBI:15366)")
+    print(len(syns))
+    print(syns)
+
+def test_cache(rosetta):
+    syns = rosetta.cache.get("synonymize(HGNC:795)")
+    print(len(syns))
+    print(syns)
+
+
 def x_test_cache(rosetta):
     #syns = rosetta.cache.get("synonymize(UMLS:C0004096)")
     #print(syns)

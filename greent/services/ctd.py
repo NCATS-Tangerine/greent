@@ -132,9 +132,9 @@ class CTD(Service):
             obj = requests.get(url).json ()
             for r in obj:
                 #Let's only keep humans for now:
-                if r['OrganismID'] != '9606':
-                    continue
-                props = {"description": r[ 'Interaction' ]}
+                #if r['OrganismID'] != '9606':
+                #    continue
+                props = {"description": r[ 'Interaction' ], 'taxon': f"taxon:{r['OrganismID']}"}
                 predicate_label = r['InteractionActions']
                 if '|' in predicate_label:
                     continue
@@ -162,8 +162,9 @@ class CTD(Service):
             obj=result.json()
             for r in obj:
                 #Let's only keep humans for now:
-                if r['taxonID'] != 'ncbitaxon:9606':
-                    continue
+                #if r['taxonID'] != 'ncbitaxon:9606':
+                #    continue
+                props = {'taxon': r['taxonID']}
                 predicate_label = r['degree']+' '+r['interaction']
                 predicate = LabeledID(identifier=f'CTD:{Text.snakify(predicate_label)}', label=predicate_label)
                 gene_node = KNode(Text.upper_curie(r['geneID']), name=r['gene_label'],type=node_types.GENE)
@@ -188,11 +189,11 @@ class CTD(Service):
             obj = requests.get (url).json ()
             for r in obj:
                 #Let's only keep humans for now:
-                if r['OrganismID'] != '9606':
-                    continue
+                #if r['OrganismID'] != '9606':
+                #    continue
                 if r['GeneID'] != geneid:
                     continue
-                props = {"description": r[ 'Interaction' ]}
+                props = {"description": r[ 'Interaction' ],'taxon': r['OrganismID']}
                 predicate_label = r['InteractionActions']
                 if '|' in predicate_label:
                     continue
@@ -226,8 +227,9 @@ class CTD(Service):
             obj = requests.get (url).json ()
             for r in obj:
                 #Let's only keep humans for now:
-                if r['taxonID'] != 'ncbitaxon:9606':
-                    continue
+                #if r['taxonID'] != 'ncbitaxon:9606':
+                #    continue
+                props = {'taxon': r['taxonID']}
                 predicate_label = r['degree']+' '+r['interaction']
                 predicate = LabeledID(identifier=f'CTD:{Text.snakify(predicate_label)}', label=predicate_label)
                 #Should this be substance?
@@ -239,7 +241,7 @@ class CTD(Service):
                 else:
                     subject = gene_node
                     object = drug_node
-                edge = self.create_edge(subject,object,'ctd.gene_to_drug_extended',identifier,predicate )
+                edge = self.create_edge(subject,object,'ctd.gene_to_drug_extended',identifier,predicate,properties = props)
                 #This is what we'd like it to be, but right now there's not enough real specificity on the predicates
                 #key = (drug_node.id, edge.standard_predicate.label)
                 key = (drug_node.id, edge.original_predicate.label)

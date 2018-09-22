@@ -119,6 +119,20 @@ def test_gene_to_drug_unique(ctd):
             assert n.name == 'Estradiol'
     assert total == unique
 
+def test_gene_to_drug_CASP3(ctd,rosetta):
+    input_node = KNode("HGNC:1504", type=node_types.GENE)  # CASP3
+    rosetta.synonymizer.synonymize(input_node)
+    results = ctd.gene_to_drug(input_node)
+    #See note in test_gene_to_drug_unique
+    outputs = [(e.original_predicate, n.id) for e, n in results]
+    total = len(outputs)
+    unique = len(set(outputs))
+    for e, n in results:
+        assert e.standard_predicate.identifier != 'GAMMA:0'
+        if (n.id == 'MESH:C059514'):
+            print(e.standard_predicate.identifier)
+    assert 0
+    assert total == unique
 
 def test_gene_to_drug_ACHE(ctd):
     input_node = KNode("NCBIGENE:43", type=node_types.GENE)  # ACHE
