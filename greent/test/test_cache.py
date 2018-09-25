@@ -7,7 +7,7 @@ def test_omnicorp(rosetta):
     print(pref)
     assert len(pref) > 10
 
-def test_cache(rosetta):
+def test_chebi(rosetta):
     syns = rosetta.cache.get("synonymize(CHEBI:15366)")
     print(len(syns))
     print(syns)
