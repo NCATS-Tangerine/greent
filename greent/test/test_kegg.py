@@ -44,3 +44,8 @@ def test_enzyme_to_chem(kegg):
     results = kegg.enzyme_get_chemicals(enzyme)
     assert len(results) == 8
 
+def test_synonymized(kegg,rosetta):
+    enzyme = KNode('HGNC:2843',name='DGAT1',type=node_types.GENE)
+    rosetta.synonymizer.synonymize(enzyme)
+    results = kegg.enzyme_get_chemicals(enzyme)
+    assert len(results) > 0
