@@ -135,9 +135,21 @@ class CTD(Service):
                 #if r['OrganismID'] != '9606':
                 #    continue
                 props = {"description": r[ 'Interaction' ], 'taxon': f"taxon:{r['OrganismID']}"}
+                pmid_count = len(r['PubMedIDs'].split('|'))
                 predicate_label = r['InteractionActions']
+                #there are lots of garbage microarrays with only one paper. THey goop the place up
+                # ignore them
+                if pmid_count < 3:
+                    if predicate_label in ['affects^expression','increases^expression',
+                                           'decreases^expression','affects^methylation',
+                                           'increases^methylation','decreases^methylation']:
+                        continue
+                if pmid_count < 2:
+                    if predicate_label in ['affects^splicing','increases^splicing', 'decreases^splicing']:
+                        continue
                 if '|' in predicate_label:
                     continue
+                print(predicate_label, pmid_count, r['GeneID'])
                 predicate = LabeledID(identifier=f'CTD:{predicate_label}', label=predicate_label)
                 gene_node = KNode(f"NCBIGENE:{r['GeneID']}", type=node_types.GENE)
                 if sum([s in predicate.identifier for s in self.g2d_strings]) > 0:

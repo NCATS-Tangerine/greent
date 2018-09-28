@@ -49,7 +49,7 @@ def load_chemicals(rosetta, refresh=False):
     with open('chemconc.txt','w') as outf:
         for key in concord:
             outf.write(f'{key}\t{concord[key]}\n')
-    dump_cache(concord,rosetta)
+#    dump_cache(concord,rosetta)
 
 def load_pairs(fname,prefix):
     pairs = []

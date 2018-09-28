@@ -92,6 +92,14 @@ def test_drug_to_gene_simple(ctd):
     result_ids = [node.id for edge, node in results]
     assert 'NCBIGENE:5743' in result_ids  # Cox2 for a cox2 inhibitor
 
+def test_drug_to_gene_Huge(ctd):
+    # Even though the main identifier is drugbank, CTD should find the right synonym in there somewhere.
+    input_node = KNode("MESH:D014635", name="Valproic Acid", type=node_types.CHEMICAL_SUBSTANCE)
+    results = ctd.drug_to_gene(input_node)
+    print(results[0][0].original_predicate )
+    print(results[0][0].standard_predicate )
+    print(len(results))
+    assert 0
 
 def test_drug_to_gene_synonym(ctd):
     # Even though the main identifier is drugbank, CTD should find the right synonym in there somewhere.
