@@ -110,6 +110,9 @@ class Synonymizer:
             synonyms_by_curie[c].append(s)
         for type_curie in type_curies:
             potential_identifiers = synonyms_by_curie[type_curie]
+            #if the current identifier is in the list of possible identifiers, then let's keep it - don't switch!
+            if node.id in [x.identifier for x in potential_identifiers]:
+                break
             if len(potential_identifiers) > 0:
                 if len(potential_identifiers) > 1:
                     pis = [ f'{pi.identifier}({pi.label})' for pi in potential_identifiers]
@@ -136,8 +139,3 @@ class Synonymizer:
                 bad_synonyms.add(synonym)
         for bs in bad_synonyms:
             node.synonyms.remove(bs)
-        if node.id.startswith('DOID'):
-            logger.warn("We are ending up with a DOID here")
-            logger.warn(node.id)
-            logger.warn(node.synonyms)
-            logger.warn(node.type)
