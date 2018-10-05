@@ -5,31 +5,18 @@ from greent.util import LoggingUtil
 import logging
 import os
 from crawler.mesh_unii import refresh_mesh_pubchem
-from crawler.crawl_util import glom, dump_cache
+from crawler.crawl_util import glom, dump_cache, pull_via_ftp
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
-def pull_via_ftp(ftpsite, ftpdir, ftpfile):
-    ftp = FTP(ftpsite)
-    ftp.login()
-    ftp.cwd(ftpdir)
-    with BytesIO() as data:
-        ftp.retrbinary(f'RETR {ftpfile}', data.write)
-        binary = data.getvalue()
-    ftp.quit()
-    return binary
 
 def pull(location,directory,filename):
-    print(filename)
     data = pull_via_ftp(location, directory, filename)
     rdf = decompress(data).decode()
     return rdf
 
-
-
 def make_mesh_id(mesh_uri):
     return f"mesh:{mesh_uri.split('/')[-1][:-1]}"
-
 
 def load_chemicals(rosetta, refresh=False):
     #Build if need be
@@ -49,7 +36,7 @@ def load_chemicals(rosetta, refresh=False):
     with open('chemconc.txt','w') as outf:
         for key in concord:
             outf.write(f'{key}\t{concord[key]}\n')
-    dump_cache(concord,rosetta)
+#    dump_cache(concord,rosetta)
 
 def load_pairs(fname,prefix):
     pairs = []
@@ -62,13 +49,6 @@ def load_pairs(fname,prefix):
                 pre_ids = [pids.strip()[1:-1] for pids in pre_ids] #remove spaces and ' marks around ids
             else:
                 pre_ids = [x[1]]
-            for pid in pre_ids:
-                if "'" in pid:
-                    print("!")
-                    print(pid)
-                    print(fname)
-                    print(prefix)
-                    exit()
             ids = [ f'{prefix}:{pid}' for pid in pre_ids ]
             for identifier in ids:
                 pairs.append( (mesh,identifier) )
@@ -86,23 +66,6 @@ def uni_glom(unichem_data,prefix1,prefix2,chemdict):
     curiepairs = [ (f'{prefix1}:{p[0]}',f'{prefix2}:{p[1]}') for p in pairs]
     glom(chemdict,curiepairs)
 
-'''
-def glom(cpairs, chemdict):
-    print(f'Starting with {len(chemdict)} entries')
-    for cpair in cpairs:
-        if cpair[0] not in chemdict:
-            if cpair[1] in chemdict:
-                chemdict[cpair[0]] = chemdict[cpair[1]]
-            else:
-                chemdict[cpair[0]] = set()
-        if cpair[1] in chemdict:
-            if chemdict[cpair[0]] != chemdict[cpair[1]]:
-                chemdict[cpair[0]].update(chemdict[cpair[1]])
-        chemdict[cpair[0]].update(cpair)
-        chemdict[cpair[1]] = chemdict[cpair[0]]
-    print(f'Ending with {len(chemdict)} entries')
-'''
-
 def load_unichem():
     chemcord = {}
     prefixes={1:'CHEMBL', 2:'DRUGBANK', 6:'KEGG.COMPOUND', 7:'CHEBI', 14:'UNII',  18:'HMDB', 22:'PUBCHEM'}
@@ -111,14 +74,12 @@ def load_unichem():
     keys.sort()
     for i in range(len(keys)):
         for j in range(i+1,len(keys)):
-            print(i,j)
             ki = keys[i]
             kj = keys[j]
             prefix_i = prefixes[ki]
             prefix_j = prefixes[kj]
             dr =f'pub/databases/chembl/UniChem/data/wholeSourceMapping/src_id{ki}'
             fl = f'src{ki}src{kj}.txt.gz'
-            print(dr,fl)
             pairs = pull('ftp.ebi.ac.uk',dr ,fl )
             uni_glom(pairs,prefix_i,prefix_j,chemcord)
     return chemcord

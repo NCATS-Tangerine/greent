@@ -7,6 +7,24 @@ def test_omnicorp(rosetta):
     print(pref)
     assert len(pref) > 10
 
+def test_chebi(rosetta):
+    syns = rosetta.cache.get("synonymize(CHEBI:15366)")
+    print(len(syns))
+    print(syns)
+
+def test_cache(rosetta):
+    syns = rosetta.cache.get("synonymize(HGNC:795)")
+    print(len(syns))
+    print(syns)
+
+def test_kegg(rosetta):
+    key='caster.upcast(kegg~enzyme_get_chemicals,chemical_substance)(HGNC:2843)'
+    res = rosetta.cache.get(key)
+    print(len(res))
+
+
+
+
 def x_test_cache(rosetta):
     #syns = rosetta.cache.get("synonymize(UMLS:C0004096)")
     #print(syns)

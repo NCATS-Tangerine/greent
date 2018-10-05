@@ -14,7 +14,7 @@ from typing import NamedTuple
 
 from builder.api.setup import swagger
 from builder.util import FromDictMixin
-from greent.util import LoggingUtil
+from greent.util import LoggingUtil, Text
 
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
@@ -141,6 +141,7 @@ class QEdge(FromDictMixin):
         self.provided_by = None
         self.original_predicate = None
         self.standard_predicate = None
+        self.type = None
         self.publications = []
         self.min_length = 1
         self.max_length = 1
@@ -293,7 +294,8 @@ class Question(FromDictMixin):
                 target_id = int(edge['target'][1:])
                 trans = {
                     "op": edge['op'],
-                    "link": edge['predicate']
+                    "link": edge['predicate'],
+                    "predicate": next(Text.snakify(e2.type) if e2.type else None for e2 in self.machine_question['edges'] if e2.id == int(e[1:]))
                 }
                 transitions[source_id][target_id].append(trans)
             
@@ -319,7 +321,7 @@ class Question(FromDictMixin):
             raise RuntimeError('No viable programs.')
 
         from greent.program import Program
-        program = Program(plan, self.machine_question['nodes'], rosetta, 0)
+        program = Program(plan, self.machine_question, rosetta, 0)
         programs = [program]
         
         return programs

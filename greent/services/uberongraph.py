@@ -264,9 +264,11 @@ class UberonGraphKS(Service):
     def get_phenotype_by_anatomy_graph (self, anatomy_node):
         results = []
         for curie in anatomy_node.get_synonyms_by_prefix('UBERON'):
+            logger.info(f"Looking up by {curie}")
             phenotypes = self.anatomy_to_phenotype (curie)
             for r in phenotypes:
                 edge, node = self.create_anatomy_phenotype_edge(r['pheno_id'],r['pheno_label'],curie,anatomy_node)
+                logger.info(f" got {node.id}")
                 if anatomy_node.name is None:
                     anatomy_node.name = r['anatomy_label']
                 results.append ( (edge, node) )

@@ -92,6 +92,16 @@ def test_drug_to_gene_simple(ctd):
     result_ids = [node.id for edge, node in results]
     assert 'NCBIGENE:5743' in result_ids  # Cox2 for a cox2 inhibitor
 
+def test_drug_to_gene_Huge(ctd):
+    # Even though the main identifier is drugbank, CTD should find the right synonym in there somewhere.
+    input_node = KNode("MESH:D014635", name="Valproic Acid", type=node_types.CHEMICAL_SUBSTANCE)
+    results = ctd.drug_to_gene(input_node)
+    #OK, this looks like a lot, but it's better than the 30000 we had before filtering.
+    assert len(results) < 4000
+    #print(results[0][0].original_predicate )
+    #print(results[0][0].standard_predicate )
+    #print(len(results))
+    #assert 0
 
 def test_drug_to_gene_synonym(ctd):
     # Even though the main identifier is drugbank, CTD should find the right synonym in there somewhere.
@@ -119,6 +129,19 @@ def test_gene_to_drug_unique(ctd):
             assert n.name == 'Estradiol'
     assert total == unique
 
+def test_gene_to_drug_CASP3(ctd,rosetta):
+    input_node = KNode("HGNC:1504", type=node_types.GENE)  # CASP3
+    rosetta.synonymizer.synonymize(input_node)
+    results = ctd.gene_to_drug(input_node)
+    #See note in test_gene_to_drug_unique
+    outputs = [(e.original_predicate, n.id) for e, n in results]
+    total = len(outputs)
+    unique = len(set(outputs))
+    for e, n in results:
+        assert e.standard_predicate.identifier != 'GAMMA:0'
+        if (n.id == 'MESH:C059514'):
+            print(e.standard_predicate.identifier)
+    assert total == unique
 
 def test_gene_to_drug_ACHE(ctd):
     input_node = KNode("NCBIGENE:43", type=node_types.GENE)  # ACHE
@@ -145,16 +168,6 @@ def test_gene_to_drug_synonym(ctd):
     result_ids = [node.id for edge, node in results]
     assert 'MESH:D000068579' in result_ids  # Cox2 for a cox2 inhibitor
 
-
-def test_artemether_to_gene(ctd):
-    mesh = 'MESH:C032942'
-    input_node = KNode(mesh, type=node_types.CHEMICAL_SUBSTANCE)
-    results = ctd.drug_to_gene(input_node)
-    for e, node in results:
-        assert e.standard_predicate.identifier != 'GAMMA:0'
-        assert node.type == node_types.GENE
-    result_ids = [node.id for edge, node in results]
-    assert 'NCBIGENE:9970' in result_ids
 
 
 def test_chemical_to_gene_glutathione(ctd):

@@ -81,7 +81,7 @@ class Synonymizer:
             else:
                 logger.warn (f"No synonymizer registered for concept: {node.type}")
         if synonyms is not None:
-            # logger.debug(f"Number of synonyms:{len(synonyms)}")
+            #logger.debug(f"Number of synonyms:{len(synonyms)}")
             #for s in synonyms:
             #    logger.debug(f"New syn: {s}")
             node.add_synonyms(synonyms)
@@ -110,6 +110,9 @@ class Synonymizer:
             synonyms_by_curie[c].append(s)
         for type_curie in type_curies:
             potential_identifiers = synonyms_by_curie[type_curie]
+            #if the current identifier is in the list of possible identifiers, then let's keep it - don't switch!
+            if node.id in [x.identifier for x in potential_identifiers]:
+                break
             if len(potential_identifiers) > 0:
                 if len(potential_identifiers) > 1:
                     pis = [ f'{pi.identifier}({pi.label})' for pi in potential_identifiers]
@@ -126,17 +129,13 @@ class Synonymizer:
         # unknown prefixes, as to make sure that if we got e.g. a meddra, and we downcast it to a disease,
         # that we don't end up with HP's in the equivalent ids.
         bad_synonyms = set()
+        uc = [ tc.upper() for tc in type_curies ]
         for synonym in node.synonyms:
             if isinstance(synonym, LabeledID):
                 prefix = Text.get_curie(synonym.identifier)
             else:
                 prefix = Text.get_curie(synonym)
-            if prefix not in type_curies:
+            if prefix.upper() not in uc:
                 bad_synonyms.add(synonym)
         for bs in bad_synonyms:
             node.synonyms.remove(bs)
-        if node.id.startswith('DOID'):
-            logger.warn("We are ending up with a DOID here")
-            logger.warn(node.id)
-            logger.warn(node.synonyms)
-            logger.warn(node.type)

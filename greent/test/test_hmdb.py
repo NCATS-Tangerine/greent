@@ -28,6 +28,16 @@ def test_metabolite_to_enzyme_with_syn(rosetta,hmdb):
     results = hmdb.metabolite_to_enzyme(chem)
     assert len(results) > 0
 
+#This one is returning no results because our current mondo doesn't map T2D to any UMLS :(
+def x_test_diabetes_to_metabolite(rosetta,hmdb):
+    diabetes = KNode('MONDO:0005148', type=node_types.DISEASE)
+    rosetta.synonymizer.synonymize(diabetes)
+    print(diabetes.synonyms)
+    results = hmdb.disease_to_metabolite(diabetes)
+    assert len(results) > 0
+    #node_labels=[node.name for edge,node in results]
+    #assert '5-HETE' in node_labels
+
 def test_disease_to_metabolite(hmdb):
     asthma = KNode('UMLS:C0004096', type=node_types.DISEASE)
     results = hmdb.disease_to_metabolite(asthma)

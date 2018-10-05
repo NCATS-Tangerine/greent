@@ -1,28 +1,22 @@
-from ftplib import FTP
-from io import BytesIO
 from gzip import decompress
 from greent.util import LoggingUtil
 import itertools
 import logging
 import requests
 import os
+import pickle
+
+from crawler.crawl_util import pull_via_ftp
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
-def pull_via_ftp(ftpsite, ftpdir, ftpfile):
-    ftp = FTP(ftpsite)
-    ftp.login()
-    ftp.cwd(ftpdir)
-    with BytesIO() as data:
-        ftp.retrbinary(f'RETR {ftpfile}', data.write)
-        binary = data.getvalue()
-    ftp.quit()
-    return binary
 
 def pull(location,directory,filename):
     print(filename)
     data = pull_via_ftp(location, directory, filename)
     rdf = decompress(data).decode()
+    with open(filename,'w') as outf:
+        outf.write(rdf)
     return rdf
 
 def parse_mesh(data):
@@ -102,7 +96,6 @@ def chunked(it, size):
         yield p
 
 def lookup_by_mesh(meshes,apikey):
-    print('Lookup by mesh')
     term_to_pubs = {}
     if apikey is None:
         print('Warning: not using API KEY for eutils, resulting in 3x slowdown')
@@ -139,10 +132,10 @@ def lookup_by_mesh(meshes,apikey):
                 if len(cids) <5:
                     # 5 or more is probably a group, not a compound
                     term_to_pubs[remesh] = cids
+    print(f'mesh found {len(term_to_pubs)}')
     return term_to_pubs
 
 def lookup_by_cas(term_to_cas,apikey):
-    print('Lookup by CAS')
     term_to_pubs = {}
     if apikey is None:
         print('Warning: not using API KEY for eutils, resulting in 3x slowdown')
@@ -151,10 +144,23 @@ def lookup_by_cas(term_to_cas,apikey):
         url = f'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pccompound&term={cas}&retmode=json'
         if apikey is not None:
             url+=f'&apikey={apikey}'
-        response = requests.get(url).json()
-        term_to_pubs[term] = response['esearchresult']['idlist']
+        try:
+            response = requests.get(url).json()
+        except Exception as e:
+            print(e)
+            print(url)
+            continue
+        try:
+            r = response['esearchresult']
+            if 'errorlist' in r:
+                if 'phrasesnotfound' in r['errorlist']:
+                    if cas in r['errorlist']['phrasesnotfound']:
+                        continue
+            term_to_pubs[term] = response['esearchresult']['idlist']
+        except:
+            continue
+    print(f'cas found {len(term_to_pubs)}')
     return term_to_pubs
-
 
 def refresh_mesh_pubchem(rosetta):
     """There are 3 possible ways to map mesh terms
@@ -162,7 +168,7 @@ def refresh_mesh_pubchem(rosetta):
     2. Sometimes there is a CAS number. These are ok. It's a good way to get a less ambiguous mapping, but you have to
        use eutils to get at them.  Furthermore: A single CAS will map to multiple PUBCHEM compounds.  This is apparently
        because somebody is not paying attention to stereochemistry.  I'm not sure if it's CAS or PUBCHEM mapping to CAS
-       but the upshot is that there is now way to choose which pubchem we want, so we will take all, and that will
+       but the upshot is that there is no way to choose which pubchem we want, so we will take all, and that will
        end up glomming together stereo and non-stereo versions  fo the structure. Oh well.
     3. Sometimes the registry term is 0.  Literally.  In this case, the only hope is to call eutils and see what you
        get back.  Here's what NLM support says about what to do with the results:
@@ -187,8 +193,7 @@ def refresh_mesh_pubchem(rosetta):
        CAS:  60880
        0:    190966"""
     unmapped_mesh, term_to_cas, term_to_unii, term_to_EC = parse_mesh(pull('ftp.nlm.nih.gov','/online/mesh/rdf', 'mesh.nt.gz'))
-    '''
-    import pickle
+    #This is just a way to cache some slow work so you can come back to it dig around without re-running things.
     umfname = os.path.join (os.path.dirname (__file__), 'unmapped.pickle')
     mcfname = os.path.join (os.path.dirname (__file__), 'meshcas.pickle')
     mufname = os.path.join (os.path.dirname (__file__), 'meshunii.pickle')
@@ -198,25 +203,26 @@ def refresh_mesh_pubchem(rosetta):
         pickle.dump(term_to_cas,mc)
         pickle.dump(term_to_unii,mu)
         pickle.dump(term_to_EC,mec)
-    with open(umfname,'rb') as um, open(mcname,'rb') as mc, open(mufname,'rb') as mu, open(ecfname,'rb') as mec:
+    '''
+    with open(umfname,'rb') as um, open(mcfname,'rb') as mc, open(mufname,'rb') as mu, open(ecfname,'rb') as mec:
         unmapped_mesh=pickle.load(um)
         term_to_cas=pickle.load(mc)
         term_to_unii=pickle.load(mu)
         term_to_EC=pickle.load(mec)
     '''
+    #mesh_to_unii is one of the files read by chemicals.py
     muni_name = os.path.join(os.path.dirname(__file__), 'mesh_to_unii.txt')
     mec_name = os.path.join(os.path.dirname(__file__), 'mesh_to_EC.txt')
     dump(term_to_unii,muni_name)
     dump(term_to_EC,mec_name)
     context = rosetta.service_context
     api_key = context.config['EUTILS_API_KEY']
+
     term_to_pubchem_by_mesh = lookup_by_mesh(unmapped_mesh,api_key)
     term_to_pubchem_by_cas = lookup_by_cas(term_to_cas,api_key)
+
     term_to_pubchem = {**term_to_pubchem_by_cas, **term_to_pubchem_by_mesh}
+    #mesh_to_pubchem is one of the files that chemicals.py is looking for.
     mpc_name = os.path.join(os.path.dirname(__file__), 'mesh_to_pubchem.txt')
     dump(term_to_pubchem,mpc_name)
 
-
-if __name__ == '__main__':
-    from greent.rosetta import Rosetta
-    refresh_mesh_pubchem(Rosetta())
