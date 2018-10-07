@@ -106,6 +106,9 @@
     pathway:
       - link  : metabolite_to_pathway
         op    : hmdb.metabolite_to_pathway
+    metabolite:
+      - link  : metabolite_to_metabolite
+        op    : kegg.chemical_get_chemical
   gene:
     anatomical_entity:
       - link  : gene_to_anatomy
