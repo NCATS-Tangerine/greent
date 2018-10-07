@@ -55,5 +55,3 @@ def read_meddra():
                 continue
             pairs.append( (f'UMLS:{x[0]}',f'MEDDRA:{x[13]}'))
     return pairs
-
-
