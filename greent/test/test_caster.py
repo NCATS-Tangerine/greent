@@ -3,6 +3,16 @@ from greent.graph_components import KNode, LabeledID
 from greent import node_types
 from greent.conftest import rosetta
 
+def test_kegg(rosetta):
+    fname='caster.upcast(kegg~enzyme_get_chemicals,chemical_substance)'
+    func = rosetta.get_ops(fname)
+    assert func is not None
+    node = KNode('HGNC:2843', name='gene',type=node_types.GENE)
+    rosetta.synonymizer.synonymize(node)
+    results = func(node)
+    assert len(results) > 0
+
+
 def test_drugcentral(rosetta):
     fname='caster.output_filter(mychem~get_drugcentral,disease,typecheck~is_disease)'
     func = rosetta.get_ops(fname)
