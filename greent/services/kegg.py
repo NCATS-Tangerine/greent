@@ -95,6 +95,42 @@ class KEGG(Service):
                 results.append( (edge, enzyme))
         return results
 
+    def chemical_get_chemical(self,chemnode):
+        """One chemical might be produced from the metabolism of another or it may produce another
+        as a metabolite. We first look up the reactions for the input chemical.
+        Then we pull the reaction which gives us the other chemicals and the relationship"""
+        reactions = self.chemical_get_reaction(chemnode)
+        chemids = set([Text.un_curie(x) for x in chemnode.get_synonyms_by_prefix('KEGG.COMPOUND')])
+        results = []
+        for reaction_id in reactions:
+            rxn = self.get_reaction(reaction_id)
+            #Only rxns with enzymes are directional I think.
+            if 'enzyme' in rxn:
+                if len(chemids.intersection(rxn['reactants'])) > 0:
+                    predicate = LabeledID('RO:0001001','derives into')
+                    input_identifier = chemids.intersection(rxn['reactants']).pop()
+                    other_chems = rxn['products']
+                    forward = True
+                elif len(chemids.intersection(rxn['products'])) > 0:
+                    predicate = LabeledID('RO:0001001','derives into')
+                    input_identifier = chemids.intersection(rxn['products']).pop()
+                    other_chems = rxn['reactants']
+                    forward = False
+                else:
+                    logger.error(f"Mismatch between query and answer: {rxn} {chemids}")
+                    continue
+                for chem in other_chems:
+                    output = KNode(f'KEGG.COMPOUND:{chem}', type=node_types.METABOLITE)
+                    if forward:
+                        subj = chemnode
+                        obj = output
+                    else:
+                        subj = output
+                        obj = chemnode
+                    edge = self.create_edge(subj, obj, f'kegg.chemical_get_chemical',  input_identifier, predicate)
+                    results.append( (edge, output))
+        return results
+
 
     def add_chem_results(self,chem_ids, predicate, enzyme_node, input_identifier, results, rset):
         for chem_id in chem_ids:
