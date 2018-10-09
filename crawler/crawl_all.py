@@ -17,18 +17,22 @@ def poolrun(type1,type2,rosetta):
 def crawl():
     rosetta = Rosetta()
     #load_genes(rosetta)
-    #load_chemicals(rosetta,refresh=False)
+    load_chemicals(rosetta,refresh=False)
     #load_chemicals(rosetta,refresh=True)
-    load_diseases_and_phenotypes(rosetta)
+    #load_diseases_and_phenotypes(rosetta)
     #poolrun(node_types.DISEASE, node_types.PHENOTYPIC_FEATURE, rosetta)
     #poolrun(node_types.GENETIC_CONDITION, node_types.PHENOTYPIC_FEATURE, rosetta)
     #poolrun(node_types.GENE, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, rosetta)
     #poolrun(node_types.DISEASE, node_types.GENE, rosetta)
     #poolrun(node_types.DISEASE, node_types.CHEMICAL_SUBSTANCE, rosetta)
-    poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.DISEASE, rosetta)
-    poolrun(node_types.GENE, node_types.CHEMICAL_SUBSTANCE, rosetta)
+    #poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.DISEASE, rosetta)
+    #poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.CHEMICAL_SUBSTANCE, rosetta)
+    #poolrun(node_types.GENE, node_types.CHEMICAL_SUBSTANCE, rosetta)
     #poolrun(node_types.ANATOMICAL_ENTITY, node_types.PHENOTYPIC_FEATURE, rosetta)
     #create_omnicache(rosetta)
+    #update_omnicache(rosetta,'MONDO','MONDO')
+    #update_omnicache(rosetta,'HGNC','HGNC')
+    #update_omnicache(rosetta,'HP','HP')
 
 #
 # Use this to clean up: should probably 

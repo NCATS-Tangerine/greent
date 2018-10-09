@@ -33,6 +33,9 @@ def create_omnicache(rosetta):
     cacheit('MONDO', 'UBERON', conn, redis)
     cacheit('CHEBI', 'UBERON', conn, redis)
     cacheit('CHEBI', 'CHEBI', conn, redis)
+    cacheit('MONDO', 'MONDO', conn, redis)
+    cacheit('HP', 'HP', conn, redis)
+    cacheit('HGNC', 'HGNC', conn, redis)
 
 def update_omnicache(rosetta,p1,p2):
     """Use this one to add a single pair to the cache.  But if you find yourself doing this,

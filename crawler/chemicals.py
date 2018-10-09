@@ -6,6 +6,7 @@ import logging
 import os
 from crawler.mesh_unii import refresh_mesh_pubchem
 from crawler.crawl_util import glom, dump_cache, pull_via_ftp
+import requests
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
@@ -18,10 +19,24 @@ def pull(location,directory,filename):
 def make_mesh_id(mesh_uri):
     return f"mesh:{mesh_uri.split('/')[-1][:-1]}"
 
+def pull_mesh_chebi():
+    url = 'https://query.wikidata.org/sparql?format=json&query=SELECT ?chebi ?mesh WHERE { ?compound wdt:P683 ?chebi . ?compound wdt:P486 ?mesh. }'
+    results = requests.get(url).json()
+    pairs = [ (f'MESH:{r["mesh"]["value"]}',f'CHEBI:{r["chebi"]["value"]}')
+             for r in results['results']['bindings']
+             if not r['mesh']['value'].startswith('M') ]
+    with open('mesh_chebi.txt','w') as outf:
+        for m,c in pairs:
+            outf.write(f'{m}\t{c}\n')
+    return pairs
+
 def load_chemicals(rosetta, refresh=False):
     #Build if need be
     if refresh:
         refresh_mesh_pubchem(rosetta)
+    #Get MESH/CHEBI
+    mesh_chebi = pull_mesh_chebi()
+    exit()
     #Get all the simple stuff
     concord = load_unichem()
     #DO MESH/UNII
@@ -38,6 +53,13 @@ def load_chemicals(rosetta, refresh=False):
             outf.write(f'{key}\t{concord[key]}\n')
 #    dump_cache(concord,rosetta)
 
+def remove_ticks(s):
+    if s.startswith("'"):
+        s = s[1:]
+    if s.endswith("'"):
+        s = s[:-1]
+    return s
+
 def load_pairs(fname,prefix):
     pairs = []
     with open(fname,'r') as inf:
@@ -46,7 +68,7 @@ def load_pairs(fname,prefix):
             mesh = f"MESH:{x[0]}"
             if x[1].startswith('['):
                 pre_ids = x[1][1:-1].split(',')
-                pre_ids = [pids.strip()[1:-1] for pids in pre_ids] #remove spaces and ' marks around ids
+                pre_ids = [remove_ticks(pids.strip()) for pids in pre_ids] #remove spaces and ' marks around ids
             else:
                 pre_ids = [x[1]]
             ids = [ f'{prefix}:{pid}' for pid in pre_ids ]
