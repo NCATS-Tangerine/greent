@@ -1,7 +1,8 @@
 from ftplib import FTP
 from io import BytesIO
 from gzip import decompress
-from greent.util import LoggingUtil
+from greent.util import LoggingUtil, Text
+from greent.graph_components import LabeledID
 import logging
 import os
 from crawler.mesh_unii import refresh_mesh_pubchem
@@ -34,11 +35,11 @@ def load_chemicals(rosetta, refresh=False):
     #Build if need be
     if refresh:
         refresh_mesh_pubchem(rosetta)
-    #Get MESH/CHEBI
-    mesh_chebi = pull_mesh_chebi()
-    exit()
     #Get all the simple stuff
     concord = load_unichem()
+    #DO MESH/CHEBI
+    mesh_chebi = pull_mesh_chebi()
+    glom(concord, mesh_chebi)
     #DO MESH/UNII
     mesh_unii_file = os.path.join(os.path.dirname(__file__),'mesh_to_unii.txt')
     mesh_unii_pairs = load_pairs(mesh_unii_file,'UNII')
@@ -47,11 +48,30 @@ def load_chemicals(rosetta, refresh=False):
     mesh_pc_file = os.path.join(os.path.dirname(__file__),'mesh_to_pubchem.txt')
     mesh_pc_pairs = load_pairs(mesh_pc_file,'PUBCHEM')
     glom(concord,mesh_pc_pairs)
+    #Add labels to CHEBIs
+    label_chebis(concord)
     #Dump
     with open('chemconc.txt','w') as outf:
         for key in concord:
             outf.write(f'{key}\t{concord[key]}\n')
 #    dump_cache(concord,rosetta)
+
+def label_chebis(concord):
+    chebilabels = {}
+    for k,v in concord.items():
+        to_remove = []
+        to_add = []
+        for ident in v:
+            if Text.get_curie(ident) == 'CHEBI':
+                if not ident in chebilabels:
+                    lid = LabeledID(ident, get_chebi_label(ident))
+                    chebilabels[ident] = lid
+                to_remove.append(ident)
+                to_add.append(chebilabels[ident])
+        for r in to_remove:
+            v.remove(r)
+        for r in to_add:
+            v.append(r)
 
 def remove_ticks(s):
     if s.startswith("'"):
