@@ -56,6 +56,10 @@ def load_chemicals(rosetta, refresh=False):
             outf.write(f'{key}\t{concord[key]}\n')
 #    dump_cache(concord,rosetta)
 
+def get_chebi_label(ident):
+    res = requests.get(f'http://onto.renci.org/label/{ident}/').json()
+    return res['label']
+
 def label_chebis(concord):
     chebilabels = {}
     for k,v in concord.items():
