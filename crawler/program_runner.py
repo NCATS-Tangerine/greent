@@ -48,17 +48,45 @@ def get_identifiers(input_type,rosetta):
                 res = requests.get(f'http://onto.renci.org/label/{ident}/').json()
                 lids.append(LabeledID(ident,res['label']))
     elif input_type == node_types.GENE:
+        print("Pull genes")
         data = pull_via_ftp('ftp.ebi.ac.uk', '/pub/databases/genenames/new/json', 'hgnc_complete_set.json')
         hgnc_json = loads( data.decode() )
         hgnc_genes = hgnc_json['response']['docs']
         for gene_dict in hgnc_genes:
             symbol = gene_dict['symbol']
             lids.append( LabeledID(identifier=gene_dict['hgnc_id'], label=symbol) )
+        print("OK")
     elif input_type == node_types.CHEMICAL_SUBSTANCE:
+        print('pull chem ids')
         identifiers = requests.get("http://onto.renci.org/descendants/CHEBI:23367").json()['descendants']
+        print('pull labels...')
+        #This is the good way to do this, but it's soooooo slow
+        #n = 0
+        #for ident in identifiers:
+        #    if n % 100 == 0:
+        #        print(n,ident)
+        #    n+=1
+        #    res = requests.get(f'http://onto.renci.org/label/{ident}/').json()
+        #    lids.append(LabeledID(ident,res['label']))
+        #Instead:
+        chebiobo = pull_via_ftp('ftp.ebi.ac.uk', '/pub/databases/chebi/ontology','chebi_lite.obo' ).decode()
+        lines = chebiobo.split('\n')
+        chebi_labels = {}
+        for line in lines:
+            if line.startswith('[Term]'):
+                tid = None
+                label = None
+            elif line.startswith('id:'):
+                tid = line[3:].strip()
+            elif line.startswith('name:'):
+                label = line[5:].strip()
+                chebi_labels[tid] = label
         for ident in identifiers:
-            res = requests.get(f'http://onto.renci.org/label/{ident}/').json()
-            lids.append(LabeledID(ident,res['label']))
+            try:
+                lids.append(LabeledID(ident,chebi_labels[ident]))
+            except KeyError:
+                res = requests.get(f'http://onto.renci.org/label/{ident}/').json()
+                lids.append(LabeledID(ident,res['label']))
     else:
         print(f'Not configured for input type: {input_type}')
     return lids

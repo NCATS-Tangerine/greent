@@ -83,10 +83,12 @@ class KEGG(Service):
             if 'enzyme' in rxn:
                 enzyme = KNode(rxn['enzyme'], type=node_types.GENE)
                 if len(chemids.intersection(rxn['reactants'])) > 0:
-                    predicate = LabeledID('RO:0002449','negatively regulates, entity to entity')
+                    predicate = LabeledID('CTD:increases^chemical synthesis', label='increases synthesis of')
+                    #predicate = LabeledID('RO:0002449','negatively regulates, entity to entity')
                     input_identifier = chemids.intersection(rxn['reactants']).pop()
                 elif len(chemids.intersection(rxn['products'])) > 0:
-                    predicate = LabeledID('RO:0002450','positively regulates, entity to entity')
+                    predicate = LabeledID('CTD:increases^degradation', label='increases degradation of')
+                    #predicate = LabeledID('RO:0002450','positively regulates, entity to entity')
                     input_identifier = chemids.intersection(rxn['products']).pop()
                 else:
                     logger.error(f"Mismatch between query and answer: {rxn} {chemids}")
@@ -153,8 +155,12 @@ class KEGG(Service):
         for reaction_id in reactions:
             rxn = self.get_reaction(reaction_id)
             input_identifier = rxn['enzyme']
-            self.add_chem_results(rxn['reactants'], LabeledID('RO:0002449','negatively regulates, entity to entity'),enzyme_node,input_identifier,results,reactset)
-            self.add_chem_results(rxn['products'], LabeledID('RO:0002449','negatively regulates, entity to entity'),enzyme_node,input_identifier,results,prodset)
+            up_synth = LabeledID('CTD:increases^chemical synthesis', label='increases synthesis of')
+            up_deg = LabeledID('CTD:increases^degradation', label='increases degradation of')
+            self.add_chem_results(rxn['reactants'], up_deg, enzyme_node,input_identifier,results,reactset)
+            self.add_chem_results(rxn['products'], up_synth, enzyme_node,input_identifier,results,prodset)
+            #self.add_chem_results(rxn['reactants'], LabeledID('RO:0002449','negatively regulates, entity to entity'),enzyme_node,input_identifier,results,reactset)
+            #self.add_chem_results(rxn['products'], LabeledID('RO:0002449','negatively regulates, entity to entity'),enzyme_node,input_identifier,results,prodset)
         return results
 
 
