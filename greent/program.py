@@ -73,8 +73,8 @@ class Program:
         response = requests.get(f"{os.environ['BROKER_API']}queues/")
         queues = response.json()
         num_consumers = [q['consumers'] for q in queues if q['name'] == 'neo4j']
-        if num_consumers and num_consumers[0]:
-        #if False:
+        #if num_consumers and num_consumers[0]:
+        if False:
             self.connection = pika.BlockingConnection(pika.ConnectionParameters(
                 heartbeat=0,
                 host=os.environ['BROKER_HOST'],

@@ -13,7 +13,7 @@ def pull_via_ftp(ftpsite, ftpdir, ftpfile):
     ftp.quit()
     return binary
 
-def glom(conc_set, newgroups):
+def glom(conc_set, newgroups, unique_prefixes=[]):
     """We want to construct sets containing equivalent identifiers.
     conc_set is a dictionary where the values are these equivalent identifier sets and
     the keys are all of the elements in the set.   For each element in a set, there is a key
@@ -33,6 +33,14 @@ def glom(conc_set, newgroups):
         #put all the new stuff in it.  Do it element-wise, cause we don't know the type of the new group
         for element in group:
             newset.add(element)
+        #make sure we didn't combine anything we want to keep separate
+        setok = True
+        for up in unique_prefixes:
+            if len([1 for e in newset if e.startswith(up)]) > 1:
+                setok = False
+                break
+        if not setok:
+            continue
         #Now make all the elements point to this new set:
         if p:
             print(newset)

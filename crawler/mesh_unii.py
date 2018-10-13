@@ -30,6 +30,7 @@ def parse_mesh(data):
     concept_to_cas  = {}
     concept_to_unii  = {}
     concept_to_EC  = {}
+    concept_to_label = {}
     for line in data.split('\n'):
         if line.startswith('#'):
             continue
@@ -62,6 +63,9 @@ def parse_mesh(data):
                 concept_to_EC[s] = o
             else:
                 concept_to_unii[s] = o
+        elif v == '<http://www.w3.org/2000/01/rdf-schema#label>':
+            meshid = s[:-1].split('/')[-1]
+            concept_to_label[meshid] = o.strip().split('"')[1]
     term_to_cas={}
     term_to_unii={}
     term_to_EC={}
@@ -79,7 +83,7 @@ def parse_mesh(data):
     print ( f"Found {len(term_to_unii)} compounds with UNII identifiers")
     print ( f"Found {len(unmapped_mesh)} compounds with NOTHING")
     print ( f"{len(term_to_cas) + len(term_to_unii) + len(unmapped_mesh)}")
-    return unmapped_mesh, term_to_cas, term_to_unii, term_to_EC
+    return unmapped_mesh, term_to_cas, term_to_unii, term_to_EC,concept_to_label
 
 def dump(outdict,outfname):
     with open(outfname,'w') as outf:
@@ -192,17 +196,19 @@ def refresh_mesh_pubchem(rosetta):
        UNII: 14545
        CAS:  60880
        0:    190966"""
-    unmapped_mesh, term_to_cas, term_to_unii, term_to_EC = parse_mesh(pull('ftp.nlm.nih.gov','/online/mesh/rdf', 'mesh.nt.gz'))
+    unmapped_mesh, term_to_cas, term_to_unii, term_to_EC, labels = parse_mesh(pull('ftp.nlm.nih.gov','/online/mesh/rdf', 'mesh.nt.gz'))
     #This is just a way to cache some slow work so you can come back to it dig around without re-running things.
-    umfname = os.path.join (os.path.dirname (__file__), 'unmapped.pickle')
-    mcfname = os.path.join (os.path.dirname (__file__), 'meshcas.pickle')
-    mufname = os.path.join (os.path.dirname (__file__), 'meshunii.pickle')
-    ecfname = os.path.join (os.path.dirname (__file__), 'meschec.pickle')
-    with open(umfname,'wb') as um, open(mcfname,'wb') as mc, open(mufname,'wb') as mu, open(ecfname,'wb') as mec:
+    umfname = os.path.join(os.path.dirname (__file__), 'unmapped.pickle')
+    mcfname = os.path.join(os.path.dirname (__file__), 'meshcas.pickle')
+    mufname = os.path.join(os.path.dirname (__file__), 'meshunii.pickle')
+    ecfname = os.path.join(os.path.dirname (__file__), 'meschec.pickle')
+    labelname = os.path.join(os.path.dirname(__file__), 'meshlabels.pickle')
+    with open(umfname,'wb') as um, open(mcfname,'wb') as mc, open(mufname,'wb') as mu, open(ecfname,'wb') as mec, open(labelname,'wb') as ml:
         pickle.dump(unmapped_mesh,um)
         pickle.dump(term_to_cas,mc)
         pickle.dump(term_to_unii,mu)
         pickle.dump(term_to_EC,mec)
+        pickle.dump(labels,ml)
     '''
     with open(umfname,'rb') as um, open(mcfname,'rb') as mc, open(mufname,'rb') as mu, open(ecfname,'rb') as mec:
         unmapped_mesh=pickle.load(um)
