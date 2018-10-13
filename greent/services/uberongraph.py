@@ -36,7 +36,7 @@ class UberonGraphKS(Service):
         prefix CL: <http://purl.obolibrary.org/obo/CL_>
         select distinct ?cellLabel
         from <http://reasoner.renci.org/nonredundant>
-        from <http://example.org/uberon-hp-cl.ttl>
+        from <http://reasoner.renci.org/ontology>
         where {
                   $cellID rdfs:label ?cellLabel .
               }
@@ -59,10 +59,10 @@ class UberonGraphKS(Service):
         prefix BFO: <http://purl.obolibrary.org/obo/BFO_>
         select distinct ?part ?partlabel
         from <http://reasoner.renci.org/nonredundant> 
-        from <http://example.org/uberon-hp-cl.ttl>
+        from <http://reasoner.renci.org/ontology>
         where {
                 $anatomy_id BFO:0000051 ?part .
-                graph <http://reasoner.renci.org/redundant> {
+                graph <http://reasoner.renci.org/ontology/closure> {
                   ?part rdfs:subClassOf UBERON:0001062 .
                 }
                 ?part rdfs:label ?partlabel .
@@ -89,11 +89,13 @@ class UberonGraphKS(Service):
         prefix BFO: <http://purl.obolibrary.org/obo/BFO_>
         select distinct ?cellID ?cellLabel
         from <http://reasoner.renci.org/nonredundant>
-        from <http://example.org/uberon-hp-cl.ttl>
+        from <http://reasoner.renci.org/ontology>
         where {
             graph <http://reasoner.renci.org/redundant> {
-                ?cellID rdfs:subClassOf CL:0000000 .
                 ?cellID BFO:0000050 $anatomyID .
+            }
+            graph <http://reasoner.renci.org/ontology/closure> {
+                ?cellID rdfs:subClassOf CL:0000000 .
             }
             ?cellID rdfs:label ?cellLabel .
         }
@@ -118,11 +120,13 @@ class UberonGraphKS(Service):
         prefix UBERON: <http://purl.obolibrary.org/obo/UBERON_>
         select distinct ?anatomyID ?anatomyLabel
         from <http://reasoner.renci.org/nonredundant>
-        from <http://example.org/uberon-hp-cl.ttl>
+        from <http://reasoner.renci.org/ontology>
         where {
             graph <http://reasoner.renci.org/redundant> {
-                ?anatomyID rdfs:subClassOf UBERON:0001062 .
                 $cellID BFO:0000050 ?anatomyID .
+            }
+            graph <http://reasoner.renci.org/ontology/closure> {
+                ?anatomyID rdfs:subClassOf UBERON:0001062 .
             }
             ?anatomyID rdfs:label ?anatomyLabel .
         }
@@ -152,16 +156,16 @@ class UberonGraphKS(Service):
         prefix phenotype_of: <http://purl.obolibrary.org/obo/UPHENO_0000001>
         select distinct ?anatomy_id ?anatomy_label ?input_label
         from <http://reasoner.renci.org/nonredundant>
-        from <http://example.org/uberon-hp-cl.ttl>
+        from <http://reasoner.renci.org/ontology>
         where {
-                  graph <http://reasoner.renci.org/redundant> {
+                  graph <http://reasoner.renci.org/ontology/closure> {
                     ?anatomy_id rdfs:subClassOf UBERON:0001062 .
                   }
                   ?anatomy_id rdfs:label ?anatomy_label .
                   graph <http://reasoner.renci.org/nonredundant> {
                        ?phenotype phenotype_of: ?anatomy_id .
                   }
-                  graph <http://reasoner.renci.org/redundant> {
+                  graph <http://reasoner.renci.org/ontology/closure> {
                     $HPID rdfs:subClassOf ?phenotype .
                   }
                   $HPID rdfs:label ?input_label .
@@ -185,13 +189,13 @@ class UberonGraphKS(Service):
         prefix phenotype_of: <http://purl.obolibrary.org/obo/UPHENO_0000001>
         select distinct ?pheno_id ?anatomy_label ?pheno_label
         from <http://reasoner.renci.org/nonredundant>
-        from <http://example.org/uberon-hp-cl.ttl>
+        from <http://reasoner.renci.org/ontology>
         where {
                   $UBERONID rdfs:label ?anatomy_label .
                   graph <http://reasoner.renci.org/nonredundant> {
                        ?phenotype phenotype_of: $UBERONID .
                   }
-                  graph <http://reasoner.renci.org/redundant> {
+                  graph <http://reasoner.renci.org/ontology/closure> {
                     ?pheno_id rdfs:subClassOf ?phenotype .
                   }
                   ?pheno_id rdfs:label ?pheno_label .
