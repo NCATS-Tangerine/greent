@@ -12,7 +12,6 @@ class GWASCatalog(Service):
         super(GWASCatalog, self).__init__("gwascatalog", context)
 
     def sequence_variant_to_disease(self, variant_node):
-        
         return_results = []
         dbsnp_curie_ids = variant_node.get_synonyms_by_prefix('DBSNP')
         if dbsnp_curie_ids:
@@ -33,10 +32,9 @@ class GWASCatalog(Service):
                                         props['pubmedId'] = pubmed_id
 
                                     efo_ids = self.get_efo_ids_by_association(association_id)
-
                                     for efo_id in efo_ids:
                                         efo_node = KNode(f'EFO:{efo_id}', type=node_types.DISEASE)
-                                        predicate = LabeledID(identifier=f'gwascatalog.has_phenotype',label=f'has_phenotype')
+                                        predicate = LabeledID(identifier=f'gwascatalog:has_phenotype',label=f'has_phenotype')
                                         edge = self.create_edge(variant_node, efo_node, 'gwascatalog.sequence_variant_to_disease_or_phenotypic_feature', dbsnp_curie_id, predicate, url=query_url, properties=props)
                                         return_results.append((edge, efo_node))
         return return_results

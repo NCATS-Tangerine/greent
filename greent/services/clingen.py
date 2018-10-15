@@ -28,7 +28,7 @@ class ClinGen(Service):
         return synonyms
 
     def get_synonyms_by_other_ids(self, variant_node):
-        # Just looking for >=1 hit because any hit should return all of the available synonyms and caid if they exist
+        # Just looking for 1 hit because any hit should return all of the available synonyms and caid if they exist
         synonyms = set()
         hgvs_ids = variant_node.get_synonyms_by_prefix('HGVS')
         if hgvs_ids:

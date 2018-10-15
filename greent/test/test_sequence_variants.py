@@ -98,9 +98,9 @@ def test_sequence_variant_to_disease(gwascatalog):
     relations = gwascatalog.sequence_variant_to_disease(variant_node)
     identifiers = [node.id for r,node in relations]
     assert 'EFO:EFO_0002690' in identifiers
-    #predicates = [ relation.standard_predicate for relation,n in relations ] 
-    #plabels = set( [p.label for p in predicates] )
-    #assert 'anything' in plabels
+    predicates = [ relation.standard_predicate for relation,n in relations ] 
+    plabels = set( [p.label for p in predicates] )
+    assert 'has_phenotype' in plabels
 
     variant_node = KNode('DBSNP:rs369602258', type=node_types.SEQUENCE_VARIANT)
     results = gwascatalog.sequence_variant_to_disease(variant_node)

@@ -496,6 +496,7 @@ slots:
     mappings:
       - hetio:PRESENTS_DpS
       - GAMMA:0000002 # inverse of UPHENO:0000001, which I can't seem to find an inverse of anywhere.
+      - gwascatalog:has_phenotype
 
     #In translator_minimal
   coexists with:
