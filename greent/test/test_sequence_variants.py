@@ -60,18 +60,27 @@ def test_sequence_variant_to_gene(myvariant):
     relations = myvariant.sequence_variant_to_gene(variant_node)
     identifiers = [node.id for r,node in relations]
     assert 'HGNC.SYMBOL:ABCA1' in identifiers
-    #predicates = [ relation.standard_predicate for relation,n in relations ] 
-    #plabels = set( [p.label for p in predicates] )
-    #assert 'missense_variant' in plabels
+    predicates = [ relation.standard_predicate for relation,n in relations ] 
+    plabels = set( [p.label for p in predicates] )
+    assert 'is_missense_variant_of' in plabels
 
     variant_node = KNode('MYVARIANT_HG19:chr7:g.55241707G>T', type=node_types.SEQUENCE_VARIANT)
     relations = myvariant.sequence_variant_to_gene(variant_node)
     identifiers = [node.id for r,node in relations]
     assert 'HGNC.SYMBOL:EGFR' in identifiers
-    #predicates = [ relation.standard_predicate for relation,n in relations ] 
-    #plabels = [p.label for p in predicates]
-    #assert 'missense_variant' in plabels
-    #assert 'downstream_gene_variant' in plabels
+    predicates = [ relation.standard_predicate for relation,n in relations ] 
+    plabels = [p.label for p in predicates]
+    assert 'is_missense_variant_of' in plabels
+    assert 'is_nearby_variant_of' in plabels
+
+    variant_node = KNode('MYVARIANT_HG19:chr16:g.84205866A>G', type=node_types.SEQUENCE_VARIANT)
+    relations = myvariant.sequence_variant_to_gene(variant_node)
+    identifiers = [node.id for r,node in relations]
+    assert 'HGNC.SYMBOL:DNAAF1' in identifiers
+    predicates = [ relation.standard_predicate for relation,n in relations ] 
+    plabels = [p.label for p in predicates]
+    assert 'is_missense_variant_of' in plabels
+    assert 'is_splice_site_variant_of' in plabels
 
     variant_node = KNode('MYVARIANT_HG38:chr11:g.68032291C>G', type=node_types.SEQUENCE_VARIANT)
     relations = myvariant.sequence_variant_to_gene(variant_node)
@@ -95,7 +104,7 @@ def test_sequence_variant_to_phenotype(rosetta, biolink):
 
 def test_sequence_variant_to_disease(gwascatalog):
     variant_node = KNode('DBSNP:rs7329174', type=node_types.SEQUENCE_VARIANT)
-    relations = gwascatalog.sequence_variant_to_disease(variant_node)
+    relations = gwascatalog.sequence_variant_to_phenotype(variant_node)
     identifiers = [node.id for r,node in relations]
     assert 'EFO:EFO_0002690' in identifiers
     predicates = [ relation.standard_predicate for relation,n in relations ] 
@@ -103,7 +112,7 @@ def test_sequence_variant_to_disease(gwascatalog):
     assert 'has_phenotype' in plabels
 
     variant_node = KNode('DBSNP:rs369602258', type=node_types.SEQUENCE_VARIANT)
-    results = gwascatalog.sequence_variant_to_disease(variant_node)
+    results = gwascatalog.sequence_variant_to_phenotype(variant_node)
     assert len(results) == 0
 
 def future_test_gene_to_sequence_variant(clingen):

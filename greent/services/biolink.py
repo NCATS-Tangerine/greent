@@ -198,6 +198,6 @@ class Biolink(Service):
 
         url = f'{self.url}/bioentity/variant/{clinvarcurie}/phenotypes'
         response = self.page_calls(url)
-        return self.process_associations(response, 'sequence_variant_to_phenotype', node_types.PHENOTYPIC_FEATURE, clinvarcurie, url, variant_node)
+        return self.process_associations(response, 'sequence_variant_get_phenotype', node_types.DISEASE_OR_PHENOTYPIC_FEATURE, clinvarcurie, url, variant_node)
 
 

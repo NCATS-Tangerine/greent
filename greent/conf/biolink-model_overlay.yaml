@@ -26,7 +26,8 @@ classes:
         - UMLS
         - MESH
         - MEDDRA
-        - PHAROS.DISEASE 
+        - PHAROS.DISEASE
+        - HP
 
   phenotypic feature:
     id_prefixes:
@@ -34,6 +35,7 @@ classes:
       - NCIT
       - UMLS
       - MEDDRA
+      - EFO
 
   chemical substance:
     id_prefixes:
@@ -538,7 +540,38 @@ slots:
       - GO:mediated_by
 
   #the following are not in the original biolink model
-  
+  is missense variant of:
+    mappings:
+      - SNPEFF:missense_variant
+      - SNPEFF:initiator_codon_variant
+
+  is synonymous variant of:
+    mappings:
+      - SNPEFF:synonymous_variant
+      - SNPEFF:start_retained
+      - SNPEFF:stop_retained_variant
+
+  is nonsense variant of:
+    mappings:
+      - SNPEFF:stop_gained
+      - SNPEFF:stop_lost
+      - SNPEFF:frameshift_variant
+
+  is splice site variant of:
+    mappings:
+      - SNPEFF:splice_region_variant
+      - SNPEFF:splice_acceptor_variant
+      - SNPEFF:splice_donor_variant
+
+  is nearby variant of:
+    mappings:
+      - SNPEFF:downstream_gene_variant
+      - SNPEFF:upstream_gene_variant
+
+  is non_coding variant of:
+      - SNPEFF:3_prime_UTR_variant
+      - SNPEFF:5_prime_UTR_variant
+
   disease to gene association:
     is_a: association
     mappings:

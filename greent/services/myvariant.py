@@ -34,32 +34,33 @@ class MyVariant(Service):
                         for annotation in annotation_info:
                             new_result = self.process_snpeff_annotation(variant_node, annotation, curie_myvariant_id, query_url)
                             if new_result:
-                                return_results.append(new_result)
+                                return_results.extend(new_result)
                 else:
                     logger.error(f'MyVariant returned a non-200 response: {query_response.status_code})')
 
         return return_results
 
     def process_snpeff_annotation(self, variant_node, annotation, curie_id, query_url):
+        results = []
         if 'gene_id' in annotation:
             gene_id = annotation['gene_id']
             if 'genename' in annotation:
                 gene_symbol = annotation['genename']
             if 'effect' in annotation:
-                effect = annotation['effect'] # could be multiple, with a & delimeter
+                effects = annotation['effect'] # could be multiple, with a & delimeter
             else:
-                effect = 'missing_effect'
+                effects = 'missing_effect'
             if 'putative_impact' in annotation:
                 props={'putative_impact': annotation['putative_impact']}
             else:
                 props = {}
 
-            # This should be switched so that the hgnc id is the node id
-            # For now they are returning both fields with the symbol so I took the symbol as node id because it's actually correct
-            gene_node = KNode(f'HGNC.SYMBOL:{gene_symbol}', type=node_types.GENE)
-            gene_node.add_synonyms((LabeledID(identifier=f'HGNC:{gene_id}', label=f'{gene_id}')))
-            predicate = LabeledID(identifier=f'myvariant:{effect}', label=f'{effect}')
-            edge = self.create_edge(variant_node, gene_node, 'myvariant.sequence_variant_to_gene', curie_id, predicate, url=query_url, properties=props)
-            return (edge, gene_node)
-        else:
-            return None
+            for effect in effects.split('&'):
+                # This should be switched so that the hgnc id is the node id
+                # For now they are returning both fields with the symbol so I took the symbol as node id because it's actually correct
+                gene_node = KNode(f'HGNC.SYMBOL:{gene_symbol}', type=node_types.GENE)
+                gene_node.add_synonyms((LabeledID(identifier=f'HGNC:{gene_id}', label=f'{gene_id}')))
+                predicate = LabeledID(identifier=f'SNPEFF:{effect}', label=f'{effect}')
+                edge = self.create_edge(variant_node, gene_node, 'myvariant.sequence_variant_to_gene', curie_id, predicate, url=query_url, properties=props)
+                results.append((edge, gene_node))
+        return results
