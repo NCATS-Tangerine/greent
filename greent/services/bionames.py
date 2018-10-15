@@ -21,7 +21,8 @@ class BioNames(Service):
             "phenotypic_feature" : self._find,
             "cell"               : self._find,
             "anatomical_entity"  : self._find,
-            "gene"               : self._find
+            "gene"               : self._find,
+            "sequence_variant"   : self._find
         }
         self.normalize = {
             "drug" : "chemical_substance"

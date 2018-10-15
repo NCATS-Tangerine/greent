@@ -9,6 +9,7 @@ DRUG = 'drug'
 METABOLITE = 'metabolite'
 ANATOMICAL_ENTITY = 'anatomical_entity'
 GENE = 'gene'
+SEQUENCE_VARIANT = 'sequence_variant'
 BIOLOGICAL_PROCESS_OR_ACTIVITY = 'biological_process_or_activity'
 MOLECULAR_ACTIVITY = 'molecular_activity'
 BIOLOGICAL_PROCESS = 'biological_process'
@@ -34,6 +35,7 @@ DRUG,
 METABOLITE,
 ANATOMICAL_ENTITY,
 GENE,
+SEQUENCE_VARIANT,
 BIOLOGICAL_PROCESS_OR_ACTIVITY,
 MOLECULAR_ACTIVITY,
 BIOLOGICAL_PROCESS,

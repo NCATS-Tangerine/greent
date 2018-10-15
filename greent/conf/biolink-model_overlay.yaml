@@ -73,7 +73,17 @@ classes:
       - RNAcentral
       - MGI
       - ZFIN
+      - HGNC.SYMBOL
 
+  sequence variant:
+    id_prefixes:
+      - CAID
+      - HGVS
+      - DBSNP
+      - CLINVARVARIANT
+      - MYVARIANT_HG19
+      - MYVARIANT_HG38
+      
   pathway:
     id_prefixes: 
       - KEGG
