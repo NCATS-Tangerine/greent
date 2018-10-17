@@ -143,7 +143,7 @@ class CTD(Service):
                     subject = drug
                     object = gene_node
                 edge = self.create_edge(subject,object,'ctd.drug_to_gene',identifier,predicate,
-                                        publications=[f"PMID:{r['PubMedIDs']}"],url=url,properties=props)
+                                        publications=[f"PMID:{x}" for x in r['PubMedIDs'].split('|')],url=url,properties=props)
                 output.append( (edge,gene_node) )
         return output
 
@@ -218,7 +218,7 @@ class CTD(Service):
                     subject = drug_node
                     obj = gene_node
                 edge = self.create_edge(subject,obj,'ctd.gene_to_drug',identifier,predicate,
-                                        publications=[f"PMID:{r['PubMedIDs']}"],url=url,properties=props)
+                                        publications=[f"PMID:{x}" for x in r['PubMedIDs'].split('|') ],url=url,properties=props)
                 #This is what we'd like it to be, but right now there's not enough real specificity on the predicates
                 #key = (drug_node.id, edge.standard_predicate.label)
                 key = (drug_node.id, edge.original_predicate.label)

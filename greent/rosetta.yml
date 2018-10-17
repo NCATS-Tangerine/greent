@@ -48,17 +48,21 @@
       - link : cell_type_to_anatomy
         op   : uberongraph.get_anatomy_by_cell_graph
     biological_process_or_activity:
+    #   - link : bio_process_cell_type
+    #     op   : quickgo.cell_to_go_term_annotation_extensions
        - link : bio_process_cell_type
-         op   : quickgo.cell_to_go_term_annotation_extensions
+         op   : uberongraph.get_process_or_activity_by_cell
   biological_process_or_activity:
     gene:
       - link : bio_process_gene
         op   : quickgo.go_term_to_gene_annotation
     cell:
+    #  - link : bio_process_cell_type
+    #    op   : quickgo.go_term_to_cell_xontology_relationships
+    #  - link : bio_process_cell_type
+    #    op   : quickgo.go_term_to_cell_annotation_extensions
       - link : bio_process_cell_type
-        op   : quickgo.go_term_to_cell_xontology_relationships
-      - link : bio_process_cell_type
-        op   : quickgo.go_term_to_cell_annotation_extensions
+        op   : uberongraph.get_cell_by_process_or_activity
   chemical_substance:
     gene:
       - link  : chemical_targets_gene

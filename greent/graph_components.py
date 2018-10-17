@@ -158,6 +158,10 @@ class KEdge(FromDictMixin):
                 raise Exception(f"Publication should be a PMID curie: {publication}")
             if not publication.startswith('PMID:'):
                 raise Exception(f"Publication should be a PMID curie: {publication}")
+            try:
+                int(publication[5:])
+            except:
+                raise Exception(f"Publication should be a PMID curie: {publication}")
 
     def __repr__(self):
         return self.long_form()

@@ -51,6 +51,20 @@ def test_reverse_extensions(quickgo):
     assert myedges[0][0].standard_predicate is not None
     assert myedges[0][1].name=='sodium channel regulator activity'
 
+
+def test_reverse_extensions(quickgo):
+    r = quickgo.cell_to_go_term_annotation_extensions(KNode("CL:0002189", type=node_types.CELL))
+    assert len(r) > 0
+    types = set([n.type for e,n in r])
+    assert len(types) == 1
+    assert node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY in types
+    print( r )
+    #myedges = list(filter( lambda en: en[1].id=='GO:0017080' , r))
+    #assert len(myedges) == 1
+    #assert myedges[0][0].standard_predicate is not None
+    #assert myedges[0][1].name=='sodium channel regulator activity'
+
+
 def test_extensions_bp(quickgo):
     #Neurotransmitter secretion
     r = quickgo.go_term_to_cell_annotation_extensions (KNode("GO.BIOLOGICAL_PROCESS:0007269", type=node_types.BIOLOGICAL_PROCESS))

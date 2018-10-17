@@ -17,6 +17,55 @@ def test_name(uberon):
     assert len(results) == 1
     assert results[0]['cellLabel'] == 'mast cell'
 
+def test_disease_to_go(uberon):
+    #Make sure that for a variety of cell types we 1) get relationships going both directions and
+    # that we map all predicates
+    disease = KNode('MONDO:0009212',type=node_types.DISEASE, name="Congenital Factor X Deficiency")
+    r = uberon.get_process_or_activity_by_disease( disease )
+    for ri in r:
+        assert ri[0].standard_predicate.identifier != 'GAMMA:0'
+    assert len(r) > 50
+
+def test_disease_to_go(uberon):
+    #Make sure that for a variety of cell types we 1) get relationships going both directions and
+    # that we map all predicates
+    disease = KNode('HP:0012387',type=node_types.PHENOTYPIC_FEATURE, name="Bronchitis")
+    r = uberon.get_process_or_activity_by_disease( disease )
+    for ri in r:
+        assert ri[0].standard_predicate.identifier != 'GAMMA:0'
+    assert len(r) > 50
+
+def test_cell_to_go(uberon):
+    #Make sure that for a variety of cell types we 1) get relationships going both directions and
+    # that we map all predicates
+    for cell in ('CL:0000121','CL:0000513', 'CL:0000233','CL:0000097', 'CL:0002251'):
+        foundsub = False
+        foundobj = False
+        r = uberon.get_process_or_activity_by_cell( KNode(cell, type=node_types.CELL, name="some cell"))
+        for ri in r:
+            assert ri[0].standard_predicate.identifier != 'GAMMA:0'
+            if ri[0].source_id == ri[1].id:
+                foundsub = True
+            elif ri[0].target_id == ri[1].id:
+                foundobj = True
+        assert foundsub, foundobj
+
+def test_go_to_cell(uberon):
+    #Make sure that for a variety of cell types we 1) get relationships going both directions and
+    # that we map all predicates
+    go = 'GO:0045576'
+    r = uberon.get_cell_by_process_or_activity( KNode(go, type=node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, name="some term"))
+    foundsub = False
+    foundobj = False
+    for ri in r:
+        assert ri[0].standard_predicate.identifier != 'GAMMA:0'
+        if ri[0].source_id == ri[1].id:
+            foundsub = True
+        elif ri[0].target_id == ri[1].id:
+            foundobj = True
+    assert foundsub, foundobj
+
+
 def test_cell_to_anatomy_super(uberon):
     k = KNode('CL:0002251', type=node_types.CELL, name='epithelial cell of the alimentary canal')
     results = uberon.get_anatomy_by_cell_graph( k )

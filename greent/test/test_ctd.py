@@ -17,6 +17,7 @@ def test_expanded_drug_to_gene(ctd):
         assert node.type == node_types.GENE
         assert edge.standard_predicate.identifier != 'GAMMA:0'
 
+
 def test_expanded_gene_to_drug(ctd,rosetta):
     input_node = KNode("HGNC:4558", type=node_types.GENE, name="GPX6")
     rosetta.synonymizer.synonymize(input_node)
@@ -168,6 +169,15 @@ def test_gene_to_drug_synonym(ctd):
     result_ids = [node.id for edge, node in results]
     assert 'MESH:D000068579' in result_ids  # Cox2 for a cox2 inhibitor
 
+def test_gene_to_drug_BCL2(ctd,rosetta):
+    input_node = KNode("HGNC:990", type=node_types.GENE, name="BCL2")
+    rosetta.synonymizer.synonymize(input_node)
+    results = ctd.gene_to_drug(input_node)
+    assert len(results) > 0
+    for edge,node in results:
+        assert node.type == node_types.CHEMICAL_SUBSTANCE
+        assert edge.standard_predicate.identifier != 'GAMMA:0'
+        print(edge, edge.standard_predicate)
 
 
 def test_chemical_to_gene_glutathione(ctd):
