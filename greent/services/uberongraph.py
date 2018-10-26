@@ -22,11 +22,50 @@ class UberonGraphKS(Service):
     def __init__(self, context): #triplestore):
         super(UberonGraphKS, self).__init__("uberongraph", context)
         self.triplestore = TripleStore (self.url)
+        #TODO: Pull this from the biolink model?
+        self.class_defs = { node_types.CELL: '?x rdfs:subClassOf CL:0000000',
+                            node_types.ANATOMICAL_ENTITY: '?x rdfs:subClassOf UBERON:0001062 ',
+                            node_types.BIOLOGICAL_PROCESS: '?x rdfs:subClassOf GO:0008150',
+                            node_types.MOLECULAR_ACTIVITY: '?x rdfs:subClassOf GO:0003674',
+                            node_types.CHEMICAL_SUBSTANCE: '?x rdfs:subClassOf CHEBI:24431',
+                            node_types.DISEASE: '?x rdfs:subClassOf MONDO:0000001',
+                            node_types.PHENOTYPIC_FEATURE: '?x rdfs:subClassOf UPHENO:0001002'}
 
     def query_uberongraph (self, query):
         """ Execute and return the result of a SPARQL query. """
         return self.triplestore.execute_query (query)
 
+    def get_edges(self,source_type,obj_type):
+        """Given an UBERON id, find other UBERONS that are parts of the query"""
+        text="""
+        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix UBERON: <http://purl.obolibrary.org/obo/UBERON_>
+        prefix CL: <http://purl.obolibrary.org/obo/CL_>
+        prefix GO: <http://purl.obolibrary.org/obo/GO_>
+        prefix CHEBI: <http://purl.obolibrary.org/obo/CHEBI_>
+        prefix MONDO: <http://purl.obolibrary.org/obo/MONDO_>
+        prefix UPHENO: <http://purl.obolibrary.org/obo/UPHENO_>
+        prefix BFO: <http://purl.obolibrary.org/obo/BFO_>
+        select distinct ?p ?plabel
+        from <http://reasoner.renci.org/nonredundant>
+        from <http://reasoner.renci.org/ontology>
+        where {
+            graph <http://reasoner.renci.org/redundant> {
+                ?sourceID ?p ?objID .
+            }
+            graph <http://reasoner.renci.org/ontology/closure> {
+                ?sourceID rdfs:subClassOf $sourcedefclass .
+                ?objID rdfs:subClassOf $objdefclass .
+            }
+            ?p rdfs:label ?pLabel
+        }
+        """
+        results = self.triplestore.query_template(
+            inputs  = { 'sourcedefclass': self.class_defs[source_type], 'objdefclass': self.class_defs[obj_type] }, \
+            outputs = [ 'p', 'plabel' ], \
+            template_text = text \
+        )
+        return results
 
     def cell_get_cellname (self, cell_identifier):
         """ Identify label for a cell type
