@@ -32,7 +32,17 @@ def create_omnicache(rosetta):
     cacheit('CL', 'UBERON', conn, redis)
     cacheit('MONDO', 'UBERON', conn, redis)
     cacheit('CHEBI', 'UBERON', conn, redis)
+    cacheit('CHEBI', 'CHEBI', conn, redis)
+    cacheit('MONDO', 'MONDO', conn, redis)
+    cacheit('HP', 'HP', conn, redis)
+    cacheit('HGNC', 'HGNC', conn, redis)
 
+def update_omnicache(rosetta,p1,p2):
+    """Use this one to add a single pair to the cache.  But if you find yourself doing this,
+    add the pair of interest to the build method above."""
+    conn = create_connection(rosetta)
+    redis = rosetta.cache.redis
+    cacheit(p1,p2, conn, redis)
 
 def create_connection(rosetta):
     context = rosetta.service_context
@@ -68,7 +78,10 @@ def cacheit(p1, p2, conn, redis):
     start = datetime.datetime.now()
     query, values = generate_query(p1, p2)
     a_curies = get_curies(p1, conn)
-    b_curies = get_curies(p2, conn)
+    if p1 == p2:
+        b_curies = a_curies
+    else:
+        b_curies = get_curies(p2, conn)
     print(len(a_curies), len(b_curies), len(a_curies) * len(b_curies))
     done_pairs = set()
     ckey = ()
@@ -86,6 +99,9 @@ def cacheit(p1, p2, conn, redis):
                 for r in records:
                     curie_1 = r[0]
                     curie_2 = r[1]
+                    if p1 == p2:
+                        #have to sort the curies in this case
+                        curie_1,curie_2 = sorted( [curie_1, curie_2] )
                     if (curie_1, curie_2) != ckey:
                         n += 1
                         dump(ckey, pubs, pipe)
@@ -130,6 +146,12 @@ def generate_query(p1, p2):
     query = f'SELECT a.curie, b.curie, a.pubmedid FROM omnicorp.{p1} a JOIN omnicorp.{p2} b ON a.pubmedid = b.pubmedid'
     values = []
     first = True
+    if p1 == p2:
+        if first:
+            query += '\nWHERE a.curie < b.curie'
+            first = False
+        else:
+            query += '\nAND a.curie < b.curie'
     if p1 in bad_ids:
         for bid in bad_ids[p1]:
             if first:

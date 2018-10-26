@@ -10,6 +10,18 @@ def kegg(rosetta):
     kegg = rosetta.core.kegg
     return kegg
 
+def test_chem_to_chem(kegg,rosetta):
+    codeine = KNode('CHEBI:16714',name='Codeine',type=node_types.CHEMICAL_SUBSTANCE)
+    rosetta.synonymizer.synonymize(codeine)
+    results = kegg.chemical_get_chemical(codeine)
+    morphine = 'CHEBI:17303'
+    ids = []
+    for edge,node in results:
+        rosetta.synonymizer.synonymize(node)
+        ids.append(node.id)
+    assert len(results) > 0
+    assert morphine in ids
+
 def test_chem_to_reaction(kegg):
     hete = KNode('KEGG.COMPOUND:C04805', name="5-HETE", type=node_types.CHEMICAL_SUBSTANCE)
     results = kegg.chemical_get_reaction(hete)
@@ -44,3 +56,8 @@ def test_enzyme_to_chem(kegg):
     results = kegg.enzyme_get_chemicals(enzyme)
     assert len(results) == 8
 
+def test_synonymized(kegg,rosetta):
+    enzyme = KNode('HGNC:2843',name='DGAT1',type=node_types.GENE)
+    rosetta.synonymizer.synonymize(enzyme)
+    results = kegg.enzyme_get_chemicals(enzyme)
+    assert len(results) > 0

@@ -36,7 +36,7 @@ class UberonGraphKS(Service):
         prefix CL: <http://purl.obolibrary.org/obo/CL_>
         select distinct ?cellLabel
         from <http://reasoner.renci.org/nonredundant>
-        from <http://example.org/uberon-hp-cl.ttl>
+        from <http://reasoner.renci.org/ontology>
         where {
                   $cellID rdfs:label ?cellLabel .
               }
@@ -59,10 +59,10 @@ class UberonGraphKS(Service):
         prefix BFO: <http://purl.obolibrary.org/obo/BFO_>
         select distinct ?part ?partlabel
         from <http://reasoner.renci.org/nonredundant> 
-        from <http://example.org/uberon-hp-cl.ttl>
+        from <http://reasoner.renci.org/ontology>
         where {
                 $anatomy_id BFO:0000051 ?part .
-                graph <http://reasoner.renci.org/redundant> {
+                graph <http://reasoner.renci.org/ontology/closure> {
                   ?part rdfs:subClassOf UBERON:0001062 .
                 }
                 ?part rdfs:label ?partlabel .
@@ -89,11 +89,13 @@ class UberonGraphKS(Service):
         prefix BFO: <http://purl.obolibrary.org/obo/BFO_>
         select distinct ?cellID ?cellLabel
         from <http://reasoner.renci.org/nonredundant>
-        from <http://example.org/uberon-hp-cl.ttl>
+        from <http://reasoner.renci.org/ontology>
         where {
             graph <http://reasoner.renci.org/redundant> {
-                ?cellID rdfs:subClassOf CL:0000000 .
                 ?cellID BFO:0000050 $anatomyID .
+            }
+            graph <http://reasoner.renci.org/ontology/closure> {
+                ?cellID rdfs:subClassOf CL:0000000 .
             }
             ?cellID rdfs:label ?cellLabel .
         }
@@ -118,11 +120,13 @@ class UberonGraphKS(Service):
         prefix UBERON: <http://purl.obolibrary.org/obo/UBERON_>
         select distinct ?anatomyID ?anatomyLabel
         from <http://reasoner.renci.org/nonredundant>
-        from <http://example.org/uberon-hp-cl.ttl>
+        from <http://reasoner.renci.org/ontology>
         where {
             graph <http://reasoner.renci.org/redundant> {
-                ?anatomyID rdfs:subClassOf UBERON:0001062 .
                 $cellID BFO:0000050 ?anatomyID .
+            }
+            graph <http://reasoner.renci.org/ontology/closure> {
+                ?anatomyID rdfs:subClassOf UBERON:0001062 .
             }
             ?anatomyID rdfs:label ?anatomyLabel .
         }
@@ -131,6 +135,105 @@ class UberonGraphKS(Service):
             inputs = { 'cellID': cell_identifier }, \
             outputs = [ 'anatomyID', 'anatomyLabel' ], \
             template_text = text \
+        )
+        return results
+
+    def cell_to_go (self, cell_identifier):
+        """ Identify anatomy terms related to cells.
+
+        :param cell: CL identifier for cell type
+        """
+        #This is a bit messy, but we need to do 4 things.  We are looking for go terms
+        # that are either biological processes or activities and we are looking for predicates
+        # that point either direction.
+        results = {'subject': [], 'object': []}
+        for goParent in ('GO:0008150','GO:0003674'):
+            for direction,query in(('subject','      $cellID ?p ?goID'),('object','        ?goID ?p $cellID')):
+                text = """
+                prefix CL: <http://purl.obolibrary.org/obo/CL_>
+                prefix BFO: <http://purl.obolibrary.org/obo/BFO_>
+                prefix GO: <http://purl.obolibrary.org/obo/GO_>
+                select distinct ?goID ?goLabel ?p ?pLabel
+                from <http://reasoner.renci.org/nonredundant>
+                from <http://reasoner.renci.org/ontology>
+                where {
+                    graph <http://reasoner.renci.org/redundant> {
+                """+ query + """
+                    }
+                    graph <http://reasoner.renci.org/ontology/closure> {
+                        ?goID rdfs:subClassOf $goParent .
+                    }
+                    ?goID rdfs:label ?goLabel .
+                    ?p rdfs:label ?pLabel
+                }
+                """
+                results[direction] += self.triplestore.query_template(
+                    inputs = { 'cellID': cell_identifier, 'goParent': goParent }, \
+                    outputs = [ 'goID', 'goLabel', 'p', 'pLabel' ], \
+                    template_text = text \
+                )
+        return results
+
+    def go_to_cell (self, input_identifier):
+        """ Identify anatomy terms related to cells.
+
+        :param cell: CL identifier for cell type
+        """
+        # we are looking for predicates that point either direction.
+        results = {'subject': [], 'object': []}
+        for direction,query in(('subject','      ?cellID ?p $goID'),('object','        $goID ?p ?cellID')):
+            text = """
+            prefix CL: <http://purl.obolibrary.org/obo/CL_>
+            prefix BFO: <http://purl.obolibrary.org/obo/BFO_>
+            prefix GO: <http://purl.obolibrary.org/obo/GO_>
+            select distinct ?cellID ?cellLabel ?p ?pLabel
+            from <http://reasoner.renci.org/nonredundant>
+            from <http://reasoner.renci.org/ontology>
+            where {
+                graph <http://reasoner.renci.org/redundant> {
+            """+ query + """
+                }
+                graph <http://reasoner.renci.org/ontology/closure> {
+                    ?cellID rdfs:subClassOf CL:0000000 .
+                }
+                ?cellID rdfs:label ?cellLabel .
+                ?p rdfs:label ?pLabel
+            }
+            """
+            results[direction] += self.triplestore.query_template(
+                inputs = { 'goID': input_identifier },
+                outputs = [ 'cellID', 'cellLabel', 'p', 'pLabel' ],
+                template_text = text
+            )
+        return results
+
+    def pheno_or_disease_to_go(self, identifier):
+        text="""
+        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+        prefix BFO: <http://purl.obolibrary.org/obo/BFO_>
+        prefix GO: <http://purl.obolibrary.org/obo/GO_>
+        prefix MONDO: <http://purl.obolibrary.org/obo/MONDO_>
+        prefix HP: <http://purl.obolibrary.org/obo/MONDO_>
+        select distinct ?goID ?goLabel ?p ?pLabel 
+        from <http://reasoner.renci.org/nonredundant>
+        from <http://reasoner.renci.org/ontology>
+        where {
+            graph <http://reasoner.renci.org/redundant> {
+    			$input_id ?p ?goID .
+            }
+            graph <http://reasoner.renci.org/ontology/closure> {
+                { ?goID rdfs:subClassOf GO:0008150 . }
+                UNION
+                { ?goID rdfs:subClassOf GO:0003674 . }
+            }
+            ?goID rdfs:label ?goLabel .
+  			?p rdfs:label ?pLabel .
+        }
+        """
+        results = self.triplestore.query_template(
+            inputs = { 'input_id': identifier },
+            outputs = [ 'goID', 'goLabel', 'p', 'pLabel' ],
+            template_text = text
         )
         return results
 
@@ -152,16 +255,16 @@ class UberonGraphKS(Service):
         prefix phenotype_of: <http://purl.obolibrary.org/obo/UPHENO_0000001>
         select distinct ?anatomy_id ?anatomy_label ?input_label
         from <http://reasoner.renci.org/nonredundant>
-        from <http://example.org/uberon-hp-cl.ttl>
+        from <http://reasoner.renci.org/ontology>
         where {
-                  graph <http://reasoner.renci.org/redundant> {
+                  graph <http://reasoner.renci.org/ontology/closure> {
                     ?anatomy_id rdfs:subClassOf UBERON:0001062 .
                   }
                   ?anatomy_id rdfs:label ?anatomy_label .
                   graph <http://reasoner.renci.org/nonredundant> {
                        ?phenotype phenotype_of: ?anatomy_id .
                   }
-                  graph <http://reasoner.renci.org/redundant> {
+                  graph <http://reasoner.renci.org/ontology/closure> {
                     $HPID rdfs:subClassOf ?phenotype .
                   }
                   $HPID rdfs:label ?input_label .
@@ -185,13 +288,13 @@ class UberonGraphKS(Service):
         prefix phenotype_of: <http://purl.obolibrary.org/obo/UPHENO_0000001>
         select distinct ?pheno_id ?anatomy_label ?pheno_label
         from <http://reasoner.renci.org/nonredundant>
-        from <http://example.org/uberon-hp-cl.ttl>
+        from <http://reasoner.renci.org/ontology>
         where {
                   $UBERONID rdfs:label ?anatomy_label .
                   graph <http://reasoner.renci.org/nonredundant> {
                        ?phenotype phenotype_of: $UBERONID .
                   }
-                  graph <http://reasoner.renci.org/redundant> {
+                  graph <http://reasoner.renci.org/ontology/closure> {
                     ?pheno_id rdfs:subClassOf ?phenotype .
                   }
                   ?pheno_id rdfs:label ?pheno_label .
@@ -260,6 +363,62 @@ class UberonGraphKS(Service):
                     pedge, pnode = self.create_phenotype_anatomy_edge(pr['part'],pr['partlabel'],curie,phenotype_node)
                     results.append ( (pedge, pnode) )
         return results
+
+    def get_process_or_activity_by_cell(self, cell_node):
+        returnresults = []
+        for curie in cell_node.get_synonyms_by_prefix('CL'):
+            results = self.cell_to_go(curie)
+            for direction in ['subject','object']:
+                done = set()
+                for r in results[direction]:
+                    key = (r['p'],r['goID'])
+                    if key in done:
+                        continue
+                    predicate = LabeledID(Text.obo_to_curie(r['p']),r['pLabel'])
+                    go_node = KNode(r['goID'],type=node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY,name=r['goLabel'])
+                    if direction == 'subject':
+                        edge = self.create_edge(cell_node, go_node, 'uberongraph.get_process_or_activity_by_cell', curie, predicate)
+                    else:
+                        edge = self.create_edge(go_node, cell_node, 'uberongraph.get_process_or_activity_by_cell', curie, predicate)
+                    done.add(key)
+                    returnresults.append((edge,go_node))
+        return returnresults
+
+    def get_cell_by_process_or_activity(self, go_node):
+        returnresults = []
+        for curie in go_node.get_synonyms_by_prefix('GO'):
+            results = self.go_to_cell(curie)
+            for direction in ['subject','object']:
+                done = set()
+                for r in results[direction]:
+                    key = (r['p'],r['cellID'])
+                    if key in done:
+                        continue
+                    predicate = LabeledID(Text.obo_to_curie(r['p']),r['pLabel'])
+                    cell_node = KNode(r['cellID'],type=node_types.CELL,name=r['cellLabel'])
+                    if direction == 'subject':
+                        edge = self.create_edge(go_node, cell_node, 'uberongraph.get_cell_by_process_or_activity', curie, predicate)
+                    else:
+                        edge = self.create_edge(cell_node, go_node, 'uberongraph.get_cell_by_process_or_activity', curie, predicate)
+                    done.add(key)
+                    returnresults.append((edge,cell_node))
+        return returnresults
+
+    def get_process_or_activity_by_disease(self, disease_node):
+        returnresults = []
+        for curie in disease_node.get_synonyms_by_prefix('MONDO'):
+            results = self.pheno_or_disease_to_go(curie)
+            done = set()
+            for r in results:
+                key = (r['p'],r['goID'])
+                if key in done:
+                    continue
+                predicate = LabeledID(Text.obo_to_curie(r['p']),r['pLabel'])
+                go_node = KNode(r['goID'],type=node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY,name=r['goLabel'])
+                edge = self.create_edge(disease_node, go_node, 'uberongraph.get_process_or_activity_by_disease', curie, predicate)
+                done.add(key)
+                returnresults.append((edge,go_node))
+        return returnresults
 
     def get_phenotype_by_anatomy_graph (self, anatomy_node):
         results = []

@@ -131,25 +131,9 @@ class CTD(Service):
             url=f"{self.url}/CTD_chem_gene_ixns_ChemicalID/{Text.un_curie(identifier)}/"
             obj = requests.get(url).json ()
             for r in obj:
-                #Let's only keep humans for now:
-                #if r['OrganismID'] != '9606':
-                #    continue
-                props = {"description": r[ 'Interaction' ], 'taxon': f"taxon:{r['OrganismID']}"}
-                pmid_count = len(r['PubMedIDs'].split('|'))
-                predicate_label = r['InteractionActions']
-                #there are lots of garbage microarrays with only one paper. THey goop the place up
-                # ignore them
-                if pmid_count < 3:
-                    if predicate_label in ['affects^expression','increases^expression',
-                                           'decreases^expression','affects^methylation',
-                                           'increases^methylation','decreases^methylation']:
-                        continue
-                if pmid_count < 2:
-                    if predicate_label in ['affects^splicing','increases^splicing', 'decreases^splicing']:
-                        continue
-                if '|' in predicate_label:
+                good_row, predicate_label, props = self.check_gene_chemical_row(r)
+                if not good_row:
                     continue
-                print(predicate_label, pmid_count, r['GeneID'])
                 predicate = LabeledID(identifier=f'CTD:{predicate_label}', label=predicate_label)
                 gene_node = KNode(f"NCBIGENE:{r['GeneID']}", type=node_types.GENE)
                 if sum([s in predicate.identifier for s in self.g2d_strings]) > 0:
@@ -159,9 +143,28 @@ class CTD(Service):
                     subject = drug
                     object = gene_node
                 edge = self.create_edge(subject,object,'ctd.drug_to_gene',identifier,predicate,
-                                        publications=[f"PMID:{r['PubMedIDs']}"],url=url,properties=props)
+                                        publications=[f"PMID:{x}" for x in r['PubMedIDs'].split('|')],url=url,properties=props)
                 output.append( (edge,gene_node) )
         return output
+
+    def check_gene_chemical_row(self, r):
+        props = {"description": r['Interaction'], 'taxon': f"taxon:{r['OrganismID']}"}
+        pmid_count = len(r['PubMedIDs'].split('|'))
+        predicate_label = r['InteractionActions']
+        # there are lots of garbage microarrays with only one paper. THey goop the place up
+        # ignore them
+        good_row = True
+        if pmid_count < 3:
+            if predicate_label in ['affects^expression', 'increases^expression',
+                                   'decreases^expression', 'affects^methylation',
+                                   'increases^methylation', 'decreases^methylation']:
+                good_row = False
+        if pmid_count < 2:
+            if predicate_label in ['affects^splicing', 'increases^splicing', 'decreases^splicing']:
+                good_row = False
+        if '|' in predicate_label:
+            good_row = False
+        return good_row, predicate_label, props
 
     def drug_to_gene_expanded(self, drug):
         output = []
@@ -200,14 +203,10 @@ class CTD(Service):
             url = f"{self.url}/CTD_chem_gene_ixns_GeneID/{geneid}/"
             obj = requests.get (url).json ()
             for r in obj:
-                #Let's only keep humans for now:
-                #if r['OrganismID'] != '9606':
-                #    continue
                 if r['GeneID'] != geneid:
                     continue
-                props = {"description": r[ 'Interaction' ],'taxon': r['OrganismID']}
-                predicate_label = r['InteractionActions']
-                if '|' in predicate_label:
+                good_row, predicate_label, props = self.check_gene_chemical_row(r)
+                if not good_row:
                     continue
                 predicate = LabeledID(identifier=f'CTD:{predicate_label}', label=predicate_label)
                 #Should this be substance?
@@ -219,7 +218,7 @@ class CTD(Service):
                     subject = drug_node
                     obj = gene_node
                 edge = self.create_edge(subject,obj,'ctd.gene_to_drug',identifier,predicate,
-                                        publications=[f"PMID:{r['PubMedIDs']}"],url=url,properties=props)
+                                        publications=[f"PMID:{x}" for x in r['PubMedIDs'].split('|') ],url=url,properties=props)
                 #This is what we'd like it to be, but right now there's not enough real specificity on the predicates
                 #key = (drug_node.id, edge.standard_predicate.label)
                 key = (drug_node.id, edge.original_predicate.label)

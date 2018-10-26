@@ -67,8 +67,11 @@ class Program:
         0000178 blood
         GO:0044267 cellular protein metabolic processes
         GO:0005515 protein binding
+        CL:0000548 animal cell
+        CL:0000003 native cell
+        CL:0000255 eukaryotic cell
         """
-        self.excluded_identifiers = {'UBERON:0000468', 'GO:0044267', 'GO:0005515'}
+        self.excluded_identifiers = {'UBERON:0000468', 'GO:0044267', 'GO:0005515', 'CL:0000548', 'CL:0000003', 'CL:0000255'}
 
         response = requests.get(f"{os.environ['BROKER_API']}queues/")
         queues = response.json()

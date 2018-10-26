@@ -17,6 +17,10 @@ def test_HGNC(rosetta):
     print(node.synonyms)
     assert True
 
+def test_RP(rosetta):
+    node = KNode('MONDO:0019200', name= 'retinitis pigmentosa', type=node_types.DISEASE)
+    rosetta.synonymizer.synonymize(node)
+    assert node.id == 'MONDO:0019200'
 
 def test_drug_with_mesh(rosetta):
     node = KNode('MESH:D000393',name="notsure",type = node_types.CHEMICAL_SUBSTANCE)

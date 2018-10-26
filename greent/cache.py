@@ -39,12 +39,13 @@ class Cache:
         self.enabled = enabled
         self.prefix = prefix
         try:
-            self.redis = redis.StrictRedis(host=redis_host, port=redis_port, db=redis_db)
+            self.redis = redis.StrictRedis(host=redis_host, port=int(redis_port), db=int(redis_db))
             self.redis.get ('x')
             logger.info(f"Cache connected to redis at {redis_host}:{redis_port}/{redis_db}")
-        except:
+        except Exception as e:
             self.redis = None
             #logger.debug (traceback.format_exc ())
+            logger.error(e)
             logger.error(f"Failed to connect to redis at {redis_host}:{redis_port}/{redis_db}.")
         self.cache_path = cache_path
         if not os.path.exists (self.cache_path):

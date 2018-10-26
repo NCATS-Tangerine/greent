@@ -17,6 +17,19 @@ def test_cache(rosetta):
     print(len(syns))
     print(syns)
 
+def test_kegg(rosetta):
+    key='caster.upcast(kegg~enzyme_get_chemicals,chemical_substance)(HGNC:2843)'
+    res = rosetta.cache.get(key)
+    print(len(res))
+
+def test_pharos_key(rosetta):
+    key='pharos.disease_get_gene(MONDO:0008903)'
+    res = rosetta.cache.get(key)
+    print(len(res))
+
+
+
+
 
 def x_test_cache(rosetta):
     #syns = rosetta.cache.get("synonymize(UMLS:C0004096)")

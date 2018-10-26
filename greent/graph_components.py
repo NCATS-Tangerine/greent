@@ -23,6 +23,10 @@ class KNode(FromDictMixin):
         if args and len(args) == 1 and isinstance(args[0], str):
             self.id = args[0]
             args = []
+        # TODO: Currently hack to only utilize the 1st curie in a list if multiple curies provided
+        elif args and len(args) == 1 and isinstance(args[0], list) and isinstance(args[0][0], str):
+            self.id = args[0][0]
+            args = []
 
         super().__init__(*args, **kwargs)
 
@@ -153,6 +157,10 @@ class KEdge(FromDictMixin):
             if not isinstance(publication,str):
                 raise Exception(f"Publication should be a PMID curie: {publication}")
             if not publication.startswith('PMID:'):
+                raise Exception(f"Publication should be a PMID curie: {publication}")
+            try:
+                int(publication[5:])
+            except:
                 raise Exception(f"Publication should be a PMID curie: {publication}")
 
     def __repr__(self):
