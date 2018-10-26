@@ -107,7 +107,7 @@ class Program:
             if not n.curie:
                 continue
             start_node = KNode(n.curie, type=n.type, name=n.name)
-            self.process_node(start_node, str(n.id))
+            self.process_node(start_node, [n.id])
         return
 
     def process_op(self, link, source_node, history):
@@ -205,7 +205,7 @@ class Program:
             #print("-"*len(history)+"Closed a loop!")
             return
 
-        source_id = int(history[-1])
+        source_id = history[-1]
 
         # quit if there are no transitions from this node
         if source_id not in self.transitions:
@@ -217,7 +217,7 @@ class Program:
             if not self.transitions[source_id][target_id]:
                 continue
             # don't turn around
-            if len(history)>1 and str(target_id) == history[-2]:
+            if len(history)>1 and target_id == history[-2]:
                 continue
             # don't repeat things
             if target_id in completed:
@@ -228,7 +228,7 @@ class Program:
             #print("-"*len(history)+f"Destination: {target_id}")
             for link in links:
                 #print("-"*len(history)+"Executing: ", link['op'])
-                self.process_op(link, node, history+str(target_id))
+                self.process_op(link, node, history + [target_id])
 
     #CAN I SOMEHOW CAPTURE PATHS HERE>>>>
 

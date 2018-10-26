@@ -108,6 +108,7 @@ class QEdge(FromDictMixin):
     schema:
         id: Edge
         required:
+            - id
             - source_id
             - target_id
         properties:
@@ -205,7 +206,7 @@ class Question(FromDictMixin):
         if key == 'machine_question':
             return {
                 'nodes': [QNode(n) for n in value['nodes']],
-                'edges': [QEdge(e, id=idx) for idx, e in enumerate(value['edges'])]
+                'edges': [QEdge(e) for e in value['edges']]
             }
         else:
             return super().load_attribute(key, value)
@@ -217,11 +218,11 @@ class Question(FromDictMixin):
         known_ids = set()
         for e in self.machine_question['edges']:
             source_signature = node_map[e.source_id].cypher_signature(
-                f'n{e.source_id}',
+                f'{e.source_id}',
                 known=e.source_id in known_ids
             )
             target_signature = node_map[e.target_id].cypher_signature(
-                f'n{e.target_id}',
+                f'{e.target_id}',
                 known=e.target_id in known_ids
             )
             links.append(f"{source_signature}{e.cypher_signature()}{target_signature}")
@@ -235,28 +236,28 @@ class Question(FromDictMixin):
         known_ids = set()
         for idx, e in enumerate(self.machine_question['edges']):
             source_signature = node_map[e.source_id].concept_cypher_signature(
-                f'n{e.source_id}',
+                f'{e.source_id}',
                 known=e.source_id in known_ids
             )
             target_signature = node_map[e.target_id].concept_cypher_signature(
-                f'n{e.target_id}',
+                f'{e.target_id}',
                 known=e.target_id in known_ids
             )
-            links.append(f"{source_signature}{e.cypher_signature(f'e{e.id}')}{target_signature}")
+            links.append(f"{source_signature}{e.cypher_signature(f'{e.id}')}{target_signature}")
             known_ids.update([e.source_id, e.target_id])
         return links
 
     def generate_concept_cypher(self):
         """Generate a cypher query to find paths through the concept-level map."""
-        named_node_names = [f'n{n.id}' for n in self.machine_question['nodes'] if n.curie]
-        node_names = [f'n{n.id}' for n in self.machine_question['nodes']]
-        edge_names = [f"e{e.id}" for e in self.machine_question['edges']]
+        named_node_names = [n.id for n in self.machine_question['nodes'] if n.curie]
+        node_names = [n.id for n in self.machine_question['nodes']]
+        edge_names = [e.id for e in self.machine_question['edges']]
         cypherbuffer = [f"MATCH {s}" for s in self.concept_cypher_signature]
         node_list = f"""[{', '.join([f"'{n}'" for n in node_names])}]"""
         named_node_list = f"""[{', '.join([f"'{n}'" for n in named_node_names])}]"""
         edge_list = f"[{', '.join(edge_names)}]"
-        edge_switches = [f"CASE startnode(e{e.id}) WHEN n{e.source_id} THEN ['n{e.source_id}','n{e.target_id}'] ELSE ['n{e.target_id}','n{e.source_id}'] END AS e{e.id}_pair" for e in self.machine_question['edges']]
-        edge_pairs = [f"e{e.id}_pair" for e in self.machine_question['edges']]
+        edge_switches = [f"CASE startnode({e.id}) WHEN {e.source_id} THEN ['{e.source_id}','{e.target_id}'] ELSE ['{e.target_id}','{e.source_id}'] END AS {e.id}_pair" for e in self.machine_question['edges']]
+        edge_pairs = [f"{e.id}_pair" for e in self.machine_question['edges']]
         cypherbuffer.append(f"WITH {', '.join(node_names + edge_names + edge_switches)}")
         cypherbuffer.append(f"WHERE robokop.traversable({node_list}, [{', '.join(edge_pairs)}], {named_node_list})")
         # This is to make sure that we don't get caught up in is_a and other funky relations.:
@@ -287,18 +288,18 @@ class Question(FromDictMixin):
             edges = row['edges']
 
             # extract transitions
-            transitions = {int(k[1:]): {int(k[1:]): [] for k in nodes} for k in nodes}
+            transitions = {node_id: {node_id: [] for node_id in nodes} for node_id in nodes}
             for e in edges:
                 edge = edges[e]
-                source_id = int(edge['source'][1:])
-                target_id = int(edge['target'][1:])
+                source_id = edge['source']
+                target_id = edge['target']
                 trans = {
                     "op": edge['op'],
                     "link": edge['predicate'],
-                    "predicate": next(Text.snakify(e2.type) if e2.type else None for e2 in self.machine_question['edges'] if e2.id == int(e[1:]))
+                    "predicate": next(Text.snakify(e2.type) if e2.type else None for e2 in self.machine_question['edges'] if e2.id == e)
                 }
                 transitions[source_id][target_id].append(trans)
-            
+
             plans.append(transitions)
         return plans
 
