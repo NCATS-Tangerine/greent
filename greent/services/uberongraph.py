@@ -23,13 +23,13 @@ class UberonGraphKS(Service):
         super(UberonGraphKS, self).__init__("uberongraph", context)
         self.triplestore = TripleStore (self.url)
         #TODO: Pull this from the biolink model?
-        self.class_defs = { node_types.CELL: '?x rdfs:subClassOf CL:0000000',
-                            node_types.ANATOMICAL_ENTITY: '?x rdfs:subClassOf UBERON:0001062 ',
-                            node_types.BIOLOGICAL_PROCESS: '?x rdfs:subClassOf GO:0008150',
-                            node_types.MOLECULAR_ACTIVITY: '?x rdfs:subClassOf GO:0003674',
-                            node_types.CHEMICAL_SUBSTANCE: '?x rdfs:subClassOf CHEBI:24431',
-                            node_types.DISEASE: '?x rdfs:subClassOf MONDO:0000001',
-                            node_types.PHENOTYPIC_FEATURE: '?x rdfs:subClassOf UPHENO:0001002'}
+        self.class_defs = { node_types.CELL: 'CL:0000000',
+                            node_types.ANATOMICAL_ENTITY: 'UBERON:0001062',
+                            node_types.BIOLOGICAL_PROCESS: 'GO:0008150',
+                            node_types.MOLECULAR_ACTIVITY: 'GO:0003674',
+                            node_types.CHEMICAL_SUBSTANCE: 'CHEBI:24431',
+                            node_types.DISEASE: 'MONDO:0000001',
+                            node_types.PHENOTYPIC_FEATURE: 'UPHENO:0001002'}
 
     def query_uberongraph (self, query):
         """ Execute and return the result of a SPARQL query. """
@@ -46,8 +46,7 @@ class UberonGraphKS(Service):
         prefix MONDO: <http://purl.obolibrary.org/obo/MONDO_>
         prefix UPHENO: <http://purl.obolibrary.org/obo/UPHENO_>
         prefix BFO: <http://purl.obolibrary.org/obo/BFO_>
-        select distinct ?p ?plabel
-        from <http://reasoner.renci.org/nonredundant>
+        select distinct ?p ?pLabel
         from <http://reasoner.renci.org/ontology>
         where {
             graph <http://reasoner.renci.org/redundant> {
@@ -55,14 +54,17 @@ class UberonGraphKS(Service):
             }
             graph <http://reasoner.renci.org/ontology/closure> {
                 ?sourceID rdfs:subClassOf $sourcedefclass .
-                ?objID rdfs:subClassOf $objdefclass .
             }
-            ?p rdfs:label ?pLabel
+            graph <http://reasoner.renci.org/ontology/closure> {
+                ?objID rdfs:subClassOf $objdefclass .
+                hint:Prior hint:runFirst true .
+            }
+            ?p rdfs:label ?pLabel .
         }
         """
         results = self.triplestore.query_template(
             inputs  = { 'sourcedefclass': self.class_defs[source_type], 'objdefclass': self.class_defs[obj_type] }, \
-            outputs = [ 'p', 'plabel' ], \
+            outputs = [ 'p', 'pLabel' ], \
             template_text = text \
         )
         return results
