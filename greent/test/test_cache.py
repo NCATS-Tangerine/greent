@@ -22,6 +22,13 @@ def test_kegg(rosetta):
     res = rosetta.cache.get(key)
     print(len(res))
 
+def test_codeine(rosetta):
+    key='caster.upcast(input_filter(kegg~chemical_get_chemical,metabolite),chemical_substance)(CHEBI:16714)'
+    res = rosetta.cache.get(key)
+    print(len(res))
+    for r in res:
+        print(r)
+
 def test_pharos_key(rosetta):
     key='pharos.disease_get_gene(MONDO:0008903)'
     res = rosetta.cache.get(key)
