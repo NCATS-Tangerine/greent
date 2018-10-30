@@ -7,6 +7,12 @@ def test_omnicorp(rosetta):
     print(pref)
     assert len(pref) > 10
 
+def test_omnicorp_2(rosetta):
+    pref = rosetta.cache.get('OmnicorpSupport(CHEBI:2549,HGNC:6025)')
+    print(pref)
+    for p in pref:
+        assert p.startswith('PMID')
+
 def test_chebi(rosetta):
     syns = rosetta.cache.get("synonymize(CHEBI:15366)")
     print(len(syns))
