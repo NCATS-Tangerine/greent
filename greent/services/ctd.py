@@ -190,7 +190,7 @@ class CTD(Service):
                 else:
                     subject = gene_node
                     object = drug
-                edge = self.create_edge(subject,object,'ctd.drug_to_gene_extended',identifier,predicate )
+                edge = self.create_edge(subject,object,'ctd.drug_to_gene_expanded',identifier,predicate )
                 output.append( (edge,gene_node) )
         return output
 
@@ -252,7 +252,7 @@ class CTD(Service):
                 else:
                     subject = gene_node
                     object = drug_node
-                edge = self.create_edge(subject,object,'ctd.gene_to_drug_extended',identifier,predicate,properties = props)
+                edge = self.create_edge(subject,object,'ctd.gene_to_drug_expanded',identifier,predicate,properties = props)
                 #This is what we'd like it to be, but right now there's not enough real specificity on the predicates
                 #key = (drug_node.id, edge.standard_predicate.label)
                 key = (drug_node.id, edge.original_predicate.label)

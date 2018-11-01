@@ -56,6 +56,8 @@ class Program:
         """
         EXCLUSION CANDIDATES:
         UBERON:0000468 multi-cellular organism
+        UBERON:0001062 anatomical entity
+        UBERON:0000479 tissue
         0002405 immune system
         0001016 nervous system
         0001017 central nervous system
@@ -71,13 +73,13 @@ class Program:
         CL:0000003 native cell
         CL:0000255 eukaryotic cell
         """
-        self.excluded_identifiers = {'UBERON:0000468', 'GO:0044267', 'GO:0005515', 'CL:0000548', 'CL:0000003', 'CL:0000255'}
+        self.excluded_identifiers = {'UBERON:0001062','UBERON:0000468', 'UBERON:0000479', 'GO:0044267', 'GO:0005515', 'CL:0000548', 'CL:0000003', 'CL:0000255'}
 
         response = requests.get(f"{os.environ['BROKER_API']}queues/")
         queues = response.json()
         num_consumers = [q['consumers'] for q in queues if q['name'] == 'neo4j']
-        if num_consumers and num_consumers[0]:
-        #if False:
+        #if num_consumers and num_consumers[0]:
+        if False:
             self.connection = pika.BlockingConnection(pika.ConnectionParameters(
                 heartbeat=0,
                 host=os.environ['BROKER_HOST'],

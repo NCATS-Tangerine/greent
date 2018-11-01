@@ -514,6 +514,7 @@ slots:
       - RO:0002327 #enables
       - CTD:marker/mechanism
       - CTD:positivecorrelation
+      - DrugCentral:0000001  # I don't love this mapping, but waiting on Matt/Chris to provide something different
 
   treats:
     mappings:

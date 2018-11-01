@@ -28,30 +28,36 @@ class MyChem(Service):
                 #print(json.dumps(hit,indent=4))
                 if 'aeolus' in hit:
                     aeolus = hit['aeolus']
+                    indication_meddra = set()
+                    #We use indications for two things: 1. to establish treats links (if there is enough evidence)
+                    # 2. To filter outcomes. This is because things that are indications often show up as outcomes erroneously
+                    if 'indications' in aeolus:
+                        for indication in aeolus['indications']:
+                            meddra_id = f"MedDRA:{indication['meddra_code']}"
+                            indication_meddra.add(meddra_id)
+                            if indication['count'] < 25:
+                                continue
+                            predicate = LabeledID(identifier="RO:0002606", label = "treats")
+                            obj_node = KNode(meddra_id, type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE, name=indication['name'])
+                            edge = self.create_edge(drug_node, obj_node, 'mychem.get_adverse_events',  cid, predicate, url = murl)
+                            return_results.append( (edge, obj_node) )
                     if 'outcomes' in aeolus:
                         for outcome in aeolus['outcomes']:
                             #I think it makes sense to do some filtering here.  I don't want anything unless the lower
                             # CI bound is > 1, and if I have enough counts (at least 5)
                             if outcome['case_count'] <=5:
                                 continue
+                            meddra_id = f"MedDRA:{outcome['meddra_code']}"
                             if min(outcome['prr_95_ci']) > 1:
+                                if meddra_id in indication_meddra:
+                                    continue
                                 predicate = LabeledID(identifier="RO:0003302",label= "causes_or_contributes_to")
                             elif max(outcome['prr_95_ci']) < 1:
                                 predicate = LabeledID(identifier="RO:0002559",label= "prevents")
                             else:
                                 continue
-                            meddra_id = f"MedDRA:{outcome['meddra_code']}"
                             obj_node = KNode(meddra_id, type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE, name=outcome['name'])
                             props={'prr':outcome['prr'], 'ror': outcome['ror'], 'case_count': outcome['case_count']}
-                            edge = self.create_edge(drug_node, obj_node, 'mychem.get_adverse_events',  cid, predicate, url = murl, properties=props)
-                            return_results.append( (edge, obj_node) )
-                    if 'indications' in aeolus:
-                        for indication in aeolus['indications']:
-                            if indication['count'] < 25:
-                                continue
-                            predicate = LabeledID(identifier="RO:0002606", label = "treats")
-                            meddra_id = f"MedDRA:{outcome['meddra_code']}"
-                            obj_node = KNode(meddra_id, type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE, name=outcome['name'])
                             edge = self.create_edge(drug_node, obj_node, 'mychem.get_adverse_events',  cid, predicate, url = murl, properties=props)
                             return_results.append( (edge, obj_node) )
         return return_results

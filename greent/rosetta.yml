@@ -94,6 +94,9 @@
     metabolite:
       - link  : disease_to_metabolite
         op    : hmdb.disease_to_metabolite
+    biological_process_or_activity:
+      - link  : disease_to_biological_process_or_activity
+        op    : uberongraph.get_process_or_activity_by_disease
   drug:
     gene:
       - link  : drug_to_gene
@@ -137,8 +140,9 @@
     metabolite:
       - link  : enzyme_to_metabolite
         op    : hmdb.enzyme_to_metabolite
-      - link  : enzyme_to_metabolite
-        op    : kegg.enzyme_get_chemicals
+      # Turned off until we re-implement
+      #- link  : enzyme_to_metabolite
+      #  op    : kegg.enzyme_get_chemicals
     pathway:
       - link  : gene_to_pathway
         op    : biolink.gene_get_pathways

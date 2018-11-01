@@ -27,6 +27,32 @@ def test_drugcentral(mychem):
     assert found1
     assert found2
 
+def test_glyburide(rosetta,mychem):
+    node = KNode('CHEBI:5441', type=node_types.CHEMICAL_SUBSTANCE, name='glyburide')
+    rosetta.synonymizer.synonymize(node)
+    results = mychem.get_drugcentral(node)
+    found1 = False
+    found2 = False
+    for e,n in results:
+        print(e.original_predicate.label, n)
+#        if n.id == 'UMLS:C0007222':
+#            found1 = True
+#            assert e.original_predicate.label == 'contraindication'
+#        if n.id == 'UMLS:C0003873':
+#            found2 = True
+#            assert e.original_predicate.label == 'treats'
+#        assert e.provided_by == 'mychem.get_drugcentral'
+    assert found1
+    assert found2
+
+def test_glyburide_aeolus(rosetta,mychem):
+    node = KNode('CHEBI:5441', type=node_types.CHEMICAL_SUBSTANCE, name='glyburide')
+    rosetta.synonymizer.synonymize(node)
+    results = mychem.get_adverse_events(node)
+    indications=['diabetes mellitus', ]
+    for e,n in results:
+        print(e.original_predicate.label, n.name)
+
 def test_drug_adverse_events(mychem):
     node = KNode('CHEMBL:CHEMBL1508', type=node_types.CHEMICAL_SUBSTANCE) #Escitalopram
     results = mychem.get_adverse_events(node)

@@ -32,10 +32,11 @@ def create_omnicache(rosetta):
     cacheit('CL', 'UBERON', conn, redis)
     cacheit('MONDO', 'UBERON', conn, redis)
     cacheit('CHEBI', 'UBERON', conn, redis)
-    cacheit('CHEBI', 'CHEBI', conn, redis)
     cacheit('MONDO', 'MONDO', conn, redis)
     cacheit('HP', 'HP', conn, redis)
     cacheit('HGNC', 'HGNC', conn, redis)
+    cacheit('CHEBI', 'CHEBI', conn, redis)
+    conn.close()
 
 def update_omnicache(rosetta,p1,p2):
     """Use this one to add a single pair to the cache.  But if you find yourself doing this,
@@ -75,6 +76,7 @@ def update_prefixes(p1, p2, redis):
 
 def cacheit(p1, p2, conn, redis):
     p1, p2 = sorted([p1, p2])
+    print(p1,p2)
     start = datetime.datetime.now()
     query, values = generate_query(p1, p2)
     a_curies = get_curies(p1, conn)
@@ -113,7 +115,7 @@ def cacheit(p1, p2, conn, redis):
                         done_pairs.add(ckey)
                         pubs = []
                     pubmed = r[2]
-                    pubs.append(pubmed)
+                    pubs.append(f'PMID:{pubmed}')
                     # do something with record here
         # Can't do this, at least on my local
         #        for ac in a_curies:

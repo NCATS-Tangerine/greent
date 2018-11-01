@@ -15,6 +15,8 @@ import psycopg2
 
 logger = LoggingUtil.init_logging(__name__, logging.INFO)
 
+"""OMNICORP IS NO LONGER CALLED FROM INTERFACES"""
+
 class OmniCorp(Service):
 
     def __init__(self, context): #triplestore):
@@ -30,6 +32,9 @@ class OmniCorp(Service):
         self.total_single_call = datetime.timedelta()
         self.npair = 0
         self.total_pair_call = datetime.timedelta()
+
+    def __del__(self):
+        self.conn.close()
 
     def get_omni_identifier(self,node):
         #Let's start with just the 'best' identifier

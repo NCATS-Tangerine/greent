@@ -56,16 +56,19 @@ def build_spec(spec_sequence, start_name, start_id, end_name=None, end_id=None):
     #sequence_ids = [map[c] for c in spec_sequence]
     
     machine_question = {'nodes': [], 'edges': []}
-    node, edge = build_step(sequence_ids[0], start_name, start_id, id=0)
+    nedge = 0
+    node, edge = build_step(sequence_ids[0], start_name, start_id, id=0, eid=nedge)
     machine_question['nodes'].append(node)
     if edge:
         machine_question['edges'].append(edge)
     for idx, s in enumerate(sequence_ids[1:-1]):
-        node, edge = build_step(s, id=idx+1)
+        nedge += 1
+        node, edge = build_step(s, id=idx+1, eid=nedge)
         machine_question['nodes'].append(node)
         machine_question['edges'].append(edge)
     if end_name:
-        node, edge = build_step(sequence_ids[-1], end_name, end_id, id=len(sequence_ids)-1)
+        nedge += 1
+        node, edge = build_step(sequence_ids[-1], end_name, end_id, id=len(sequence_ids)-1,eid=nedge)
         machine_question['nodes'].append(node)
         machine_question['edges'].append(edge)
 
@@ -74,7 +77,8 @@ def build_spec(spec_sequence, start_name, start_id, end_name=None, end_id=None):
         natural = f'{spec_sequence}({start_name}, {end_name})'
         
     else:
-        node, edge = build_step(sequence_ids[-1], id=len(sequence_ids)-1)
+        nedge += 1
+        node, edge = build_step(sequence_ids[-1], id=len(sequence_ids)-1, eid=nedge)
         machine_question['nodes'].append(node)
         machine_question['edges'].append(edge)
         
@@ -89,23 +93,24 @@ def build_spec(spec_sequence, start_name, start_id, end_name=None, end_id=None):
     }
     return out
 
-def build_step(spec, name=None, curie=None, id=0):
+def build_step(spec, name=None, curie=None, id=0, eid=0):
     if name and curie:
         node = {
             "type": spec,
             "name": name,
             "curie": curie,
-            "id": id
+            "id": f'n{id}'
         }
     else:
         node = {
             "type": spec,
-            "id": id
+            "id": f'n{id}'
         }
     if id:
         edge = {
-            "source_id": id-1,
-            "target_id": id
+            "id": f'e{eid}',
+            "source_id": f'n{id-1}',
+            "target_id": f'n{id}'
         }
     else:
         edge = None
