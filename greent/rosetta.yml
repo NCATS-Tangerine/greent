@@ -67,10 +67,10 @@
     gene:
       - link  : chemical_targets_gene
         op    : chembio.graph_pubchem_to_ncbigene
-      - link  : drug_to_gene
-        op    : ctd.drug_to_gene #Going away eventually, but not yet
 #      - link  : drug_to_gene
-#        op    : ctd.drug_to_gene_expanded
+#        op    : ctd.drug_to_gene #Going away eventually, but not yet
+      - link  : drug_to_gene
+        op    : ctd.drug_to_gene_expanded
     disease_or_phenotypic_feature:
       - link  : adverse_events
         op    : mychem.get_adverse_events
@@ -131,10 +131,10 @@
       - link  : gene_to_disease
         op    : pharos.gene_get_disease
     chemical_substance:
-      - link  : gene_to_drug
-        op    : ctd.gene_to_drug #Going away eventually, but not yet
 #      - link  : gene_to_drug
-#        op    : ctd.gene_to_drug_expanded
+#        op    : ctd.gene_to_drug #Going away eventually, but not yet
+      - link  : gene_to_drug
+        op    : ctd.gene_to_drug_expanded
       - link  : gene_get_drug
         op    : pharos.gene_get_drug
     metabolite:
