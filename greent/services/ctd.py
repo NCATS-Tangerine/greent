@@ -176,7 +176,10 @@ class CTD(Service):
         if len(pmids) < 3:
             if predicate_label in ['affects expression of', 'increases expression of',
                                    'decreases expression of', 'affects methylation of',
-                                   'increases methylation of', 'decreases methylation of']:
+                                   'increases methylation of', 'decreases methylation of',
+                                   'affects molecular modification of',
+                                   'increases molecular modification of',
+                                   'decreases molecular modification of']:
                 good_row = False
         if len(pmids) < 2:
             if predicate_label in ['affects splicing of', 'increases splicing of', 'decreases splicing of']:
