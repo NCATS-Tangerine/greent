@@ -167,7 +167,7 @@ class CTD(Service):
         return good_row, predicate_label, props
 
     def check_expanded_gene_chemical_row(self, r):
-        props = {"description": r['interaction'], 'taxon': f"taxon:{r['OrganismID']}"}
+        props = {"description": r['interaction'], 'taxon': f"taxon:{r['taxonID']}"}
         pmids = r['PMID'].split('|')
         predicate_label = r['interaction']
         # there are lots of garbage microarrays with only one paper. THey goop the place up
@@ -195,7 +195,7 @@ class CTD(Service):
                 good_row, predicate_label, props, pmids = self.check_expanded_gene_chemical_row(r)
                 if not good_row:
                     continue
-                predicate = LabeledID(identifier=Text.snakify(predicate_label), label=predicate_label)
+                predicate = LabeledID(identifier=f"CTD:{Text.snakify(predicate_label)}", label=predicate_label)
                 gene_node = KNode(Text.upper_curie(r['geneID']), name=r['gene_label'],type=node_types.GENE)
                 direction = r['direction']
                 if direction == '->':
@@ -254,7 +254,7 @@ class CTD(Service):
                 good_row, predicate_label, props, pmids = self.check_expanded_gene_chemical_row(r)
                 if not good_row:
                     continue
-                predicate = LabeledID(identifier=Text.snakify(predicate_label), label=predicate_label)
+                predicate = LabeledID(identifier=f"CTD:{Text.snakify(predicate_label)}", label=predicate_label)
                 #Should this be substance?
                 drug_node = KNode(Text.upper_curie(r['chemicalID']), type=node_types.CHEMICAL_SUBSTANCE, name=r['chem_label'])
                 direction = r['direction']
