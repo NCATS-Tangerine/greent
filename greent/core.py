@@ -15,7 +15,7 @@ from greent.services.kegg import KEGG
 from greent.services.mychem import MyChem
 from greent.services.onto import Onto
 #from greent.services.omnicorp import OmniCorp
-from greent.services.omnicorp_postgres import OmniCorp
+#from greent.services.omnicorp_postgres import OmniCorp
 from greent.services.oxo import OXO
 from greent.services.pharos import Pharos
 from greent.services.pharos_mysql import PharosMySQL
@@ -55,7 +55,7 @@ class GreenT:
             "kegg"             : lambda :  KEGG (self.service_context),
             "mondo"            : lambda :  Mondo2(self.service_context),
             "mychem"           : lambda :  MyChem(self.service_context),
-            "omnicorp"         : lambda :  OmniCorp (self.service_context),
+            #"omnicorp"         : lambda :  OmniCorp (self.service_context),
             "oxo"              : lambda :  OXO (self.service_context),
             "onto"             : lambda :  Onto ("onto", self.service_context),
             #"pharos"           : lambda :  Pharos (self.service_context),

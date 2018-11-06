@@ -25,7 +25,8 @@ class OmniCorp(Service):
         host = context.config['OMNICORP_HOST']
         password = context.config['OMNICORP_PASSWORD']
         self.prefixes = set(['UBERON', 'BSPO', 'PATO', 'GO', 'MONDO', 'HP', 'ENVO', 'OBI', 'CL', 'SO', 'CHEBI', 'HGNC', 'MESH'])
-        self.conn = psycopg2.connect(dbname=db, user=user, host=host, port=port, password=password)
+        #self.conn = psycopg2.connect(dbname=db, user=user, host=host, port=port, password=password)
+	self.conn = None
         self.nsingle = 0
         self.total_single_call = datetime.timedelta()
         self.npair = 0
@@ -36,9 +37,9 @@ class OmniCorp(Service):
         identifier = node.id
         prefix = Text.get_curie(node.id)
         if prefix not in self.prefixes:
-            logger.debug("What kinda tomfoolery is this?")
-            logger.debug(f"{node.id} {node.type}")
-            logger.debug(f"{node.synonyms}")
+            #logger.debug("What kinda tomfoolery is this?")
+            #logger.debug(f"{node.id} {node.type}")
+            #logger.debug(f"{node.synonyms}")
             return None
         return identifier
 
