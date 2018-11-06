@@ -76,8 +76,10 @@ class ClinGen(Service):
     def parse_allele_json_for_synonyms(self, allele_json):
         synonyms = set()
         if '@id' in allele_json:
-            variant_caid = allele_json['@id'].rsplit('/', 1)[1]
-            synonyms.add(LabeledID(identifier=f'CAID:{variant_caid}', label=f'Variant(caid): {variant_caid}'))
+            id_split = allele_json['@id'].rsplit('/', 1)
+            if (len(id_split) > 1) and ('CA' in id_split[1]): 
+                variant_caid = allele_json['@id'].rsplit('/', 1)[1]
+                synonyms.add(LabeledID(identifier=f'CAID:{variant_caid}', label=f'Variant(caid): {variant_caid}'))
                             
         if ('externalRecords' in allele_json):
             if ('MyVariantInfo_hg19' in allele_json['externalRecords']):
