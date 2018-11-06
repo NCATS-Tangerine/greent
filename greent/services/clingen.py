@@ -124,11 +124,13 @@ class ClinGen(Service):
                 if query_results:
                     for allele_json in query_results:
                         if '@id' in allele_json:
-                            variant_caid = allele_json['@id'].rsplit('/', 1)[1]
-                            variant_node = KNode(f'CAID:{variant_caid}', type=node_types.SEQUENCE_VARIANT)
-                            predicate = LabeledID(identifier=f'clingen.gene_to_sequence_variant',label=f'gene_to_sequence_variant')
-                            edge = self.create_edge(gene_node, variant_node, 'clingen.gene_to_sequence_variant', currie_gene_symbol, predicate, url=query_url)
-                            return_results.append((edge, variant_node))
+                            id_split = allele_json['@id'].rsplit('/', 1)
+                            if (len(id_split) > 1) and ('CA' in id_split[1]):
+                                variant_caid = id_split[1]
+                                variant_node = KNode(f'CAID:{variant_caid}', type=node_types.SEQUENCE_VARIANT)
+                                predicate = LabeledID(identifier=f'clingen.gene_to_sequence_variant',label=f'gene_to_sequence_variant')
+                                edge = self.create_edge(gene_node, variant_node, 'clingen.gene_to_sequence_variant', currie_gene_symbol, predicate, url=query_url)
+                                return_results.append((edge, variant_node))
                     counter += 100
                 else:
                     break
