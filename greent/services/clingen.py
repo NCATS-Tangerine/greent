@@ -138,7 +138,7 @@ class ClinGen(Service):
         #headers = {'Accept':'application/json'}
         query_response = requests.get(query_url)
         if query_response.status_code != 200:
-            logger.error(f'ClinGen returned a non-200 response({query_response.status_code}) calling ({query_url})')
+            logger.warning(f'ClinGen returned a non-200 response({query_response.status_code}) calling ({query_url})')
             return {}
         else:
             query_json = query_response.json()

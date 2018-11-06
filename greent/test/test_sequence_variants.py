@@ -59,7 +59,8 @@ def test_sequence_variant_to_gene(myvariant):
     variant_node = KNode('MYVARIANT_HG19:chr9:g.107620835G>A', type=node_types.SEQUENCE_VARIANT)
     relations = myvariant.sequence_variant_to_gene(variant_node)
     identifiers = [node.id for r,node in relations]
-    assert 'HGNC.SYMBOL:ABCA1' in identifiers
+    #assert 'HGNC.SYMBOL:ABCA1' in identifiers
+    assert 'HGNC:29' in identifiers
     predicates = [ relation.standard_predicate for relation,n in relations ] 
     plabels = set( [p.label for p in predicates] )
     assert 'is_missense_variant_of' in plabels
@@ -67,7 +68,8 @@ def test_sequence_variant_to_gene(myvariant):
     variant_node = KNode('MYVARIANT_HG19:chr7:g.55241707G>T', type=node_types.SEQUENCE_VARIANT)
     relations = myvariant.sequence_variant_to_gene(variant_node)
     identifiers = [node.id for r,node in relations]
-    assert 'HGNC.SYMBOL:EGFR' in identifiers
+    #assert 'HGNC.SYMBOL:EGFR' in identifiers
+    assert 'HGNC:3236' in identifiers
     predicates = [ relation.standard_predicate for relation,n in relations ] 
     plabels = [p.label for p in predicates]
     assert 'is_missense_variant_of' in plabels
@@ -76,7 +78,8 @@ def test_sequence_variant_to_gene(myvariant):
     variant_node = KNode('MYVARIANT_HG19:chr16:g.84205866A>G', type=node_types.SEQUENCE_VARIANT)
     relations = myvariant.sequence_variant_to_gene(variant_node)
     identifiers = [node.id for r,node in relations]
-    assert 'HGNC.SYMBOL:DNAAF1' in identifiers
+    #assert 'HGNC.SYMBOL:DNAAF1' in identifiers
+    assert 'HGNC:30539' in identifiers
     predicates = [ relation.standard_predicate for relation,n in relations ] 
     plabels = [p.label for p in predicates]
     assert 'is_missense_variant_of' in plabels
@@ -85,10 +88,14 @@ def test_sequence_variant_to_gene(myvariant):
     variant_node = KNode('MYVARIANT_HG38:chr11:g.68032291C>G', type=node_types.SEQUENCE_VARIANT)
     relations = myvariant.sequence_variant_to_gene(variant_node)
     identifiers = [node.id for r,node in relations]
-    assert 'HGNC.SYMBOL:NDUFS8' in identifiers
-    assert 'HGNC.SYMBOL:MIR4691' in identifiers
-    assert 'HGNC.SYMBOL:MIR7113' in identifiers
-    assert 'HGNC.SYMBOL:ALDH3B1' in identifiers
+    #assert 'HGNC.SYMBOL:NDUFS8' in identifiers
+    assert 'HGNC:7715' in identifiers
+    #assert 'HGNC.SYMBOL:MIR4691' in identifiers
+    assert 'HGNC:41796' in identifiers
+    #assert 'HGNC.SYMBOL:MIR7113' in identifiers
+    assert 'HGNC:49947' in identifiers
+    #assert 'HGNC.SYMBOL:ALDH3B1' in identifiers
+    assert 'HGNC:410' in identifiers
 
 def test_sequence_variant_to_phenotype(rosetta, biolink):
     variant_node = KNode('HGVS:NC_000023.9:g.32317682G>A', type=node_types.SEQUENCE_VARIANT)

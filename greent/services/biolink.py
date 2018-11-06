@@ -185,16 +185,13 @@ class Biolink(Service):
 
 
     def sequence_variant_get_phenotype(self, variant_node):
-        if (Text.get_curie(variant_node.id) == 'CLINVARVARIANT'):
-            clinvarcurie = f'ClinVarVariant%3A{Text.un_curie(variant_node.id)}'
+        clinvarsyns = variant_node.get_synonyms_by_prefix('CLINVARVARIANT')
+        if (len(clinvarsyns) > 0):
+            clinvarsyn = clinvarsyns.pop()
+            clinvarcurie = f'ClinVarVariant%3A{Text.un_curie(clinvarsyn)}'
         else:
-            clinvarsyns = variant_node.get_synonyms_by_prefix('CLINVARVARIANT')
-            if (len(clinvarsyns) > 0):
-                clinvarsyn = clinvarsyns.pop()
-                clinvarcurie = f'ClinVarVariant%3A{Text.un_curie(clinvarsyn)}'
-            else:
-                logger.warn('No ClinVar ids found, could not find sequence variant to phenotype.')
-                return {}
+            #logger.warn('No ClinVar ids found, could not find sequence variant to phenotype.')
+            return {}
 
         url = f'{self.url}/bioentity/variant/{clinvarcurie}/phenotypes'
         response = self.page_calls(url)

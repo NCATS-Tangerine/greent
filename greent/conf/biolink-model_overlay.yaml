@@ -27,7 +27,6 @@ classes:
         - MESH
         - MEDDRA
         - PHAROS.DISEASE
-        - HP
 
   phenotypic feature:
     id_prefixes:
@@ -75,7 +74,6 @@ classes:
       - RNAcentral
       - MGI
       - ZFIN
-      - HGNC.SYMBOL
 
   sequence variant:
     id_prefixes:
