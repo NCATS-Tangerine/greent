@@ -67,10 +67,10 @@
     gene:
       - link  : chemical_targets_gene
         op    : chembio.graph_pubchem_to_ncbigene
-      - link  : drug_to_gene
-        op    : ctd.drug_to_gene #Going away eventually, but not yet
 #      - link  : drug_to_gene
-#        op    : ctd.drug_to_gene_expanded
+#        op    : ctd.drug_to_gene #Going away eventually, but not yet
+      - link  : drug_to_gene
+        op    : ctd.drug_to_gene_expanded
     disease_or_phenotypic_feature:
       - link  : adverse_events
         op    : mychem.get_adverse_events
@@ -94,6 +94,9 @@
     metabolite:
       - link  : disease_to_metabolite
         op    : hmdb.disease_to_metabolite
+    biological_process_or_activity:
+      - link  : disease_to_biological_process_or_activity
+        op    : uberongraph.get_process_or_activity_by_disease
   drug:
     gene:
       - link  : drug_to_gene
@@ -128,17 +131,18 @@
       - link  : gene_to_disease
         op    : pharos.gene_get_disease
     chemical_substance:
-      - link  : gene_to_drug
-        op    : ctd.gene_to_drug #Going away eventually, but not yet
 #      - link  : gene_to_drug
-#        op    : ctd.gene_to_drug_expanded
+#        op    : ctd.gene_to_drug #Going away eventually, but not yet
+      - link  : gene_to_drug
+        op    : ctd.gene_to_drug_expanded
       - link  : gene_get_drug
         op    : pharos.gene_get_drug
     metabolite:
       - link  : enzyme_to_metabolite
         op    : hmdb.enzyme_to_metabolite
-      - link  : enzyme_to_metabolite
-        op    : kegg.enzyme_get_chemicals
+      # Turned off until we re-implement
+      #- link  : enzyme_to_metabolite
+      #  op    : kegg.enzyme_get_chemicals
     pathway:
       - link  : gene_to_pathway
         op    : biolink.gene_get_pathways

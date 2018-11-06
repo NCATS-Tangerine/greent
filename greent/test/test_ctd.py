@@ -15,6 +15,7 @@ def test_expanded_drug_to_gene(ctd):
     results = ctd.drug_to_gene_expanded(input_node)
     for edge,node in results:
         assert node.type == node_types.GENE
+        print( edge.original_predicate, edge.standard_predicate )
         assert edge.standard_predicate.identifier != 'GAMMA:0'
 
 

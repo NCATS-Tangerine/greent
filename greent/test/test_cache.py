@@ -7,6 +7,12 @@ def test_omnicorp(rosetta):
     print(pref)
     assert len(pref) > 10
 
+def test_omnicorp_2(rosetta):
+    pref = rosetta.cache.get('OmnicorpSupport(CHEBI:2549,HGNC:6025)')
+    print(pref)
+    for p in pref:
+        assert p.startswith('PMID')
+
 def test_chebi(rosetta):
     syns = rosetta.cache.get("synonymize(CHEBI:15366)")
     print(len(syns))
@@ -21,6 +27,13 @@ def test_kegg(rosetta):
     key='caster.upcast(kegg~enzyme_get_chemicals,chemical_substance)(HGNC:2843)'
     res = rosetta.cache.get(key)
     print(len(res))
+
+def test_codeine(rosetta):
+    key='caster.upcast(input_filter(kegg~chemical_get_chemical,metabolite),chemical_substance)(CHEBI:16714)'
+    res = rosetta.cache.get(key)
+    print(len(res))
+    for r in res:
+        print(r)
 
 def test_pharos_key(rosetta):
     key='pharos.disease_get_gene(MONDO:0008903)'

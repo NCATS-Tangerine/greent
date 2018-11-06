@@ -25,19 +25,21 @@ def crawl():
     #poolrun(node_types.GENE, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, rosetta)
     #poolrun(node_types.DISEASE, node_types.GENE, rosetta)
     #poolrun(node_types.DISEASE, node_types.CHEMICAL_SUBSTANCE, rosetta)
-
-    poolrun(node_types.GENE, node_types.CHEMICAL_SUBSTANCE, rosetta)
-    poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.DISEASE, rosetta)
-    poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.CHEMICAL_SUBSTANCE, rosetta)
-
-    #Next
-        
-    #poolrun(node_types.ANATOMICAL_ENTITY, node_types.PHENOTYPIC_FEATURE, rosetta)
     #create_omnicache(rosetta)
-    #update_omnicache(rosetta,'MONDO','MONDO')
-    #update_omnicache(rosetta,'HGNC','HGNC')
-    #update_omnicache(rosetta,'HP','HP')
 
+    #Need to redo these to get PMID correct in the neo4j
+    #poolrun(node_types.GENE, node_types.CHEMICAL_SUBSTANCE, rosetta)
+    #poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.DISEASE, rosetta)
+    #poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.PHENOTYPIC_FEATURE, rosetta)
+    #poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.CHEMICAL_SUBSTANCE, rosetta)
+
+    #These are from uberongraph, needed for COPs
+    #poolrun(node_types.ANATOMICAL_ENTITY, node_types.PHENOTYPIC_FEATURE, rosetta)
+    #poolrun(node_types.CELL, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, rosetta)
+    #poolrun(node_types.ANATOMICAL_ENTITY, node_types.CELL, rosetta)
+
+    #this is a new one from uberongraph
+    #poolrun(node_types.DISEASE, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, rosetta)
 #
 # Use this to clean up: should probably 
 #

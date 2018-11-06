@@ -17,7 +17,7 @@ from greent.services.onto import Onto
 #from greent.services.omnicorp import OmniCorp
 #from greent.services.omnicorp_postgres import OmniCorp
 from greent.services.oxo import OXO
-from greent.services.pharos import Pharos
+#from greent.services.pharos import Pharos
 from greent.services.pharos_mysql import PharosMySQL
 from greent.services.quickgo import QuickGo
 from greent.services.tkba import TranslatorKnowledgeBeaconAggregator

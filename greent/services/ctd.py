@@ -166,22 +166,36 @@ class CTD(Service):
             good_row = False
         return good_row, predicate_label, props
 
+    def check_expanded_gene_chemical_row(self, r):
+        props = {"description": r['interaction'], 'taxon': f"taxon:{r['taxonID']}"}
+        pmids = r['PMID'].split('|')
+        predicate_label = r['interaction']
+        # there are lots of garbage microarrays with only one paper. THey goop the place up
+        # ignore them
+        good_row = True
+        if len(pmids) < 3:
+            if predicate_label in ['affects expression of', 'increases expression of',
+                                   'decreases expression of', 'affects methylation of',
+                                   'increases methylation of', 'decreases methylation of']:
+                good_row = False
+        if len(pmids) < 2:
+            if predicate_label in ['affects splicing of', 'increases splicing of', 'decreases splicing of']:
+                good_row = False
+        pmids = [Text.upper_curie(p) for p in pmids]
+        return good_row, predicate_label, props, pmids
+
     def drug_to_gene_expanded(self, drug):
         output = []
         identifiers = drug.get_synonyms_by_prefix('MESH')
         for identifier in identifiers:
             url=f"{self.url}CTD_chem_gene_expanded_chemicalID/mesh:{Text.un_curie(identifier)}/"
-            print(url)
             result = requests.get(url)
-            print(result.status_code)
             obj=result.json()
             for r in obj:
-                #Let's only keep humans for now:
-                #if r['taxonID'] != 'ncbitaxon:9606':
-                #    continue
-                props = {'taxon': r['taxonID']}
-                predicate_label = r['degree']+' '+r['interaction']
-                predicate = LabeledID(identifier=f'CTD:{Text.snakify(predicate_label)}', label=predicate_label)
+                good_row, predicate_label, props, pmids = self.check_expanded_gene_chemical_row(r)
+                if not good_row:
+                    continue
+                predicate = LabeledID(identifier=f"CTD:{Text.snakify(predicate_label)}", label=predicate_label)
                 gene_node = KNode(Text.upper_curie(r['geneID']), name=r['gene_label'],type=node_types.GENE)
                 direction = r['direction']
                 if direction == '->':
@@ -190,7 +204,7 @@ class CTD(Service):
                 else:
                     subject = gene_node
                     object = drug
-                edge = self.create_edge(subject,object,'ctd.drug_to_gene_extended',identifier,predicate )
+                edge = self.create_edge(subject,object,'ctd.drug_to_gene_expanded',identifier,predicate,publications=pmids,properties=props,url=url )
                 output.append( (edge,gene_node) )
         return output
 
@@ -237,12 +251,10 @@ class CTD(Service):
             url = f"{self.url}/CTD_chem_gene_expanded_geneID/ncbigene:{geneid}/"
             obj = requests.get (url).json ()
             for r in obj:
-                #Let's only keep humans for now:
-                #if r['taxonID'] != 'ncbitaxon:9606':
-                #    continue
-                props = {'taxon': r['taxonID']}
-                predicate_label = r['degree']+' '+r['interaction']
-                predicate = LabeledID(identifier=f'CTD:{Text.snakify(predicate_label)}', label=predicate_label)
+                good_row, predicate_label, props, pmids = self.check_expanded_gene_chemical_row(r)
+                if not good_row:
+                    continue
+                predicate = LabeledID(identifier=f"CTD:{Text.snakify(predicate_label)}", label=predicate_label)
                 #Should this be substance?
                 drug_node = KNode(Text.upper_curie(r['chemicalID']), type=node_types.CHEMICAL_SUBSTANCE, name=r['chem_label'])
                 direction = r['direction']
@@ -252,7 +264,7 @@ class CTD(Service):
                 else:
                     subject = gene_node
                     object = drug_node
-                edge = self.create_edge(subject,object,'ctd.gene_to_drug_extended',identifier,predicate,properties = props)
+                edge = self.create_edge(subject,object,'ctd.gene_to_drug_expanded',identifier,predicate,properties = props,url=url,publications=pmids)
                 #This is what we'd like it to be, but right now there's not enough real specificity on the predicates
                 #key = (drug_node.id, edge.standard_predicate.label)
                 key = (drug_node.id, edge.original_predicate.label)

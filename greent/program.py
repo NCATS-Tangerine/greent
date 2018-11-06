@@ -56,6 +56,8 @@ class Program:
         """
         EXCLUSION CANDIDATES:
         UBERON:0000468 multi-cellular organism
+        UBERON:0001062 anatomical entity
+        UBERON:0000479 tissue
         0002405 immune system
         0001016 nervous system
         0001017 central nervous system
@@ -71,13 +73,13 @@ class Program:
         CL:0000003 native cell
         CL:0000255 eukaryotic cell
         """
-        self.excluded_identifiers = {'UBERON:0000468', 'GO:0044267', 'GO:0005515', 'CL:0000548', 'CL:0000003', 'CL:0000255'}
+        self.excluded_identifiers = {'UBERON:0001062','UBERON:0000468', 'UBERON:0000479', 'GO:0044267', 'GO:0005515', 'CL:0000548', 'CL:0000003', 'CL:0000255'}
 
         response = requests.get(f"{os.environ['BROKER_API']}queues/")
         queues = response.json()
         num_consumers = [q['consumers'] for q in queues if q['name'] == 'neo4j']
-        if num_consumers and num_consumers[0]:
-        #if False:
+        #if num_consumers and num_consumers[0]:
+        if False:
             self.connection = pika.BlockingConnection(pika.ConnectionParameters(
                 heartbeat=0,
                 host=os.environ['BROKER_HOST'],
@@ -110,7 +112,7 @@ class Program:
             if not n.curie:
                 continue
             start_node = KNode(n.curie, type=n.type, name=n.name)
-            self.process_node(start_node, str(n.id))
+            self.process_node(start_node, [n.id])
         return
 
     def process_op(self, link, source_node, history):
@@ -208,7 +210,7 @@ class Program:
             #print("-"*len(history)+"Closed a loop!")
             return
 
-        source_id = int(history[-1])
+        source_id = history[-1]
 
         # quit if there are no transitions from this node
         if source_id not in self.transitions:
@@ -220,7 +222,7 @@ class Program:
             if not self.transitions[source_id][target_id]:
                 continue
             # don't turn around
-            if len(history)>1 and str(target_id) == history[-2]:
+            if len(history)>1 and target_id == history[-2]:
                 continue
             # don't repeat things
             if target_id in completed:
@@ -231,7 +233,7 @@ class Program:
             #print("-"*len(history)+f"Destination: {target_id}")
             for link in links:
                 #print("-"*len(history)+"Executing: ", link['op'])
-                self.process_op(link, node, history+str(target_id))
+                self.process_op(link, node, history + [target_id])
 
     #CAN I SOMEHOW CAPTURE PATHS HERE>>>>
 
