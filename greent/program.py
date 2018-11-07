@@ -140,25 +140,10 @@ class Program:
                 logger.debug(f"cache.set-> {key} length:{len(results)}")
                 logger.debug(f"    {[node for _, node in results]}")
             results = list(filter(lambda x: x[1].id not in self.excluded_identifiers, results))
-            if source_node.id == 'CHEBI:17234':
-                logger.debug(f'GLUCOSE Have {len(results)} results')
             for edge, node in results:
-                if source_node.id == 'CHEBI:17234':
-                    logger.debug(f'GLUCOSE result {edge} {node}')
                 edge_label = Text.snakify(edge.standard_predicate.label)
-                if source_node.id == 'CHEBI:17234':
-                    logger.debug(f'GLUCOSE edge_label {edge_label}')
                 if link['predicate'] is None or edge_label == link['predicate']:
-                    if source_node.id == 'CHEBI:17234':
-                        logger.debug('GLUCOSE HI')
-                        logger.debug(f'GLUCOSE process node {node.id}')
                     self.process_node(node, history, edge)
-                    if source_node.id == 'CHEBI:17234':
-                        logger.debug(f'GLUCOSE returned')
-                else:
-                    if source_node.id == 'CHEBI:17234':
-                        logger.debug('GLUCOSE skip')
-                        logger.debug('GLUCOSE skipping.',link['predicate'],edge_label)
 
         except pika.exceptions.ChannelClosed:
             raise
@@ -206,7 +191,7 @@ class Program:
                 exchange='',
                 routing_key='neo4j',
                 body=pickle.dumps({'nodes': [node], 'edges': []}))
-        logger.debug(f"Sent node {node.id}")
+        #logger.debug(f"Sent node {node.id}")
 
         # make sure the edge is queued for creation AFTER the node
         if edge:
@@ -218,7 +203,7 @@ class Program:
                     exchange='',
                     routing_key='neo4j',
                     body=pickle.dumps({'nodes': [], 'edges': [edge]}))
-            logger.debug(f"Sent edge {edge.source_id}->{edge.target_id}")
+            #logger.debug(f"Sent edge {edge.source_id}->{edge.target_id}")
 
         # quit if we've closed a loop
         if history[-1] in history[:-1]:
