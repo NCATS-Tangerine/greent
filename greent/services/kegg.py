@@ -118,6 +118,7 @@ class KEGG(Service):
         # with it.
         # For gene, we really have to use the orthology section, not the EC.  And it may return multiple values.
         url = f'{self.url}/get/{reaction_id}'
+        print(url)
         reaction = {}
         raw_results = requests.get(url)
         estring = None
@@ -134,10 +135,11 @@ class KEGG(Service):
                 left = self.parse_chemicals(parts[0])
                 right = self.parse_chemicals(parts[1])
             elif line.startswith('ORTHOLOGY'):
-                ni = line.index('[')
-                nj = line.index(']',ni+1)
-                ecs = line[ni+1:nj].split()
-                elist = [ x.split(':')[-1] for x in ecs ]
+                if '[' in line:
+                    ni = line.index('[')
+                    nj = line.index(']',ni+1)
+                    ecs = line[ni+1:nj].split()
+                    elist = [ x.split(':')[-1] for x in ecs ]
                 ko = line.split()[1]
                 genes = self.get_human_genes(ko)
                 if len(genes) > 0:

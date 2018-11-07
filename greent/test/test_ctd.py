@@ -31,6 +31,15 @@ def test_expanded_drug_to_gene_too_many(ctd):
     for e in counter:
         print(e,counter[e])
 
+def test_expanded_drug_to_gene_glucose(ctd,rosetta):
+    input_node = KNode("CHEBI:17234", type=node_types.CHEMICAL_SUBSTANCE, name="Glucose")
+    rosetta.synonymizer.synonymize(input_node)
+    results = ctd.drug_to_gene_expanded(input_node)
+    assert len(results) > 0
+    for edge,node in results:
+        assert node.type == node_types.GENE
+        print( edge.original_predicate, edge.standard_predicate, node.name )
+        assert edge.standard_predicate.identifier != 'GAMMA:0'
 
 def test_expanded_gene_to_drug(ctd,rosetta):
     input_node = KNode("HGNC:4558", type=node_types.GENE, name="GPX6")
