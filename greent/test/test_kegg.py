@@ -50,6 +50,13 @@ def test_get_reaction(kegg):
     assert 'C00127' in reaction['products']
     assert 'C04805' in reaction['products']
 
+def test_chem_to_enzyme_fail(kegg,rosetta):
+    input = KNode('CHEBI:29073',name='CHEDMICAL', type=node_types.METABOLITE)
+    rosetta.synonymizer.synonymize(input)
+    results = kegg.chemical_get_enzyme(input)
+    print(results)
+    assert True
+
 def test_chem_to_enzyme(kegg):
     hete = KNode('KEGG.COMPOUND:C04805', name="5-HETE", type=node_types.CHEMICAL_SUBSTANCE)
     results = kegg.chemical_get_enzyme(hete)

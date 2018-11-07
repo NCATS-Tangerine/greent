@@ -72,8 +72,9 @@ class KEGG(Service):
                 values = products
             if mode == 'parsing':
                 l = line.strip()
-                cid = l.split('[')[-1].split(']')[0].split(':')[1]
-                values.add(cid)
+                if ':' in l:
+                    cid = l.split('[')[-1].split(']')[0].split(':')[1]
+                    values.add(cid)
                 if not l.endswith(';'):
                     mode = 'looking'
         return substrates, products
