@@ -145,18 +145,19 @@ class Program:
             for edge, node in results:
                 if source_node.id == 'CHEBI:17234':
                     logger.debug(f'GLUCOSE result {edge} {node}')
-                    logger.debug(f'GLUCOSE result {edge.standard_predicate}')
-                    logger.debug(f'GLUCOSE result {edge.standard_predicate.label}')
-                    logger.debug(f'GLUCOSE result {Text.snakify(edge.standard_predicate.label)}')
                 edge_label = Text.snakify(edge.standard_predicate.label)
+                if source_node.id == 'CHEBI:17234':
+                    logger.debug(f'GLUCOSE edge_label {edge_label}')
                 if link['predicate'] is None or edge_label == link['predicate']:
                     if source_node.id == 'CHEBI:17234':
+                        logger.debug('GLUCOSE HI')
                         logger.debug(f'GLUCOSE process node {node.id}')
                     self.process_node(node, history, edge)
                     if source_node.id == 'CHEBI:17234':
                         logger.debug(f'GLUCOSE returned')
                 else:
                     if source_node.id == 'CHEBI:17234':
+                        logger.debug('GLUCOSE skip')
                         logger.debug('GLUCOSE skipping.',link['predicate'],edge_label)
 
         except pika.exceptions.ChannelClosed:
