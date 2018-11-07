@@ -15,7 +15,21 @@ def test_expanded_drug_to_gene(ctd):
     results = ctd.drug_to_gene_expanded(input_node)
     for edge,node in results:
         assert node.type == node_types.GENE
+        print( edge.original_predicate, edge.standard_predicate )
         assert edge.standard_predicate.identifier != 'GAMMA:0'
+
+def test_expanded_drug_to_gene_too_many(ctd):
+    input_node = KNode("MESH:D001335", type=node_types.CHEMICAL_SUBSTANCE, name="question")
+    results = ctd.drug_to_gene_expanded(input_node)
+    print(len(results))
+    from collections import defaultdict
+    counter=defaultdict(int)
+    for edge,node in results:
+        assert node.type == node_types.GENE
+        counter[edge.standard_predicate.identifier] += 1
+        assert edge.standard_predicate.identifier != 'GAMMA:0'
+    for e in counter:
+        print(e,counter[e])
 
 
 def test_expanded_gene_to_drug(ctd,rosetta):
