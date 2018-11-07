@@ -78,8 +78,8 @@ class Program:
         response = requests.get(f"{os.environ['BROKER_API']}queues/")
         queues = response.json()
         num_consumers = [q['consumers'] for q in queues if q['name'] == 'neo4j']
-        #if num_consumers and num_consumers[0]:
-        if False:
+        if num_consumers and num_consumers[0]:
+        #if False:
             self.connection = pika.BlockingConnection(pika.ConnectionParameters(
                 heartbeat=0,
                 host=os.environ['BROKER_HOST'],
@@ -140,15 +140,21 @@ class Program:
                 logger.debug(f"cache.set-> {key} length:{len(results)}")
                 logger.debug(f"    {[node for _, node in results]}")
             results = list(filter(lambda x: x[1].id not in self.excluded_identifiers, results))
-            logger.debug(f'Have {len(results)} results')
+            if source_node.id == 'CHEBI:17234':
+                logger.debug(f'GLUCOSE Have {len(results)} results')
             for edge, node in results:
+                if source_node.id == 'CHEBI:17234':
+                    logger.debug(f'GLUCOSE result {edge} {node}')
                 edge_label = Text.snakify(edge.standard_predicate.label)
                 if link['predicate'] is None or edge_label == link['predicate']:
-                    logger.debug('process node')
+                    if source_node.id == 'CHEBI:17234':
+                        logger.debug(f'GLUCOSE process node {node.id}')
                     self.process_node(node, history, edge)
+                    if source_node.id == 'CHEBI:17234':
+                        logger.debug(f'GLUCOSE returned')
                 else:
-                    logger.debug('skipping.',link['predicate'],edge_label)
-
+                    if source_node.id == 'CHEBI:17234':
+                        logger.debug('GLUCOSE skipping.',link['predicate'],edge_label)
 
         except pika.exceptions.ChannelClosed:
             raise
