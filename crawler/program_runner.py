@@ -47,6 +47,12 @@ def get_identifiers(input_type,rosetta):
             if ident not in bad_idents:
                 res = requests.get(f'http://onto.renci.org/label/{ident}/').json()
                 lids.append(LabeledID(ident,res['label']))
+    elif input_type == node_types.CELL:
+        identifiers = requests.get("http://onto.renci.org/descendants/CL:0000000").json()['descendants']
+        for ident in identifiers:
+            if ident not in bad_idents:
+                res = requests.get(f'http://onto.renci.org/label/{ident}/').json()
+                lids.append(LabeledID(ident,res['label']))
     elif input_type == node_types.GENE:
         print("Pull genes")
         data = pull_via_ftp('ftp.ebi.ac.uk', '/pub/databases/genenames/new/json', 'hgnc_complete_set.json')
