@@ -33,10 +33,12 @@ def crawl():
     #poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.PHENOTYPIC_FEATURE, rosetta)
     #poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.CHEMICAL_SUBSTANCE, rosetta)
 
+    #This one doesnt work!
+    #poolrun(node_types.CELL, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, rosetta)
+
     #These are from uberongraph, needed for COPs
     #poolrun(node_types.ANATOMICAL_ENTITY, node_types.PHENOTYPIC_FEATURE, rosetta)
-    #poolrun(node_types.CELL, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, rosetta)
-    #poolrun(node_types.ANATOMICAL_ENTITY, node_types.CELL, rosetta)
+    poolrun(node_types.ANATOMICAL_ENTITY, node_types.CELL, rosetta)
 
     #this is a new one from uberongraph
     #poolrun(node_types.DISEASE, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, rosetta)
