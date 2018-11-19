@@ -33,7 +33,7 @@ class GWASCatalog(Service):
 
                                     efo_traits = self.get_efo_traits_by_association(association_id)
                                     for efo_trait in efo_traits:
-                                        efo_node = KNode(f'EFO:{efo_trait['id']}', name=f'{efo_trait['trait']}', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+                                        efo_node = KNode(f'EFO:{efo_trait["id"]}', name=f'{efo_trait["trait"]}', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
                                         predicate = LabeledID(identifier=f'gwascatalog:has_phenotype',label=f'has_phenotype')
                                         edge = self.create_edge(variant_node, efo_node, 'gwascatalog.sequence_variant_to_disease_or_phenotypic_feature', dbsnp_curie_id, predicate, url=query_url, properties=props)
                                         return_results.append((edge, efo_node))
