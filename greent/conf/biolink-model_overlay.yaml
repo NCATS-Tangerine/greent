@@ -598,6 +598,7 @@ slots:
       - SNPEFF:upstream_gene_variant
 
   is non_coding variant of:
+    mappings:
       - SNPEFF:3_prime_UTR_variant
       - SNPEFF:5_prime_UTR_variant
       - SNPEFF:non_coding_transcript_exon_variant
