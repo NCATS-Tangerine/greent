@@ -35,6 +35,7 @@ classes:
       - NCIT
       - UMLS
       - MEDDRA
+      - EFO
 
   chemical substance:
     id_prefixes:
@@ -75,6 +76,15 @@ classes:
       - MGI
       - ZFIN
 
+  sequence variant:
+    id_prefixes:
+      - CAID
+      - HGVS
+      - DBSNP
+      - CLINVARVARIANT
+      - MYVARIANT_HG19
+      - MYVARIANT_HG38
+      
   pathway:
     id_prefixes: 
       - KEGG
@@ -488,6 +498,7 @@ slots:
     mappings:
       - hetio:PRESENTS_DpS
       - GAMMA:0000002 # inverse of UPHENO:0000001, which I can't seem to find an inverse of anywhere.
+      - gwascatalog:has_phenotype
 
     #In translator_minimal
   coexists with:
@@ -558,7 +569,39 @@ slots:
       - RO:0004024
 
   #the following are not in the original biolink model
-  
+  is missense variant of:
+    mappings:
+      - SNPEFF:missense_variant
+      - SNPEFF:initiator_codon_variant
+
+  is synonymous variant of:
+    mappings:
+      - SNPEFF:synonymous_variant
+      - SNPEFF:start_retained
+      - SNPEFF:stop_retained_variant
+
+  is nonsense variant of:
+    mappings:
+      - SNPEFF:stop_gained
+      - SNPEFF:stop_lost
+      - SNPEFF:frameshift_variant
+
+  is splice site variant of:
+    mappings:
+      - SNPEFF:splice_region_variant
+      - SNPEFF:splice_acceptor_variant
+      - SNPEFF:splice_donor_variant
+
+  is nearby variant of:
+    mappings:
+      - SNPEFF:downstream_gene_variant
+      - SNPEFF:upstream_gene_variant
+
+  is non_coding variant of:
+      - SNPEFF:3_prime_UTR_variant
+      - SNPEFF:5_prime_UTR_variant
+      - SNPEFF:non_coding_transcript_exon_variant
+
   disease to gene association:
     is_a: association
     mappings:
