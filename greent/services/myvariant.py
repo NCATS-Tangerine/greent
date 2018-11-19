@@ -67,7 +67,7 @@ class MyVariant(Service):
             else:
                 props = {}
 
-            gene_node = KNode(gene_identifier, type=node_types.GENE) 
+            gene_node = KNode(gene_identifier, type=node_types.GENE, name=gene_symbol)
 
             for effect in effects.split('&'):
                 # This should be switched so that the hgnc id is the node id

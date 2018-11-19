@@ -142,7 +142,7 @@ class ObesityHub(object):
                     else:
                         variation = f'{position}_{int(position) + len_ref}del'
                 # substitutions
-                elif len_ref == 1:      
+                else:      
                     variation = f'{position}{ref_allele}>{alt_allele}'
 
             # insertions
@@ -182,8 +182,9 @@ class ObesityHub(object):
 
                 identifiers, p_values = self.get_hgvs_identifiers_from_vcf(m_filename, p_value_cutoff, reference_genome, reference_patch)
                 if len(identifiers) > 0:
-                    metabolite_node = KNode(m_id, type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+                    metabolite_node = KNode(m_id, type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE, name=m_label)
                     metabolite_node.name = m_id
+                    self.rosetta.synonymizer.synonymize(metabolite_node)
                     with BufferedWriter(self.rosetta) as writer:
                         writer.write_node(metabolite_node)
 
@@ -204,14 +205,13 @@ class ObesityHub(object):
         pool.close()
         pool.join()
 
-        writer.flush()
-
         print(f'{variants_processed} significant variants found and processed')
 
     def write_experimental_edge(self, source_node, associated_node_id, associated_node_type, p_values, ctime):
         
         associated_node = KNode(associated_node_id.identifier, type=associated_node_type)
         associated_node.name = associated_node_id.label
+        self.rosetta.synonymizer.synonymize(associated_node)
         predicate = LabeledID(identifier=f'OBH:experimental_association', label=f'experimental_association')
         props={'p_value': p_values.get(associated_node_id.identifier)}
         new_edge = KEdge(source_id=source_node.id,
@@ -234,8 +234,10 @@ def find_connections(input_type, output_type, identifier):
         run(path,identifier.label,identifier.identifier,None,None,None,'greent.conf')
 
 if __name__=='__main__':
+    #metabolites_file = '/projects/sequence_analysis/vol1/obesity_hub/metabolomics/files_for_using_metabolomics_data/SOL_metabolomics_info_10202017.xlsx'
+    #gwas_directory = '/projects/sequence_analysis/vol1/obesity_hub/metabolomics/aggregate_results/'
     metabolites_file = './sample_metabolites.xlsx'
     gwas_directory = '.'
     obh = ObesityHub(Rosetta())
-    obh.create_obesity_graph(metabolites_file, gwas_directory, .00001, 'GRCh37')
+    obh.create_obesity_graph(metabolites_file, gwas_directory, .000001, 'GRCh37')
 

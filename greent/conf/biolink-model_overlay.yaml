@@ -601,6 +601,7 @@ slots:
       - SNPEFF:3_prime_UTR_variant
       - SNPEFF:5_prime_UTR_variant
       - SNPEFF:non_coding_transcript_exon_variant
+      - SNPEFF:intron_variant
 
   disease to gene association:
     is_a: association
