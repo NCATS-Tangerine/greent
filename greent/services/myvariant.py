@@ -10,6 +10,7 @@ logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 class MyVariant(Service):
     def __init__(self, context):
         super(MyVariant, self).__init__("myvariant", context)
+        self.effects_ignore_list = ['intergenic_region']
 
     def sequence_variant_to_gene(self, variant_node):
         return_results = []
@@ -19,7 +20,7 @@ class MyVariant(Service):
             myvariant_ids = variant_node.get_synonyms_by_prefix('MYVARIANT_HG38')
             myvariant_assembly = "hg38"
         if not myvariant_ids:
-            logger.warning('No MyVariant ID found, sequence_variant_to_gene failed.')
+            logger.warning(f'No MyVariant ID found for {variant_node.id}, sequence_variant_to_gene failed.')
         else: 
             for curie_myvariant_id in myvariant_ids:
                 variant_id = Text.un_curie(curie_myvariant_id)
@@ -29,6 +30,7 @@ class MyVariant(Service):
                     query_json = query_response.json()
                     if 'snpeff' in query_json and 'ann' in query_json['snpeff']:
                         annotation_info = query_json['snpeff']['ann']
+                        # sometimes this is a list and sometimes a single instance
                         if not isinstance(annotation_info, list):
                             annotation_info = [annotation_info]
                         for annotation in annotation_info:
@@ -65,13 +67,17 @@ class MyVariant(Service):
             else:
                 props = {}
 
+            gene_node = KNode(gene_identifier, type=node_types.GENE) 
+
             for effect in effects.split('&'):
                 # This should be switched so that the hgnc id is the node id
                 # For now they are returning both fields with the symbol so I took the symbol as node id because it's actually correct
                 # gene_node = KNode(f'HGNC.SYMBOL:{gene_symbol}', type=node_types.GENE)
                 #gene_node.add_synonyms((LabeledID(identifier=f'HGNC:{gene_id}', label=f'{gene_id}')))
                 
-                gene_node = KNode(gene_identifier, type=node_types.GENE)
+                if effect in self.effects_ignore_list:
+                    continue
+
                 predicate = LabeledID(identifier=f'SNPEFF:{effect}', label=f'{effect}')
                 edge = self.create_edge(variant_node, gene_node, 'myvariant.sequence_variant_to_gene', curie_id, predicate, url=query_url, properties=props)
                 results.append((edge, gene_node))
