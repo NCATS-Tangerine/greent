@@ -31,9 +31,9 @@ class GWASCatalog(Service):
                                     if pubmed_id:
                                         props['pubmedId'] = pubmed_id
 
-                                    efo_ids = self.get_efo_ids_by_association(association_id)
-                                    for efo_id in efo_ids:
-                                        efo_node = KNode(f'EFO:{efo_id}', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+                                    efo_traits = self.get_efo_traits_by_association(association_id)
+                                    for efo_trait in efo_traits:
+                                        efo_node = KNode(f'EFO:{efo_trait['id']}', name=f'{efo_trait['trait']}', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
                                         predicate = LabeledID(identifier=f'gwascatalog:has_phenotype',label=f'has_phenotype')
                                         edge = self.create_edge(variant_node, efo_node, 'gwascatalog.sequence_variant_to_disease_or_phenotypic_feature', dbsnp_curie_id, predicate, url=query_url, properties=props)
                                         return_results.append((edge, efo_node))
@@ -47,14 +47,14 @@ class GWASCatalog(Service):
         else:
             return None
 
-    def get_efo_ids_by_association(self, association_id):
+    def get_efo_traits_by_association(self, association_id):
         query_url = f'{self.url}associations/{association_id}/efoTraits'
         query_json = self.query_service(query_url)
         efo_traits = []
         if ('_embedded' in query_json) and ('efoTraits' in query_json['_embedded']):
             for efo_trait in query_json['_embedded']['efoTraits']:
                 if 'shortForm' in efo_trait:
-                    efo_traits.append(efo_trait['shortForm'])
+                    efo_traits.append({'id': efo_trait['shortForm'], 'trait' : efo_trait['trait']})
         return efo_traits
 
     def query_service(self, query_url):

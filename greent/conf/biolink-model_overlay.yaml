@@ -597,7 +597,7 @@ slots:
       - SNPEFF:downstream_gene_variant
       - SNPEFF:upstream_gene_variant
 
-  is non_coding variant of:
+  is non coding variant of:
     mappings:
       - SNPEFF:3_prime_UTR_variant
       - SNPEFF:5_prime_UTR_variant
