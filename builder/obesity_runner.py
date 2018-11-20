@@ -140,10 +140,15 @@ class ObesityHub(object):
                     if len_ref is 1:
                         variation = f'{position}del'
                     else:
-                        variation = f'{position}_{int(position) + len_ref}del'
+                        variation = f'{position}_{int(position)+len_ref}del'
                 # substitutions
-                else:      
+                elif len_ref == 1:      
                     variation = f'{position}{ref_allele}>{alt_allele}'
+                # more deletions
+                elif len_ref == 2 and (ref_allele[0] == alt_allele[0]):
+                    variation = f'{int(position)+1}del'
+                elif len_ref > 2 and (ref_allele[0] == alt_allele[0]):
+                    variation = f'{int(position)+1}_{int(position)+len_ref}del'
 
             # insertions
             elif (len_alt > len_ref) and (ref_allele[0] == alt_allele[0]):
@@ -182,7 +187,7 @@ class ObesityHub(object):
 
                 identifiers, p_values = self.get_hgvs_identifiers_from_vcf(m_filename, p_value_cutoff, reference_genome, reference_patch)
                 if len(identifiers) > 0:
-                    metabolite_node = KNode(m_id, type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE, name=m_label)
+                    metabolite_node = KNode(m_id, type=node_types.CHEMICAL_SUBSTANCE, name=m_label)
                     metabolite_node.name = m_id
                     self.rosetta.synonymizer.synonymize(metabolite_node)
                     with BufferedWriter(self.rosetta) as writer:
