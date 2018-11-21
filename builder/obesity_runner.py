@@ -94,7 +94,7 @@ class ObesityHub(object):
                     return 0
                 for line in f:
                     data = line.split()
-                    if len(data) < pval_index:
+                    if len(data) < pval_index-1:
                         continue
                     chromosome = data[0]
                     position = data[1]
@@ -187,8 +187,7 @@ class ObesityHub(object):
 
                 identifiers, p_values = self.get_hgvs_identifiers_from_vcf(m_filename, p_value_cutoff, reference_genome, reference_patch)
                 if len(identifiers) > 0:
-                    metabolite_node = KNode(m_id, type=node_types.CHEMICAL_SUBSTANCE, name=m_label)
-                    metabolite_node.name = m_id
+                    metabolite_node = KNode(m_id, name=m_label, type=node_types.CHEMICAL_SUBSTANCE)
                     self.rosetta.synonymizer.synonymize(metabolite_node)
                     with BufferedWriter(self.rosetta) as writer:
                         writer.write_node(metabolite_node)
