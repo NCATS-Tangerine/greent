@@ -44,14 +44,19 @@ celery.log.setup()
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
 @celery.task(bind=True, queue='update')
-def update_kg(self, question_json):
+def update_kg(self, question_json, task_acks_late=True, track_started=True, worker_prefetch_multiplier=1):
     '''
     Update the shared knowledge graph with respect to a question
     '''
 
     greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
     sys.path.insert(0, greent_path)
-    rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
+    logger.info("Setting up rosetta...")
+    try:
+        rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
+    except Exception as err:
+        logger.exception(f"Could not update KG because could not setup rosetta: {err}")
+        raise err
 
     self.update_state(state='UPDATING KG')
     logger.info("Updating the knowledge graph...")
@@ -59,8 +64,9 @@ def update_kg(self, question_json):
     try:
         logger.debug(question_json)
         q = Question(question_json)
+        logger.info("Program acquired...")
         programs = q.compile(rosetta)
-
+        logger.info("Running Program...")
         for p in programs:
             p.run_program()
 
