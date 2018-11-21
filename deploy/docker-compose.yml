@@ -18,7 +18,6 @@ services:
     environment:
       - DEPLOY=docker
       - ROBOKOP_HOME=/home/murphy
-      - NEO4J_HOST=neo4j
       - BROKER_HOST=broker
       - RESULTS_HOST=results
       - BUILD_CACHE_HOST=cache
