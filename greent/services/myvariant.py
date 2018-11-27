@@ -53,7 +53,7 @@ class MyVariant(Service):
             gene_identifier = f'HGNC.SYMBOL:{gene_symbol}'
             synonyms = self.context.core.hgnc.get_synonyms(gene_identifier)
             for identifier in [s.identifier for s in synonyms]:
-                if Text.get_curie(identifier).upper() == 'HGNC':
+                if Text.get_curie(identifier) == 'HGNC':
                     gene_identifier = identifier
                     break
 
@@ -66,17 +66,12 @@ class MyVariant(Service):
             else:
                 props = {}
             
-            effects_list = effects.split('&')            
+            effects_list = effects.split('&')
             for effect in effects_list:
-                # This should be switched so that the hgnc id is the node id
-                # For now they are returning both fields with the symbol so I took the symbol as node id because it's actually correct
-                # gene_node = KNode(f'HGNC.SYMBOL:{gene_symbol}', type=node_types.GENE)
-                #gene_node.add_synonyms((LabeledID(identifier=f'HGNC:{gene_id}', label=f'{gene_id}')))
-                                             
                 if effect in self.effects_ignore_list:
                     continue
 
-                gene_node = KNode(gene_identifier, type=node_types.GENE, name=gene_symbol)                                         
+                gene_node = KNode(gene_identifier, type=node_types.GENE, name=gene_symbol)
                 predicate = LabeledID(identifier=f'SNPEFF:{effect}', label=f'{effect}')
                 edge = self.create_edge(variant_node, gene_node, 'myvariant.sequence_variant_to_gene', curie_id, predicate, url=query_url, properties=props)
                 results.append((edge, gene_node))

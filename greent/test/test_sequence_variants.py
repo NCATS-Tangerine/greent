@@ -113,7 +113,7 @@ def test_sequence_variant_to_disease(gwascatalog):
     variant_node = KNode('DBSNP:rs7329174', type=node_types.SEQUENCE_VARIANT)
     relations = gwascatalog.sequence_variant_to_phenotype(variant_node)
     identifiers = [node.id for r,node in relations]
-    assert 'EFO:EFO_0002690' in identifiers
+    assert 'EFO:0002690' in identifiers
     predicates = [ relation.standard_predicate for relation,n in relations ] 
     plabels = set( [p.label for p in predicates] )
     assert 'has_phenotype' in plabels

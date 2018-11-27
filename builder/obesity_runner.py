@@ -94,7 +94,7 @@ class ObesityHub(object):
                     return 0
                 for line in f:
                     data = line.split()
-                    if len(data) < pval_index:
+                    if len(data) < pval_index-1:
                         continue
                     chromosome = data[0]
                     position = data[1]
@@ -167,7 +167,7 @@ class ObesityHub(object):
             return ''
 
     def create_obesity_graph(self, metabolites_file, gwas_directory, p_value_cutoff, reference_genome, reference_patch='p1'):
-        pool = Pool(processes=4)
+        pool = Pool(processes=8)
         variants_processed = 0
         try:
             wb = load_workbook(filename=metabolites_file, read_only=True)
@@ -187,8 +187,7 @@ class ObesityHub(object):
 
                 identifiers, p_values = self.get_hgvs_identifiers_from_vcf(m_filename, p_value_cutoff, reference_genome, reference_patch)
                 if len(identifiers) > 0:
-                    metabolite_node = KNode(m_id, type=node_types.CHEMICAL_SUBSTANCE, name=m_label)
-                    metabolite_node.name = m_id
+                    metabolite_node = KNode(m_id, name=m_label, type=node_types.CHEMICAL_SUBSTANCE)
                     self.rosetta.synonymizer.synonymize(metabolite_node)
                     with BufferedWriter(self.rosetta) as writer:
                         writer.write_node(metabolite_node)
@@ -217,7 +216,7 @@ class ObesityHub(object):
         associated_node = KNode(associated_node_id.identifier, type=associated_node_type)
         associated_node.name = associated_node_id.label
         self.rosetta.synonymizer.synonymize(associated_node)
-        predicate = LabeledID(identifier=f'OBH:experimental_association', label=f'experimental_association')
+        predicate = LabeledID(identifier=f'RO:0002609', label=f'correlated_with')
         props={'p_value': p_values.get(associated_node_id.identifier)}
         new_edge = KEdge(source_id=source_node.id,
                      target_id=associated_node.id,
