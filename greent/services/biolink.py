@@ -182,3 +182,19 @@ class Biolink(Service):
         #response = requests.get(url).json()
         response = self.page_calls(url)
         return self.process_associations(response, 'pathway_get_genes', node_types.GENE, url, pathway.id, pathway, reverse=True)
+
+
+    def sequence_variant_get_phenotype(self, variant_node):
+        clinvarsyns = variant_node.get_synonyms_by_prefix('CLINVARVARIANT')
+        if (len(clinvarsyns) > 0):
+            clinvarsyn = clinvarsyns.pop()
+            clinvarcurie = f'ClinVarVariant%3A{Text.un_curie(clinvarsyn)}'
+        else:
+            #logger.warn('No ClinVar ids found, could not find sequence variant to phenotype.')
+            return {}
+
+        url = f'{self.url}/bioentity/variant/{clinvarcurie}/phenotypes'
+        response = self.page_calls(url)
+        return self.process_associations(response, 'sequence_variant_get_phenotype', node_types.DISEASE_OR_PHENOTYPIC_FEATURE, clinvarcurie, url, variant_node)
+
+

@@ -166,8 +166,9 @@ class TaskStatus(Resource):
         r = redis.Redis(
             host=os.environ['RESULTS_HOST'],
             port=os.environ['RESULTS_PORT'],
-            password=os.environ['RESULTS_PASSWORD'],
-            db=os.environ['BUILDER_RESULTS_DB'])
+            db=os.environ['BUILDER_RESULTS_DB'],
+            password=os.environ['RESULTS_PASSWORD']
+        )
         value = r.get(f'celery-task-meta-{task_id}')
         if value is None:
             return 'Task not found', 404

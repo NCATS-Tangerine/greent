@@ -42,11 +42,11 @@ class Text:
 
     @staticmethod
     def get_curie (text):
-        return text.upper ().split (':')[0] if ':' in text else None
+        return text.upper().split(':', 1)[0] if ':' in text else None
         
     @staticmethod
     def un_curie (text):
-        return text.split (':')[1] if ':' in text else text
+        return text.split (':', 1)[1] if ':' in text else text
         
     @staticmethod
     def short (obj, limit=80):
@@ -72,7 +72,7 @@ class Text:
     def upper_curie(text):
         if ':' not in text:
             return text
-        p = text.split(':')
+        p = text.split(':', 1)
         return f'{p[0].upper()}:{p[1]}'
 
 

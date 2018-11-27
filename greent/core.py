@@ -7,12 +7,15 @@ from greent.services.biolink import Biolink
 from greent.services.caster import Caster
 from greent.services.chembio import ChemBioKS
 from greent.services.chemotext import Chemotext
+from greent.services.clingen import ClinGen
 from greent.services.ctd import CTD
+from greent.services.gwascatalog import GWASCatalog
 from greent.services.hetio import HetIO
 from greent.services.hmdb_beacon import HMDB
 from greent.services.hgnc import HGNC
 from greent.services.kegg import KEGG
 from greent.services.mychem import MyChem
+from greent.services.myvariant import MyVariant
 from greent.services.onto import Onto
 #from greent.services.omnicorp import OmniCorp
 #from greent.services.omnicorp_postgres import OmniCorp
@@ -46,8 +49,10 @@ class GreenT:
             "caster"           : lambda :  Caster(self.service_context, self),
             "chembio"          : lambda :  ChemBioKS (self.service_context),
             "chemotext"        : lambda :  Chemotext (self.service_context),
+            "clingen"          : lambda :  ClinGen(self.service_context),
             "ctd"              : lambda :  CTD(self.service_context),
             "go"               : lambda :  GO2(self.service_context),
+            "gwascatalog"      : lambda :  GWASCatalog(self.service_context),
             "hetio"            : lambda :  HetIO (self.service_context),
             "hgnc"             : lambda :  HGNC(self.service_context),
             "hmdb"             : lambda :  HMDB(self.service_context),
@@ -55,6 +60,7 @@ class GreenT:
             "kegg"             : lambda :  KEGG (self.service_context),
             "mondo"            : lambda :  Mondo2(self.service_context),
             "mychem"           : lambda :  MyChem(self.service_context),
+            "myvariant"        : lambda :  MyVariant(self.service_context),
             #"omnicorp"         : lambda :  OmniCorp (self.service_context),
             "oxo"              : lambda :  OXO (self.service_context),
             "onto"             : lambda :  Onto ("onto", self.service_context),

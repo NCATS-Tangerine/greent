@@ -51,6 +51,17 @@ def test_expanded_gene_to_drug(ctd,rosetta):
         assert edge.standard_predicate.identifier != 'GAMMA:0'
         print(edge, edge.standard_predicate)
 
+def test_disease_to_chemical_fails(rosetta,ctd):
+    input_node = KNode("MONDO:0009184", type=node_types.DISEASE, name='something')
+    rosetta.synonymizer.synonymize(input_node)
+    print(input_node.synonyms)
+    results = ctd.disease_to_chemical(input_node)
+    #Now, we're not returning the inferred ones.
+    assert len(results) > 100
+    for edge, node in results:
+        assert node.type == node_types.CHEMICAL_SUBSTANCE
+        assert edge.standard_predicate.identifier != 'GAMMA:0'
+
 def test_disease_to_chemical(rosetta,ctd):
     input_node = KNode("MONDO:0004979", type=node_types.DISEASE, name='Asthma')
     rosetta.synonymizer.synonymize(input_node)

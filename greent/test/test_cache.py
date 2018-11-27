@@ -86,3 +86,12 @@ def xtest_umls(rosetta):
     print(node.synonyms)
     assert node.id == 'MONDO:0019339'
 
+def test_check_fanc_pheno(rosetta):
+    key='biolink.disease_get_phenotype(MONDO:0019391)'
+    s3 = rosetta.cache.get(key)
+    node_ids = set()
+    for edge,node in s3:
+        node_ids.add(node.id)
+    print(len(s3))
+    print(len(node_ids))
+

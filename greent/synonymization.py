@@ -9,6 +9,7 @@ from greent.synonymizers import hgnc_synonymizer
 from greent.synonymizers import oxo_synonymizer
 from greent.synonymizers import substance_synonymizer
 from greent.synonymizers import disease_synonymizer
+from greent.synonymizers import sequence_variant_synonymizer
 from builder.question import LabeledID
 
 
@@ -24,6 +25,7 @@ class Synonymizer:
             node_types.DISEASE:set([disease_synonymizer]),
             node_types.CHEMICAL_SUBSTANCE:set([substance_synonymizer]),
             node_types.CELL:set([cell_synonymizer]),
+            node_types.SEQUENCE_VARIANT:set([sequence_variant_synonymizer])
         }
         self.create_synonymizers()
 

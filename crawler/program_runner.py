@@ -31,6 +31,13 @@ def get_identifiers(input_type,rosetta):
                 label = rosetta.core.mondo.get_label(ident)
                 if label is not None and not label.startswith('obsolete'):
                     lids.append(LabeledID(ident,label))
+    if input_type == node_types.PHENOTYPIC_FEATURE:
+        identifiers = rosetta.core.hpo.get_ids()
+        for ident in identifiers:
+            if ident not in bad_idents:
+                label = rosetta.core.hpo.get_label(ident)
+                if label is not None and not label.startswith('obsolete'):
+                    lids.append(LabeledID(ident,label))
     elif input_type == node_types.GENETIC_CONDITION:
         identifiers_disease = rosetta.core.mondo.get_ids()
         for ident in identifiers_disease:
@@ -108,6 +115,9 @@ def load_all(input_type, output_type,rosetta,poolsize):
     print( f'Found {len(identifiers)} input {input_type}')
     partial_do_one = partial(do_one, input_type, output_type)
     pool = Pool(processes=poolsize)
-    pool.map(partial_do_one, identifiers)
+    chunks = poolsize*2
+    chunksize = int(len(identifiers)/chunks)
+    print( f'Chunksize: {chunksize}')
+    pool.map_async(partial_do_one, identifiers)# chunksize=chunksize)
     pool.close()
     pool.join()
