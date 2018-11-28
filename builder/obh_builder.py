@@ -1,5 +1,6 @@
 from greent.rosetta import Rosetta
 from greent import node_types
+from greent.util import LoggingUtil
 from greent.graph_components import KNode, KEdge
 from builder.buildmain import run
 from builder.question import LabeledID
@@ -7,9 +8,11 @@ from multiprocessing import Pool
 from greent.export import BufferedWriter
 from functools import partial
 from openpyxl import load_workbook
-import time
+import logging, time
 
-class ObesityHub(object):
+logger = logging.getLogger(__name__)
+
+class ObesityHubBuilder(object):
 
     reference_chrom_versions = {
         'GRCh37': {
@@ -75,11 +78,14 @@ class ObesityHub(object):
     }
 
     reference_prefixes = {
-        'GRCh37': 'NC_0000'
+        'GRCh37': 'NC_0000',
+        'GRCh38': 'NC_0000'
     }
 
-    def __init__(self, rosetta):
+    def __init__(self, rosetta, debug=False):
         self.rosetta = rosetta
+        if debug:
+            logger.setLevel(logging.DEBUG)
 
     def get_hgvs_identifiers_from_vcf(self, filename, p_value_cutoff, reference_genome, reference_patch):
         new_ids = []
@@ -90,81 +96,79 @@ class ObesityHub(object):
                 if ('PVALUE' in headers):
                     pval_index = headers.index('PVALUE')
                 else:
-                    print(f'Invalid file format: {filename}')
+                    logger.error(f'Invalid file format: {filename}')
                     return 0
+                line_counter = 0
                 for line in f:
+                    line_counter += 1
                     data = line.split()
-                    if len(data) < pval_index-1:
-                        continue
-                    chromosome = data[0]
-                    position = data[1]
-                    ref_allele = data[3]
-                    alt_allele = data[4]
-                    p_value = data[pval_index]
                     try:
+                        chromosome = data[0]
+                        position = data[1]
+                        ref_allele = data[3]
+                        alt_allele = data[4]
+                        p_value = data[pval_index]
+                    
                         if float(p_value) <= p_value_cutoff:
                             hgvs = self.convert_vcf_to_hgvs(reference_genome, reference_patch, chromosome, position, ref_allele, alt_allele)
                             if hgvs:
                                 new_ids.append(LabeledID(identifier=f'HGVS:{hgvs}', label=f'Variant(hgvs): {hgvs}'))
                                 corresponding_p_values[hgvs] = p_value
 
-                    except ValueError:
+                    except (ValueError, IndexError) as e:
+                        logger.debug(f'Error reading line {line_counter} from {filename}')
                         continue
-                        # should we log this? p value wasn't a float
 
         except IOError:
-            print(f'Could not open file: {filename}')
+            logger.debug(f'Could not open file: {filename}')
 
         return new_ids, corresponding_p_values
 
     def convert_vcf_to_hgvs(self, reference_genome, reference_patch, chromosome, position, ref_allele, alt_allele):
-        if (reference_genome in self.reference_prefixes and reference_genome in self.reference_chrom_versions
-            and reference_patch in self.reference_chrom_versions[reference_genome] 
-            and chromosome in self.reference_chrom_versions[reference_genome][reference_patch]):
-            
+        try:
             ref_chrom_version = self.reference_chrom_versions[reference_genome][reference_patch][chromosome]
             ref_prefix = self.reference_prefixes[reference_genome]
-            if chromosome == 'X':
-                chromosome = '23'
-            elif chromosome == 'Y':
-                chromosome = '24'
-            elif len(chromosome) == 1:
-                ref_prefix = f'{ref_prefix}0'
 
-            len_ref =  len(ref_allele) 
-            len_alt = len(alt_allele)
+        except KeyError:
+            logger.debug(f'Reference chromosome and/or version not found: {reference_genome}.{reference_patch},{chromosome}')
+            return ''
+
+        if chromosome == 'X':
+            chromosome = '23'
+        elif chromosome == 'Y':
+            chromosome = '24'
+        elif len(chromosome) == 1:
+            ref_prefix = f'{ref_prefix}0'
+
+        len_ref =  len(ref_allele) 
+        len_alt = len(alt_allele)
             
-            if len_alt == 1:
-                # deletions
-                if alt_allele == '.' or not alt_allele:
-                    if len_ref is 1:
-                        variation = f'{position}del'
-                    else:
-                        variation = f'{position}_{int(position)+len_ref}del'
-                # substitutions
-                elif len_ref == 1:      
-                    variation = f'{position}{ref_allele}>{alt_allele}'
-                # more deletions
-                elif len_ref == 2 and (ref_allele[0] == alt_allele[0]):
-                    variation = f'{int(position)+1}del'
-                elif len_ref > 2 and (ref_allele[0] == alt_allele[0]):
-                    variation = f'{int(position)+1}_{int(position)+len_ref}del'
+        if len_alt == 1:
+            # deletions
+            if alt_allele == '.' or not alt_allele:
+                if len_ref is 1:
+                    variation = f'{position}del'
+                else:
+                    variation = f'{position}_{int(position)+len_ref}del'
+            # substitutions
+            elif len_ref == 1:      
+                variation = f'{position}{ref_allele}>{alt_allele}'
+            # more deletions
+            elif len_ref == 2 and (ref_allele[0] == alt_allele[0]):
+                variation = f'{int(position)+1}del'
+            elif len_ref > 2 and (ref_allele[0] == alt_allele[0]):
+                variation = f'{int(position)+1}_{int(position)+len_ref}del'
 
-            # insertions
-            elif (len_alt > len_ref) and (ref_allele[0] == alt_allele[0]):
-                variation = f'{position}_{int(position) + 1}ins{alt_allele[1:]}'
-
-            else:
-                print(f'Format of variant not recognized for hgvs conversion: {ref_allele} to {alt_allele}')
-                return ''
-
-            hgvs = f'{ref_prefix}{chromosome}.{ref_chrom_version}:g.{variation}'
-            #print(hgvs)
-            return hgvs
+        # insertions
+        elif (len_alt > len_ref) and (len_ref == 1) and (ref_allele[0] == alt_allele[0]):
+            variation = f'{position}_{int(position) + 1}ins{alt_allele[1:]}'
 
         else:
-            print(f'Reference chromosome version not found: {reference_genome}.{reference_patch},{chromosome}')
+            logger.debug(f'Format of variant not recognized for hgvs conversion: {ref_allele} to {alt_allele}')
             return ''
+
+        hgvs = f'{ref_prefix}{chromosome}.{ref_chrom_version}:g.{variation}'
+        return hgvs
 
     def create_obesity_graph(self, metabolites_file, gwas_directory, p_value_cutoff, reference_genome, reference_patch='p1'):
         pool = Pool(processes=8)
@@ -203,13 +207,13 @@ class ObesityHub(object):
 
                     variants_processed += len(identifiers)
 
-        except IOError:
-            print(f'metabolites_file ({metabolites_file}) could not be loaded as xlsx')
+        except (IOError, KeyError) as e:
+            logger.debug(f'metabolites_file ({metabolites_file}) could not be loaded as xlsx: {e}')
 
         pool.close()
         pool.join()
-
-        print(f'{variants_processed} significant variants found and processed')
+        print(f'{variants_processed} significant variants found and processed for {metabolites_file}')
+        logger.debug(f'{variants_processed} significant variants found and processed for {metabolites_file}')
 
     def write_experimental_edge(self, source_node, associated_node_id, associated_node_type, p_values, ctime):
         
@@ -218,6 +222,7 @@ class ObesityHub(object):
         self.rosetta.synonymizer.synonymize(associated_node)
         predicate = LabeledID(identifier=f'RO:0002609', label=f'correlated_with')
         props={'p_value': p_values.get(associated_node_id.identifier)}
+
         new_edge = KEdge(source_id=source_node.id,
                      target_id=associated_node.id,
                      provided_by='Obesity_Hub',
@@ -234,14 +239,13 @@ class ObesityHub(object):
 
 def find_connections(input_type, output_type, identifier):
         path = f'{input_type},{output_type}'
-        #print(f'{identifier.identifier} - {path}')
         run(path,identifier.label,identifier.identifier,None,None,None,'greent.conf')
 
 if __name__=='__main__':
     #metabolites_file = '/projects/sequence_analysis/vol1/obesity_hub/metabolomics/files_for_using_metabolomics_data/SOL_metabolomics_info_10202017.xlsx'
-    #gwas_directory = '/projects/sequence_analysis/vol1/obesity_hub/metabolomics/aggregate_results/'
+    #gwas_directory = '/projects/sequence_analysis/vol1/obesity_hub/metabolomics/aggregate_results'
     metabolites_file = './sample_metabolites.xlsx'
     gwas_directory = '.'
-    obh = ObesityHub(Rosetta())
+    obh = ObesityHubBuilder(Rosetta(), debug=True)
     obh.create_obesity_graph(metabolites_file, gwas_directory, .000001, 'GRCh37')
 
