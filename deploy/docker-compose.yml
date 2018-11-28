@@ -6,7 +6,6 @@ services:
     command: redis-server --port ${BUILD_CACHE_PORT}
         
   interfaces:
-    # image: patrickkwang/robokop-interfaces
     container_name: interfaces
     build:
       context: .
@@ -21,4 +20,4 @@ services:
     volumes:
       - ../../logs:/home/murphy/logs
       - ../../shared:/home/murphy/shared
-      - ..:/home/murphy/robokop-interfaces
+      - ../:/home/murphy/robokop-interfaces
