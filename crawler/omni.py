@@ -62,6 +62,12 @@ def dump(k, v, pipe):
     # outf.write(f'SET {key} {pickle.dumps(v)}\n')
     pipe.set(key, pickle.dumps(v))
 
+def dump_count(k,v,pipe):
+    if len(k) == 0:
+        return
+    key = f'OmnicorpSupport_count({k[0]},{k[1]})'
+    # outf.write(f'SET {key} {pickle.dumps(v)}\n')
+    pipe.set(key, pickle.dumps(v))
 
 def update_prefixes(p1, p2, redis):
     key = 'OmnicorpPrefixes'
@@ -106,7 +112,8 @@ def cacheit(p1, p2, conn, redis):
                         curie_1,curie_2 = sorted( [curie_1, curie_2] )
                     if (curie_1, curie_2) != ckey:
                         n += 1
-                        dump(ckey, pubs, pipe)
+                        #dump(ckey, pubs, pipe)
+                        dump_count(ckey, len(pubs), pipe)
                         num_piped += 1
                         if num_piped >= max_piped:
                             pipe.execute()

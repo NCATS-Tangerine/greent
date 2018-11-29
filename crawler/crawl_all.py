@@ -9,13 +9,14 @@ from datetime import datetime as dt
 
 def poolrun(type1,type2,rosetta):
     start = dt.now()
-    psize=10
+    psize = 10
     load_all(type1,type2,rosetta,psize)
     end = dt.now()
     print(f'Poolsize: {psize}, time: {end-start}')
 
 def crawl():
     rosetta = Rosetta()
+    #logsyn
     #load_genes(rosetta)
     #load_chemicals(rosetta,refresh=False)
     #load_diseases_and_phenotypes(rosetta)
@@ -23,7 +24,7 @@ def crawl():
     #create_omnicache(rosetta)
     #poolrun(node_types.DISEASE, node_types.GENE, rosetta)
     #log9
-    poolrun(node_types.PHENOTYPIC_FEATURE, node_types.DISEASE, rosetta)
+    #poolrun(node_types.PHENOTYPIC_FEATURE, node_types.DISEASE, rosetta)
     #poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.DISEASE, rosetta)
     #poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.PHENOTYPIC_FEATURE, rosetta)
     #poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.CHEMICAL_SUBSTANCE, rosetta)
@@ -44,12 +45,6 @@ def crawl():
     #log8
     #poolrun(node_types.DISEASE, node_types.CHEMICAL_SUBSTANCE, rosetta)
     #poolrun(node_types.GENE, node_types.CHEMICAL_SUBSTANCE, rosetta)
-
-#
-# MATCH (n)
-# WHERE size((n)--())=0
-# DELETE (n)
-#
 
 if __name__=='__main__':
     crawl()
