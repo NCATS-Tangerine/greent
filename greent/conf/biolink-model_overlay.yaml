@@ -571,34 +571,40 @@ slots:
   #the following are not in the original biolink model
   is missense variant of:
     mappings:
+      - SO:0001583
       - SNPEFF:missense_variant
       - SNPEFF:initiator_codon_variant
 
   is synonymous variant of:
     mappings:
+      - SO:0001819
       - SNPEFF:synonymous_variant
       - SNPEFF:start_retained
       - SNPEFF:stop_retained_variant
 
   is nonsense variant of:
     mappings:
+      - SO:0002054
       - SNPEFF:stop_gained
       - SNPEFF:stop_lost
       - SNPEFF:frameshift_variant
 
   is splice site variant of:
     mappings:
+      - SO:0001629
       - SNPEFF:splice_region_variant
       - SNPEFF:splice_acceptor_variant
       - SNPEFF:splice_donor_variant
 
   is nearby variant of:
     mappings:
+      - GAMMA:0000102
       - SNPEFF:downstream_gene_variant
       - SNPEFF:upstream_gene_variant
 
   is non coding variant of:
     mappings:
+      - GAMMA:0000103
       - SNPEFF:3_prime_UTR_variant
       - SNPEFF:5_prime_UTR_variant
       - SNPEFF:non_coding_transcript_exon_variant
