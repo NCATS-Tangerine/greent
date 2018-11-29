@@ -112,7 +112,7 @@ def cacheit(p1, p2, conn, redis):
                         curie_1,curie_2 = sorted( [curie_1, curie_2] )
                     if (curie_1, curie_2) != ckey:
                         n += 1
-                        #dump(ckey, pubs, pipe)
+                        dump(ckey, pubs, pipe)
                         dump_count(ckey, len(pubs), pipe)
                         num_piped += 1
                         if num_piped >= max_piped:
