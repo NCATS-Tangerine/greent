@@ -60,6 +60,17 @@ def test_gene_to_process2(biolink):
         assert kn.type == node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY
         assert Text.get_curie(kn.id) == "GO"
 
+def test_disease_to_phenotypes_pmid_parsing(biolink):
+    disease = KNode('MONDO:0019043', type=node_types.DISEASE)
+    results = biolink.disease_get_phenotype(disease)
+    assert True
+    #identifiers = [node.id for r,node in results]
+    ##everthing should be MONDO ids
+    #for ident in identifiers:
+    #    assert Text.get_curie(ident) == 'HP'
+    #acute severe asthma should be in there.
+    #assert 'HP:0012653' in identifiers
+
 def test_disease_to_phenotypes(biolink):
     #This tests pagination as well
     asthma = KNode('DOID:2841', type=node_types.DISEASE)
