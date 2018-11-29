@@ -84,7 +84,10 @@ class Biolink(Service):
                     # Sometimes, we get back something like "uniprotkb" instead of a PMID.  We don't want it.
                     pubid_prefix = pub['id'][:4].upper()
                     if pubid_prefix == 'PMID':
-                        pubs.append(pub['id'])
+                        # Sometimes, there is something like: 'id': 'PMID:9557891PMID:9557891' !?
+                        ids = pub['id'].split('PMID:')
+                        for n in ids[1:]:
+                            pubs.append(f'PMID:{n}')
             if reverse:
                 source_node = KNode(association['subject']['id'], type=target_node_type, name=association['subject']['label'])
                 target_node = input_node
@@ -110,7 +113,13 @@ class Biolink(Service):
                 predicate_label = f'biolink:{function}'
             #now back to the show
             predicate = LabeledID(identifier=predicate_id, label=predicate_label)
-            edge = self.create_edge(source_node, target_node, f'biolink.{function}',  input_identifier, predicate,  publications = pubs, url = url)
+            try:
+                edge = self.create_edge(source_node, target_node, f'biolink.{function}',  input_identifier, predicate,  publications = pubs, url = url)
+            except Exception as e:
+                print(e)
+                print(association['publications'])
+                print( pubs)
+                raise e
             edge_nodes.append((edge, newnode))
         return edge_nodes
 
