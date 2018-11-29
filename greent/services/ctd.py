@@ -308,8 +308,8 @@ class CTD(Service):
         for identifier in identifiers:
             unique = set()
             url = f"{self.url}CTD_chemicals_diseases_DiseaseID/{identifier}/"
-            obj = requests.get (url).json ()
             logger.info(url)
+            obj = requests.get (url).json ()
             logger.info(len(obj))
             for r in obj:
                 predicate_label = r['DirectEvidence']
