@@ -10,7 +10,7 @@ from functools import partial
 from openpyxl import load_workbook
 import logging, time
 
-logger = logging.getLogger(__name__)
+logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
 class ObesityHubBuilder(object):
 
@@ -84,6 +84,7 @@ class ObesityHubBuilder(object):
 
     def __init__(self, rosetta, debug=False):
         self.rosetta = rosetta
+        self.concept_model = rosetta.type_graph.concept_model
         if debug:
             logger.setLevel(logging.DEBUG)
 
@@ -93,34 +94,37 @@ class ObesityHubBuilder(object):
         try:
             with open(filename) as f:
                 headers = next(f).split()
-                if ('PVALUE' in headers):
-                    pval_index = headers.index('PVALUE')
-                else:
-                    logger.error(f'Invalid file format: {filename}')
-                    return 0
                 line_counter = 0
+                try:
+                    pval_index = headers.index('PVALUE')
+                    chrom_index = headers.index('CHROM')
+                    pos_index = headers.index('POS')
+                    ref_index = headers.index('REF')
+                    alt_index = headers.index('ALT')
+                except ValueError:
+                    logger.warning(f'Error reading file headers for {filename}')
                 for line in f:
-                    line_counter += 1
-                    data = line.split()
                     try:
-                        chromosome = data[0]
-                        position = data[1]
-                        ref_allele = data[3]
-                        alt_allele = data[4]
+                        line_counter += 1
+                        data = line.split()
+                        chromosome = data[chrom_index]
+                        position = data[pos_index]
+                        ref_allele = data[ref_index]
+                        alt_allele = data[alt_index]
                         p_value = data[pval_index]
                     
                         if float(p_value) <= p_value_cutoff:
                             hgvs = self.convert_vcf_to_hgvs(reference_genome, reference_patch, chromosome, position, ref_allele, alt_allele)
                             if hgvs:
-                                new_ids.append(LabeledID(identifier=f'HGVS:{hgvs}', label=f'Variant(hgvs): {hgvs}'))
-                                corresponding_p_values[hgvs] = p_value
+                                curie_hgvs = f'HGVS:{hgvs}'
+                                new_ids.append(LabeledID(identifier=curie_hgvs, label=f'Variant(hgvs): {hgvs}'))
+                                corresponding_p_values[curie_hgvs] = p_value
 
-                    except (ValueError, IndexError) as e:
-                        logger.debug(f'Error reading line {line_counter} from {filename}')
-                        continue
+                    except (IndexError) as e:
+                        logger.warning(f'Error reading file {filename}, on line {line_counter}: {e}')
 
         except IOError:
-            logger.debug(f'Could not open file: {filename}')
+            logger.warning(f'Could not open file: {filename}')
 
         return new_ids, corresponding_p_values
 
@@ -130,7 +134,7 @@ class ObesityHubBuilder(object):
             ref_prefix = self.reference_prefixes[reference_genome]
 
         except KeyError:
-            logger.debug(f'Reference chromosome and/or version not found: {reference_genome}.{reference_patch},{chromosome}')
+            logger.warning(f'Reference chromosome and/or version not found: {reference_genome}.{reference_patch},{chromosome}')
             return ''
 
         if chromosome == 'X':
@@ -164,7 +168,7 @@ class ObesityHubBuilder(object):
             variation = f'{position}_{int(position) + 1}ins{alt_allele[1:]}'
 
         else:
-            logger.debug(f'Format of variant not recognized for hgvs conversion: {ref_allele} to {alt_allele}')
+            logger.warning(f'Format of variant not recognized for hgvs conversion: {ref_allele} to {alt_allele}')
             return ''
 
         hgvs = f'{ref_prefix}{chromosome}.{ref_chrom_version}:g.{variation}'
@@ -208,19 +212,24 @@ class ObesityHubBuilder(object):
                     variants_processed += len(identifiers)
 
         except (IOError, KeyError) as e:
-            logger.debug(f'metabolites_file ({metabolites_file}) could not be loaded as xlsx: {e}')
+            logger.warning(f'metabolites_file ({metabolites_file}) could not be loaded as xlsx: {e}')
 
         pool.close()
         pool.join()
-        print(f'{variants_processed} significant variants found and processed for {metabolites_file}')
-        logger.debug(f'{variants_processed} significant variants found and processed for {metabolites_file}')
+
+        logger.info(f'{variants_processed} significant variants found and processed for {metabolites_file}')
 
     def write_experimental_edge(self, source_node, associated_node_id, associated_node_type, p_values, ctime):
         
-        associated_node = KNode(associated_node_id.identifier, type=associated_node_type)
-        associated_node.name = associated_node_id.label
+        associated_node = KNode(associated_node_id.identifier, name=associated_node_id.label, type=associated_node_type)
         self.rosetta.synonymizer.synonymize(associated_node)
-        predicate = LabeledID(identifier=f'RO:0002609', label=f'correlated_with')
+
+        predicate = LabeledID(identifier=f'RO:0002609', label=f'related_to')
+        if self.concept_model:
+            standard_predicate = self.concept_model.standardize_relationship(predicate)
+        else:
+            standard_predicate = predicate
+
         props={'p_value': p_values.get(associated_node_id.identifier)}
 
         new_edge = KEdge(source_id=source_node.id,
@@ -228,7 +237,7 @@ class ObesityHubBuilder(object):
                      provided_by='Obesity_Hub',
                      ctime=ctime,
                      original_predicate=predicate,
-                     standard_predicate=predicate,
+                     standard_predicate=standard_predicate,
                      input_id=source_node.id,
                      publications=None,
                      url=None,
