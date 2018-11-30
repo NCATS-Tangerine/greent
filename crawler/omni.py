@@ -52,6 +52,11 @@ def create_connection(rosetta):
     port = context.config['OMNICORP_PORT']
     host = context.config['OMNICORP_HOST']
     pw = context.config['OMNICORP_PASSWORD']
+    print(db)
+    print(user)
+    print(port)
+    print(host)
+    print(pw)
     return psycopg2.connect(dbname=db, user=user, host=host, port=port,password=pw)
 
 
