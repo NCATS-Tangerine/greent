@@ -113,14 +113,14 @@ class ObesityHubBuilder(object):
                         alt_allele = data[alt_index]
                         p_value = data[pval_index]
                     
-                        if float(p_value) <= p_value_cutoff:
+                        if (p_value != 'NA') and (float(p_value) <= p_value_cutoff):
                             hgvs = self.convert_vcf_to_hgvs(reference_genome, reference_patch, chromosome, position, ref_allele, alt_allele)
                             if hgvs:
                                 curie_hgvs = f'HGVS:{hgvs}'
                                 new_ids.append(LabeledID(identifier=curie_hgvs, label=f'Variant(hgvs): {hgvs}'))
                                 corresponding_p_values[curie_hgvs] = p_value
 
-                    except (IndexError) as e:
+                    except (IndexError, ValueError) as e:
                         logger.warning(f'Error reading file {filename}, on line {line_counter}: {e}')
 
         except IOError:
