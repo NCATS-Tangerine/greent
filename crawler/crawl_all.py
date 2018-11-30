@@ -6,6 +6,7 @@ from crawler.program_runner import load_all
 from crawler.disease_phenotype import load_diseases_and_phenotypes
 from crawler.omni import create_omnicache,update_omnicache
 from datetime import datetime as dt
+import argparse
 
 def poolrun(type1,type2,rosetta):
     start = dt.now()
@@ -14,37 +15,62 @@ def poolrun(type1,type2,rosetta):
     end = dt.now()
     print(f'Poolsize: {psize}, time: {end-start}')
 
-def crawl():
+def load_synonyms(rosetta=None):
+    if rosetta is None:
+        rosetta = Rosetta()
+    load_genes(rosetta)
+    #load_chemicals(rosetta,refresh=True)
+    load_chemicals(rosetta,refresh=False)
+    load_diseases_and_phenotypes(rosetta)
+
+crawls = [
+    (node_types.DISEASE, node_types.PHENOTYPIC_FEATURE),
+    (node_types.GENETIC_CONDITION, node_types.PHENOTYPIC_FEATURE),
+    (node_types.PHENOTYPIC_FEATURE, node_types.DISEASE),
+    (node_types.DISEASE, node_types.GENE),
+    (node_types.GENE, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY),
+    (node_types.ANATOMICAL_ENTITY, node_types.PHENOTYPIC_FEATURE),
+    (node_types.ANATOMICAL_ENTITY, node_types.CELL),
+    (node_types.CELL, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY),
+    (node_types.DISEASE, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY),
+    (node_types.DISEASE, node_types.CHEMICAL_SUBSTANCE),
+    (node_types.CHEMICAL_SUBSTANCE, node_types.DISEASE),
+    (node_types.CHEMICAL_SUBSTANCE, node_types.PHENOTYPIC_FEATURE),
+    (node_types.CHEMICAL_SUBSTANCE, node_types.CHEMICAL_SUBSTANCE),
+    (node_types.GENE, node_types.CHEMICAL_SUBSTANCE)
+]
+
+def crawl_all(rosetta):
+    load_synonyms(rosetta)
+    create_omnicache(rosetta)
+    for (source,target) in crawls:
+        poolrun(source,target,rosetta)
+
+def run(args):
     rosetta = Rosetta()
-    #logsyn
-    #load_genes(rosetta)
-    #load_chemicals(rosetta,refresh=False)
-    #load_diseases_and_phenotypes(rosetta)
-    #logomni
-    #create_omnicache(rosetta)
-    #poolrun(node_types.DISEASE, node_types.GENE, rosetta)
-    #log9
-    #poolrun(node_types.PHENOTYPIC_FEATURE, node_types.DISEASE, rosetta)
-    #poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.DISEASE, rosetta)
-    #poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.PHENOTYPIC_FEATURE, rosetta)
-    #poolrun(node_types.CHEMICAL_SUBSTANCE, node_types.CHEMICAL_SUBSTANCE, rosetta)
-    #THIS ONE HAS SOME PMID ERRORS: check /scratch/bizon/log	
-    #poolrun(node_types.DISEASE, node_types.PHENOTYPIC_FEATURE, rosetta)
-    #log2
-    #poolrun(node_types.GENETIC_CONDITION, node_types.PHENOTYPIC_FEATURE, rosetta)
-    #log3
-    #poolrun(node_types.GENE, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, rosetta)
-    #log4
-    #poolrun(node_types.ANATOMICAL_ENTITY, node_types.PHENOTYPIC_FEATURE, rosetta)
-    #log5
-    #poolrun(node_types.ANATOMICAL_ENTITY, node_types.CELL, rosetta)
-    #log6
-    #poolrun(node_types.CELL, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, rosetta)
-    #log7
-    #poolrun(node_types.DISEASE, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, rosetta)
-    #log8
-    #poolrun(node_types.DISEASE, node_types.CHEMICAL_SUBSTANCE, rosetta)
-    #poolrun(node_types.GENE, node_types.CHEMICAL_SUBSTANCE, rosetta)
+    if args.all:
+        print('all')
+        crawl_all(rosetta)
+    elif args.synonyms:
+        print('synonyms')
+        load_synonyms(rosetta)
+    elif args.omnicache:
+        print('omnicache')
+        create_omnicache(rosetta)
+    else:
+        print(f'crawl from {args.source} to {args.target}')
+        poolrun(args.source, args.target,rosetta)
 
 if __name__=='__main__':
-    crawl()
+    #run crawl_all.py -h to see the list of allowed crawls
+    helpstring = 'Allowed crawls (source)->(target):\n'+'\n'.join([f'  {c[0]}->{c[1]}' for c in crawls])
+    parser = argparse.ArgumentParser(description=helpstring,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument('-a','--all', help='Perform all crawls consecutively', action='store_true')
+    parser.add_argument('-s','--synonyms', help='Build all synonyms (genes, chemicals, diseases, phenotypes)', action='store_true')
+    parser.add_argument('-o','--omnicache', help='Load omnicorp from postgres to redis', action='store_true')
+    parser.add_argument('--source', help='type from which to build')
+    parser.add_argument('--target', help='type to which to build')
+    args = parser.parse_args()
+    run(args)
+
