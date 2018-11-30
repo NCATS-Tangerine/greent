@@ -85,8 +85,12 @@ class Biolink(Service):
                     pubid_prefix = pub['id'][:4].upper()
                     if pubid_prefix == 'PMID':
                         # Sometimes, there is something like: 'id': 'PMID:9557891PMID:9557891' !?
+                        # Oh, and even better, sometimes there is this: 'id': 'PMID:12687501:PMID:17918734'
+                        # I will refrain from cursing in code.
                         ids = pub['id'].split('PMID:')
                         for n in ids[1:]:
+                            while n.endswith(':'):
+                                n = n[:-1]
                             pubs.append(f'PMID:{n}')
             if reverse:
                 source_node = KNode(association['subject']['id'], type=target_node_type, name=association['subject']['label'])
