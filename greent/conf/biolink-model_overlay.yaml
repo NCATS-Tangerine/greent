@@ -574,6 +574,7 @@ slots:
       - SO:0001583
       - SNPEFF:missense_variant
       - SNPEFF:initiator_codon_variant
+      - SNPEFF:structural_interaction_variant
 
   is synonymous variant of:
     mappings:
@@ -586,6 +587,7 @@ slots:
     mappings:
       - SO:0002054
       - SNPEFF:stop_gained
+      - SNPEFF:start_lost
       - SNPEFF:stop_lost
       - SNPEFF:frameshift_variant
 
@@ -607,6 +609,7 @@ slots:
       - GAMMA:0000103
       - SNPEFF:3_prime_UTR_variant
       - SNPEFF:5_prime_UTR_variant
+      - SNPEFF:5_prime_UTR_premature_start_codon_gain_variant
       - SNPEFF:non_coding_transcript_exon_variant
       - SNPEFF:intron_variant
 

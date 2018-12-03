@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class MyVariant(Service):
     def __init__(self, context):
         super(MyVariant, self).__init__("myvariant", context)
-        self.effects_ignore_list = ['intergenic_region']
+        self.effects_ignore_list = ['intergenic_region', 'sequence_feature']
 
     def sequence_variant_to_gene(self, variant_node):
         return_results = []
