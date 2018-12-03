@@ -88,6 +88,94 @@ class ObesityHubBuilder(object):
         if debug:
             logger.setLevel(logging.DEBUG)
 
+    def get_metabolites_from_file(self, metabolites_file):
+        metabolite_nodes = []
+        metabolite_file_names = {}
+        try:
+            wb = load_workbook(filename=metabolites_file, read_only=True)
+            ws = wb.active
+            for row in ws.iter_rows(min_row=2):
+                if row[5].value != '#N/A':
+                    m_id = f'PUBCHEM:{row[5].value}'
+                elif row[7].value != '#N/A':
+                    m_id = f'HMDB:{row[7].value}'
+                elif row[6].value != '#N/A':
+                    m_id = f'KEGG.COMPOUND:{row[6].value}'
+                else:
+                    continue
+
+                m_label = row[0].value
+                m_filename = f'{row[8].value}'
+                # temporary workaround for incorrect names
+                #m_filename = f'{row[8].value}_scale'
+                #m_filename = m_filename[0:32]
+                metabolite_file_names[m_id] = m_filename
+
+                new_metabolite_node = KNode(m_id, name=m_label, type=node_types.CHEMICAL_SUBSTANCE)
+                metabolite_nodes.append(new_metabolite_node)
+
+        except (IOError, KeyError) as e:
+            logger.warning(f'metabolites_file ({metabolites_file}) could not be loaded or parsed: {e}')
+
+        return metabolite_nodes, metabolite_file_names
+
+    def create_gwas_graph(self, source_nodes, gwas_file_names, gwas_file_directory, p_value_cutoff, reference_genome='GRCh37', reference_patch='p1'):
+        variants_processed = 0
+        predicate = LabeledID(identifier=f'RO:0002609', label=f'related_to')
+        pool = Pool(processes=8)
+
+        for source_node in source_nodes:
+            filepath = f'{gwas_file_directory}/{gwas_file_names[source_node.id]}'
+            identifiers, p_values = self.get_hgvs_identifiers_from_vcf(filepath, p_value_cutoff, reference_genome, reference_patch)
+            if len(identifiers) > 0:
+                self.rosetta.synonymizer.synonymize(source_node)
+                with BufferedWriter(self.rosetta) as writer:
+                    writer.write_node(source_node)
+
+                for seq_var_id in identifiers:
+                    p_value = p_values.get(seq_var_id.identifier)
+                    self.write_new_association(source_node, seq_var_id, node_types.SEQUENCE_VARIANT, predicate, p_value)
+                    
+                partial_run_one = partial(find_connections, node_types.SEQUENCE_VARIANT, node_types.GENE)
+                pool.map(partial_run_one, identifiers)
+
+                partial_run_one = partial(find_connections, node_types.SEQUENCE_VARIANT, node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+                pool.map(partial_run_one, identifiers)
+
+                variants_processed += len(identifiers)
+
+        pool.close()
+        pool.join()
+
+        logger.info(f'create_gwas_graph complete - {variants_processed} significant variants found and processed.')
+
+    def write_new_association(self, source_node, associated_node_id, associated_node_type, predicate, p_value):
+        
+        associated_node = KNode(associated_node_id.identifier, name=associated_node_id.label, type=associated_node_type)
+        self.rosetta.synonymizer.synonymize(associated_node)
+
+        if self.concept_model:
+            standard_predicate = self.concept_model.standardize_relationship(predicate)
+        else:
+            logger.warning('obesity builder: concept_model was missing, predicate standardization failed')
+            standard_predicate = predicate
+
+        props={'p_value': p_value}
+        ctime = time.time()
+        new_edge = KEdge(source_id=source_node.id,
+                     target_id=associated_node.id,
+                     provided_by='Obesity_Hub',
+                     ctime=ctime,
+                     original_predicate=predicate,
+                     standard_predicate=standard_predicate,
+                     input_id=source_node.id,
+                     publications=None,
+                     url=None,
+                     properties=props)
+        with BufferedWriter(self.rosetta) as writer:
+            writer.write_node(associated_node)
+            writer.write_edge(new_edge)
+
     def get_hgvs_identifiers_from_vcf(self, filename, p_value_cutoff, reference_genome, reference_patch):
         new_ids = []
         corresponding_p_values = {}
@@ -174,87 +262,31 @@ class ObesityHubBuilder(object):
         hgvs = f'{ref_prefix}{chromosome}.{ref_chrom_version}:g.{variation}'
         return hgvs
 
-    def create_obesity_graph(self, metabolites_file, gwas_directory, p_value_cutoff, reference_genome, reference_patch='p1'):
-        pool = Pool(processes=8)
-        variants_processed = 0
-        try:
-            wb = load_workbook(filename=metabolites_file, read_only=True)
-            ws = wb.active
-            for row in ws.iter_rows(min_row=2):
-                m_label = row[0].value
-                m_filename = f'{gwas_directory}/{row[8].value}'
-                m_id = ''
-                if row[5].value != '#N/A':
-                    m_id = f'PUBCHEM:{row[5].value}'
-                elif row[7].value != '#N/A':
-                    m_id = f'HMDB:{row[7].value}'
-                elif row[6].value != '#N/A':
-                    m_id = f'KEGG.COMPOUND:{row[6].value}'
-                else:
-                    continue
-
-                identifiers, p_values = self.get_hgvs_identifiers_from_vcf(m_filename, p_value_cutoff, reference_genome, reference_patch)
-                if len(identifiers) > 0:
-                    metabolite_node = KNode(m_id, name=m_label, type=node_types.CHEMICAL_SUBSTANCE)
-                    self.rosetta.synonymizer.synonymize(metabolite_node)
-                    with BufferedWriter(self.rosetta) as writer:
-                        writer.write_node(metabolite_node)
-
-                    for seq_id in identifiers:
-                        self.write_experimental_edge(metabolite_node, seq_id, node_types.SEQUENCE_VARIANT, p_values, time.time())
-                    
-                    partial_run_one = partial(find_connections, node_types.SEQUENCE_VARIANT, node_types.GENE)
-                    pool.map(partial_run_one, identifiers)
-
-                    partial_run_one = partial(find_connections, node_types.SEQUENCE_VARIANT, node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
-                    pool.map(partial_run_one, identifiers)
-
-                    variants_processed += len(identifiers)
-
-        except (IOError, KeyError) as e:
-            logger.warning(f'metabolites_file ({metabolites_file}) could not be loaded as xlsx: {e}')
-
-        pool.close()
-        pool.join()
-
-        logger.info(f'{variants_processed} significant variants found and processed for {metabolites_file}')
-
-    def write_experimental_edge(self, source_node, associated_node_id, associated_node_type, p_values, ctime):
-        
-        associated_node = KNode(associated_node_id.identifier, name=associated_node_id.label, type=associated_node_type)
-        self.rosetta.synonymizer.synonymize(associated_node)
-
-        predicate = LabeledID(identifier=f'RO:0002609', label=f'related_to')
-        if self.concept_model:
-            standard_predicate = self.concept_model.standardize_relationship(predicate)
-        else:
-            standard_predicate = predicate
-
-        props={'p_value': p_values.get(associated_node_id.identifier)}
-
-        new_edge = KEdge(source_id=source_node.id,
-                     target_id=associated_node.id,
-                     provided_by='Obesity_Hub',
-                     ctime=ctime,
-                     original_predicate=predicate,
-                     standard_predicate=standard_predicate,
-                     input_id=source_node.id,
-                     publications=None,
-                     url=None,
-                     properties=props)
-        with BufferedWriter(self.rosetta) as writer:
-            writer.write_node(associated_node)
-            writer.write_edge(new_edge)
-
 def find_connections(input_type, output_type, identifier):
-        path = f'{input_type},{output_type}'
-        run(path,identifier.label,identifier.identifier,None,None,None,'greent.conf')
+    path = f'{input_type},{output_type}'
+    run(path,identifier.label,identifier.identifier,None,None,None,'greent.conf')
 
 if __name__=='__main__':
+    
+    obh = ObesityHubBuilder(Rosetta(), debug=True)
+
     #metabolites_file = '/projects/sequence_analysis/vol1/obesity_hub/metabolomics/files_for_using_metabolomics_data/SOL_metabolomics_info_10202017.xlsx'
     #gwas_directory = '/projects/sequence_analysis/vol1/obesity_hub/metabolomics/aggregate_results'
-    metabolites_file = './sample_metabolites.xlsx'
-    gwas_directory = '.'
-    obh = ObesityHubBuilder(Rosetta(), debug=True)
-    obh.create_obesity_graph(metabolites_file, gwas_directory, .000001, 'GRCh37')
+    #metabolites_file = './sample_metabolites.xlsx'
+    #gwas_directory = '.'
+    #p_value_cutoff = .000001
 
+    #create a graph with just one node / file
+    #pa_id = 'EFO:0003940'
+    #pa_node = KNode(pa_id, name='Physical Activity', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+    #associated_nodes = [pa_node]
+    #associated_file_names = {pa_id:''}
+    #gwas_directory = '/projects/sequence_analysis/vol1/obesity_hub/PA'
+    #obh.create_gwas_graph(associated_nodes, associated_file_names, gwas_directory, p_value_cutoff)
+
+    #create a graph with a file of many nodes
+    #metabolite_nodes, metabolite_file_names = obh.get_metabolites_from_file(metabolites_file)
+    #obh.create_gwas_graph(metabolite_nodes, metabolite_file_names, gwas_directory, p_value_cutoff)
+   
+    # generic example / shows reference param
+    #obh.create_gwas_graph(associated_nodes, associated_node_file_names, gwas_directory, p_value_cutoff, reference_genome='GRCh38')

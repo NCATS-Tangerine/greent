@@ -21,7 +21,7 @@ class ClinGen(Service):
 
     def get_synonyms_by_hgvs(self, hgvs_id):
         synonyms = set()
-        query_url = f'{self.url}allele?hgvs={requests.utils.quote(hgvs_id)}'
+        query_url = f'{self.url}allele?hgvs={hgvs_id}'
         allele_json = self.query_service(query_url)
         if allele_json:
             synonyms.update(self.parse_allele_json_for_synonyms(allele_json))
@@ -68,7 +68,7 @@ class ClinGen(Service):
     def get_synonyms_by_parameter_matching(self, variant_node, url_param, url_param_value):
         synonyms = set()
         query_url = f'{self.url}alleles?{url_param}={url_param_value}'
-        query_json = self.query_service(requests.utils.quote(query_url))
+        query_json = self.query_service(query_url)
         for allele_json in query_json:
             synonyms.update(self.parse_allele_json_for_synonyms(allele_json))
         return synonyms
