@@ -44,6 +44,10 @@ class MyVariant(Service):
     def process_snpeff_annotation(self, variant_node, annotation, curie_id, query_url):
         results = []
         try:
+            # for now we only take transcript feature type annotations
+            if annotation['feature_type'] != 'transcript':
+                return []
+
             #gene_identifier = f'HGNC:{annotation["gene_id"]}'
             # TODO: this assumes the strange behavior that gene_id is a symbol not an ID
             # for now we overwrite it with a real ID if we can find it
