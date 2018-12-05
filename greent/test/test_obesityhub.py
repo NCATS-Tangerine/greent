@@ -15,11 +15,18 @@ def test_cache(rosetta):
     pass
 
 def test_metabolite_loader(rosetta, obh):
-	metabolite_nodes, metabolite_file_names = obh.load_metabolite_info('./sample_metabolites.csv')
+	metabolite_nodes, metabolite_file_names = obh.load_metabolite_info('./sample_metabolites.csv', file_names_postfix='_scale')
 	assert len(metabolite_nodes) == 171
 
-	assert obh.metabolite_label_to_node_lookup['1-methylguanidine'].id == 'PUBCHEM:10111'
-	assert obh.metabolite_label_to_node_lookup['1-palmitoyl-GPI (16:0)'].id == 'HMDB:HMDB61695'
+	assert obh.metabolite_labled_id_lookup['methylguanidine_std_scale'].identifier == 'PUBCHEM:10111'
+	assert obh.metabolite_labled_id_lookup['palmitoylGPI160_std_scale'].identifier == 'HMDB:HMDB61695'
+	assert not 'enylpalmitoyl2oleoylGPCP160181_std_scale' in obh.metabolite_labled_id_lookup
+
+def test_mwas_file_reader(rosetta, obh):
+	metabolite_nodes, metabolite_file_names = obh.load_metabolite_info('./sample_metabolites.csv', file_names_postfix='_scale')
+	assert len(metabolite_nodes) == 171
+	labled_ids, p_values = obh.get_metabolite_identifiers_from_mwas('./sample_mwas', 1e-5)
+	assert len(labled_ids) == 3
 
 def test_sugen_file_reader(rosetta, obh):
 

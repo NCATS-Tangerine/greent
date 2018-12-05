@@ -88,7 +88,7 @@ class ObesityHubBuilder(object):
 
         # for files that come in without real ids
         # populate this with the labels they do have and their real IDs if we can find them
-        self.metabolite_label_to_node_lookup = {}
+        self.metabolite_labled_id_lookup = {}
 
     def create_gwas_graph(self, source_nodes, gwas_file_names, gwas_file_directory, p_value_cutoff, p_value_median_threshold=0.525, max_hits=10000, reference_genome='GRCh37', reference_patch='p1'):
         variants_processed = 0
@@ -143,18 +143,19 @@ class ObesityHubBuilder(object):
                     try:
                         line_counter += 1
                         data = line.split()
-                        chromosome = data[chrom_index]
-                        position = data[pos_index]
-                        ref_allele = data[ref_index]
-                        alt_allele = data[alt_index]
-                        p_value = data[pval_index]
-                    
-                        if (p_value != 'NA') and (float(p_value) <= p_value_cutoff):
-                            hgvs = self.convert_vcf_to_hgvs(reference_genome, reference_patch, chromosome, position, ref_allele, alt_allele)
-                            if hgvs:
-                                curie_hgvs = f'HGVS:{hgvs}'
-                                new_ids.append(LabeledID(identifier=curie_hgvs, label=f'Variant(hgvs): {hgvs}'))
-                                corresponding_p_values[curie_hgvs] = p_value
+                        p_value_string = data[pval_index]
+                        if (p_value_string != 'NA'):
+                            p_value = float(p_value_string)
+                            if (p_value <= p_value_cutoff):
+                                chromosome = data[chrom_index]
+                                position = data[pos_index]
+                                ref_allele = data[ref_index]
+                                alt_allele = data[alt_index]
+                                hgvs = self.convert_vcf_to_hgvs(reference_genome, reference_patch, chromosome, position, ref_allele, alt_allele)
+                                if hgvs:
+                                    curie_hgvs = f'HGVS:{hgvs}'
+                                    new_ids.append(LabeledID(identifier=curie_hgvs, label=f'Variant(hgvs): {hgvs}'))
+                                    corresponding_p_values[curie_hgvs] = p_value
 
                     except (IndexError, ValueError) as e:
                         logger.warning(f'Error reading file {gwas_filename}, on line {line_counter}: {e}')
@@ -233,14 +234,14 @@ class ObesityHubBuilder(object):
                 partial_run_one = partial(find_connections, node_types.CHEMICAL_SUBSTANCE, node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
                 pool.map(partial_run_one, identifiers)
 
-                variants_processed += len(identifiers)
+                metabolites_processed += len(identifiers)
 
         pool.close()
         pool.join()
 
         logger.info(f'create_mwas_graph complete - {metabolites_processed} significant metabolites found and processed.')
 
-    def load_metabolite_info(self, metabolites_file_path, file_names_postfix='', file_name_truncation=0):
+    def load_metabolite_info(self, metabolites_file_path, file_names_postfix='', file_name_truncation=None):
                
         metabolite_nodes = []
         file_names_by_id = {}
@@ -280,7 +281,7 @@ class ObesityHubBuilder(object):
                         new_metabolite_node = KNode(m_id, name=m_label, type=node_types.CHEMICAL_SUBSTANCE)
                         metabolite_nodes.append(new_metabolite_node)
 
-                        self.metabolite_label_to_node_lookup[m_label] = new_metabolite_node
+                        self.metabolite_labled_id_lookup[m_filename] = LabeledID(identifier=m_id, label=m_label)
 
                     except (KeyError) as e:
                         logger.warning(f'metabolites_file ({metabolites_file_path}) could not be parsed: {e}')
@@ -289,6 +290,51 @@ class ObesityHubBuilder(object):
             logger.warning(f'metabolites_file ({metabolites_file_path}) could not be loaded: {e}')
 
         return metabolite_nodes, file_names_by_id
+
+    def get_metabolite_identifiers_from_mwas(self, mwas_filename, p_value_cutoff):
+        metabolite_ids = []
+        corresponding_p_values = {}
+        try:
+            with open(mwas_filename) as f:
+                csv_reader = csv.reader(f)
+                headers = next(csv_reader)
+                line_counter = 0
+                name_index = -1
+                pval_index = -1
+                for header in headers:
+                    if header == 'TRAIT':
+                        name_index = headers.index(header)
+                    elif ('pval' in header.lower()) or ('pvalue' in header.lower()):
+                        pval_index = headers.index(header)
+
+                if (name_index < 0) or (pval_index < 0):
+                    logger.warning(f'Error reading file headers for {mwas_filename} - {headers}')
+                    return new_ids, corresponding_p_values
+
+                for data in csv_reader:
+                    try:
+                        line_counter += 1
+                        p_value_string = data[pval_index]
+                        if (p_value_string != 'NA'):
+                            p_value = float(p_value_string) 
+                            if p_value <= p_value_cutoff:
+                                m_name = data[name_index]
+                                if m_name in self.metabolite_labled_id_lookup:
+                                    m_labeled_id = self.metabolite_labled_id_lookup[m_name]
+                                    metabolite_ids.append(m_labeled_id)
+                                    corresponding_p_values[m_labeled_id.identifier] = p_value
+                                else:
+                                    logger.warning(f'Could not find real id for metabolite {m_name} in {mwas_filename}')  
+
+                    except IndexError as e:
+                        logger.warning(f'Error parsing file {mwas_filename}, on line {line_counter}: {e}')
+                    except ValueError as e:
+                        logger.warning(f'Error converting {p_value_string} to float in {mwas_filename}')
+
+        except IOError:
+            logger.warning(f'Could not open file: {mwas_filename}')
+
+        return metabolite_ids, corresponding_p_values
 
     def write_new_association(self, source_node, associated_node_id, associated_node_type, predicate, p_value):
         
@@ -368,6 +414,7 @@ if __name__=='__main__':
     #gwas_directory = '.'
 
     #create a graph with just one node / file
+    #p_value_cutoff = 1e-5
     #pa_id = 'EFO:0003940'
     #pa_node = KNode(pa_id, name='Physical Activity', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
     #associated_nodes = [pa_node]
@@ -380,6 +427,13 @@ if __name__=='__main__':
     #gwas_directory = '/projects/sequence_analysis/vol1/obesity_hub/metabolomics/aggregate_results'
     #metabolite_nodes, metabolite_file_names = obh.load_metabolite_info(metabolites_file, file_names_postfix="_scale", file_name_truncation=32)
     #obh.create_gwas_graph(metabolite_nodes, metabolite_file_names, gwas_directory, 1e-10, p_value_median_threshold=0.525, max_hits=10000)
-   
-    # generic example / shows reference param
-    #obh.create_gwas_graph(associated_nodes, associated_node_file_names, gwas_directory, p_value_cutoff, reference_genome='GRCh38')
+    
+    p_value_cutoff = 1e-5
+    metabolites_file = './sample_metabolites.csv'
+    pa_id = 'EFO:0003940'
+    pa_node = KNode(pa_id, name='Physical Activity', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+    associated_nodes = [pa_node]
+    associated_file_names = {pa_id:'sample_mwas'}
+    mwas_directory = '.'
+    metabolite_nodes, metabolite_file_names = obh.load_metabolite_info(metabolites_file, file_names_postfix="_scale")
+    obh.create_mwas_graph(associated_nodes, associated_file_names, mwas_directory, p_value_cutoff)
