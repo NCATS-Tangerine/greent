@@ -58,6 +58,7 @@ class UpdateKG(Resource):
         """
         logger.info("Queueing 'KG update' task...")
         task = update_kg.apply_async(args=[request.json])
+        logger.info(f"task {task.id} started ...")
         return {'task id': task.id}, 202
 
 api.add_resource(UpdateKG, '/')
