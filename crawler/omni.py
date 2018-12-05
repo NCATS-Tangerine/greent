@@ -52,6 +52,11 @@ def create_connection(rosetta):
     port = context.config['OMNICORP_PORT']
     host = context.config['OMNICORP_HOST']
     pw = context.config['OMNICORP_PASSWORD']
+    print(db)
+    print(user)
+    print(port)
+    print(host)
+    print(pw)
     return psycopg2.connect(dbname=db, user=user, host=host, port=port,password=pw)
 
 
@@ -62,6 +67,12 @@ def dump(k, v, pipe):
     # outf.write(f'SET {key} {pickle.dumps(v)}\n')
     pipe.set(key, pickle.dumps(v))
 
+def dump_count(k,v,pipe):
+    if len(k) == 0:
+        return
+    key = f'OmnicorpSupport_count({k[0]},{k[1]})'
+    # outf.write(f'SET {key} {pickle.dumps(v)}\n')
+    pipe.set(key, pickle.dumps(v))
 
 def update_prefixes(p1, p2, redis):
     key = 'OmnicorpPrefixes'
@@ -107,6 +118,7 @@ def cacheit(p1, p2, conn, redis):
                     if (curie_1, curie_2) != ckey:
                         n += 1
                         dump(ckey, pubs, pipe)
+                        dump_count(ckey, len(pubs), pipe)
                         num_piped += 1
                         if num_piped >= max_piped:
                             pipe.execute()

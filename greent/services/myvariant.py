@@ -5,12 +5,12 @@ from greent.service import Service
 from greent.util import Text, LoggingUtil
 import logging,json
 
-logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class MyVariant(Service):
     def __init__(self, context):
         super(MyVariant, self).__init__("myvariant", context)
-        self.effects_ignore_list = ['intergenic_region']
+        self.effects_ignore_list = ['intergenic_region', 'sequence_feature']
 
     def sequence_variant_to_gene(self, variant_node):
         return_results = []
@@ -35,8 +35,7 @@ class MyVariant(Service):
                             annotation_info = [annotation_info]
                         for annotation in annotation_info:
                             new_result = self.process_snpeff_annotation(variant_node, annotation, curie_myvariant_id, query_url)
-                            if new_result:
-                                return_results.extend(new_result)
+                            return_results.extend(new_result)
                 else:
                     logger.error(f'MyVariant returned a non-200 response: {query_response.status_code})')
 
@@ -44,36 +43,38 @@ class MyVariant(Service):
 
     def process_snpeff_annotation(self, variant_node, annotation, curie_id, query_url):
         results = []
-        if 'gene_id' in annotation:
+        try:
+            # for now we only take transcript feature type annotations
+            if annotation['feature_type'] != 'transcript':
+                return []
+
             #gene_identifier = f'HGNC:{annotation["gene_id"]}'
             # TODO: this assumes the strange behavior that gene_id is a symbol not an ID
             # for now we overwrite it with a real ID if we can find it
             # when myvariant fixes that, we won't necessarily need this
             gene_symbol = annotation['genename']
-            gene_identifier = f'HGNC.SYMBOL:{gene_symbol}'
-            synonyms = self.context.core.hgnc.get_synonyms(gene_identifier)
+            synonyms = self.context.core.hgnc.get_synonyms(f'HGNC.SYMBOL:{gene_symbol}')
             for identifier in [s.identifier for s in synonyms]:
                 if Text.get_curie(identifier) == 'HGNC':
-                    gene_identifier = identifier
+                    
+                    if 'putative_impact' in annotation:
+                        props={'putative_impact': annotation['putative_impact']}
+                    else:
+                        props = {}
+
+                    effects = annotation['effect'] # could be multiple, with a & delimeter
+                    effects_list = effects.split('&')
+                    for effect in effects_list:
+                        if effect in self.effects_ignore_list:
+                            continue
+
+                        gene_node = KNode(identifier, type=node_types.GENE, name=gene_symbol)
+                        predicate = LabeledID(identifier=f'SNPEFF:{effect}', label=f'{effect}')
+                        edge = self.create_edge(variant_node, gene_node, 'myvariant.sequence_variant_to_gene', curie_id, predicate, url=query_url, properties=props)
+                        results.append((edge, gene_node))
+
                     break
-
-            if 'effect' in annotation:
-                effects = annotation['effect'] # could be multiple, with a & delimeter
-            else:
-                effects = 'missing_effect'
-            if 'putative_impact' in annotation:
-                props={'putative_impact': annotation['putative_impact']}
-            else:
-                props = {}
-            
-            effects_list = effects.split('&')
-            for effect in effects_list:
-                if effect in self.effects_ignore_list:
-                    continue
-
-                gene_node = KNode(gene_identifier, type=node_types.GENE, name=gene_symbol)
-                predicate = LabeledID(identifier=f'SNPEFF:{effect}', label=f'{effect}')
-                edge = self.create_edge(variant_node, gene_node, 'myvariant.sequence_variant_to_gene', curie_id, predicate, url=query_url, properties=props)
-                results.append((edge, gene_node))
+        except KeyError as e:
+            logger.error(f'myvariant annotation error:{e}')
                 
         return results
