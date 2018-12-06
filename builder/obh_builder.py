@@ -399,6 +399,8 @@ class ObesityHubBuilder(object):
         except (IOError) as e:
             logger.warning(f'QC check file ({file_path}) could not be loaded: {e}')
             return False
+        except (csv.Error) as e:
+            logger.warning(f'csv error in ({file_path}): {e}')
 
         return True
 
