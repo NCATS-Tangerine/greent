@@ -104,6 +104,13 @@ def test_sequence_variant_to_gene(myvariant):
     pids = [p.identifier for p in predicates]
     assert 'GAMMA:0000102' in pids
 
+    # this one has unmapped annotations that should be skipped
+    variant_node = KNode('MYVARIANT_HG19:chr1:g.145440440C>T', type=node_types.SEQUENCE_VARIANT)
+    relations = myvariant.sequence_variant_to_gene(variant_node)
+    predicates = [ relation.standard_predicate for relation,n in relations ] 
+    pids = [p.identifier for p in predicates]
+    assert 'GAMMA:0' not in pids
+
     variant_node = KNode('MYVARIANT_HG19:chr17:g.56283533T>A', type=node_types.SEQUENCE_VARIANT)
     relations = myvariant.sequence_variant_to_gene(variant_node)
     identifiers = [node.id for r,node in relations]
