@@ -64,6 +64,13 @@ def test_chem_to_enzyme_failagain(kegg,rosetta):
     print(results)
     assert True
 
+def test_chem_to_enzyme_nb(kegg,rosetta):
+    input = KNode('CHEBI:1941',name='CHEDMICAL', type=node_types.METABOLITE)
+    rosetta.synonymizer.synonymize(input)
+    results = kegg.chemical_get_enzyme(input)
+    print(results)
+    assert True
+
 def test_get_reaction(kegg):
     rn = 'rn:R09338'
     out = kegg.get_reaction(rn)

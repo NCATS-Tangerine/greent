@@ -175,11 +175,11 @@ class KEGG(Service):
                 for gene_id in rxn['enzyme']:
                     enzyme = KNode(gene_id, type=node_types.GENE)
                     if len(chemids.intersection(rxn['reactants'])) > 0:
-                        predicate = LabeledID('CTD:increases^chemical synthesis', label='increases synthesis of')
+                        predicate = LabeledID('CTD:increases^degradation', label='increases degradation of')
                         #predicate = LabeledID('RO:0002449','negatively regulates, entity to entity')
                         input_identifier = chemids.intersection(rxn['reactants']).pop()
                     elif len(chemids.intersection(rxn['products'])) > 0:
-                        predicate = LabeledID('CTD:increases^degradation', label='increases degradation of')
+                        predicate = LabeledID('CTD:increases^chemical synthesis', label='increases synthesis of')
                         #predicate = LabeledID('RO:0002450','positively regulates, entity to entity')
                         input_identifier = chemids.intersection(rxn['products']).pop()
                     else:
