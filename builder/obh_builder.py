@@ -93,11 +93,11 @@ class ObesityHubBuilder(object):
     def create_gwas_graph(self, source_nodes, gwas_file_names, gwas_file_directory, p_value_cutoff, p_value_median_threshold=0.525, max_hits=10000, reference_genome='GRCh37', reference_patch='p1'):
         variants_processed = 0
         predicate = LabeledID(identifier=f'RO:0002609', label=f'related_to')
-        pool = Pool(processes=8)
+        pool = Pool(processes=10)
 
         for source_node in source_nodes:
             filepath = f'{gwas_file_directory}/{gwas_file_names[source_node.id]}'
-            if not self.quality_control_check(filepath, p_value_cutoff, p_value_median_threshold, max_hits, delimiter=' '):
+            if not self.quality_control_check(filepath, p_value_cutoff, p_value_median_threshold, max_hits, delimiter='\t'):
                 continue
             identifiers, p_values = self.get_hgvs_identifiers_from_gwas(filepath, p_value_cutoff, reference_genome, reference_patch)
             if len(identifiers) > 0:
@@ -122,11 +122,11 @@ class ObesityHubBuilder(object):
 
         logger.info(f'create_gwas_graph complete - {variants_processed} significant variants found and processed.')
 
-    def get_hgvs_identifiers_from_gwas(self, gwas_filename, p_value_cutoff, reference_genome, reference_patch):
+    def get_hgvs_identifiers_from_gwas(self, gwas_filepath, p_value_cutoff, reference_genome, reference_patch):
         new_ids = []
         corresponding_p_values = {}
         try:
-            with open(gwas_filename) as f:
+            with open(gwas_filepath) as f:
                 headers = next(f).split()
                 line_counter = 0
                 try:
@@ -136,7 +136,7 @@ class ObesityHubBuilder(object):
                     ref_index = headers.index('REF')
                     alt_index = headers.index('ALT')
                 except ValueError:
-                    logger.warning(f'Error reading file headers for {gwas_filename}')
+                    logger.warning(f'Error reading file headers for {gwas_filepath}')
                     return new_ids, corresponding_p_values
 
                 for line in f:
@@ -158,10 +158,10 @@ class ObesityHubBuilder(object):
                                     corresponding_p_values[curie_hgvs] = p_value
 
                     except (IndexError, ValueError) as e:
-                        logger.warning(f'Error reading file {gwas_filename}, on line {line_counter}: {e}')
+                        logger.warning(f'Error reading file {gwas_filepath}, on line {line_counter}: {e}')
 
         except IOError:
-            logger.warning(f'Could not open file: {gwas_filename}')
+            logger.warning(f'Could not open file: {gwas_filepath}')
 
         return new_ids, corresponding_p_values
 
@@ -184,25 +184,24 @@ class ObesityHubBuilder(object):
         len_ref =  len(ref_allele) 
         len_alt = len(alt_allele)
             
-        if len_alt == 1:
+        if len_alt == 1 or not alt_allele:
             # deletions
             if alt_allele == '.' or not alt_allele:
                 if len_ref is 1:
                     variation = f'{position}del'
                 else:
-                    variation = f'{position}_{int(position)+len_ref}del'
-            # substitutions
-            elif len_ref == 1:      
-                variation = f'{position}{ref_allele}>{alt_allele}'
-            # more deletions
+                    variation = f'{position}_{int(position)+len_ref-1}del'
             elif len_ref == 2 and (ref_allele[0] == alt_allele[0]):
                 variation = f'{int(position)+1}del'
             elif len_ref > 2 and (ref_allele[0] == alt_allele[0]):
-                variation = f'{int(position)+1}_{int(position)+len_ref}del'
+                variation = f'{int(position)+1}_{int(position)+len_ref-1}del'
+            else 
+                # substitutions
+                variation = f'{position}{ref_allele}>{alt_allele}'
 
         # insertions
         elif (len_alt > len_ref) and (len_ref == 1) and (ref_allele[0] == alt_allele[0]):
-            variation = f'{position}_{int(position) + 1}ins{alt_allele[1:]}'
+            variation = f'{position}_{int(position)+1}ins{alt_allele[1:]}'
 
         else:
             logger.warning(f'Format of variant not recognized for hgvs conversion: {ref_allele} to {alt_allele}')
@@ -291,11 +290,11 @@ class ObesityHubBuilder(object):
 
         return metabolite_nodes, file_names_by_id
 
-    def get_metabolite_identifiers_from_mwas(self, mwas_filename, p_value_cutoff):
+    def get_metabolite_identifiers_from_mwas(self, mwas_filepath, p_value_cutoff):
         metabolite_ids = []
         corresponding_p_values = {}
         try:
-            with open(mwas_filename) as f:
+            with open(mwas_filepath) as f:
                 csv_reader = csv.reader(f)
                 headers = next(csv_reader)
                 line_counter = 0
@@ -308,7 +307,7 @@ class ObesityHubBuilder(object):
                         pval_index = headers.index(header)
 
                 if (name_index < 0) or (pval_index < 0):
-                    logger.warning(f'Error reading file headers for {mwas_filename} - {headers}')
+                    logger.warning(f'Error reading file headers for {mwas_filepath} - {headers}')
                     return new_ids, corresponding_p_values
 
                 for data in csv_reader:
@@ -324,15 +323,15 @@ class ObesityHubBuilder(object):
                                     metabolite_ids.append(m_labeled_id)
                                     corresponding_p_values[m_labeled_id.identifier] = p_value
                                 else:
-                                    logger.warning(f'Could not find real id for metabolite {m_name} in {mwas_filename}')  
+                                    logger.warning(f'Could not find real id for metabolite {m_name} in {mwas_filepath}')  
 
                     except IndexError as e:
-                        logger.warning(f'Error parsing file {mwas_filename}, on line {line_counter}: {e}')
+                        logger.warning(f'Error parsing file {mwas_filepath}, on line {line_counter}: {e}')
                     except ValueError as e:
-                        logger.warning(f'Error converting {p_value_string} to float in {mwas_filename}')
+                        logger.warning(f'Error converting {p_value_string} to float in {mwas_filepath}')
 
         except IOError:
-            logger.warning(f'Could not open file: {mwas_filename}')
+            logger.warning(f'Could not open file: {mwas_filepath}')
 
         return metabolite_ids, corresponding_p_values
 
@@ -404,9 +403,28 @@ class ObesityHubBuilder(object):
 
         return True
 
+
 def find_connections(input_type, output_type, identifier):
     path = f'{input_type},{output_type}'
     run(path,identifier.label,identifier.identifier,None,None,None,'greent.conf')
+
+def get_ordered_names_from_csv(file_path, name_header):
+    ordered_names = []
+    with open(file_path) as f:
+        csv_reader = csv.reader(f, skipinitialspace=True)
+        headers = next(csv_reader)
+        try:
+            name_index = headers.index(name_header)
+        except ValueError:
+            logger.warning(f'Error reading file headers for {file_path}')
+            return []
+
+        for line in csv_reader:
+            try:
+                ordered_names.append(line[name_index])
+            except (ValueError, IndexError) as e:
+                logger.warning(f'file error ({file_path}) could not be parsed: {e}')
+    return ordered_names
 
 if __name__=='__main__':
     
@@ -421,21 +439,35 @@ if __name__=='__main__':
     #pa_node = KNode(pa_id, name='Physical Activity', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
     #associated_nodes = [pa_node]
     #associated_file_names = {pa_id:''}
-    #gwas_directory = '/projects/sequence_analysis/vol1/obesity_hub/PA/GWAS'
+    #gwas_directory = '.'
     #obh.create_gwas_graph(associated_nodes, associated_file_names, gwas_directory, p_value_cutoff)
 
-    #create a graph with a file of many nodes
-    #metabolites_file = '/projects/sequence_analysis/vol1/obesity_hub/metabolomics/files_for_using_metabolomics_data/SOL_metabolomics_info_10202017.xlsx'
-    #gwas_directory = '/projects/sequence_analysis/vol1/obesity_hub/metabolomics/aggregate_results'
-    #metabolite_nodes, metabolite_file_names = obh.load_metabolite_info(metabolites_file, file_names_postfix="_scale", file_name_truncation=32)
-    #obh.create_gwas_graph(metabolite_nodes, metabolite_file_names, gwas_directory, 1e-10, p_value_median_threshold=0.525, max_hits=10000)
-    
-    p_value_cutoff = 1e-5
-    metabolites_file = './sample_metabolites.csv'
-    pa_id = 'EFO:0003940'
-    pa_node = KNode(pa_id, name='Physical Activity', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
-    associated_nodes = [pa_node]
-    associated_file_names = {pa_id:'sample_mwas'}
-    mwas_directory = '.'
+    #create a graph with a file of many nodes (optional, sort the nodes first)
+    metabolites_file = '/home/emorris/metabolite_info.csv'
     metabolite_nodes, metabolite_file_names = obh.load_metabolite_info(metabolites_file, file_names_postfix="_scale")
-    obh.create_mwas_graph(associated_nodes, associated_file_names, mwas_directory, p_value_cutoff)
+
+    ordered_names = get_ordered_names_from_csv('/projects/sequence_analysis/vol1/obesity_hub/PA/MWAS/SOL_metabolomics_std_GPAQ_PAG2008YN_09132018_sorted.csv', 'TRAIT')
+    ordered_metabolite_nodes = []
+    for name in ordered_names:
+        for node in metabolite_nodes:
+            if metabolite_file_names[node.id] == name:
+                ordered_metabolite_nodes.append(node)
+                continue
+
+    # this is run twice due to having truncated names for the actual file names 
+    throwaway_nodes, real_file_names = obh.load_metabolite_info(metabolites_file, file_names_postfix="_scale", file_name_truncation=32)
+    gwas_directory = '/projects/sequence_analysis/vol1/obesity_hub/metabolomics/aggregate_results'
+    obh.create_gwas_graph(ordered_metabolite_nodes, real_file_names, gwas_directory, 1e-10, p_value_median_threshold=0.525, max_hits=10000)
+    
+    # create a mwas graph
+    #p_value_cutoff = 1e-5
+    #metabolites_file = '/home/emorris/metabolite_info.csv'
+    #pa_id = 'EFO:0003940'
+    #pa_node = KNode(pa_id, name='Physical Activity', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+    #associated_nodes = [pa_node]
+    #associated_file_names = {pa_id:'sample_mwas'}
+    #mwas_directory = '.'
+    #metabolite_nodes, metabolite_file_names = obh.load_metabolite_info(metabolites_file, file_names_postfix="_scale")
+    #obh.create_mwas_graph(associated_nodes, associated_file_names, mwas_directory, p_value_cutoff)
+
+
