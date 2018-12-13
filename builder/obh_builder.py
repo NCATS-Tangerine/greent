@@ -195,7 +195,7 @@ class ObesityHubBuilder(object):
                 variation = f'{int(position)+1}del'
             elif len_ref > 2 and (ref_allele[0] == alt_allele[0]):
                 variation = f'{int(position)+1}_{int(position)+len_ref-1}del'
-            else 
+            else:
                 # substitutions
                 variation = f'{position}{ref_allele}>{alt_allele}'
 
@@ -443,21 +443,21 @@ if __name__=='__main__':
     #obh.create_gwas_graph(associated_nodes, associated_file_names, gwas_directory, p_value_cutoff)
 
     #create a graph with a file of many nodes (optional, sort the nodes first)
-    metabolites_file = '/home/emorris/metabolite_info.csv'
-    metabolite_nodes, metabolite_file_names = obh.load_metabolite_info(metabolites_file, file_names_postfix="_scale")
+    #metabolites_file = '/home/emorris/metabolite_info.csv'
+    #metabolite_nodes, metabolite_file_names = obh.load_metabolite_info(metabolites_file, file_names_postfix="_scale")
 
-    ordered_names = get_ordered_names_from_csv('/projects/sequence_analysis/vol1/obesity_hub/PA/MWAS/SOL_metabolomics_std_GPAQ_PAG2008YN_09132018_sorted.csv', 'TRAIT')
-    ordered_metabolite_nodes = []
-    for name in ordered_names:
-        for node in metabolite_nodes:
-            if metabolite_file_names[node.id] == name:
-                ordered_metabolite_nodes.append(node)
-                continue
+    #ordered_names = get_ordered_names_from_csv('/projects/sequence_analysis/vol1/obesity_hub/PA/MWAS/SOL_metabolomics_std_GPAQ_PAG2008YN_09132018_sorted.csv', 'TRAIT')
+    #ordered_metabolite_nodes = []
+    #for name in ordered_names:
+    #    for node in metabolite_nodes:
+    #        if metabolite_file_names[node.id] == name:
+    #            ordered_metabolite_nodes.append(node)
+    #            continue
 
     # this is run twice due to having truncated names for the actual file names 
-    throwaway_nodes, real_file_names = obh.load_metabolite_info(metabolites_file, file_names_postfix="_scale", file_name_truncation=32)
-    gwas_directory = '/projects/sequence_analysis/vol1/obesity_hub/metabolomics/aggregate_results'
-    obh.create_gwas_graph(ordered_metabolite_nodes, real_file_names, gwas_directory, 1e-10, p_value_median_threshold=0.525, max_hits=10000)
+    #throwaway_nodes, real_file_names = obh.load_metabolite_info(metabolites_file, file_names_postfix="_scale", file_name_truncation=32)
+    #gwas_directory = '/projects/sequence_analysis/vol1/obesity_hub/metabolomics/aggregate_results'
+    #obh.create_gwas_graph(ordered_metabolite_nodes, real_file_names, gwas_directory, 1e-10, p_value_median_threshold=0.525, max_hits=10000)
     
     # create a mwas graph
     #p_value_cutoff = 1e-5
