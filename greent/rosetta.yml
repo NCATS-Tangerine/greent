@@ -93,6 +93,8 @@
     gene:
       - link  : disease_to_gene
         op    : pharos.disease_get_gene
+      - link  : disease_to_gene
+        op    : biolink.disease_get_gene
     metabolite:
       - link  : disease_to_metabolite
         op    : hmdb.disease_to_metabolite
@@ -156,6 +158,9 @@
     biological_process_or_activity:
       - link  : biological_process_or_activity
         op    : biolink.gene_get_process_or_function
+    phenotypic_feature:
+      - link  : gene_get_phenotype
+        op    : biolink.gene_get_phenotype
   pathway:
     gene:
       - link  : pathway_to_gene
@@ -170,6 +175,9 @@
     disease:
       - link  : phenotype_to_disease
         op    : biolink.phenotype_get_disease
+    gene:
+      - link  : phenotype_get_gene
+        op    : biolink.phenotype_get_gene
   sequence_variant:
     gene:
       - link  : sequence_variant_to_gene

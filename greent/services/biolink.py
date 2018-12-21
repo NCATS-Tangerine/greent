@@ -25,7 +25,7 @@ class Biolink(Service):
 
     def page_calls(self,url):
         rows = 100
-        start = 1
+        start = 0
         allassociations = []
         startchar = '?'
         if '?' in url:
@@ -210,4 +210,18 @@ class Biolink(Service):
         response = self.page_calls(url)
         return self.process_associations(response, 'sequence_variant_get_phenotype', node_types.DISEASE_OR_PHENOTYPIC_FEATURE, clinvarcurie, url, variant_node)
 
+    def disease_get_gene(self, disease):
+        url = "{0}/bioentity/disease/{1}/genes/".format(self.url, disease.id)
+        response = self.page_calls(url)
+        return self.process_associations(response, 'disease_get_gene', node_types.GENE, disease.id, url, disease)
+
+    def gene_get_phenotype(self, gene):
+        url = f"{self.url}/bioentity/gene/{gene.id}/phenotypes/"
+        response = self.page_calls(url)
+        return self.process_associations(response, 'gene_get_phenotype', node_types.PHENOTYPIC_FEATURE, gene.id, url, gene)
+
+    def phenotype_get_gene(self, phenotype):
+        url = f"{self.url}/bioentity/phenotype/{phenotype.id}/genes/"
+        response = self.page_calls(url)
+        return self.process_associations(response, 'phenotype_get_gene', node_types.GENE, phenotype.id, url, phenotype)
 
