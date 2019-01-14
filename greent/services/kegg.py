@@ -149,6 +149,9 @@ class KEGG(Service):
             elist = [estring] + elist
         for ec in elist:
             substrates,products = self.get_rp_from_enzyme(ec)
+            genes = self.get_human_genes(ec)
+            if len(genes) > 0:
+                reaction['enzyme'] = genes
             if len(left.intersection(substrates)) > 0:
                 reaction['reactants'] = left
                 reaction['products'] = right
