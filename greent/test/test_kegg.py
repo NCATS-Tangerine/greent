@@ -29,6 +29,18 @@ def test_chem_to_chem(kegg,rosetta):
     assert codeine6glucoronide in ids
     assert norcodeine in ids
 
+def test_chem_to_chem_morphine(kegg,rosetta):
+    morphine = KNode('CHEBI:17303',name='Morphine',type=node_types.CHEMICAL_SUBSTANCE)
+    rosetta.synonymizer.synonymize(morphine)
+    normorphine = 'KEGG.COMPOUND:C11785'
+    results = kegg.chemical_get_chemical(morphine)
+    ids = []
+    for edge,node in results:
+        if edge.source_id == 'CHEBI:17303':
+            ids.append(node.id)
+    assert len(results) > 0
+    assert normorphine in ids
+
 def test_chem_to_reaction(kegg):
     hete = KNode('KEGG.COMPOUND:C04805', name="5-HETE", type=node_types.CHEMICAL_SUBSTANCE)
     results = kegg.chemical_get_reaction(hete)
@@ -49,6 +61,11 @@ def test_get_reaction(kegg):
     assert 'C00001' in reaction['products']
     assert 'C00127' in reaction['products']
     assert 'C04805' in reaction['products']
+
+def test_get_reaction_morphinetonormorphine(kegg):
+    reaction = kegg.get_reaction('rn:R08265')
+    assert 'enzyme' in reaction
+
 
 def test_chem_to_enzyme_fail(kegg,rosetta):
     input = KNode('CHEBI:29073',name='CHEDMICAL', type=node_types.METABOLITE)
@@ -88,6 +105,28 @@ def test_chem_to_enzyme(kegg):
     assert 'NCBIGene:2882' in ids
     assert 'NCBIGene:257202' in ids
     assert 'NCBIGene:493869' in ids
+
+def test_chem_to_enzyme_codeine_to_cyp3a4(kegg):
+    hete = KNode('KEGG.COMPOUND:C06174', name="Codeine", type=node_types.CHEMICAL_SUBSTANCE)
+    results = kegg.chemical_get_enzyme(hete)
+    ids = [ node.id for edge,node in results ]
+    assert 'NCBIGene:1576' in ids
+
+def test_chem_to_enzyme_norcodeine_to_cyp3a4(kegg):
+    hete = KNode('KEGG.COMPOUND:C16576', name="Norcodeine", type=node_types.CHEMICAL_SUBSTANCE)
+    results = kegg.chemical_get_enzyme(hete)
+    ids = [ node.id for edge,node in results ]
+    assert 'NCBIGene:1576' in ids
+
+def test_chem_to_enzymes_morphine_and_normorphine(kegg):
+    morhpine = KNode('KEGG.COMPOUND:C01516', name="Morphine", type=node_types.CHEMICAL_SUBSTANCE)
+    results = kegg.chemical_get_enzyme(morhpine)
+    morphine_enzymes = set([ node.id for edge,node in results ])
+    normorhpine = KNode('KEGG.COMPOUND:C11785', name="Normorphine", type=node_types.CHEMICAL_SUBSTANCE)
+    results = kegg.chemical_get_enzyme(normorhpine)
+    normorphine_enzymes = set([ node.id for edge,node in results ])
+    shared = morphine_enzymes.intersection(normorphine_enzymes)
+    assert len(shared) > 0
 
 
 #def test_enzyme_to_chem(kegg):

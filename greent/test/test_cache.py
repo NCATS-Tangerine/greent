@@ -95,3 +95,16 @@ def test_check_fanc_pheno(rosetta):
     print(len(s3))
     print(len(node_ids))
 
+def test_norcodeine_enzymes(rosetta):
+    key='caster.input_filter(kegg~chemical_get_enzyme,metabolite)(CHEBI:80579)'
+    s3 = rosetta.cache.get(key)
+    print("?")
+    print( len(s3) )
+    for edge,node in s3:
+        print(node.id, node.name)
+
+def test_norcodeine_syn(rosetta):
+    key='synonymize(CHEBI:80579)'
+    s3 = rosetta.cache.get(key)
+    print(len(s3))
+    print(s3)
