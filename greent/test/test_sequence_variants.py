@@ -123,7 +123,7 @@ def test_sequence_variant_to_gene(myvariant):
     assert 'GAMMA:0000103' in pids
     assert 'SO:0001629' in pids
 
-def test_sequence_variant_to_phenotype(rosetta, biolink):
+def test_biolink(rosetta, biolink):
     variant_node = KNode('HGVS:NC_000023.9:g.32317682G>A', type=node_types.SEQUENCE_VARIANT)
     rosetta.synonymizer.synonymize(variant_node)
     relations = biolink.sequence_variant_get_phenotype(variant_node)
@@ -135,7 +135,7 @@ def test_sequence_variant_to_phenotype(rosetta, biolink):
     plabels = set( [p.label for p in predicates] )
     assert 'has_phenotype' in plabels
 
-def test_sequence_variant_to_disease(gwascatalog):
+def test_gwascatalog_variant_to_phenotype(gwascatalog):
     variant_node = KNode('DBSNP:rs7329174', type=node_types.SEQUENCE_VARIANT)
     relations = gwascatalog.sequence_variant_to_phenotype(variant_node)
     identifiers = [node.id for r,node in relations]
@@ -144,9 +144,36 @@ def test_sequence_variant_to_disease(gwascatalog):
     plabels = set( [p.label for p in predicates] )
     assert 'has_phenotype' in plabels
 
+    variant_node = KNode('DBSNP:rs2066363', type=node_types.SEQUENCE_VARIANT)
+    relations = gwascatalog.sequence_variant_to_phenotype(variant_node)
+    identifiers = [node.id for r,node in relations]
+    assert 'EFO:0003898' in identifiers
+    assert 'EFO:0001359' in identifiers
+    assert 'ORPHANET:1572' in identifiers
+    names = [node.name for r,node in relations]
+    assert 'ankylosing spondylitis' in names
+    assert 'chronic childhood arthritis' in names
+    publications = [r.publications for r,node in relations]
+    assert ['PMID:26301688'] in publications
+    #properties = [r.properties for r,node in relations]
+    #assert properties[0]['pvalue'] == 8.0E-11
+
     variant_node = KNode('DBSNP:rs369602258', type=node_types.SEQUENCE_VARIANT)
     results = gwascatalog.sequence_variant_to_phenotype(variant_node)
     assert len(results) == 0
+
+def test_gwascatalog_phenotype_to_variant(gwascatalog):
+    #phenotype_node = KNode('EFO:0003898', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+    #relations = gwascatalog.disease_or_phenotypic_feature_to_sequence_variant(phenotype_node)
+    #identifiers = [node.id for r,node in relations]
+    #assert 'DBSNP:rs2066363' in identifiers
+    #publications = [r.publications for r,node in relations]
+    #assert ['PMID:26301688'] in publications
+
+    phenotype_node = KNode('EFO:0002690', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+    relations = gwascatalog.disease_or_phenotypic_feature_to_sequence_variant(phenotype_node)
+    identifiers = [node.id for r,node in relations]
+    assert 'DBSNP:rs7329174' in identifiers
 
 def future_test_gene_to_sequence_variant(clingen):
    node = KNode('HGNC.SYMBOL:SRY', type=node_types.GENE)
