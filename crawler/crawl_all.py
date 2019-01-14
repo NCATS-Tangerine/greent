@@ -15,12 +15,11 @@ def poolrun(type1,type2,rosetta):
     end = dt.now()
     print(f'Poolsize: {psize}, time: {end-start}')
 
-def load_synonyms(rosetta=None):
+def load_synonyms(rosetta=None,refresh_chemicals=False):
     if rosetta is None:
         rosetta = Rosetta()
     load_genes(rosetta)
-    #load_chemicals(rosetta,refresh=True)
-    load_chemicals(rosetta,refresh=False)
+    load_chemicals(rosetta,refresh=refresh_chemicals)
     load_diseases_and_phenotypes(rosetta)
 
 crawls = [
@@ -37,6 +36,7 @@ crawls = [
     (node_types.CHEMICAL_SUBSTANCE, node_types.DISEASE),
     (node_types.CHEMICAL_SUBSTANCE, node_types.PHENOTYPIC_FEATURE),
     (node_types.CHEMICAL_SUBSTANCE, node_types.CHEMICAL_SUBSTANCE),
+    (node_types.CHEMICAL_SUBSTANCE, node_types.GENE),
     (node_types.GENE, node_types.CHEMICAL_SUBSTANCE)
 ]
 
