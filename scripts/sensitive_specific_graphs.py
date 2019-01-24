@@ -5,6 +5,7 @@ import pickle
 import time
 import sys
 from itertools import product
+from ast import literal_eval
 
 def extract_nodes_and_edge_from_hop(hop):
     """Assumes (n*)-[e*]-(n*)"""
@@ -205,29 +206,17 @@ def go(rebuild = True):
     atype = 'chemical_substance'
     btype = 'disease'
     target_link = f"(a:{atype})-[:treats]->(b:{btype})"
-    patterns = [
-                Pattern([f"(a)-[e0]-(b)"]), #P0
-                Pattern([f"(a)-[e0]-(n0)","(n0)-[e1]-(b)"]), #P1
-                Pattern([f"(a)-[e0]-(n0)","(n0)-[e1]-(b)","(a)-[e2]-(b)"]), #P2
-                Pattern([f"(a)-[e0]-(n0)","(n0)-[e1]-(n1)","(n1)-[e2]-(b)"]), #P3
-                Pattern([f"(a)-[e0]-(n0)","(a)-[e1]-(n1)","(n1)-[e2]-(b)","(n0)-[e3]-(b)"]), #P4
-                Pattern([f"(a)-[e0]-(n0)","(n0)-[e1]-(n1)","(n1)-[e2]-(b)","(n0)-[e3]-(b)"]), #P5
-                Pattern([f"(a)-[e0]-(n0)","(n0)-[e1]-(n1)","(n1)-[e2]-(b)","(a)-[e3]-(n1)"]), #P6
-                Pattern([f"(a)-[e0]-(n0)","(n0)-[e1]-(n1)","(n1)-[e2]-(b)","(a)-[e3]-(n1)","(n0)-[e4]-(b)"]), #P7
-                Pattern([f"(a)-[e0]-(n0)","(n0)-[e1]-(n1)","(n1)-[e2]-(b)","(a)-[e3]-(b)"]), #P8
-                Pattern([f"(a)-[e0]-(n0)","(a)-[e1]-(n1)","(n1)-[e2]-(b)","(n0)-[e3]-(b)","(a)-[e4]-(b)"]), #P9
-                Pattern([f"(a)-[e0]-(n0)","(n0)-[e1]-(n1)","(n1)-[e2]-(b)","(n0)-[e3]-(b)","(a)-[e5]-(b)"]), #P10
-                Pattern([f"(a)-[e0]-(n0)","(n0)-[e1]-(n1)","(n1)-[e2]-(b)","(a)-[e3]-(n1)","(a)-[e4]-(b)"]), #P11
-                Pattern([f"(a)-[e0]-(n0)","(n0)-[e1]-(n1)","(n1)-[e2]-(b)","(a)-[e3]-(n1)","(n0)-[e4]-(b)","(a)-[e5]-(b)"]), #P12
-                Pattern([f"(a)-[e0]-(n0)","(n0)-[e1]-(n1)","(n1)-[e2]-(n2)","(n2)-[e3]-(b)"]), #P13
-                Pattern([f"(a)-[e0]-(n0)","(a)-[e1]-(n1)","(n1)-[e2]-(b)","(n0)-[e3]-(b)","(a)-[e4]-(n2)","(n2)-[e5]-(b)"]), #P14
-                Pattern([f"(a)-[e0]-(n0)","(n0)-[e1]-(n1)","(n1)-[e2]-(b)","(a)-[e3]-(n2)","(n2)-[e4]-(b)"]), #P15
-               ]
-    with open('n_hopa.txt','w') as countf, open('n_hopa_defs.txt','w') as patternf, open('queries.txt','w') as queryf:
+    with open('n_hopa.txt','w') as countf, \
+         open('n_hopa_defs.txt','w') as patternf, \
+         open('queries.txt','w') as queryf, \
+         open('topologies.txt','r') as topof:
         countf.write('Topology\tPID\tTPCount\tTrueLinkCount\tAllReturnedCount\tRecall\tPrecision\n')
         queryf.write('Query\tTimeSeconds\n')
         patternf.write('Topology\tPID\tDefinition\n')
-        for pattern in patterns:
+        for line in topof:
+            topstring = line.strip().split('\t')[1]
+            topo = literal_eval(topstring)
+            pattern = Pattern(topo)
             run_pattern(target_link,pattern,url,countf,patternf,queryf,node_types,edge_types,atype,btype)
 
 if __name__ == '__main__':

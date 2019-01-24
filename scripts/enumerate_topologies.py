@@ -24,6 +24,17 @@ def degree_check(g):
             return False
     return True
 
+def path_check(g,n):
+    """Returns true if every node is part of a simple path connecting a and b, and false otherwise
+       This removes graphs like (a)-(b), (a)-(x)-(y)-(a)"""
+    pathnodes = set()
+    for path in nx.all_simple_paths(g,source='a',target='b'):
+        pathnodes.update(path)
+        if len(pathnodes) == (n + 2):
+            return True
+    return False
+
+
 def has_isomorphism_with(g,graphs):
     for oldgraph in graphs:
         if nx.is_isomorphic(g,oldgraph,node_match=iso.categorical_node_match('nodetype','dumb')):
@@ -48,6 +59,8 @@ def generate_topologies(nextra,outf):
             continue
         if not degree_check(g):
             continue
+        if not path_check(g,nextra):
+            continue
         if has_isomorphism_with(g,graphs):
             continue
         graphs.append(g)
@@ -67,7 +80,7 @@ def bin(s):
     return str(s) if s<=1 else bin(s>>1) + str(s&1)
 
 if __name__ == '__main__':
-    with open('topologies.txt','w') as topfile:
+    with open('topologies_pc.txt','w') as topfile:
         generate_topologies(0,topfile)
         generate_topologies(1,topfile)
         generate_topologies(2,topfile)
