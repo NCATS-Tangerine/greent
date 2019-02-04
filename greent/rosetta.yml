@@ -65,6 +65,9 @@
     #    op   : quickgo.go_term_to_cell_annotation_extensions
       - link : bio_process_cell_type
         op   : uberongraph.get_cell_by_process_or_activity
+    chemical_substance:
+      - link : bio_process_chemical_substance
+        op   : uberongraph.get_chemical_entity_by_process_or_activity
   chemical_substance:
     gene:
       - link  : chemical_targets_gene
@@ -99,6 +102,9 @@
     biological_process_or_activity:
       - link  : disease_to_biological_process_or_activity
         op    : uberongraph.get_process_or_activity_by_disease
+    anatomical_entity:
+      - link  : disease_to_anatomical_entity
+        op    : uberongraph.get_anatomy_by_disease
   drug:
     gene:
       - link  : drug_to_gene
@@ -170,6 +176,9 @@
     disease:
       - link  : phenotype_to_disease
         op    : biolink.phenotype_get_disease
+    biological_process_or_activity:
+      - link  : phenotype_to_biological_process_or_activity
+        op    : uberongraph.get_process_or_activity_by_phenotype
   sequence_variant:
     gene:
       - link  : sequence_variant_to_gene
