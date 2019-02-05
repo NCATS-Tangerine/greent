@@ -117,6 +117,7 @@ slots:
   capable of:
     mappings:
       - biolink:gene_get_function            # biolink returns no relation_id or an identifier that is not a curie
+      - RO:0002584
 
   affects:
     mappings:
@@ -124,6 +125,8 @@ slots:
       - GOREL:0001006
       - CTD:inferred
       - CTD:prediction/hypothesis
+      - UPHENO:0000001
+      - RO:0002573
 
     #In the model, here for the hetio mappings
   positively regulates, entity to entity:
@@ -152,6 +155,7 @@ slots:
     mappings:
       - CTD:affects_abundance_of
       - CTD:affects^abundance
+      - RO:0002332
 
   increases abundance of:
     mappings:
@@ -212,16 +216,19 @@ slots:
     mappings:
       - CTD:affects_localization_of
       - CTD:affects^localization
+      - RO:0002313
 
   increases localization of:
     mappings:
       - CTD:increases_localization_of
       - CTD:increases^localization
+      - RO:0002340
 
   decreases localization of:
     mappings:
       - CTD:decreases_localization_of
       - CTD:decreases^localization
+      - RO:0002345
 
   affects metabolic processing of:
     mappings:
@@ -451,6 +458,7 @@ slots:
     mappings:
       - CTD:increases_transport_of
       - CTD:increases^transport
+      - RO:0002020
 
   decreases transport of:
     mappings:
@@ -518,14 +526,14 @@ slots:
       - GO:regulates_o_occurs_in
       - RO:0002231 # has_start_location
       - RO:0002338 # has_target_start_location
+      - RO:0004026
+      - RO:0004027
 
   contributes to:
     mappings:
-      - RO:0003302 #Causes or contributes to
       - RO:0002327 #enables
       - CTD:marker/mechanism
       - CTD:positivecorrelation
-      - DrugCentral:0000001  # I don't love this mapping, but waiting on Matt/Chris to provide something different
 
   treats:
     mappings:
@@ -543,6 +551,8 @@ slots:
   has participant:
     mappings:
       - GOREL:0001007
+      - RO:0040036
+      - GOREL:0002008
 
   capable of:
     mappings:
@@ -554,6 +564,7 @@ slots:
     mappings:
       - RO:0002595  #Actually causally relates entity to process, while causes is supposed to be entity to entity...
       - RO:0002500  #Actually causally relates entity to process, and is only causally involved in
+      - mondo#disease:triggers
 
   related to:
     mappings:
@@ -563,10 +574,16 @@ slots:
       - RO:0002497
       - RO:0002609 #causal or correlated
       - RO:0004023 #causal relationship with disease as subject
+      - BFO:0000054
+      - RO:0040035
+      - RO:0009501  # Better to turn to B - (Causes) -> A  for Pheno -> Biological Process/ Molecular activity, where B = Biological process , A= Phenotypic feature.
+      - RO:0004028 # ^^ Similar case like 0009501
+      - RO:0002337
 
   disrupts:
     mappings:
       - RO:0004024
+      - RO:0004025
 
   #the following are not in the original biolink model
   is missense variant of:
@@ -650,3 +667,52 @@ slots:
   has output:
     mappings:
       - RO:0002234
+
+  disease has basis in:
+    is_a: related to 
+    description : >-
+      A relation that holds between a disease and an entity where the state of the entity has contribution to the disease.
+    mappings:
+      - RO:0004019
+      - RO:0004020
+      - RO:0004021
+      - RO:0004022
+      - RO:0004030
+      - RO:0004017
+      - mondo#disease:has:basis:in:development:of
+      
+  causes adverse event:
+    mappings:
+     - RO:0003302 #Causes or contributes to
+     - Aeolus:0000001
+
+  contraindicated for:
+    mappings:
+      - DrugCentral:0000001  
+ 
+  has not completed:
+    mappings:
+      - cl#has:not:completed
+
+  has completed:
+    mappings:
+      - cl#has:completed
+  
+  occurs in:
+    mappings:
+      - RO:0002339
+      - RO:0002344
+      - RO:0002479
+      - RO:0002232
+
+  regulates:
+    mappings:
+      - RO:0002596
+  
+  negatively regulates:
+    mappings:
+      - RO:0002597
+  
+  posetively regulates:
+    mappings:
+      - RO:0002598

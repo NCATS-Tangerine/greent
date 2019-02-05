@@ -100,6 +100,18 @@ def get_identifiers(input_type,rosetta):
             except KeyError:
                 res = requests.get(f'http://onto.renci.org/label/{ident}/').json()
                 lids.append(LabeledID(ident,res['label']))
+
+    elif input_type == node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY:
+        # pull Biological process decendants
+        identifiers = requests.get('https://onto.renci.org/descendants/GO:0008150').json()['descendants']
+        # merge with molucular activity decendants
+        identifiers = identifiers + requests.get('https://onto.renci.org/descendants/GO:0003674').json()['descendants']
+
+        for ident in identifiers:
+            if ident not in bad_idents:
+                res = requests.get(f'http://onto.renci.org/label/{ident}/')
+                p = res.json()
+                lids.append(LabeledID(ident, p['label']))
     else:
         print(f'Not configured for input type: {input_type}')
     return lids

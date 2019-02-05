@@ -18,7 +18,7 @@ def test_name(uberon):
     assert len(results) == 1
     assert results[0]['cellLabel'] == 'mast cell'
 
-def test_disease_to_go(uberon):
+def test_disease_to_go(uberon):    
     #Make sure that for a variety of cell types we 1) get relationships going both directions and
     # that we map all predicates
     disease = KNode('MONDO:0009212',type=node_types.DISEASE, name="Congenital Factor X Deficiency")
@@ -158,3 +158,44 @@ def test_parts(uberon):
     curies = [x['curie'] for x in results]
     assert 'UBERON:0000948' in curies #heart
     assert 'UBERON:0001981' in curies #blood vessel
+
+def test_molecular_function_to_chemical(uberon):
+    k = KNode('GO:0006084', type= node_types.CHEMICAL_SUBSTANCE)
+    results = uberon.get_chemical_entity_by_process_or_activity(k)
+    attributes = [(edge.target_id, edge.original_predicate, node.id, node.name) for edge, node in results]
+    for edge_tar_id, predicate, node_id , node_name in attributes:
+        assert edge_tar_id == node_id
+    assert 'CHEBI:15351' in [ edge_tar_id for edge_tar_id, predicate, node_id , node_name in attributes ]
+    assert 'acetyl-CoA' in [ node_name  for edge_tar_id, predicate, node_id , node_name in attributes ]
+    assert ('RO:0000057','has participant') in [ predicate for edge_tar_id, predicate, node_id , node_name in attributes ]
+
+def test_phenotype_to_biological_process_or_activity(uberon):
+    k = KNode('HP:0004339', type= node_types.PHENOTYPIC_FEATURE)
+    results = uberon.get_process_or_activity_by_phenotype(k)
+    identifiers = [edge.target_id for edge, node in results]
+    attributes = [(edge.target_id, edge.original_predicate, node.id, node.name) for edge, node in results]
+    for edge_tar_id, predicate, node_id , node_name in attributes:
+        assert edge_tar_id == node_id
+    assert 'GO:0000096' in [ edge_tar_id for edge_tar_id, predicate, node_id , node_name in attributes ]
+    assert 'GO:0006790' in [ edge_tar_id for edge_tar_id, predicate, node_id , node_name in attributes ]
+    assert 'sulfur amino acid metabolic process' in [ node_name  for edge_tar_id, predicate, node_id , node_name in attributes ]
+    assert 'sulfur compound metabolic process' in [ node_name  for edge_tar_id, predicate, node_id , node_name in attributes ]
+    #both of these have the same relationship
+    assert ('UPHENO:0000001', 'has phenotype affecting') in [ predicate for edge_tar_id, predicate, node_id , node_name in attributes ]
+    
+def test_disease_to_anatomy(uberon):
+    k = KNode('MONDO:0003070', type = node_types.DISEASE)
+    results = uberon.get_anatomy_by_disease(k)
+    identifiers = [edge.target_id for edge, node in results]
+    attributes = [(edge.target_id, edge.original_predicate, node.id, node.name) for edge, node in results]
+    for edge_tar_id, predicate, node_id , node_name in attributes:
+        assert edge_tar_id == node_id
+    
+    assert 'UBERON:0001421' in [ edge_tar_id for edge_tar_id, predicate, node_id , node_name in attributes ]
+    assert 'UBERON:0009472' in [ edge_tar_id for edge_tar_id, predicate, node_id , node_name in attributes ]
+    assert 'UBERON:0007823' in [ edge_tar_id for edge_tar_id, predicate, node_id , node_name in attributes ]
+
+    assert ('RO:0002410', 'causally related to') in [ predicate for edge_tar_id, predicate, node_id , node_name in attributes ]
+    assert 'pectoral girdle region' in [ node_name  for edge_tar_id, predicate, node_id , node_name in attributes ]
+    assert 'axilla' in [ node_name  for edge_tar_id, predicate, node_id , node_name in attributes ]
+    assert 'appendage girdle region' in [ node_name  for edge_tar_id, predicate, node_id , node_name in attributes ]

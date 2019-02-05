@@ -5,7 +5,6 @@ from collections import defaultdict, deque
 import calendar
 import logging
 from datetime import datetime
-from neo4j.util import watch
 from sys import stdout
 
 #watch("neo4j.bolt", logging.DEBUG, stdout)
