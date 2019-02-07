@@ -26,7 +26,7 @@
   phenotypic_feature : [ 'HP' , 'NCIT', 'EFO']
   sequence_variant   : [ 'CAID', 'HGVS', 'DBSNP', 'CLINVARVARIANT', 'MYVARIANT_HG19', 'MYVARIANT_HG38']
   chemical_substance : [ 'DRUGBANK', 'PUBCHEM', 'CHEBI', 'CHEMBL','DRUG.INTERACTION', 'INCHI', 'INCHIKEY',  'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG' , 'PHAROS.DRUG', 'CTD' ]
- 
+  gene_family        : [ '' ]
 
 '@translator-registry' :
   skip_list:
@@ -138,6 +138,9 @@
         op    : hetio.gene_to_disease
       - link  : gene_to_disease
         op    : pharos.gene_get_disease
+    gene_family:
+      - link  : gene_to_gene_family
+        op    : hgnc.gene_get_gene_family
     chemical_substance:
 #      - link  : gene_to_drug
 #        op    : ctd.gene_to_drug #Going away eventually, but not yet

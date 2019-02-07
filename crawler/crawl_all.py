@@ -1,7 +1,7 @@
-from crawler.genes import load_genes
+from crawler.genes import load_genes, load_annotations_genes
 from greent.rosetta import Rosetta
 from greent import node_types
-from crawler.chemicals import load_chemicals
+from crawler.chemicals import load_chemicals, load_annotations_chemicals
 from crawler.program_runner import load_all
 from crawler.disease_phenotype import load_diseases_and_phenotypes
 from crawler.omni import create_omnicache,update_omnicache
@@ -41,6 +41,7 @@ crawls = [
     (node_types.PHENOTYPIC_FEATURE, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY),
     (node_types.DISEASE, node_types.ANATOMICAL_ENTITY),
     (node_types.CHEMICAL_SUBSTANCE, node_types.GENE),
+    (node_types.GENE, node_types.GENE_FAMILY)
 ]
 
 def crawl_all(rosetta):
@@ -48,6 +49,10 @@ def crawl_all(rosetta):
     create_omnicache(rosetta)
     for (source,target) in crawls:
         poolrun(source,target,rosetta)
+
+def load_annotations(rosetta):
+    load_annotations_chemicals(rosetta)
+    load_annotations_genes(rosetta)
 
 def run(args):
     rosetta = Rosetta()
@@ -60,6 +65,9 @@ def run(args):
     elif args.omnicache:
         print('omnicache')
         create_omnicache(rosetta)
+    elif args.annotate:
+        print('annotate')
+        load_annotations(rosetta)
     else:
         print(f'crawl from {args.source} to {args.target}')
         poolrun(args.source, args.target,rosetta)
@@ -74,6 +82,7 @@ if __name__=='__main__':
     parser.add_argument('-o','--omnicache', help='Load omnicorp from postgres to redis', action='store_true')
     parser.add_argument('--source', help='type from which to build')
     parser.add_argument('--target', help='type to which to build')
+    parser.add_argument('-A', '--annotate', help='Preform adding annotation data to cache', action='store_true')
     args = parser.parse_args()
     run(args)
 

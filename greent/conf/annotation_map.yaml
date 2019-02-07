@@ -1,0 +1,194 @@
+#################################
+# Following structure
+#    <Annotator class name>:
+#      node-type: "value from node_type"
+#      <prefixes>: 
+#         - <prefix-1>
+#      <prefix-1>:
+#         url : <value>      // base url of data source.
+#         <keys>:     
+#           - <property> :          // property name of how we want to store it
+#               source: <actual_property_name_on_original_data>      //what we want to map it to when storing it in neo4j
+
+ChemicalAnnotator:
+  node_type: "chemical_substance"
+  prefixes: 
+    - "PUBCHEM"
+    - "KEGG"
+    - "CHEBI"
+    - "CHEMBL"
+  PUBCHEM:
+    url: "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/"
+    keys:
+      - molecular_formula:
+          source: "Molecular Formula"
+          data_type: string
+      - inchi:
+          source: "InChI"
+          data_type: "string"
+      - inchikey:
+          source: "InChIKey"
+          data_type: string
+      - iupac_name:
+          source: "IUPAC Name"
+          data_type: string
+      - molecular_weight:
+          source: "Molecular Weight"
+          data_type: float
+      - smiles:
+          source: "SMILES"
+          data_type: string
+  KEGG:
+    url: "http://rest.kegg.jp/get/"
+    keys:
+      - molecular_formula:
+          source: "FORMULA"
+          data_type: string
+      - molecular_weight:
+          source: "MOL_WEIGHT"
+          data_type: float
+  CHEMBL:
+    url: "https://www.ebi.ac.uk/chembl/api/data/molecule/"
+    keys:
+      - molecule_properties:
+          source: "molecule_properties"
+          data_type: string
+      - molecule_type:
+          source: "molecule_type"
+          data_type: string
+      - natural_product:
+          source: "natural_product"
+          data_type: integer
+      - oral:
+          source: "oral"
+          data_type: boolean
+      - parenteral:
+          source: "parenteral"
+          data_type: boolean
+      - topical:
+          source: "topical"
+          data_type: boolean
+      - prodrug:
+          source: "prodrug"
+          data_type: integer
+      - therapeutic_flag:
+          source: "therapeutic_flag"
+          data_type: boolean
+      - withdrawn_flag:
+          source: "withdrawn_flag"
+          data_type: boolean
+  CHEBI:
+    url: "https://onto.renci.org/all_properties/"
+    keys:
+      - monoisotopic_mass:
+          source: "monoisotopicmass"
+          data_type: float
+      - charge:
+          source: "charge"
+          data_type: integer
+      - molecular_formula:
+          source: "formula"
+          data_type: string
+      - mass:  
+          source: "mass" # ambigious molecular / exact 
+          data_type: float
+      - inchi:
+          source: "inchi"
+          data_type: string
+      - inchikey:
+          source: "inchikey"
+          data_type: string
+      - smiles:
+          source: "smiles"
+          data_type: string
+GeneAnnotator:
+    prefixes:
+      - HGNC
+    HGNC:
+      url: "http://rest.genenames.org/fetch"
+      keys:
+        - gene_family:
+            source: "gene_family"
+            data_type: string_array
+        - gene_family_id:
+            source: "gene_family_id"
+            data_type: integer_array
+        - location:
+            source: "location"
+            data_type: string
+        - locus_group:
+            source: "locus_group"
+            data_type: string
+
+DiseaseAnnotator:
+    prefixes:
+      - MONDO
+    MONDO:
+      url: "https://onto.renci.org/ancestors/"
+      keys: 
+        - "acute disease": 
+            source: "MONDO:0020683"
+            data_type: boolean
+        - "congenital abnormality": 
+            source: "MONDO:0000839"
+            data_type: boolean
+        - "degenerative disorder": 
+            source: "MONDO:0024236"
+            data_type: boolean
+        - "disease susceptibility": 
+            source: "MONDO:0042489"
+            data_type: boolean
+        - "iatrogenic disease": 
+            source: "MONDO:0043543"
+            data_type: boolean
+        - "injury": 
+            source: "MONDO:0021178"
+            data_type: boolean
+        - "nutritional or metabolic disease": 
+            source: "MONDO:0024297"
+            data_type: boolean
+        - "post-infectious disorder": 
+            source: "MONDO:0021669"
+            data_type: boolean
+        - "psychiatric disorder": 
+            source: "MONDO:0002025"
+            data_type: boolean
+        - "radiation of chemically induced disorder": 
+            source: "MONDO:0045028"
+            data_type: boolean
+        - "rare disease": 
+            source: "MONDO:0021200"
+            data_type: boolean
+        - "syndromic disease": 
+            source: "MONDO:0002254"
+            data_type: boolean
+        - "systemic or rheumatic disease": 
+            source: "MONDO:0020012"
+            data_type: boolean
+        - "transmissible disease": 
+            source: "MONDO:0021683"
+            data_type: boolean
+        - "monogenic disease": 
+            source: "MONDO:0000275"
+            data_type: boolean
+        - "Y-linked disease": 
+            source: "MONDO:0000428"
+            data_type: boolean
+        - "autosomal genetic disease": 
+            source: "MONDO:0000429"
+            data_type: boolean
+        - "autosomal dominant disease": 
+            source: "MONDO:0000426"
+            data_type: boolean
+        - "autosomal recessive disease": 
+            source: "MONDO:0006025"
+            data_type: boolean
+        - "X-linked disease": 
+            source: "MONDO:0000425"
+            data_type: boolean
+        - "X-linked dominant disease": 
+            source: "MONDO:0020604"
+            data_type: boolean
+        - "X-linked recessive disease": 
+            source: "MONDO:0020605"
+            data_type: boolean

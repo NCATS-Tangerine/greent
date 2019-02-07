@@ -1,6 +1,6 @@
 import requests
 from greent import node_types
-from greent.graph_components import LabeledID
+from greent.graph_components import LabeledID, KNode, KEdge
 from greent.service import Service
 from greent.util import LoggingUtil
 from builder.question import LabeledID
@@ -75,7 +75,7 @@ class HGNC(Service):
             symbol = hgnc_id
         return symbol 
 
-    def get_synonyms(self, identifier):
+    def get_hgnc_docs(self, identifier):
         #HGNC doesn't want to handle more than 10 of these a second (from one IP).  If we think that we're
         # going to be running in parallel, that means a simple wait should fix it.  ESPECIALLY, since we should
         # almost never be calling this - everything should be pre-cached.  So this little wait time, which is
@@ -92,11 +92,14 @@ class HGNC(Service):
         headers = {'Accept':'application/json'}
         r = self.query('%s/%s/%s' % (self.url, query_type, gid), headers= headers)
         try:
-            docs = r['response']['docs']
+            return r['response']['docs']
         except:
             #didn't get anything useful
             logger.error("No good return")
             return set()
+
+    def get_synonyms(self, identifier):
+        docs = self.get_hgnc_docs(identifier)
         synonyms = set()
         logger.debug(f"Number of docs: {len(docs)}")
         for doc in docs:
@@ -117,5 +120,40 @@ class HGNC(Service):
                         synonym = f'{prefix}:{value}'
                         synonyms.add(LabeledID(identifier=synonym, label=hgnc_label))
         return synonyms
+
+
+    def gene_get_gene_family(self, gene_node):
+        """
+        """
+        results = []
+        if gene_node.properties != {}:
+            #should be already annotated so we don't have to really call the hgnc endpoint
+            results = self.create_gene_family_relations(gene_node, gene_node.properties)
+        else:
+
+            docs = self.get_hgnc_docs(gene_node.id)
+            for doc in docs:
+                results += self.create_gene_family_relations(gene_node, doc)
+        return results
+
+    def create_gene_family_edge(self, gene_node, gene_family_node):
+        predicate = LabeledID('BFO:0000050','part of') 
+        edge = self.create_edge(source_node= gene_node, 
+                                target_node= gene_family_node, 
+                                provided_by= 'hgnc.gene_get_gene_family',
+                                input_id= gene_node.id, 
+                                predicate= predicate)
+        return edge 
+
+    def create_gene_family_relations(self, gene_node, hgnc_data):
+        results = []
+        if 'gene_family' in hgnc_data and 'gene_family_id' in hgnc_data:
+            gene_families = hgnc_data['gene_family']
+            gene_family_ids = hgnc_data['gene_family_id']
+            for gene_family, gene_family_id in zip(gene_families, gene_family_ids):
+                gene_family_node = KNode(f'HGNC.FAMILY:{str(gene_family_id)}', type= node_types.GENE_FAMILY, name= gene_family)
+                edge = self.create_gene_family_edge(gene_node, gene_family_node)
+                results.append((edge, gene_family_node))
+        return results
 
 

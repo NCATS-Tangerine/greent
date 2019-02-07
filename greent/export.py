@@ -122,10 +122,11 @@ def export_node_chunk(tx,nodelist,label):
                 set a:{label}
                 set a.name=batch.name
                 set a.equivalent_identifiers=batch.synonyms
+                set a += batch.properties
                 """
     batch = []
     for n in nodelist:
-        nodeout = { 'id': n.id, 'name': n.name, 'synonyms': [s.identifier for s in n.synonyms] }
+        nodeout = { 'id': n.id, 'name': n.name, 'synonyms': [s.identifier for s in n.synonyms], 'properties': n.properties }
         batch.append(nodeout)
     tx.run(cypher,{'batches': batch})
 
