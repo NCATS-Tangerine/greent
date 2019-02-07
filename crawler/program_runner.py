@@ -100,15 +100,32 @@ def get_identifiers(input_type,rosetta):
             except KeyError:
                 res = requests.get(f'http://onto.renci.org/label/{ident}/').json()
                 lids.append(LabeledID(ident,res['label']))
+
+    elif input_type == node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY:
+        # pull Biological process decendants
+        identifiers = requests.get('https://onto.renci.org/descendants/GO:0008150').json()['descendants']
+        # merge with molucular activity decendants
+        identifiers = identifiers + requests.get('https://onto.renci.org/descendants/GO:0003674').json()['descendants']
+
+        for ident in identifiers:
+            if ident not in bad_idents:
+                res = requests.get(f'http://onto.renci.org/label/{ident}/')
+                p = res.json()
+                lids.append(LabeledID(ident, p['label']))
     else:
         print(f'Not configured for input type: {input_type}')
     return lids
 
 def do_one(itype,otype,identifier):
-    print(identifier.identifier)
     path = f'{itype},{otype}'
-    run(path,identifier.label,identifier.identifier,None,None,None,'greent.conf')
-
+    print(path)
+    if type(identifier) != type([]):
+        print('Passing single identifier per program')
+        run(path,identifier.label,identifier.identifier,None,None,None,'greent.conf')
+    else:
+        print('passing chunk of identifiers for a program')
+        run(path,'','',None,None,None,'greent.conf', identifier_list = identifier)
+     
 def load_all(input_type, output_type,rosetta,poolsize):
     """Given an input type and an output type, run a bunch of workflows dumping results into neo4j and redis"""
     identifiers = get_identifiers(input_type,rosetta)
@@ -118,6 +135,8 @@ def load_all(input_type, output_type,rosetta,poolsize):
     chunks = poolsize*2
     chunksize = int(len(identifiers)/chunks)
     print( f'Chunksize: {chunksize}')
-    pool.map_async(partial_do_one, identifiers)# chunksize=chunksize)
+    single_program_size = chunksize # nodes sent to a program
+    identifier_chunks = [identifiers[i: i + single_program_size] for i in range(0, len(identifiers), single_program_size)]
+    pool.map_async(partial_do_one, identifier_chunks)# chunksize=chunksize)
     pool.close()
     pool.join()

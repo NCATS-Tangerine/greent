@@ -17,7 +17,8 @@ from greent import node_types
 from greent.export import BufferedWriter
 from greent.cache import Cache
 from greent.graph_components import KEdge
-
+from greent.annotators.annotator_factory import annotate_shortcut
+import traceback
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
 class QueryDefinition:
@@ -111,7 +112,10 @@ class Program:
         logstring += 'Transitions:\n'
         for k in self.transitions:
             logstring+=f' {k}: {self.transitions[k]}\n'
-        logger.debug(logstring)
+        total_transitions = len(self.transitions.keys())
+        if  total_transitions < 20:
+            logger.debug(logstring)
+        logger.debug(f'total transitions : {total_transitions}')
 
     def initialize_instance_nodes(self):
         # No error checking here. You should have caught any malformed questions before this point.
@@ -171,6 +175,13 @@ class Program:
         if edge is not None:
             is_source = node.id == edge.source_id
         self.rosetta.synonymizer.synonymize(node)
+        try:
+            result = annotate_shortcut(node, self.rosetta)
+            if type(result) == type(None):
+                logger.debug(f'No annotator found for {node}')
+        except Exception as e:
+            logger.error(e)
+            logger.error(traceback.format_exc())
         if edge is not None:
             if is_source:
                 edge.source_id = node.id

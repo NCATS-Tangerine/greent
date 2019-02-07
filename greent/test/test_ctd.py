@@ -41,6 +41,16 @@ def test_expanded_drug_to_gene_glucose(ctd,rosetta):
         print( edge.original_predicate, edge.standard_predicate, node.name )
         assert edge.standard_predicate.identifier != 'GAMMA:0'
 
+def test_expanded_gene_to_drug_what(ctd,rosetta):
+    input_node = KNode("HGNC:1305", type=node_types.GENE, name="C6ORF21")
+    rosetta.synonymizer.synonymize(input_node)
+    results = ctd.gene_to_drug_expanded(input_node)
+    assert len(results) > 0
+    for edge,node in results:
+        assert node.type == node_types.CHEMICAL_SUBSTANCE
+        assert edge.standard_predicate.identifier != 'GAMMA:0'
+        print(edge, edge.standard_predicate)
+
 def test_expanded_gene_to_drug(ctd,rosetta):
     input_node = KNode("HGNC:4558", type=node_types.GENE, name="GPX6")
     rosetta.synonymizer.synonymize(input_node)

@@ -19,6 +19,7 @@ from greent.synonymization import Synonymizer
 #from greent.transreg import TranslatorRegistry
 from greent.util import LoggingUtil
 from greent.util import Text
+from greent.annotators.annotator_factory import annotate_shortcut
 
 logger = LoggingUtil.init_logging(__name__, level=logging.INFO)
 
@@ -183,6 +184,7 @@ class Rosetta:
         inputs = next_nodes[top_frame.name]
         for i in inputs:
             self.synonymizer.synonymize(i[1])
+            annotate_shortcut(i[1], self)
 
         """ Stack is the overall executable. We prepend a base frame with a collector primed with input arguments. """
         stack = [Frame(collector=inputs)] + program
@@ -220,6 +222,7 @@ class Rosetta:
                                     edge.predicate = operator.predicate
                                     edge.source_node = source_node
                                     self.synonymizer.synonymize(node)
+                                    annotate_shortcut(node,self)
                                     edge.target_node = node
 
                                 """ Validate the id space of the returned data maps to the target concept. """

@@ -350,6 +350,95 @@ class UberonGraphKS(Service):
         )
         return results
 
+    def biological_process_or_activity_to_chemical(self, go_id):
+        """
+        Given a chemical finds associated GO Molecular Activities.
+        """
+        results = []
+     
+        text = """
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX GO:  <http://purl.obolibrary.org/obo/GO_>
+            PREFIX RO: <http://purl.obolibrary.org/obo/RO_>
+            PREFIX chemical_entity: <http://purl.obolibrary.org/obo/CHEBI_24431>
+            PREFIX chemical_class: <http://purl.obolibrary.org/obo/CHEBI_24431>
+            SELECT DISTINCT ?chebi_id ?predicate ?label_predicate ?chebi_label
+            from <http://reasoner.renci.org/ontology>
+            from <http://reasoner.renci.org/nonredundant>
+            where {
+            $GO_ID ?predicate ?chebi_id. 
+            ?chebi_id rdfs:label ?chebi_label.
+            GRAPH <http://reasoner.renci.org/ontology/closure>
+  	            { ?chebi_id rdfs:subClassOf chemical_class:.} 
+            ?predicate rdfs:label ?label_predicate.
+            FILTER ( datatype(?label_predicate) = xsd:string) 
+            }
+        """ 
+        results = self.triplestore.query_template(
+            template_text = text,
+            outputs = ['chebi_id', 'predicate','label_predicate', 'chebi_label'],
+            inputs = {'GO_ID': go_id})
+        return results
+
+    def pheno_to_biological_activity(self, pheno_id):
+        """
+        Finds biological activities related to a phenotype
+        :param :pheno_id phenotype identifier
+        """
+        text = """
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX GO: <http://purl.obolibrary.org/obo/GO_>
+            PREFIX has_phenotype_affecting: <http://purl.obolibrary.org/obo/UPHENO_0000001>
+            PREFIX RO: <http://purl.obolibrary.org/obo/RO_>
+            prefix HP: <http://purl.obolibrary.org/obo/HP_>
+
+            SELECT DISTINCT ?go_id ?predicate ?predicate_label ?go_label
+            from <http://reasoner.renci.org/nonredundant>
+            from <http://reasoner.renci.org/ontology>
+            WHERE {
+            $pheno_type ?predicate  ?go_id.
+            ?go_id rdfs:label ?go_label.
+            graph <http://reasoner.renci.org/ontology/closure> {
+                { ?go_id rdfs:subClassOf GO:0008150 . }
+                UNION
+                { ?go_id rdfs:subClassOf GO:0003674 . }
+            }
+            ?predicate rdfs:label ?predicate_label.
+            }
+        """
+        results = self.triplestore.query_template(
+            template_text = text,
+            inputs = {'pheno_type': pheno_id},
+            outputs = ['go_id', 'predicate', 'predicate_label', 'go_label']
+        )
+        return results
+    def disease_to_anatomy(self, disease_id):
+        text = """
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX owl: <http://www.w3.org/2002/07/owl#>
+            PREFIX anatomicalEntity: <http://purl.obolibrary.org/obo/UBERON_0001062>
+            PREFIX MONDO: <http://purl.obolibrary.org/obo/MONDO_>
+            SELECT DISTINCT ?anatomyID ?predicate ?predicate_label ?anatomy_label
+            FROM <http://reasoner.renci.org/nonredundant>
+            FROM <http://reasoner.renci.org/ontology>
+            WHERE {
+            $diseaseID ?predicate ?anatomyID.
+            ?anatomyID rdfs:label ?anatomy_label.
+            graph <http://reasoner.renci.org/ontology/closure> {
+                ?anatomyID rdfs:subClassOf anatomicalEntity: .
+            }
+            ?predicate rdfs:label ?predicate_label.
+            }
+        """
+        results = []
+        results = self.triplestore.query_template(
+            template_text = text,
+            outputs = ['anatomyID', 'predicate', 'predicate_label', 'anatomy_label'],
+            inputs = {'diseaseID': disease_id}
+        )
+        return results
+
 
     def get_anatomy_by_cell_graph (self, cell_node):
         anatomies = self.cell_to_anatomy (cell_node.id)
@@ -473,3 +562,50 @@ class UberonGraphKS(Service):
                     anatomy_node.name = r['anatomy_label']
                 results.append ( (edge, node) )
         return results
+
+    def get_chemical_entity_by_process_or_activity(self, go_node):
+        response = []
+        for curie in go_node.get_synonyms_by_prefix('GO'):
+            results =  self.biological_process_or_activity_to_chemical(curie)
+            for r in results:
+                new_node = KNode(Text.obo_to_curie(r['chebi_id']), type= node_types.CHEMICAL_SUBSTANCE, name= r['chebi_label'])
+                predicate = LabeledID(Text.obo_to_curie(r['predicate']),r['label_predicate'])
+                edge = self.create_edge(go_node, new_node, \
+                                        'uberongraph.get_molecular_function_by_chemical_entity',\
+                                        go_node.id, predicate)
+                response.append((edge,new_node))
+        return response
+
+    def get_process_or_activity_by_phenotype(self, pheno_node):
+        response = []
+        for curie in pheno_node.get_synonyms_by_prefix('HP'):
+            results = self.pheno_to_biological_activity(curie)
+            for r in results: 
+                new_node = KNode(Text.obo_to_curie(r['go_id']), type = node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY, name= r['go_label'])
+                predicate = LabeledID(Text.obo_to_curie(r['predicate']), r['predicate_label'])
+                edge = self.create_edge(\
+                    pheno_node,\
+                    new_node,\
+                    'uberongraph.get_process_or_activity_by_phenotype',\
+                    pheno_node.id,\
+                    predicate\
+                )
+                response.append((edge, new_node))
+        return response
+    
+    def get_anatomy_by_disease(self, disease_node):
+        response = []
+        for curie in disease_node.get_synonyms_by_prefix('MONDO'):
+            results = self.disease_to_anatomy(disease_node.id)
+            for r in results:
+                anatomy_node = KNode(Text.obo_to_curie(r['anatomyID']), type= node_types.ANATOMICAL_ENTITY, name=r['anatomy_label'])
+                predicate = LabeledID(Text.obo_to_curie(r['predicate']), r['predicate_label'])
+                edge = self.create_edge(\
+                    disease_node,\
+                    anatomy_node,\
+                    'uberon.get_anatomy_by_disease',\
+                    disease_node.id,\
+                    predicate\
+                )
+                response.append((edge, anatomy_node))
+        return response

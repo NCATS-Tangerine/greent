@@ -83,11 +83,12 @@ class KEGG(Service):
         url = f'{self.url}/conv/ncbi-geneid/hsa:{hsaid}'
         raw_results = requests.get(url)
         ncbis = []
-        for line in raw_results.text.split('\n'):
-            try:
-                ncbis.append( line.strip().split()[-1] )
-            except:
-                pass
+        if raw_results.status_code == 200:
+            for line in raw_results.text.split('\n'):
+                try:
+                    ncbis.append( line.strip().split()[-1] )
+                except:
+                    pass
         ncbi = [f'NCBIGene:{x.split(":")[-1]}' for x in ncbis]
         return ncbi
 
@@ -149,6 +150,9 @@ class KEGG(Service):
             elist = [estring] + elist
         for ec in elist:
             substrates,products = self.get_rp_from_enzyme(ec)
+            genes = self.get_human_genes(ec)
+            if len(genes) > 0:
+                reaction['enzyme'] = genes
             if len(left.intersection(substrates)) > 0:
                 reaction['reactants'] = left
                 reaction['products'] = right
@@ -175,11 +179,11 @@ class KEGG(Service):
                 for gene_id in rxn['enzyme']:
                     enzyme = KNode(gene_id, type=node_types.GENE)
                     if len(chemids.intersection(rxn['reactants'])) > 0:
-                        predicate = LabeledID('CTD:increases^chemical synthesis', label='increases synthesis of')
+                        predicate = LabeledID('CTD:increases^degradation', label='increases degradation of')
                         #predicate = LabeledID('RO:0002449','negatively regulates, entity to entity')
                         input_identifier = chemids.intersection(rxn['reactants']).pop()
                     elif len(chemids.intersection(rxn['products'])) > 0:
-                        predicate = LabeledID('CTD:increases^degradation', label='increases degradation of')
+                        predicate = LabeledID('CTD:increases^chemical synthesis', label='increases synthesis of')
                         #predicate = LabeledID('RO:0002450','positively regulates, entity to entity')
                         input_identifier = chemids.intersection(rxn['products']).pop()
                     else:

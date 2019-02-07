@@ -12,6 +12,16 @@ def test_kegg_get_enzyme(rosetta):
     results = func(node)
     assert len(results) > 0
 
+def test_kegg_get_enzyme_norcodeine(rosetta):
+    fname='caster.input_filter(kegg~chemical_get_enzyme,metabolite)'
+    func = rosetta.get_ops(fname)
+    node = KNode('CHEBI:80579', name='norcodeine',type=node_types.CHEMICAL_SUBSTANCE)
+    rosetta.synonymizer.synonymize(node)
+    results = func(node)
+    for edge,node in results:
+        print(edge,node.id,node.name)
+
+
 def test_kegg(rosetta):
     fname='caster.upcast(kegg~enzyme_get_chemicals,chemical_substance)'
     func = rosetta.get_ops(fname)

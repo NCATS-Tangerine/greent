@@ -60,6 +60,11 @@ def test_gene_to_process2(biolink):
         assert kn.type == node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY
         assert Text.get_curie(kn.id) == "GO"
 
+def test_disease_to_phenotypes_pmid_parsing_again(biolink):
+    disease = KNode('MONDO:0005172', type=node_types.DISEASE)
+    results = biolink.disease_get_phenotype(disease)
+    assert True
+
 def test_disease_to_phenotypes_pmid_parsing(biolink):
     disease = KNode('MONDO:0019043', type=node_types.DISEASE)
     results = biolink.disease_get_phenotype(disease)

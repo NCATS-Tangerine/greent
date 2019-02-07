@@ -16,3 +16,5 @@ pronto
 pika
 mysql-connector
 -e git+https://github.com/Supervisor/supervisor@master#egg=supervisor
+aiosparql
+aiohttp
