@@ -44,12 +44,8 @@ def aggregate(p,nps):
 def construct_for_pair(a_id,b_id,redis,nps,max_values,topologies,topo_counts,skips,filters):
     max_graphs = 2000000
     paths = get_paths(nps,a_id,b_id,redis)
-    print( 'prefilter ' , paths.keys() )
     paths = apply_filters(paths,filters)
-    print( 'postfilter ' , paths.keys() )
     paths = aggregate(paths,nps)
-    for k in paths.keys():
-        print ( k, paths[k] )
     lp = len(paths)
     #for p in nps:
     #    print(p,len(paths[p]))
@@ -160,9 +156,9 @@ def get_paths(nps,a_id,b_id,redis):
             #x should be a dictionary
             for k in x:
                 paths[np][k].extend(x[k])
-    print(a_id,b_id)
-    for k in paths:
-        print(' ',k,len(paths[k]))
+    #print(a_id,b_id)
+    #for k in paths:
+    #    print(' ',k,len(paths[k]))
     return paths
 
 def rep_to_graph(edgelist):
