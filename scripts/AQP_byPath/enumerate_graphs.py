@@ -31,9 +31,25 @@ def apply_filters(paths,filters):
         newpaths[np] = pnp
     return newpaths
 
+def aggregate(p,nps):
+    newp = {}
+    for n in nps:
+        newp[n] = []
+        if n not in p:
+            continue
+        for v in p[n].values():
+            newp[n].extend( v )
+    return newp
+
 def construct_for_pair(a_id,b_id,redis,nps,max_values,topologies,topo_counts,skips,filters):
+    max_graphs = 2000000
     paths = get_paths(nps,a_id,b_id,redis)
+    print( 'prefilter ' , paths.keys() )
     paths = apply_filters(paths,filters)
+    print( 'postfilter ' , paths.keys() )
+    paths = aggregate(paths,nps)
+    for k in paths.keys():
+        print ( k, paths[k] )
     lp = len(paths)
     #for p in nps:
     #    print(p,len(paths[p]))
@@ -42,11 +58,15 @@ def construct_for_pair(a_id,b_id,redis,nps,max_values,topologies,topo_counts,ski
     current = [0,1,0,0,0]
     while True:
         num_graphs = 1
-        for i in nps:
-            num_graphs *= comb(len(paths[i]),current[i])
-        if num_graphs > 0:
-            print(current, '   ',num_graphs)
-            construct_current(current,paths,topologies,topo_counts,a_id)
+        if tuple(current) not in skips:
+            for i in nps:
+                num_graphs *= comb(len(paths[i]),current[i])
+            if num_graphs > 0:
+                print(current, '   ',num_graphs)
+                if num_graphs > max_graphs:
+                    skips.add(tuple(current))
+                else:
+                    construct_current(current,paths,topologies,topo_counts,a_id)
         current = increment_current(current,maxes,1)
         if current is None:
             break
@@ -140,6 +160,9 @@ def get_paths(nps,a_id,b_id,redis):
             #x should be a dictionary
             for k in x:
                 paths[np][k].extend(x[k])
+    print(a_id,b_id)
+    for k in paths:
+        print(' ',k,len(paths[k]))
     return paths
 
 def rep_to_graph(edgelist):
@@ -190,7 +213,7 @@ def construct_hit_filters(b_id,redis,neo4j,atype,edge_name):
     for a_id in a_ids:
         paths = get_paths([1,2,3,4],a_id,b_id,redis)
         for i in paths:
-            print(paths[i])
+            #print(paths[i])
             hit_filters[i].update( paths[i].keys() )
     return hit_filters
     #construct_graphs(b_id,a_ids,redis)
@@ -215,10 +238,10 @@ def construct_graphs(b_id,a_ids,redis,filters,nps):
             print('    ',topology_counts[tc][(n,e)])
 
 
-def get_other_ends(nps,b_id,redis,atype):
+def get_other_ends(nps,b_id,red,atype):
     a_ids = set()
     for np in nps:
-        results = redis.get(f"EndPoints({np},{b_id},{atype})")
+        results = red.get(f"EndPoints({np},{b_id},{atype})")
         n_a_ids = json.loads(results)
         a_ids.update(n_a_ids)
     return a_ids
@@ -259,8 +282,8 @@ def go(disease):
     p_edge = 'treats'
     filters = construct_hit_filters(disease,red,neo,a_type,p_edge)
     nps = [1,2,3,4]
-    a_ids = get_other_ends(nps,disease,redis,a_type)
-    construct_graphs(disease,a_ids,redis,filters,nps)
+    a_ids = get_other_ends(nps,disease,red,a_type)
+    construct_graphs(disease,a_ids,red,filters,nps)
 
 if __name__ == '__main__':
     go('MONDO:0005136')
