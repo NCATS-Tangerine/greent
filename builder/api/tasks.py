@@ -11,7 +11,7 @@ from celery.utils.log import get_task_logger
 from kombu import Queue
 
 # setup 'builder' logger first so that we know it's here when setting up children
-import builder.api.logging_config
+from builder.api.logging_config import set_up_main_logger, add_task_id_based_handler, clear_log_handlers
 
 from builder.api.setup import app
 from builder.question import Question
@@ -34,24 +34,48 @@ celery.conf.update(
 celery.conf.task_queues = (
     Queue('update', routing_key='update'),
 )
-# Tell celery not to mess with logging at all
-@signals.setup_logging.connect
-def setup_celery_logging(**kwargs):
-    pass
-celery.log.setup()
 
-#logger = logging.getLogger(__name__)
-logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
+@signals.task_prerun.connect()
+def setup_logging(signal=None, sender=None, task_id=None, task=None, *args, **kwargs):
+    """
+    Changes the main logger's handlers so they could log to a task specific log file.    
+    """
+    logger = logging.getLogger('greent')
+    clear_log_handlers(logger)
+    add_task_id_based_handler(logger, task_id)
+    logger = logging.getLogger('builder')
+    clear_log_handlers(logger)
+    add_task_id_based_handler(logger, task_id)
+
+@signals.task_postrun.connect()
+def tear_down_task_logging(**kwargs):
+    """
+    Reverts back logging to main configuration once task is finished.
+    """
+    logger = logging.getLogger('greent')
+    clear_log_handlers(logger)
+    logger = logging.getLogger('builder')
+    clear_log_handlers(logger)
+    # change logging config back to the way it was
+    set_up_main_logger()
+    #finally log task has finished to main file
+    logger = logging.getLogger(__name__)
+    logger.info(f"task {kwargs.get('task_id')} finished ...")
 
 @celery.task(bind=True, queue='update')
-def update_kg(self, question_json):
+def update_kg(self, question_json, task_acks_late=True, track_started=True, worker_prefetch_multiplier=1):
     '''
     Update the shared knowledge graph with respect to a question
     '''
-
+    logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
     greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
     sys.path.insert(0, greent_path)
-    rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
+    logger.info("Setting up rosetta...")
+    try:
+        rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
+    except Exception as err:
+        logger.exception(f"Could not update KG because could not setup rosetta: {err}")
+        raise err
 
     self.update_state(state='UPDATING KG')
     logger.info("Updating the knowledge graph...")
@@ -59,8 +83,9 @@ def update_kg(self, question_json):
     try:
         logger.debug(question_json)
         q = Question(question_json)
+        logger.info("Program acquired...")
         programs = q.compile(rosetta)
-
+        logger.info("Running Program...")
         for p in programs:
             p.run_program()
 

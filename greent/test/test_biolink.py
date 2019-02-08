@@ -110,3 +110,28 @@ def xtest_phenotype_to_disease(biolink):
         assert k.type == node_types.DISEASE
     dids = [ pk.id for pe,pk in results ]
     assert 'MONDO:0015967' in dids #rare genetic diabetes mellitus
+
+def test_disease_to_gene(biolink):
+    disease = KNode('DOID:14250', type=node_types.DISEASE, name="Downs Syndrome")
+    results = biolink.disease_get_gene(disease)
+    assert len(results) == 14 # Downs syndrome has 14 Gene associations
+    for e, k in results:
+        assert k.type == node_types.GENE
+
+def test_gene_to_phenotype(biolink):
+    gene = KNode('HGNC:613', type=node_types.GENE, name="APOE")
+    results = biolink.gene_get_phenotype(gene)
+    assert len(results) == 329
+    for e, k in results:
+        assert k.type == node_types.PHENOTYPIC_FEATURE
+    pheno_ids = [pheno_node.id for edge, pheno_node in results]
+    assert "HP:0000723" in pheno_ids
+
+def test_phenotype_to_gene(biolink):
+    phenotype = KNode('HP:0000723', type=node_types.PHENOTYPIC_FEATURE, name="Restrictive Behaviour")
+    results = biolink.phenotype_get_gene(phenotype)
+    assert len(results) == 17
+    for e, k in results:
+        assert k.type == node_types.GENE
+    gene_ids = [gene_node.id for edge, gene_node in results]
+    assert "HGNC:12765" in gene_ids # some random gene that should be there

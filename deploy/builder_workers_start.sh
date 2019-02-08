@@ -7,8 +7,9 @@ celery multi start \
     updater@robokop \
     -A builder.api.tasks.celery \
     -l info \
-    -c:1 $NUM_BUILDERS \
+    -c:1 $BUILDER_NUM_WORKERS \
     -Q:1 update
+    -O:1 fair
 # Equivalent to:
 # celery \
 #     -A builder.api.tasks.celery \

@@ -75,6 +75,7 @@ classes:
       - RNAcentral
       - MGI
       - ZFIN
+      - HGNC.SYMBOL
 
   sequence variant:
     id_prefixes:

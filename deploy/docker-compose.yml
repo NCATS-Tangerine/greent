@@ -1,16 +1,12 @@
 version: "3"
 services:
-  cache:
+  build_cache:
     image: redis
-    ports:
-      - "${BUILD_CACHE_PORT}:${BUILD_CACHE_PORT}"
-    volumes:
-      - ../../redis_data:/data
-    entrypoint: redis-server
-    command: --port ${BUILD_CACHE_PORT}
+    container_name: build_cache
+    command: redis-server --port ${BUILD_CACHE_PORT}
         
   interfaces:
-    # image: patrickkwang/robokop-interfaces
+    container_name: interfaces
     build:
       context: .
     env_file:
@@ -18,18 +14,10 @@ services:
     environment:
       - DEPLOY=docker
       - ROBOKOP_HOME=/home/murphy
-      - NEO4J_HOST=neo4j
-      - BROKER_HOST=broker
-      - RESULTS_HOST=results
-      - BUILD_CACHE_HOST=cache
     ports:
       - "${BUILDER_PORT}:${BUILDER_PORT}"
       - "${BUILDER_SUPERVISOR_PORT}:${BUILDER_SUPERVISOR_PORT}"
     volumes:
       - ../../logs:/home/murphy/logs
       - ../../shared:/home/murphy/shared
-      - ..:/home/murphy/robokop-interfaces
-networks:
-  default:
-    external:
-      name: ${COMPOSE_PROJECT_NAME}_default
+      - ../:/home/murphy/robokop-interfaces

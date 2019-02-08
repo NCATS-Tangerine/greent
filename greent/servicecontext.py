@@ -20,7 +20,8 @@ class ServiceContext:
         self.cache = Cache (
             redis_host = redis_conf.get ("host"),
             redis_port = redis_conf.get ("port"),
-            redis_db = redis_conf.get ("db"))
+            redis_db = redis_conf.get ("db"),
+            redis_password = redis_conf.get ("password"))
         #redis_conf = self.config["redis"]
         #self.cache = Cache (
         #    redis_host = self.config.get ("RESULTS_HOST"),

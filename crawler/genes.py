@@ -5,6 +5,7 @@ from gzip import decompress
 from collections import defaultdict
 from builder.question import LabeledID
 from greent.util import LoggingUtil,Text
+from greent.annotators.gene_annotator import GeneAnnotator
 import logging
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
@@ -130,3 +131,16 @@ def synonymize_genes():
     logger.debug(f'There were {still_unmapped} UniProt Ids left that we are keeping as solos')
     return ids_to_synonyms
 
+def load_annotations_genes(rosetta):
+    """
+    For now building annotation data using HGNC data.
+    """
+    hgnc_genes = pull_hgnc_json()['response']['docs']
+    gene_annotator = GeneAnnotator(rosetta)
+    logger.debug('Pulled hgnc data for gene annotations')
+    for gene in hgnc_genes:
+        extract = gene_annotator.extract_annotation_from_hgnc(gene, gene_annotator.get_prefix_config('HGNC')['keys'])
+        key = f"annotation({Text.upper_curie(gene['hgnc_id'])})"
+        logger.debug(f'Caching {key} {extract}')
+        rosetta.cache.set(key, extract)
+    logger.debug(f"There were {len(hgnc_genes)} HGNC Annotations")

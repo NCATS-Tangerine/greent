@@ -303,26 +303,58 @@ class Question(FromDictMixin):
             plans.append(transitions)
         return plans
 
-    def compile(self, rosetta):
-        plans = self.get_transitions(rosetta.type_graph, self.generate_concept_cypher())
+    def compile(self, rosetta, disconnected_graph = False):
+        plan = None
+        if not disconnected_graph:
+            plans = self.get_transitions(rosetta.type_graph, self.generate_concept_cypher())
+            
+            # merge plans
+            plan = {n.id: {n.id: [] for n in self.machine_question['nodes']} for n in self.machine_question['nodes']}
+            for p in plans:
+                for source_id in p:
+                    for target_id in p[source_id]:
+                        plan[source_id][target_id].extend(p[source_id][target_id])
 
-        # merge plans
-        plan = {n.id: {n.id: [] for n in self.machine_question['nodes']} for n in self.machine_question['nodes']}
-        for p in plans:
-            for source_id in p:
-                for target_id in p[source_id]:
-                    plan[source_id][target_id].extend(p[source_id][target_id])
-
-        # remove duplicate transitions
-        for source_id in plan:
-            for target_id in plan:
-                plan[source_id][target_id] = {t['op']:t for t in plan[source_id][target_id]}.values()
-
+            # remove duplicate transitions
+            for source_id in plan:
+                for target_id in plan:
+                    plan[source_id][target_id] = {t['op']:t for t in plan[source_id][target_id]}.values()
+        else:
+            plan = self.get_transitions_disconnected(rosetta.type_graph)
         if not plan:
             raise RuntimeError('No viable programs.')
 
         from greent.program import Program
         program = Program(plan, self.machine_question, rosetta, 0)
         programs = [program]
-        
+    
         return programs
+
+    def get_transitions_disconnected(self, graph):
+        """
+        Function adjusted for crawler works on the assumptions that quetion contains 
+        unform types of  pairs of nodes which we don't have pair to pair connections.
+        I.e (a)->(b) (c) -> (d) but no (b)->(c)
+        """
+        source_node = self.machine_question['nodes'][0].concept_cypher_signature('n0')
+        target_node = self.machine_question['nodes'][1].concept_cypher_signature('n1')
+        cypher =[f'MATCH {source_node}-[e]-> {target_node}'] 
+        cypher += ['WHERE Exists(e.op) RETURN Collect(e) as edges']
+        query = '\n'.join(cypher)
+        result = ''
+        with graph.driver.session() as session:
+            result = session.run(query)
+        edges = []
+        for row in result:
+            for edge in row['edges']:
+                e = {
+                        "op": edge['op'],
+                        "link": edge['predicate'],
+                        "predicate": Text.snakify(edge['type']) if edge['type'] else None
+                    }
+                edges.append(e)
+        p = {}
+        for edge in self.machine_question['edges']:
+            p[edge.source_id] = {}
+            p[edge.source_id][edge.target_id] = {e['op']: e for e in edges}.values()
+        return p

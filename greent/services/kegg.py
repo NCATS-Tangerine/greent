@@ -83,11 +83,12 @@ class KEGG(Service):
         url = f'{self.url}/conv/ncbi-geneid/hsa:{hsaid}'
         raw_results = requests.get(url)
         ncbis = []
-        for line in raw_results.text.split('\n'):
-            try:
-                ncbis.append( line.strip().split()[-1] )
-            except:
-                pass
+        if raw_results.status_code == 200:
+            for line in raw_results.text.split('\n'):
+                try:
+                    ncbis.append( line.strip().split()[-1] )
+                except:
+                    pass
         ncbi = [f'NCBIGene:{x.split(":")[-1]}' for x in ncbis]
         return ncbi
 

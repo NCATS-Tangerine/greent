@@ -14,6 +14,7 @@ from builder.question import Question
 import datetime
 
 logger = LoggingUtil.init_logging(__name__, logging.INFO)
+rosetta_global = None
 
 def run_query(querylist, supports, rosetta, prune=False):
     """Given a query, create a knowledge graph though querying external data sources.  Export the graph"""
@@ -116,7 +117,30 @@ def build_step(spec, name=None, curie=None, id=0, eid=0):
         edge = None
     return node, edge
 
-def run(pathway, start_name, start_id, end_name, end_id, supports, config):
+def specs_from_array_of_ids(pathway, identifier_list, end_name, end_id):
+    all_specs = {}
+    current_index = 2
+    for identifier in identifier_list:
+        if all_specs == {}:
+            all_specs = build_spec(pathway, identifier.label, identifier.identifier, end_name=end_name, end_id=end_id)
+        else:
+            current_spec = build_spec(pathway, identifier.label, identifier.identifier, end_name=end_name, end_id= end_id)
+            for node in current_spec['machine_question']['nodes']:
+                node_id = int(node['id'][-1])
+                node['id'] = f'n{node_id + current_index}'
+                all_specs['machine_question']['nodes'].append(node)
+            for edge in current_spec['machine_question']['edges']:
+                edge_id = int(edge['id'][-1])
+                source_id = int(edge['source_id'][-1])
+                target_id = int(edge['target_id'][-1])
+                edge['id'] = f'e{edge_id + current_index}'
+                edge['source_id']= f'n{source_id + current_index}'
+                edge['target_id']= f'n{target_id + current_index}'
+                all_specs['machine_question']['edges'].append(edge)
+            current_index += 2
+    return all_specs
+
+def run(pathway, start_name, start_id, end_name, end_id, supports, config, identifier_list = []):
     """Programmatic interface.  Pathway defined as in the command-line input.
        Arguments:
          pathway: A string defining the query.  See command line help for details
@@ -126,11 +150,17 @@ def run(pathway, start_name, start_id, end_name, end_id, supports, config):
          supports: array strings designating support modules to apply
          config: Rosettta environment configuration. 
     """
-    spec = build_spec(pathway, start_name, start_id, end_name=end_name, end_id=end_id)
+    spec = None
+    disconnected_graph = False
+    if len(identifier_list) == 0:
+        spec = build_spec(pathway, start_name, start_id, end_name=end_name, end_id=end_id)
+    else:
+        spec = specs_from_array_of_ids(pathway, identifier_list ,end_name, end_id)
+        disconnected_graph = True
     q = Question(spec)
 
     rosetta = setup(config)
-    programs = q.compile(rosetta)
+    programs = q.compile(rosetta, disconnected_graph= disconnected_graph)
 
     for p in programs:
         p.run_program()
@@ -139,8 +169,10 @@ def run(pathway, start_name, start_id, end_name, end_id, supports, config):
 def setup(config):
     logger = logging.getLogger('application')
     logger.setLevel(level=logging.DEBUG)
-    rosetta = Rosetta(greentConf=config,debug=True)
-    return rosetta
+    global rosetta_global
+    if rosetta_global == None:
+        rosetta_global = Rosetta(greentConf=config,debug=True)
+    return rosetta_global
 
 
 helpstring = """Execute a query across all configured data sources.  The query is defined 

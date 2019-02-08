@@ -19,6 +19,7 @@ CELL = 'cell'
 GROSS_ANATOMICAL_STRUCTURE = 'gross_anatomical_structure'
 GENETIC_CONDITION = 'genetic_condition'
 UNSPECIFIED = 'unspecified'
+GENE_FAMILY = 'gene_family'
 
 #The root of all biolink_model entities, which every node in neo4j will also have as a label. used to specify constraints/indices
 ROOT_ENTITY = 'named_thing'
@@ -44,4 +45,6 @@ CELLULAR_COMPONENT,
 CELL,
 GROSS_ANATOMICAL_STRUCTURE,
 GENETIC_CONDITION,
-UNSPECIFIED])
+UNSPECIFIED,
+GENE_FAMILY
+])

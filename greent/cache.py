@@ -32,14 +32,17 @@ class Cache:
     """ Cache objects by configurable means. """
     def __init__(self, cache_path="cache",
                  serializer=PickleCacheSerializer,
-                 redis_host="localhost", redis_port=6379, redis_db=0,
+                 redis_host="localhost", redis_port=6379, redis_db=0, redis_password="",
                  enabled=True, prefix=''):
         
         """ Connect to cache. """
         self.enabled = enabled
         self.prefix = prefix
         try:
-            self.redis = redis.StrictRedis(host=redis_host, port=int(redis_port), db=int(redis_db))
+            if redis_password:
+                self.redis = redis.StrictRedis(host=redis_host, port=int(redis_port), db=int(redis_db), password=redis_password)
+            else:
+                self.redis = redis.StrictRedis(host=redis_host, port=int(redis_port), db=int(redis_db))
             self.redis.get ('x')
             logger.info(f"Cache connected to redis at {redis_host}:{redis_port}/{redis_db}")
         except Exception as e:
