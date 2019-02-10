@@ -41,8 +41,9 @@ def aggregate(p,nps):
             newp[n].extend( v )
     return newp
 
-def construct_for_pair(a_id,b_id,redis,nps,max_values,topologies,topo_counts,skips,filters):
-    max_graphs = 2000000
+def construct_for_pair(a_id,b_id,redis,nps,max_values,topologies,topo_counts,filters,max_graphs):
+    print('--------')
+    print(a_id)
     paths = get_paths(nps,a_id,b_id,redis)
     paths = apply_filters(paths,filters)
     paths = aggregate(paths,nps)
@@ -54,15 +55,12 @@ def construct_for_pair(a_id,b_id,redis,nps,max_values,topologies,topo_counts,ski
     current = [0,1,0,0,0]
     while True:
         num_graphs = 1
-        if tuple(current) not in skips:
-            for i in nps:
-                num_graphs *= comb(len(paths[i]),current[i])
-            if num_graphs > 0:
-                print(current, '   ',num_graphs)
-                if num_graphs > max_graphs:
-                    skips.add(tuple(current))
-                else:
-                    construct_current(current,paths,topologies,topo_counts,a_id)
+        for i in nps:
+            num_graphs *= comb(len(paths[i]),current[i])
+        if num_graphs > 0:
+            print(current, '   ',num_graphs)
+            if num_graphs < max_graphs:
+                construct_current(current,paths,topologies,topo_counts,a_id)
         current = increment_current(current,maxes,1)
         if current is None:
             break
@@ -75,8 +73,6 @@ def get_isomorphism(g,possibles):
     for possible_graph, possible_name in possibles:
         matcher=isomorphism.GraphMatcher(possible_graph,g,node_match=isomorphism.categorical_node_match('matchtype','dumb'))
         if matcher.is_isomorphic():
-            #print(json.dumps(nx.readwrite.json_graph.node_link_data(g),indent=4))
-            #print(json.dumps(nx.readwrite.json_graph.node_link_data(possible_graph),indent=4))
             return possible_graph, possible_name, matcher.mapping
     #It's possible not to find one. suppose we're looking for 2 1-hops.
     #  But we have the same node, with different edges.  That collapses to a 1-hop with multiple edges, but that's not
@@ -92,12 +88,9 @@ def construct_current(current,paths,topologies,topo_counts,a_id):
     #print(pathgroups)
     for pathset in product(*pathgroups):
         #flatten the goofy representation
-        #print('-----')
-        #print(pathset)
         pathlist = [item for sublist in pathset for item in sublist]
         g=construct_from_pathset(pathlist)
         possibles = topologies[tuple(current)]
-        #if there's only one possible, it better map
         matching_graph, matching_name, mapping = get_isomorphism(g,possibles)
         if matching_graph is None:
             continue
@@ -156,9 +149,6 @@ def get_paths(nps,a_id,b_id,redis):
             #x should be a dictionary
             for k in x:
                 paths[np][k].extend(x[k])
-    #print(a_id,b_id)
-    #for k in paths:
-    #    print(' ',k,len(paths[k]))
     return paths
 
 def rep_to_graph(edgelist):
@@ -212,27 +202,34 @@ def construct_hit_filters(b_id,redis,neo4j,atype,edge_name):
             #print(paths[i])
             hit_filters[i].update( paths[i].keys() )
     return hit_filters
-    #construct_graphs(b_id,a_ids,redis)
 
-def construct_graphs(b_id,a_ids,redis,filters,nps):
+def put_topologies_in_redis(redis,topologies):
+    #Don't really need to do this all the time.  Should have enumerate_topologies do this directly I think. Then pull from there for this and aggregation
+    for pcount in topologies:
+        for graph,gstring in topologies[pcount]:
+            rkey = f'PathCount({gstring})'
+            redis.set(rkey,json.dumps(pcount))
+
+def construct_graphs(b_id,a_ids,redis,filters,nps,max_graphs):
     max_values = [1,5,2,2] # 1 0-hop, 5 1-hops, 2 2-hops, 2 3-hops
     topologies = read_topologies(max_values)
-    #a_ids = get_other_ends(nps,b_id,redis,atype)
+    put_topologies_in_redis(redis,topologies)
     print('Number of other ends:',len(a_ids))
     maxp = 1
     topology_counts = defaultdict( lambda: defaultdict(set))
-    skips = set()
+    #skips = set()
     for a_id in a_ids:
-    #for a_id in ['CHEMBL:CHEMBL117452']:
-        construct_for_pair(a_id,b_id,redis,nps,max_values,topologies,topology_counts,skips,filters)
+        construct_for_pair(a_id,b_id,redis,nps,max_values,topologies,topology_counts,filters,max_graphs)
+    key=f'MatchingTopologies({b_id},{max_graphs})'
+    #Each topology_counts key is a tuple of edges. Make each key a list, then make a list of those
+    # lists (i.e. a list of all topologies) that can be serialized as json for the value
+    topos = [ list(k) for k in topology_counts.keys() ]
+    redis.set(key,json.dumps(topos))
     for tc in topology_counts:
-        for (n,e) in topology_counts[tc]:
-            print('-----------')
-            print(tc)
-            print('  ',n)
-            print('  ',e)
-            print('    ',topology_counts[tc][(n,e)])
-
+        mkey = f'MatchResults({b_id},{max_graphs},{tc})'
+        output = [{'nodes':n,'edges':e,'results':list(topology_counts[tc][(n,e)]) } for n,e in topology_counts[tc]]
+        redis.set(mkey,json.dumps(output))
+        
 
 def get_other_ends(nps,b_id,red,atype):
     a_ids = set()
@@ -279,7 +276,9 @@ def go(disease):
     filters = construct_hit_filters(disease,red,neo,a_type,p_edge)
     nps = [1,2,3,4]
     a_ids = get_other_ends(nps,disease,red,a_type)
-    construct_graphs(disease,a_ids,red,filters,nps)
+    max_graphs = 100000
+#    a_ids = set( list(a_ids)[:10] )
+    construct_graphs(disease,a_ids,red,filters,nps,max_graphs)
 
 if __name__ == '__main__':
     go('MONDO:0005136')
