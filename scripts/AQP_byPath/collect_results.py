@@ -73,4 +73,4 @@ def go(b_id, atype, predicting_edge, max_graphs):
                 query_id += 1
 
 if __name__ == '__main__':
-    go('MONDO:0005136','chemical_substance','treats',1000)
+    go('MONDO:0005136','chemical_substance','treats',100000)

@@ -94,12 +94,15 @@ def store_results(redis,results,n,b_id,atype,cnodes):
     bkey = f'EndPoints({n},{b_id},{atype})'
     redis.set(bkey,json.dumps(list(aids)))
 
-def single_endpoint(atype,btype,b_id,censored_nodes,censored_edges,nhops,neo4j,redis,max_degree=5000):
+def single_endpoint(atype,btype,b_id,censored_nodes,censored_edges,predicting_edge,nhops,neo4j,redis,max_degree=5000):
     """Find paths from a_types to b_types where b is bound to b_id, ignoring censored edges.
         Paths come from neo4j and are put into redis"""
     print(b_id, nhops)
+    ces = censored_edges.copy()
+    if nhops == 1:
+        ces.append(predicting_edge)
     print(' Make Query')
-    query = construct_cypher(atype,btype,b_id,censored_edges,nhops,max_degree)
+    query = construct_cypher(atype,btype,b_id,ces,nhops,max_degree)
     print(query)
     print(' Run Query')
     results = run_query(query,neo4j)
@@ -187,7 +190,9 @@ censored_as = [
 if __name__ == '__main__':
     n4j = create_neo4j()
     red = create_redis()
-    #for gnh in [1,2,3]:
-    #    single_endpoint('chemical_substance','disease','MONDO:0005136',censored_as,['contributes_to','treats'],gnh,n4j,red,max_degree=3000)
-    for gnh in [4]:
-        single_endpoint('chemical_substance','disease','MONDO:0005136',censored_as,['contributes_to','treats'],gnh,n4j,red,max_degree=300)
+    malaria = 'MONDO:0005136'
+    asthma = 'MONDO:0004979'
+    v = [(1,3000),(2,3000),(3,3000),(4,300)]
+    #v = [(4,200)]
+    for gnh,c in v:
+        single_endpoint('chemical_substance','disease',malaria,censored_as,['contributes_to'],'treats',gnh,n4j,red,max_degree=c)
