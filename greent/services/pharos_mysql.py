@@ -18,7 +18,7 @@ class PharosMySQL(Service):
         predicate = LabeledID(identifier='PHAROS:gene_involved', label='gene_involved')
         resolved_edge_nodes = []
         for hgnc in identifiers:
-            query = f"select distinct d.did,d.name from disease d join xref x on x.protein_id = d.target_id where x.xtype = 'HGNC' and x.value = '{hgnc}'"
+            query = f"select distinct d.did,d.name from disease d join xref x on x.protein_id = d.target_id where x.xtype = 'HGNC' and d.dtype <> 'Expression Atlas' and x.value = '{hgnc}'"
             cursor = self.db.cursor(dictionary = True, buffered = True)
             cursor.execute(query)
             for result in cursor:
@@ -102,7 +102,7 @@ class PharosMySQL(Service):
                     pharos_ids = [f'{dbpred}:{x}' for x in pharos_candidates]
                     for pharos_id in pharos_ids:
                         cursor = self.db.cursor(dictionary = True, buffered = True)
-                        query = f"select distinct x.value, p.sym  from disease d join xref x on x.protein_id = d.target_id join protein p on d.target_id = p.id where x.xtype = 'HGNC' and d.did='{pharos_id}';"
+                        query = f"select distinct x.value, p.sym  from disease d join xref x on x.protein_id = d.target_id join protein p on d.target_id = p.id where x.xtype = 'HGNC' and d.dtype <> 'Expression Atlas' and d.did='{pharos_id}';"
                         cursor.execute(query)
                         for result in cursor:
                             label = result['sym']
