@@ -84,45 +84,72 @@ class ObesityHubBuilder(object):
 
     def __init__(self, rosetta, debug=False):
         self.rosetta = rosetta
+        self.cache = rosetta.cache
+        self.clingen = rosetta.core.clingen
+        self.gwascatalog = rosetta.core.gwascatalog
+        self.myvariant = rosetta.core.myvariant
         self.concept_model = rosetta.type_graph.concept_model
 
         # for files that come in without real ids
         # populate this with the labels they do have and their real IDs if we can find them
         self.metabolite_labled_id_lookup = {}
 
-    def create_gwas_graph(self, source_nodes, gwas_file_names, gwas_file_directory, p_value_cutoff, p_value_median_threshold=0.525, max_hits=10000, reference_genome='GRCh37', reference_patch='p1'):
+    def create_gwas_graph(self, source_nodes, gwas_file_names, gwas_file_directory, p_value_cutoff, p_value_median_threshold=0.525, max_hits=100000, reference_genome='GRCh37', reference_patch='p1', analysis_id=None):
+        self.prepopulate_gwascatalog_cache()
         variants_processed = 0
         predicate = LabeledID(identifier=f'RO:0002609', label=f'related_to')
         pool = Pool(processes=10)
-
         for source_node in source_nodes:
-            filepath = f'{gwas_file_directory}/{gwas_file_names[source_node.id]}'
-            if not self.quality_control_check(filepath, p_value_cutoff, p_value_median_threshold, max_hits, delimiter='\t'):
-                continue
-            identifiers, p_values = self.get_hgvs_identifiers_from_gwas(filepath, p_value_cutoff, reference_genome, reference_patch)
-            if len(identifiers) > 0:
+            try:
+                filepath = f'{gwas_file_directory}/{gwas_file_names[source_node.id]}'
+            except KeyError:
+                logger.warning('create_gwas_graph bad filename look-up')
+            #if not self.quality_control_check(filepath, p_value_cutoff, p_value_median_threshold, max_hits, delimiter='\t'):
+            #    logger.debug(f'GWAS File: {gwas_file_names[source_node.id]} did not pass QC.')
+            #    continue
+
+            hgvs_ids, p_values = self.get_hgvs_identifiers_from_gwas(filepath, p_value_cutoff, reference_genome, reference_patch)
+            if len(hgvs_ids) > 0:
                 self.rosetta.synonymizer.synonymize(source_node)
                 with BufferedWriter(self.rosetta) as writer:
                     writer.write_node(source_node)
 
-                for seq_var_id in identifiers:
-                    p_value = p_values.get(seq_var_id.identifier)
-                    self.write_new_association(source_node, seq_var_id, node_types.SEQUENCE_VARIANT, predicate, p_value)
+                labled_variant_ids = []
+                uncached_variant_annotation_nodes = []
+                for hgvs_id in hgvs_ids:
+                    curie_hgvs = f'HGVS:{hgvs_id}'
+                    p_value = p_values.get(hgvs_id)
+                    variant_node = KNode(curie_hgvs, name=hgvs_id, type=node_types.SEQUENCE_VARIANT)
+                    self.rosetta.synonymizer.synonymize(variant_node)
+                    labled_variant_ids.append(LabeledID(identifier=variant_node.id, label=variant_node.name))
+                    new_edge = self.write_new_association(source_node, variant_node, predicate, p_value, analysis_id=analysis_id)
+
+                    if self.cache.get(f'myvariant.sequence_variant_to_gene({variant_node.id})') is None:
+                        uncached_variant_annotation_nodes.append(variant_node)
+                        if len(uncached_variant_annotation_nodes) == 1000:
+                            self.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
+                            uncached_variant_annotation_nodes = []
+
+                if uncached_variant_annotation_nodes:
+                    self.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
+
+                if labled_variant_ids:
+                    partial_run_one = partial(find_connections, node_types.SEQUENCE_VARIANT, node_types.GENE)
+                    pool.map(partial_run_one, labled_variant_ids)
+                
+                    partial_run_one = partial(find_connections, node_types.SEQUENCE_VARIANT, node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+                    pool.map(partial_run_one, labled_variant_ids)
                     
-                partial_run_one = partial(find_connections, node_types.SEQUENCE_VARIANT, node_types.GENE)
-                pool.map(partial_run_one, identifiers)
-
-                partial_run_one = partial(find_connections, node_types.SEQUENCE_VARIANT, node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
-                pool.map(partial_run_one, identifiers)
-
-                variants_processed += len(identifiers)
+                    variants_processed += len(labled_variant_ids)
 
         pool.close()
         pool.join()
 
         logger.info(f'create_gwas_graph complete - {variants_processed} significant variants found and processed.')
 
-    def get_hgvs_identifiers_from_gwas(self, gwas_filepath, p_value_cutoff, reference_genome, reference_patch):
+        return variants_processed
+
+    def get_hgvs_identifiers_from_gwas(self, gwas_filepath, p_value_cutoff, reference_genome, reference_patch, impute2_cutoff=0.5, alt_af_min=0.01, alt_af_max=0.99):
         new_ids = []
         corresponding_p_values = {}
         try:
@@ -139,6 +166,16 @@ class ObesityHubBuilder(object):
                     logger.warning(f'Error reading file headers for {gwas_filepath}')
                     return new_ids, corresponding_p_values
 
+                if 'ALT_AF' in headers:
+                    alt_af_index = headers.index('ALT_AF')
+                else:
+                    alt_af_index = None
+
+                if 'IMPUTE2_INFO' in headers:
+                    impute2_index = headers.index('IMPUTE2_INFO')
+                else:
+                    impute2_index = None
+
                 for line in f:
                     try:
                         line_counter += 1
@@ -146,16 +183,21 @@ class ObesityHubBuilder(object):
                         p_value_string = data[pval_index]
                         if (p_value_string != 'NA'):
                             p_value = float(p_value_string)
-                            if (p_value <= p_value_cutoff):
-                                chromosome = data[chrom_index]
-                                position = data[pos_index]
-                                ref_allele = data[ref_index]
-                                alt_allele = data[alt_index]
-                                hgvs = self.convert_vcf_to_hgvs(reference_genome, reference_patch, chromosome, position, ref_allele, alt_allele)
-                                if hgvs:
-                                    curie_hgvs = f'HGVS:{hgvs}'
-                                    new_ids.append(LabeledID(identifier=curie_hgvs, label=f'Variant(hgvs): {hgvs}'))
-                                    corresponding_p_values[curie_hgvs] = p_value
+                            if p_value <= p_value_cutoff:
+                                if impute2_index is not None:
+                                    impute2_score = float(data[impute2_index])
+                                if ((impute2_index is None) or (impute2_score >= impute2_cutoff)):
+                                    if alt_af_index is not None:
+                                        alt_af_freq = float(data[alt_af_index])
+                                    if ((alt_af_index is None) or (alt_af_min <= alt_af_freq <= alt_af_max)):
+                                        chromosome = data[chrom_index]
+                                        position = data[pos_index]
+                                        ref_allele = data[ref_index]
+                                        alt_allele = data[alt_index]
+                                        hgvs = self.convert_vcf_to_hgvs(reference_genome, reference_patch, chromosome, position, ref_allele, alt_allele)
+                                        if hgvs:
+                                            new_ids.append(hgvs)
+                                            corresponding_p_values[hgvs] = p_value
 
                     except (IndexError, ValueError) as e:
                         logger.warning(f'Error reading file {gwas_filepath}, on line {line_counter}: {e}')
@@ -184,7 +226,7 @@ class ObesityHubBuilder(object):
         len_ref =  len(ref_allele) 
         len_alt = len(alt_allele)
             
-        if len_alt == 1 or not alt_allele:
+        if len_alt == 1 or not alt_allele or len_ref > len_alt:
             # deletions
             if alt_allele == '.' or not alt_allele:
                 if len_ref is 1:
@@ -193,16 +235,23 @@ class ObesityHubBuilder(object):
                     variation = f'{position}_{int(position)+len_ref-1}del'
             elif len_ref == 2 and (ref_allele[0] == alt_allele[0]):
                 variation = f'{int(position)+1}del'
-            elif len_ref > 2 and (ref_allele[0] == alt_allele[0]):
-                variation = f'{int(position)+1}_{int(position)+len_ref-1}del'
+            elif len_ref > 2 and ref_allele.startswith(alt_allele):
+                diff = len_ref - len_alt
+                offset = len_ref - diff
+                variation = f'{int(position)+offset-1}_{int(position)+offset-1+diff}del'
             else:
                 # substitutions
                 variation = f'{position}{ref_allele}>{alt_allele}'
 
         # insertions
-        elif (len_alt > len_ref) and (len_ref == 1) and (ref_allele[0] == alt_allele[0]):
-            variation = f'{position}_{int(position)+1}ins{alt_allele[1:]}'
+        elif (len_alt > len_ref) and (len_ref > 0) and alt_allele.startswith(ref_allele):
+            diff = len_alt - len_ref
+            offset = len_alt - diff 
+            variation = f'{int(position)+offset-1}_{int(position)+offset}ins{alt_allele[diff:]}'
 
+        elif alt_allele.startswith('<CN') or alt_allele.startswith('<INS'):
+            # we know about these but don't support them yet
+            return ''
         else:
             logger.warning(f'Format of variant not recognized for hgvs conversion: {ref_allele} to {alt_allele}')
             return ''
@@ -210,33 +259,91 @@ class ObesityHubBuilder(object):
         hgvs = f'{ref_prefix}{chromosome}.{ref_chrom_version}:g.{variation}'
         return hgvs
 
-    def create_mwas_graph(self, source_nodes, mwas_file_names, mwas_file_directory, p_value_cutoff):
+    def prepopulate_gwascatalog_cache(self):
+        self.gwascatalog.prepopulate_cache()
+
+    def prepopulate_variant_cache(self, hgvs_file_path, reference_genome='GRCh37', reference_patch='p1'):
+        hgvs_ids, pvalues = self.get_hgvs_identifiers_from_gwas(hgvs_file_path, 1, reference_genome, reference_patch, impute2_cutoff=0, alt_af_min=0, alt_af_max=1)
+        batch_of_ids = []
+        for hgvs_id in hgvs_ids:
+            cached = self.cache.get(f'synonymize(HGVS:{hgvs_id})')
+            if cached is None:
+                batch_of_ids.append(hgvs_id)
+
+            if len(batch_of_ids) == 10000:
+                self.process_variant_synonymization_cache(batch_of_ids)
+                batch_of_ids = []
+                
+        if batch_of_ids:
+            self.process_variant_synonymization_cache(batch_of_ids)
+
+        return len(hgvs_ids)
+
+    def process_variant_synonymization_cache(self, batch_of_hgvs):
+        batch_synonyms = self.clingen.get_batch_of_synonyms(batch_of_hgvs)
+        for hgvs_id, synonyms in batch_synonyms.items():
+            key = f'synonymize({hgvs_id})'
+            self.cache.set(key, synonyms)
+
+            dbsnp_labled_id = None
+            caid_labled_id = None
+            for syn in synonyms:
+                if syn.identifier.startswith('DBSNP'):
+                    dbsnp_labled_id = syn
+                elif syn.identifier.startswith('CAID'):
+                    caid_labled_id = syn
+                if dbsnp_labled_id and caid_labled_id:
+                    break
+
+            if caid_labled_id:
+                synonyms.remove(caid_labled_id)
+                self.cache.set(f'synonymize({caid_labled_id.identifier})', synonyms)
+                synonyms.add(caid_labled_id)
+
+            if dbsnp_labled_id:
+                synonyms.remove(dbsnp_labled_id)
+                #synonyms.add(LabeledID(identifier=f'HGVS:{hgvs_id}', label=f'{hgvs_id}'))
+                self.cache.set(f'synonymize({dbsnp_labled_id.identifier})', synonyms)
+
+    def prepopulate_variant_annotation_cache(self, batch_of_nodes):
+        batch_annotations = self.myvariant.batch_sequence_variant_to_gene(batch_of_nodes)
+        for seq_var_id, annotations in batch_annotations.items():
+            key = f'myvariant.sequence_variant_to_gene({seq_var_id})'
+            self.cache.set(key, annotations)
+
+    def create_mwas_graph(self, source_nodes, mwas_file_names, mwas_file_directory, p_value_cutoff, analysis_id=None):
         metabolites_processed = 0
         predicate = LabeledID(identifier=f'RO:0002609', label=f'related_to')
-        pool = Pool(processes=8)
+        #pool = Pool(processes=8)
 
         for source_node in source_nodes:
             filepath = f'{mwas_file_directory}/{mwas_file_names[source_node.id]}'
             identifiers, p_values = self.get_metabolite_identifiers_from_mwas(filepath, p_value_cutoff)
-            if len(identifiers) > 0:
+            if identifiers:
                 self.rosetta.synonymizer.synonymize(source_node)
                 with BufferedWriter(self.rosetta) as writer:
                     writer.write_node(source_node)
 
+                labled_metabolite_ids = []
                 for metabolite_id in identifiers:
                     p_value = p_values.get(metabolite_id.identifier)
-                    self.write_new_association(source_node, metabolite_id, node_types.CHEMICAL_SUBSTANCE, predicate, p_value)
-                    
-                partial_run_one = partial(find_connections, node_types.CHEMICAL_SUBSTANCE, node_types.GENE)
-                pool.map(partial_run_one, identifiers)
+                    metabolite_node = KNode(metabolite_id.identifier, name=metabolite_id.label, type=node_types.CHEMICAL_SUBSTANCE)
+                    self.rosetta.synonymizer.synonymize(metabolite_node)
+                    labled_metabolite_ids.append(LabeledID(identifier=metabolite_node.id, label=metabolite_node.name))
+                    new_edge = self.write_new_association(source_node, metabolite_node, predicate, p_value, analysis_id=analysis_id)
 
-                partial_run_one = partial(find_connections, node_types.CHEMICAL_SUBSTANCE, node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
-                pool.map(partial_run_one, identifiers)
+                    self.write_new_association(source_node, metabolite_node, predicate, p_value)
+                
+                #partial_run_one = partial(find_connections, node_types.CHEMICAL_SUBSTANCE, node_types.GENE)
+                #pool.map(partial_run_one, labled_metabolite_ids)
 
-                metabolites_processed += len(identifiers)
+                #partial_run_one = partial(find_connections, node_types.CHEMICAL_SUBSTANCE, node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+                #pool.map(partial_run_one, labled_metabolite_ids)
 
-        pool.close()
-        pool.join()
+                metabolites_processed += len(labled_metabolite_ids)
+
+        #pool.close()
+        #pool.join()
 
         logger.info(f'create_mwas_graph complete - {metabolites_processed} significant metabolites found and processed.')
 
@@ -335,18 +442,17 @@ class ObesityHubBuilder(object):
 
         return metabolite_ids, corresponding_p_values
 
-    def write_new_association(self, source_node, associated_node_id, associated_node_type, predicate, p_value):
-        
-        associated_node = KNode(associated_node_id.identifier, name=associated_node_id.label, type=associated_node_type)
-        self.rosetta.synonymizer.synonymize(associated_node)
+    def write_new_association(self, source_node, associated_node, predicate, p_value, analysis_id=None):
 
         if self.concept_model:
             standard_predicate = self.concept_model.standardize_relationship(predicate)
         else:
-            logger.warning('obesity builder: concept_model was missing, predicate standardization failed')
+            logger.warning('OBH builder: concept_model was missing, predicate standardization failed')
             standard_predicate = predicate
 
         props={'p_value': p_value}
+        if analysis_id:
+            props['analysis_id'] = analysis_id
         ctime = time.time()
         new_edge = KEdge(source_id=source_node.id,
                      target_id=associated_node.id,
@@ -358,9 +464,12 @@ class ObesityHubBuilder(object):
                      publications=None,
                      url=None,
                      properties=props)
+        
         with BufferedWriter(self.rosetta) as writer:
             writer.write_node(associated_node)
             writer.write_edge(new_edge)
+
+        return new_edge
 
     def quality_control_check(self, file_path, p_value_threshold, p_value_median_threshold, max_hits, delimiter=',', p_value_column='PVALUE'):
         try:
@@ -393,7 +502,7 @@ class ObesityHubBuilder(object):
                         logger.warning(f'QC file error ({file_path}) line {line_counter} could not be parsed: {e}')
 
                 if median(p_values) > p_value_median_threshold:
-                        return False
+                    return False
 
         except (IOError) as e:
             logger.warning(f'QC check file ({file_path}) could not be loaded: {e}')
@@ -402,7 +511,6 @@ class ObesityHubBuilder(object):
             logger.warning(f'csv error in ({file_path}): {e}')
 
         return True
-
 
 def find_connections(input_type, output_type, identifier):
     path = f'{input_type},{output_type}'
@@ -433,6 +541,25 @@ if __name__=='__main__':
     #metabolites_file = './sample_metabolites.csv'
     #gwas_directory = '.'
 
+    p_value_cutoff = 1e-5
+    obesity_id = 'HP:0001513'
+    gwas_directory = '/projects/sequence_analysis/vol1/obesity_hub/BMI/GWAS/aggregate_results'
+
+    #obesity_node = KNode(obesity_id, name='Obesity', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+    #associated_nodes = [obesity_node]
+    #associated_file_names = {obesity_id: 'sample_gwas'}
+    #obh.create_gwas_graph(associated_nodes, associated_file_names, '.', p_value_cutoff, analysis_id='testing_gwas')
+
+    obesity_node = KNode(obesity_id, name='Obesity', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+    associated_nodes = [obesity_node]
+    associated_file_names = {obesity_id: 'obese95_control5to50'}
+    obh.create_gwas_graph(associated_nodes, associated_file_names, gwas_directory, p_value_cutoff, analysis_id='obesity_gwas')
+    
+    obesity_node = KNode(obesity_id, name='Obesity', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+    associated_nodes = [obesity_node]
+    associated_file_names = {obesity_id: 'obese95_control5to50_diet'}
+    obh.create_gwas_graph(associated_nodes, associated_file_names, gwas_directory, p_value_cutoff, analysis_id='obesity_gwas_diet')
+
     #create a graph with just one node / file
     #p_value_cutoff = 1e-5
     #pa_id = 'EFO:0003940'
@@ -460,14 +587,28 @@ if __name__=='__main__':
     #obh.create_gwas_graph(ordered_metabolite_nodes, real_file_names, gwas_directory, 1e-10, p_value_median_threshold=0.525, max_hits=10000)
     
     # create a mwas graph
-    #p_value_cutoff = 1e-5
-    #metabolites_file = '/home/emorris/metabolite_info.csv'
+    p_value_cutoff = 1e-5
+    metabolites_file = '/home/emorris/metabolite_info.csv'
+    metabolite_nodes, metabolite_file_names = obh.load_metabolite_info(metabolites_file, file_names_postfix="_scale")
     #pa_id = 'EFO:0003940'
     #pa_node = KNode(pa_id, name='Physical Activity', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
-    #associated_nodes = [pa_node]
-    #associated_file_names = {pa_id:'sample_mwas'}
-    #mwas_directory = '.'
+    obesity_node = KNode(obesity_id, name='Obesity', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+    associated_nodes = [obesity_node]
+    associated_file_names = {obesity_id:'SOL_metabolomics_std_obese95_control5to50_no_diet.csv'}
+    mwas_directory = '/projects/sequence_analysis/vol1/obesity_hub/BMI/MWAS'
     #metabolite_nodes, metabolite_file_names = obh.load_metabolite_info(metabolites_file, file_names_postfix="_scale")
-    #obh.create_mwas_graph(associated_nodes, associated_file_names, mwas_directory, p_value_cutoff)
+    obh.create_mwas_graph(associated_nodes, associated_file_names, mwas_directory, p_value_cutoff, analysis_id='obesity_mwas')
 
+    # create a mwas graph
+    p_value_cutoff = 1e-5
+    metabolites_file = '/home/emorris/metabolite_info.csv'
+    #pa_id = 'EFO:0003940'
+    #pa_node = KNode(pa_id, name='Physical Activity', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+    obesity_node = KNode(obesity_id, name='Obesity', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+    associated_nodes = [obesity_node]
+    associated_file_names = {obesity_id:'SOL_metabolomics_std_obese95_control5to50.csv'}
+    mwas_directory = '/projects/sequence_analysis/vol1/obesity_hub/BMI/MWAS'
+    #metabolite_nodes, metabolite_file_names = obh.load_metabolite_info(metabolites_file, file_names_postfix="_scale")
+    obh.create_mwas_graph(associated_nodes, associated_file_names, mwas_directory, p_value_cutoff, analysis_id='obesity_mwas_diet')
 
+   

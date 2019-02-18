@@ -33,7 +33,7 @@ class Service:
     def standardize_predicate(self, predicate, source=None, target=None):
         return self.concept_model.standardize_relationship(predicate)
 
-    def create_edge(self, source_node, target_node, provided_by, input_id, predicate, publications=None, url=None, properties=None):
+    def create_edge(self, source_node, target_node, provided_by, input_id, predicate, analysis_id=None, publications=[], url=None, properties={}):
         ctime = time.time()
         standard_predicate=self.standardize_predicate(predicate, source_node.id, target_node.id)
         if provided_by is None:
