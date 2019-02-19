@@ -284,7 +284,7 @@ api.add_resource(Concepts, '/concepts')
 if __name__ == '__main__':
 
     # Get host and port from environmental variables
-    server_host = '0.0.0.0' #os.environ['ROBOKOP_HOST']
+    server_host = '0.0.0.0'
     server_port = int(os.environ['BUILDER_PORT'])
 
     app.run(host=server_host,\
