@@ -41,6 +41,17 @@ def test_chem_to_chem_morphine(kegg,rosetta):
     assert len(results) > 0
     assert normorphine in ids
 
+def test_chem_to_chem_caffiene(kegg,rosetta):
+    caffiene = KNode('CHEBI:27732',name='Caffiene',type=node_types.CHEMICAL_SUBSTANCE)
+    rosetta.synonymizer.synonymize(caffiene)
+    results = kegg.chemical_get_chemical(caffiene)
+    theobromine = 'KEGG.COMPOUND:07480'
+    ids = []
+    for edge,node in results:
+        if edge.source_id == 'CHEBI:27732':
+            ids.append(node.id)
+    assert theobromine in ids
+
 def test_chem_to_reaction(kegg):
     hete = KNode('KEGG.COMPOUND:C04805', name="5-HETE", type=node_types.CHEMICAL_SUBSTANCE)
     results = kegg.chemical_get_reaction(hete)
@@ -88,10 +99,29 @@ def test_chem_to_enzyme_nb(kegg,rosetta):
     print(results)
     assert True
 
+# There is a problem with some genes coming back malformed
+def test_chem_to_enzyme_nb(kegg,rosetta):
+    input = KNode('KEGG.COMPOUND:C00319',name='Sphingosine', type=node_types.METABOLITE)
+    results = kegg.chemical_get_enzyme(input)
+    genes = set()
+    for e,n in results:
+        genes.add(n.id)
+    for gene in genes:
+        print(gene)
+    print(len(gene))
+
 def test_get_reaction(kegg):
     rn = 'rn:R09338'
     out = kegg.get_reaction(rn)
     assert True
+
+def test_chem_to_eynzyme_ass1(kegg):
+    #Why don't I get the gene ASS1 when I look at degradation of L-aspartic acid?
+    l = KNode('KEGG.COMPOUND:00049', 'L-aspartic acid', type = node_types.CHEMICAL_SUBSTANCE)
+    results = kegg.chemical_get_enzyme(l)
+    ids = [node.id for edge,node in results]
+    print(ids)
+    assert('NCBIGene:445' in ids)
 
 def test_chem_to_enzyme(kegg):
     hete = KNode('KEGG.COMPOUND:C04805', name="5-HETE", type=node_types.CHEMICAL_SUBSTANCE)

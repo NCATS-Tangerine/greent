@@ -87,6 +87,9 @@
         op    : ctd.disease_to_exposure
       - link  : disease_to_chemical
         op    : ctd.disease_to_chemical
+    sequence_variant:
+      - link  : disease_or_phenotypic_feature_to_sequence_variant
+        op    : gwascatalog.disease_or_phenotypic_feature_to_sequence_variant
   disease:
     phenotypic_feature:
       - link  : disease_to_phenotype
@@ -195,7 +198,7 @@
       - link  : sequence_variant_to_disease_or_phenotypic_feature
         op    : biolink.sequence_variant_get_phenotype
       - link  : sequence_variant_to_disease_or_phenotypic_feature
-        op    : gwascatalog.sequence_variant_to_phenotype
+        op    : gwascatalog.sequence_variant_to_disease_or_phenotypic_feature
 
 '@type_checks':
   genetic_condition: mondo.is_genetic_disease
