@@ -195,7 +195,7 @@ class TaskLog(Resource):
                 description: text
         """
 
-        task_log_file = os.path.join(os.environ['ROBOKOP_HOME'], 'task_logs', f'{task_id}.log')
+        task_log_file = os.path.join(os.environ['ROBOKOP_HOME'], 'logs','builder_task_logs', f'{task_id}.log')
         if os.path.isfile(task_log_file):
             with open(task_log_file, 'r') as log_file:
                 log_contents = log_file.read()

@@ -3,8 +3,8 @@
 set -e
 
 cd $ROBOKOP_HOME/robokop-interfaces
-mkdir -p $ROBOKOP_HOME/task_logs
-chmod 777 $ROBOKOP_HOME/task_logs
+mkdir -p $ROBOKOP_HOME/logs/builder_task_logs
+chmod 777 $ROBOKOP_HOME/logs/builder_task_logs
 
 sleep 3s
 
