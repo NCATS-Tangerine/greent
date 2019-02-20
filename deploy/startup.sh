@@ -18,8 +18,8 @@ fi
 echo "Setting up environment..."
 source ./deploy/setenv.sh
 
-echo "Initializing type graph..."
-./initialize_type_graph.sh
+# echo "Initializing type graph..."
+# ./initialize_type_graph.sh
 
 echo "Finding and removing stray pid files..."
 find . -prune -name "*.pid" -exec rm -rf {} \;
