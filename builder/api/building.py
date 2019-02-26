@@ -25,6 +25,7 @@ from greent.graph_components import KNode
 from greent.util import LoggingUtil
 
 rosetta_config_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "rosetta.yml")
+properties_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "conf", "annotation_map.yaml")
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
@@ -259,6 +260,26 @@ class Connections(Resource):
         return s
 
 api.add_resource(Connections, '/connections')
+
+class Properties(Resource):
+    def get(self):
+        """
+        Get a list of all node properties that may be in the graph
+        ---
+        tags: [util]
+        responses:
+            200:
+                description: Properties
+                content:
+                    application/json:
+        """
+        with open(properties_file, 'r') as stream:
+            properties = yaml.load(stream)
+
+        return properties
+
+api.add_resource(Properties, '/properties')
+
 
 class Concepts(Resource):
     def get(self):
