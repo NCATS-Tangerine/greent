@@ -293,10 +293,13 @@ class Question(FromDictMixin):
                 edge = edges[e]
                 source_id = edge['source']
                 target_id = edge['target']
+                qedge = next(e2 for e2 in self.machine_question['edges'] if e2.id == e)
+                qedge_type = qedge.type
+                predicate = [Text.snakify(e2type) for e2type in qedge_type] if isinstance(qedge_type, list) and qedge_type else Text.snakify(qedge_type) if isinstance(qedge_type, str) else None
                 trans = {
                     "op": edge['op'],
                     "link": edge['predicate'],
-                    "predicate": next(Text.snakify(e2.type) if e2.type else None for e2 in self.machine_question['edges'] if e2.id == e)
+                    "predicate": predicate
                 }
                 transitions[source_id][target_id].append(trans)
 

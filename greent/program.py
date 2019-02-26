@@ -154,7 +154,7 @@ class Program:
             results = list(filter(lambda x: x[1].id not in self.excluded_identifiers, results))
             for edge, node in results:
                 edge_label = Text.snakify(edge.standard_predicate.label)
-                if link['predicate'] is None or edge_label == link['predicate']:
+                if link['predicate'] is None or edge_label == link['predicate'] or (isinstance(link['predicate'], list) and (edge_label in link['predicate'])):
                     self.process_node(node, history, edge)
                 else:
                     pass
