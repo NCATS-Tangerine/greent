@@ -123,6 +123,16 @@ class Program:
         for n in self.machine_question['nodes']:
             if not n.curie:
                 continue
+
+            # Ignore the name we're given. Get one from bionames.
+            response = requests.get(f"https://bionames.renci.org/ID_to_label/{n.curie}/")
+            if response.ok:
+                logger.debug(response.json())
+                n.name = response.json()[0]['label']
+            else:
+                logger.warning(f"Bionames ID_to_label failed for curie {n.curie}.")
+                n.name = None
+
             start_node = KNode(n.curie, type=n.type, name=n.name)
             self.process_node(start_node, [n.id])
         return

@@ -121,14 +121,13 @@ def export_node_chunk(tx,nodelist,label):
     cypher = f"""UNWIND $batches as batch
                 MERGE (a:{node_types.ROOT_ENTITY} {{id: batch.id}})
                 set a:{label}
-                set a.name=batch.name
-                set a.equivalent_identifiers=batch.synonyms
                 set a += batch.properties
                 """
     batch = []
     for n in nodelist:
-        nodeout = { 'id': n.id, 'name': n.name, 'synonyms': [s.identifier for s in n.synonyms], 'properties': n.properties }
+        n.properties['equivalent_identifiers'] = [s.identifier for s in n.synonyms]
+        if n.name is not None:
+            n.properties['name'] = n.name
+        nodeout = {'id': n.id, 'properties': n.properties}
         batch.append(nodeout)
     tx.run(cypher,{'batches': batch})
-
-
