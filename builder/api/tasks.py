@@ -43,7 +43,7 @@ redis_client = redis.Redis(
     db=os.environ['BUILDER_RESULTS_DB'],
     password=os.environ['RESULTS_PASSWORD'])
 
-logger = logging.getLogger('ranker')
+logger = logging.getLogger('builder')
 
 @signals.after_task_publish.connect()
 def initialize_queued_task_results(**kwargs):

@@ -35,6 +35,15 @@ class QueryDefinition:
         self.start_name = None
         self.end_name = None
 
+def get_name_for_curie(curie):
+    response = requests.get(f"https://bionames.renci.org/ID_to_label/{curie}/")
+    if response.ok:
+        logger.debug(response.json())
+        return response.json()[0]['label']
+    else:
+        logger.warning(f"Bionames ID_to_label failed for curie {curie}.")
+        return None
+
 class Program:
 
     def __init__(self, plan, machine_question, rosetta, program_number):
@@ -120,18 +129,16 @@ class Program:
     def initialize_instance_nodes(self):
         # No error checking here. You should have caught any malformed questions before this point.
         logger.debug("Initializing program {}".format(self.program_number))
+        
         for n in self.machine_question['nodes']:
             if not n.curie:
                 continue
 
             # Ignore the name we're given. Get one from bionames.
-            response = requests.get(f"https://bionames.renci.org/ID_to_label/{n.curie}/")
-            if response.ok:
-                logger.debug(response.json())
-                n.name = response.json()[0]['label']
-            else:
-                logger.warning(f"Bionames ID_to_label failed for curie {n.curie}.")
-                n.name = None
+            if isinstance(n.curie, str):
+                n.name = get_name_for_curie(n.curie)
+            elif isinstance(n.curie, list):
+                n.name = [get_name_for_curie(c) for c in n.curie]
 
             start_node = KNode(n.curie, type=n.type, name=n.name)
             self.process_node(start_node, [n.id])
