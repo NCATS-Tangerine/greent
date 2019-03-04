@@ -1,5 +1,7 @@
 from greent.annotators.annotator import Annotator
+from greent.util import Text
 import logging
+
 
 logger = logging.getLogger(name = __name__)
 
@@ -18,9 +20,9 @@ class DiseaseAnnotator(Annotator):
         conf = self.get_prefix_config('MONDO')
         ancestors_url = conf['url'] + mondo_curie
         response = await self.async_get_json(ancestors_url)
-        if 'ancestors' not in response:
+        if 'superterms' not in response:
             return {}
-        ancestors = response['ancestors']
-        properties = { conf['keys'][x] : True for x in ancestors if x in conf['keys']}
+        ancestors = response['superterms']
+        properties = {Text.snakify(conf['keys'][x]) : True for x in ancestors if x in conf['keys']}
         return properties
 

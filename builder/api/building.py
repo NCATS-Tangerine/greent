@@ -150,6 +150,35 @@ class SynonimizeAnswerSet(Resource):
         return [], 400
 api.add_resource(SynonimizeAnswerSet, '/synonymize_answer_set/')
 
+class Annotator(Resource):
+    def get(self, node_id, node_type):
+        node = KNode(id= node_id, type= node_type)
+        greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
+        sys.path.insert(0, greent_path)
+        rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
+        rosetta.synonymizer.synonymize(node)
+        try:
+            result = annotator_factory.annotate_shortcut(node, rosetta)
+            if type(result) == type(None):
+                logger.debug(f'No annotator found for {node}')
+                return {'error': f'No annotator found for {node}'}
+        except Exception as e:
+            return {'error': str(e)}, 500
+        return node.properties , 200
+api.add_resource(Annotator, '/annotate/<node_id>/<node_type>/')
+
+class MapSourceNames(Resource):
+    def get(self):
+        map_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
+        sys.path.insert(0, map_path)
+        path = os.path.join(map_path, 'greent','conf','source_map.json')
+        try:
+            with open(path) as f :
+                return  json.load(f), 200
+        except Exception:
+            return {'error': 'error loading file'}, 500
+        
+api.add_resource(MapSourceNames, '/sourcemap/')
 
 class TaskStatus(Resource):
     def get(self, task_id):

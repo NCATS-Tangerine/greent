@@ -2,6 +2,8 @@ import requests
 import logging
 from greent.annotators.annotator import Annotator
 from greent.annotators.util.async_sparql_client import TripleStoreAsync
+from greent.util import Text
+import asyncio
 logger = logging.getLogger(__name__)
 
 class ChemicalAnnotator(Annotator):
@@ -33,8 +35,10 @@ class ChemicalAnnotator(Annotator):
         """
         Extracts interesting data from chembl raw response.
         """
-        extracted = {keys_of_interest[key] : str(chembl_raw[key]) for key in keys_of_interest if key in chembl_raw.keys()}
-        
+        extracted = {keys_of_interest[key] : \
+                    self.convert_data_to_primitives(chembl_raw[key]) \
+                    for key in keys_of_interest if key in chembl_raw.keys()
+                    }
         if len(keys_of_interest) != len(extracted.keys()):
             logger.warn(f"All keys were not annotated for {chembl_raw['molecule_chembl_id']}")
         
@@ -49,7 +53,7 @@ class ChemicalAnnotator(Annotator):
         chebi_raw = await self.async_get_json(url)
         chebi_roles = await self.get_chemical_roles(chebi_id)
         chebi_extract = self.extract_chebi_data(chebi_raw, conf['keys'])
-        chebi_extract.update({x['role_label']: True for x in chebi_roles[chebi_id]})
+        chebi_extract.update({Text.snakify(x['role_label']): True for x in chebi_roles[chebi_id]})
         return chebi_extract
 
     def extract_chebi_data(self, chebi_raw, keys_of_interest):
@@ -76,7 +80,10 @@ class ChemicalAnnotator(Annotator):
         return self.extract_kegg_data(kegg_dict, conf['keys'])
     
     def extract_kegg_data(self, kegg_dict, keys_of_interest):
-        extracted = {keys_of_interest[key] : kegg_dict[key] for key in keys_of_interest if key in kegg_dict.keys()}
+        extracted = {keys_of_interest[key] : \
+            self.convert_data_to_primitives(kegg_dict[key]) \
+            for key in keys_of_interest if key in kegg_dict.keys()}
+
         if len(keys_of_interest) != len(extracted.keys()):
             logger.warn(f"All keys were not annotated for {kegg_dict['ENTRY']}")
         return extracted
@@ -110,11 +117,14 @@ class ChemicalAnnotator(Annotator):
         PREFIX CHEBI: <http://purl.obolibrary.org/obo/CHEBI_>
         SELECT DISTINCT ?role_label
         from <http://reasoner.renci.org/ontology>
-        from <http://reasoner.renci.org/nonredundant>
+        from <http://reasoner.renci.org/redundant>
         where {
             $chebi_id has_role: ?role.
             ?role rdfs:label ?role_label.
+            GRAPH <http://reasoner.renci.org/ontology/closure> {
+                ?role rdfs:subClassOf CHEBI:50906.
             }
+        }
         """
         query_result = await self.tripleStore.async_query_template(
             inputs = {'chebi_id': chebi_id},
@@ -124,7 +134,7 @@ class ChemicalAnnotator(Annotator):
         return {chebi_id: query_result}
 
 
-    async def get_pubchem_data(self, pubchem_id):
+    async def get_pubchem_data(self, pubchem_id, retries = 0):
         """
         Gets pubchem annotations.
         """ 
@@ -133,19 +143,44 @@ class ChemicalAnnotator(Annotator):
         headers = {
             'Accept': 'application/json'
         }
-        result = await self.async_get_json(url, headers= headers)
-        return self.extract_pubchem_data(result, conf['keys'])
+        result = await self.async_get_raw_response(url, headers= headers)
+        # async with result as result_json:
+        result_json = result['json']
+        # pubmed api blocks if too many req are sent
+        throttle = result['headers']['X-Throttling-Control']
+        throttle_warnings = { Text.snakify(value.split(':')[0].lower()) : value.split(':')[1] for value in throttle.split(',') if ':' in value }
+        if 'Yellow' in throttle_warnings['request_time_status'] or 'Yellow' in throttle_warnings['request_count_status']:
+            logger.warn('Pubchem requests reached Yellow')
+            await asyncio.sleep(0.5) 
+        if 'Red' in throttle_warnings['request_time_status'] or 'Red' in throttle_warnings['request_count_status']:
+            logger.warn('Pubchem requests reached RED')
+            await asyncio.sleep(2)
+        if 'Black' in throttle_warnings['request_time_status'] or 'Black' in throttle_warnings['request_count_status']:
+            sleep_sec = 3 * ( retries + 1 ) # 
+            logger.error(f'Pubchem request blocked, sleeping {sleep_sec} seconds, no of retries {retries}')
+            await asyncio.sleep(sleep_sec)
+            # repeat call if retries has changed till 3 
+            if retries < 3:
+                return await self.get_pubchem_data(pubchem_id, retries + 1)
+            else:
+                # exceeding retries return {}
+                logger.warn(f'retry limit exceed for {pubchem_id} , returning empty')
+                return {}
+        return self.extract_pubchem_data(result_json, conf['keys'])
 
     def extract_pubchem_data(self, pubchem_raw, keys_of_interest = []):
         """
         Extracts pubchem data.
         """
         result = {}
-        for compound in pubchem_raw['PC_Compounds']:
-            #I beileve we will have one in the array,
-            for prop in compound['props']:
-                label = prop['urn']['label']
-                if label in keys_of_interest:
-                    values = [prop['value'][v] for v in prop['value'].keys()]
-                    result[keys_of_interest[label]] = values[0] if len(values) == 1 else values
+        if 'PC_Compounds' in pubchem_raw:    
+            for compound in pubchem_raw['PC_Compounds']:
+                #I beileve we will have one in the array,
+                for prop in compound['props']:
+                    label = prop['urn']['label']
+                    if label in keys_of_interest:
+                        values = [prop['value'][v] for v in prop['value'].keys()]
+                        result[keys_of_interest[label]] = values[0] if len(values) == 1 else values
+        else:
+            logger.error(f"got this : {pubchem_raw} for pubchem")
         return result

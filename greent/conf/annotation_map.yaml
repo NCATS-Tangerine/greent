@@ -124,7 +124,7 @@ DiseaseAnnotator:
     prefixes:
       - MONDO
     MONDO:
-      url: "https://onto.renci.org/ancestors/"
+      url: "https://onto.renci.org/superterms/"
       keys: 
         - "acute disease": 
             source: "MONDO:0020683"
