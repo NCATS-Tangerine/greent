@@ -13,7 +13,7 @@ from typing import NamedTuple
 import redis
 from flask import request
 from flask_restful import Resource, reqparse
-
+from greent.annotators import annotator_factory
 from builder.api.setup import app, api
 from builder.api.tasks import update_kg
 import builder.api.logging_config
@@ -125,6 +125,31 @@ class Synonymize(Resource):
         return result, 200
 
 api.add_resource(Synonymize, '/synonymize/<node_id>/<node_type>/')
+
+class SynonimizeAnswerSet(Resource):
+    def post(self):
+        # some sanity checks
+        json_blob = request.json    
+        if 'knowledge_graph' in json_blob and 'nodes' in json_blob['knowledge_graph']:
+            results = json_blob['knowledge_graph']['nodes']
+            # make our synonymizer
+            greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
+            sys.path.insert(0, greent_path)
+            rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
+            for result in results:
+                if 'equivalent_identifiers' in result :
+                    continue
+                node = KNode(id = result['id'], type = result['type']) 
+                # call synonimzer on temp node, this node will have a normalized id based on our conf.
+                rosetta.synonymizer.synonymize(node)
+                # set the normalized id
+                result['id'] = node.id
+                # result['name'] = node.name
+                result['equivalent_identifiers']= [x[0] for x in list(node.synonyms)]
+            return json_blob, 200
+        return [], 400
+api.add_resource(SynonimizeAnswerSet, '/synonymize_answer_set/')
+
 
 class TaskStatus(Resource):
     def get(self, task_id):
