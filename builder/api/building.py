@@ -406,6 +406,7 @@ class Connections(Resource):
         """
         Get a simplified list of all edges in the type graph
         ---
+        
         tags: [util]
         responses:
             200:
