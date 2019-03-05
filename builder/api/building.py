@@ -166,6 +166,7 @@ def synonymize_knowledge_graph(knowledge_graph):
             if 'equivalent_identifiers' not in node:
                 node['equivalent_identifiers'] = [] 
             node['equivalent_identifiers'].extend([x[0] for x in list(n1.synonyms) if x[0] not in node['equivalent_identifiers']])
+            node['id'] = n1.id
     else: 
         logger.warning('Unable to locate nodes in knowledge graph')
     return knowledge_graph
