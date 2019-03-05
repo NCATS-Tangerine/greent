@@ -13,6 +13,8 @@ from typing import NamedTuple
 import redis
 from flask import request
 from flask_restful import Resource, reqparse
+from neo4j.v1 import GraphDatabase, basic_auth
+
 from greent.annotators import annotator_factory
 from builder.api.setup import app, api
 from builder.api.tasks import update_kg
@@ -313,7 +315,58 @@ class Predicates(Resource):
 
         return predicate_conf
 
-api.add_resource(Operations, '/predicates')
+    def post(self):
+        """
+        Force update of source-target predicate list from neo4j database
+        ---
+        tags: [util]
+        responses:
+            200:
+                description: "Here's your updated source-target predicate list"
+                content:
+                    application/json:
+                        schema:
+                            type: object
+            400:
+                description: "Something went wrong. Old predicate list will be retained"
+                content:
+                    text/plain:
+                        schema:
+                            type: string
+        """
+        # Grab all predicates from neo4j - Array of lists of form:
+        # ['predicate_name',[source type list], [target type list]]
+        driver = GraphDatabase.driver(f"bolt://{os.environ['NEO4J_HOST']}:{os.environ['NEO4J_BOLT_PORT']}",
+            auth=basic_auth("neo4j", os.environ['NEO4J_PASSWORD']))
+        with driver.session() as session:
+            result = session.run('match (a)-[x]-(b) return distinct type(x), labels(a), labels(b)')
+            records = [list(r) for r in result]
+
+        # Reformat predicate list into a dict of dicts with first key as
+        # source_type, 2nd key as target_type, and value as a list of all 
+        # supported predicates for the source-target pairing
+        type_black_list = ['Concept', 'named_thing']
+        pred_dict = dict()
+        for row in records:
+            predicate = row[0]
+            sourceTypes = [r for r in row[1] if r not in type_black_list]
+            targetTypes = [r for r in row[2] if r not in type_black_list]
+
+            for s in sourceTypes:
+                for t in targetTypes:
+                    if s not in pred_dict:
+                        pred_dict[s] = dict()
+                    if t not in pred_dict[s]:
+                        pred_dict[s][t] = []
+                    pred_dict[s][t].append(predicate)
+
+        with open(predicates_file, 'w') as f:
+            json.dump(pred_dict, f, indent=2)
+
+        return pred_dict, 201
+
+api.add_resource(Predicates, '/predicates')
+
 
 class Connections(Resource):
     def get(self):
