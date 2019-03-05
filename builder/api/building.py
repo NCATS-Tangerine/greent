@@ -219,7 +219,7 @@ class Annotator(Resource):
                 return {'error': f'No annotator found for {node}'}
         except Exception as e:
             return {'error': str(e)}, 500
-        response['properties'] = node.properties
+        response.update(node.properties)
         return response, 200
 api.add_resource(Annotator, '/annotate/<node_id>/<node_type>/')
 
