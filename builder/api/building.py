@@ -190,13 +190,13 @@ class NormalizeAnswerSet(Resource):
                 description: Previous Knowledge graph with nodes synonymized with 'equivalent_identifiers' array field added to the node (if not provided). Edges will contain a new field with 'normalized_edge_source' (string).
         """
         # some sanity checks
-        json_blob = request.json    
+        json_blob = request.json
         if 'knowledge_graph' in json_blob and 'nodes' in json_blob['knowledge_graph']:
             json_blob['knowledge_graph'] = synonymize_knowledge_graph(json_blob['knowledge_graph'])
             json_blob['knowledge_graph'] = normalize_edge_source(json_blob['knowledge_graph'])
             return json_blob, 200
         return [], 400
-api.add_resource(NormalizeAnswerSet, '/normalize/')
+api.add_resource(NormalizeAnswerSet, '/normalize')
 
 class Annotator(Resource):
     def get(self, node_id, node_type):
