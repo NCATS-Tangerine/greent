@@ -170,7 +170,23 @@ def synonymize_knowledge_graph(knowledge_graph):
     else: 
         logger.warning('Unable to locate nodes in knowledge graph')
     return knowledge_graph
-    
+
+def synonymize_binding_nodes(answer_set):
+    if 'question_graph' not in answer_set:
+        logger.warning('No question graph in parameter')
+        return answer_set
+    question = answer_set['question_graph']
+    answer_type_map = {n['id']: n['type'] for n in question['nodes']}
+    rosetta = rossetta_setup_default()
+    for answer in answer_set['answers']:
+        node_bindings = answer['node_bindings']
+        for node_id in node_bindings:
+            curie = node_bindings[node_id]
+            n = KNode(id= curie, type = answer_type_map[node_id])
+            rosetta.synonymizer.synonymize(n)
+            node_bindings[node_id] = n.id
+    return answer_set    
+        
 
 class NormalizeAnswerSet(Resource):
     def post(self):
@@ -195,6 +211,7 @@ class NormalizeAnswerSet(Resource):
         if 'knowledge_graph' in json_blob and 'nodes' in json_blob['knowledge_graph']:
             json_blob['knowledge_graph'] = synonymize_knowledge_graph(json_blob['knowledge_graph'])
             json_blob['knowledge_graph'] = normalize_edge_source(json_blob['knowledge_graph'])
+            json_blob = synonymize_binding_nodes(json_blob)
             return json_blob, 200
         return [], 400
 api.add_resource(NormalizeAnswerSet, '/normalize')
