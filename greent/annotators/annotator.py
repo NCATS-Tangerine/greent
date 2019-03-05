@@ -147,3 +147,15 @@ class Annotator:
     
     async def async_get_text(self, url, headers={}):
         return await async_client.async_get_text(url, headers)
+
+    async def async_get_raw_response(self, url, headers ={}):
+        return await async_client.async_get_response(url, headers)
+
+    def convert_data_to_primitives(self, value):
+        """
+        Will preserve original data types will try to convert any 
+        other type not supported by neo4j to string, like dict.
+        """
+        if type(value) in [int, float, str, bool, list]:
+            return value
+        return str(value) 
