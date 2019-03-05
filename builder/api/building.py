@@ -136,11 +136,13 @@ def rossetta_setup_default():
     return rosetta
 
 
-def normalize_edge_source(knowledge_graph):
+def normalize_edge_source(knowledge_graph, id_mappings):
     source_map = load_edge_source_json_map()
     edges = knowledge_graph['edges']
     for edge in edges:
         source_db = edge['source_database']
+        edge['source_id'] = id_mappings.get(edge['source_id'],edge['source_id'])
+        edge['target_id'] = id_mappings.get(edge['target_id'], edge['target_id'])
         logger.warning(f'getting {source_db} from :')
 
         logger.warning(f'{source_map}')
@@ -157,6 +159,7 @@ def load_edge_source_json_map():
 
 
 def synonymize_knowledge_graph(knowledge_graph):
+    id_mappings = {}
     if 'nodes' in knowledge_graph:
         rosetta = rossetta_setup_default()
         nodes = knowledge_graph['nodes']
@@ -166,25 +169,21 @@ def synonymize_knowledge_graph(knowledge_graph):
             if 'equivalent_identifiers' not in node:
                 node['equivalent_identifiers'] = [] 
             node['equivalent_identifiers'].extend([x[0] for x in list(n1.synonyms) if x[0] not in node['equivalent_identifiers']])
-            node['id'] = n1.id
+            id_mappings[node['id']] = n1.id
+            node['id'] = n1.id  
     else: 
         logger.warning('Unable to locate nodes in knowledge graph')
-    return knowledge_graph
+    return knowledge_graph, id_mappings
 
-def synonymize_binding_nodes(answer_set):
+def synonymize_binding_nodes(answer_set, id_mappings):
     if 'question_graph' not in answer_set:
         logger.warning('No question graph in parameter')
         return answer_set
-    question = answer_set['question_graph']
-    answer_type_map = {n['id']: n['type'] for n in question['nodes']}
-    rosetta = rossetta_setup_default()
     for answer in answer_set['answers']:
         node_bindings = answer['node_bindings']
         for node_id in node_bindings:
-            curie = node_bindings[node_id]
-            n = KNode(id= curie, type = answer_type_map[node_id])
-            rosetta.synonymizer.synonymize(n)
-            node_bindings[node_id] = n.id
+            curie = node_bindings[node_id] 
+            node_bindings[node_id] = id_mappings.get(curie, curie)
     return answer_set    
         
 
@@ -209,9 +208,9 @@ class NormalizeAnswerSet(Resource):
         # some sanity checks
         json_blob = request.json
         if 'knowledge_graph' in json_blob and 'nodes' in json_blob['knowledge_graph']:
-            json_blob['knowledge_graph'] = synonymize_knowledge_graph(json_blob['knowledge_graph'])
-            json_blob['knowledge_graph'] = normalize_edge_source(json_blob['knowledge_graph'])
-            json_blob = synonymize_binding_nodes(json_blob)
+            json_blob['knowledge_graph'], id_mappings = synonymize_knowledge_graph(json_blob['knowledge_graph'])
+            json_blob['knowledge_graph'] = normalize_edge_source(json_blob['knowledge_graph'], id_mappings)
+            json_blob = synonymize_binding_nodes(json_blob, id_mappings)
             return json_blob, 200
         return [], 400
 api.add_resource(NormalizeAnswerSet, '/normalize')
