@@ -126,29 +126,74 @@ class Synonymize(Resource):
 
 api.add_resource(Synonymize, '/synonymize/<node_id>/<node_type>/')
 
-class SynonimizeAnswerSet(Resource):
+def rossetta_setup_default():
+    greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
+    sys.path.insert(0, greent_path)
+    rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
+    return rosetta
+
+
+def normalize_edge_source(knowledge_graph):
+    source_map = load_edge_source_json_map()
+    edges = knowledge_graph['edges']
+    for edge in edges:
+        source_db = edge['source_database']
+        logger.warning(f'getting {source_db} from :')
+
+        logger.warning(f'{source_map}')
+        edge['normalized_source_database'] = source_map.get(edge['source_database'],'')
+    return knowledge_graph
+    
+
+def load_edge_source_json_map():
+    map_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
+    sys.path.insert(0, map_path)
+    path = os.path.join(map_path, 'greent','conf','source_map.json')
+    with open(path) as f :
+        return  json.load(f)
+
+
+def synonymize_knowledge_graph(knowledge_graph):
+    if 'nodes' in knowledge_graph:
+        rosetta = rossetta_setup_default()
+        nodes = knowledge_graph['nodes']
+        for node in nodes:
+            n1 = KNode(id = node['id'], type = node['type'])
+            rosetta.synonymizer.synonymize(n1)
+            if 'equivalent_identifiers' not in node:
+                node['equivalent_identifiers'] = [] 
+            node['equivalent_identifiers'].extend([x[0] for x in list(n1.synonyms) if x[0] not in node['equivalent_identifiers']])
+    else: 
+        logger.warning('Unable to locate nodes in knowledge graph')
+    return knowledge_graph
+    
+
+class NormalizeAnswerSet(Resource):
     def post(self):
+        """
+        Adds synonmys to node and normalize edge db source for a json blob of answer knowledge graph.
+        ---
+        tags: [util]
+        requestBody:
+            name: Answer
+            description: The answer graph.
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/definitions/Answer'
+            required: true
+        responses:
+            200:
+                description: Previous Knowledge graph with nodes synonymized with 'equivalent_identifiers' array field added to the node (if not provided). Edges will contain a new field with 'normalized_edge_source' (string).
+        """
         # some sanity checks
         json_blob = request.json    
         if 'knowledge_graph' in json_blob and 'nodes' in json_blob['knowledge_graph']:
-            results = json_blob['knowledge_graph']['nodes']
-            # make our synonymizer
-            greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
-            sys.path.insert(0, greent_path)
-            rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
-            for result in results:
-                if 'equivalent_identifiers' in result :
-                    continue
-                node = KNode(id = result['id'], type = result['type']) 
-                # call synonimzer on temp node, this node will have a normalized id based on our conf.
-                rosetta.synonymizer.synonymize(node)
-                # set the normalized id
-                result['id'] = node.id
-                # result['name'] = node.name
-                result['equivalent_identifiers']= [x[0] for x in list(node.synonyms)]
+            json_blob['knowledge_graph'] = synonymize_knowledge_graph(json_blob['knowledge_graph'])
+            json_blob['knowledge_graph'] = normalize_edge_source(json_blob['knowledge_graph'])
             return json_blob, 200
         return [], 400
-api.add_resource(SynonimizeAnswerSet, '/synonymize_answer_set/')
+api.add_resource(NormalizeAnswerSet, '/normalize/')
 
 class Annotator(Resource):
     def get(self, node_id, node_type):
@@ -175,18 +220,6 @@ class Annotator(Resource):
         return response, 200
 api.add_resource(Annotator, '/annotate/<node_id>/<node_type>/')
 
-class MapSourceNames(Resource):
-    def get(self):
-        map_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
-        sys.path.insert(0, map_path)
-        path = os.path.join(map_path, 'greent','conf','source_map.json')
-        try:
-            with open(path) as f :
-                return  json.load(f), 200
-        except Exception:
-            return {'error': 'error loading file'}, 500
-        
-api.add_resource(MapSourceNames, '/sourcemap/')
 
 class TaskStatus(Resource):
     def get(self, task_id):
