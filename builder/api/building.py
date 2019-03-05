@@ -26,6 +26,7 @@ from greent.util import LoggingUtil
 
 rosetta_config_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "rosetta.yml")
 properties_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "conf", "annotation_map.yaml")
+predicates_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "conf", "predicates.json")
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
@@ -325,6 +326,27 @@ class Operations(Resource):
         return operators
 
 api.add_resource(Operations, '/operations')
+
+class Predicates(Resource):
+    def get(self):
+        """
+        Get a JSON object of predicates for a source-target pair
+        ---
+        tags: [util]
+        responses:
+            200:
+                description: Operations
+                content:
+                    application/json:
+                        schema:
+                            type: object
+        """
+        with open(predicates_file, 'r') as f:
+            predicate_conf = json.load(f)
+
+        return predicate_conf
+
+api.add_resource(Operations, '/predicates')
 
 class Connections(Resource):
     def get(self):
