@@ -157,6 +157,13 @@ class Annotator(Resource):
         sys.path.insert(0, greent_path)
         rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
         rosetta.synonymizer.synonymize(node)
+        equivalent_ids = {x[0]:x[1] for x in list(node.synonyms)}
+        response = {
+            'id': node.id,
+            'equivalent_identifiers': equivalent_ids,
+            'type': node.type,
+            'name': equivalent_ids[node.id]
+        }
         try:
             result = annotator_factory.annotate_shortcut(node, rosetta)
             if type(result) == type(None):
@@ -164,7 +171,8 @@ class Annotator(Resource):
                 return {'error': f'No annotator found for {node}'}
         except Exception as e:
             return {'error': str(e)}, 500
-        return node.properties , 200
+        response['properties'] = node.properties
+        return response, 200
 api.add_resource(Annotator, '/annotate/<node_id>/<node_type>/')
 
 class MapSourceNames(Resource):
