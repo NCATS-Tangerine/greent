@@ -181,7 +181,12 @@ def synonymize_binding_nodes(answer_set, id_mappings):
         node_bindings = answer['node_bindings']
         for node_id in node_bindings:
             curie = node_bindings[node_id] 
-            node_bindings[node_id] = id_mappings.get(curie, curie)
+            converted = ''
+            if type(curie) == type([]):
+                converted = [id_mappings.get(c, c) for c in curie]
+            else:
+                converted = id_mappings.get(curie, curie)
+            node_bindings[node_id] = converted
     return answer_set    
         
 
