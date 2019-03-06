@@ -25,6 +25,7 @@ import builder.api.definitions
 from builder.buildmain import setup
 from greent.graph_components import KNode
 from greent.util import LoggingUtil
+import re
 
 rosetta_config_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "rosetta.yml")
 properties_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "conf", "annotation_map.yaml")
@@ -140,13 +141,9 @@ def normalize_edge_source(knowledge_graph, id_mappings):
     source_map = load_edge_source_json_map()
     edges = knowledge_graph['edges']
     for edge in edges:
-        source_db = edge['source_database']
         edge['source_id'] = id_mappings.get(edge['source_id'],edge['source_id'])
         edge['target_id'] = id_mappings.get(edge['target_id'], edge['target_id'])
-        logger.warning(f'getting {source_db} from :')
-
-        logger.warning(f'{source_map}')
-        edge['normalized_source_database'] = source_map.get(edge['source_database'],'')
+        edge['source_database'] = source_map.get(edge['source_database'],edge['source_database'])
     return knowledge_graph
     
 
@@ -164,7 +161,8 @@ def synonymize_knowledge_graph(knowledge_graph):
         rosetta = rossetta_setup_default()
         nodes = knowledge_graph['nodes']
         for node in nodes:
-            n1 = KNode(id = node['id'], type = node['type'])
+            id = ':'.join(re.split(r'\..*:',node['id']))
+            n1 = KNode(id = id, type = node['type'])
             rosetta.synonymizer.synonymize(n1)
             if 'equivalent_identifiers' not in node:
                 node['equivalent_identifiers'] = [] 
