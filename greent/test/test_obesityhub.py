@@ -48,30 +48,24 @@ def test_mwas_file_reader(rosetta, obh):
 
 def test_sugen_file_reader(rosetta, obh):
 
-	assert obh.quality_control_check('sample_sugen1', .00000001, .525, 100, delimiter=' ') == True
-	assert obh.quality_control_check('sample_sugen1', .00000001, .4, 100, delimiter=' ') == False
-	
-	assert obh.quality_control_check('sample_sugen2', .00000001, .525, 100, delimiter=' ') == True
-	assert obh.quality_control_check('sample_sugen2', 1e-5, .525, 1, delimiter=' ') == False
-	assert obh.quality_control_check('sample_sugen2', 1e-20, .525, 1, delimiter=' ') == True
+	assert obh.quality_control_check('./sample_sugen', p_value_threshold=.05, max_hits=1, delimiter='\t') == False
+	assert obh.quality_control_check('./sample_sugen', p_value_threshold=.05, max_hits=100, delimiter='\t') == True
+	assert obh.quality_control_check('./sample_sugen', delimiter='\t') == True
 
-	hgvs_ids, p_values = obh.get_hgvs_identifiers_from_gwas('./sample_sugen1', .000001, 'GRCh37', 'p1')
-	assert len(hgvs_ids) == 0
-	assert len(p_values.keys()) == 0
+	# p value is too strict
+	variant_info = obh.get_variants_from_gwas('./sample_sugen', .005, 'GRCh37', 'p1')
+	assert len(variant_info) == 0
 
-	hgvs_ids, p_values = obh.get_hgvs_identifiers_from_gwas('./sample_sugen2', .000001, 'GRCh37', 'p1')
-	assert len(hgvs_ids) == 0
-	hgvs_ids, p_values = obh.get_hgvs_identifiers_from_gwas('./sample_sugen2', .000001, 'GRCh37', 'p1', impute2_cutoff=0)
-	assert 'NC_000023.10:g.32407761G>A' in hgvs_ids
-	assert float(p_values['NC_000023.10:g.32407761G>A']) < .00001
-	assert 'NC_000001.10:g.10235_10236insA' in hgvs_ids
-	assert float(p_values['NC_000001.10:g.10235_10236insA']) < .000001
+	# impute2 cutoff is too strict
+	variant_info = obh.get_variants_from_gwas('./sample_sugen', .05, 'GRCh37', 'p1', impute2_cutoff=0.7)
+	assert len(variant_info) == 0
 
-	hgvs_ids, p_values = obh.get_hgvs_identifiers_from_gwas('./sample_sugen3', .000001, 'GRCh37', 'p1', impute2_cutoff=0)
-	assert len(hgvs_ids) == 5
+	variant_info = obh.get_variants_from_gwas('./sample_sugen', .05, 'GRCh37', 'p1')
+	assert len(variant_info) == 5
 
-	hgvs_ids, p_values = obh.get_hgvs_identifiers_from_gwas('./sample_sugen3', 1, 'GRCh37', 'p1', impute2_cutoff=0)
-	assert len(hgvs_ids) == 24
+	variant_ids, p_values = zip(*variant_info)
+	assert 'NC_000001.10:g.19299674_19299676del' in variant_ids
+	assert .049 in p_values
 
 def test_gwas_builder(rosetta, obh):
 	#this will actually write to neo4j
