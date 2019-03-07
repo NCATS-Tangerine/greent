@@ -143,7 +143,11 @@ def normalize_edge_source(knowledge_graph, id_mappings):
     for edge in edges:
         edge['source_id'] = id_mappings.get(edge['source_id'],edge['source_id'])
         edge['target_id'] = id_mappings.get(edge['target_id'], edge['target_id'])
-        edge['source_database'] = source_map.get(edge['source_database'],edge['source_database'])
+        if 'source_database' in edge:
+            if type(edge['source_database']) == type([]):
+                edge['source_database'] = [source_map.get(source,source) for source in edge['source_database']]
+            else:
+                edge['source_database'] = source_map.get(edge['source_database'],edge['source_database'])
     return knowledge_graph
     
 
