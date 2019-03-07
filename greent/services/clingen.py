@@ -125,7 +125,7 @@ class ClinGen(Service):
             try:
                 for dbsnp_json in allele_json['externalRecords']['dbSNP']:
                     variant_rsid = dbsnp_json['rs']
-                    synonyms.add(LabeledID(identifier=f'DBSNP:rs{variant_rsid}', label=f'{variant_rsid}'))
+                    synonyms.add(LabeledID(identifier=f'DBSNP:rs{variant_rsid}', label=f'rs{variant_rsid}'))
             except KeyError as e:
                 pass
 

@@ -149,7 +149,8 @@ def test_biolink(rosetta, biolink):
     plabels = set( [p.label for p in predicates] )
     assert 'has_phenotype' in plabels
 
-def test_gwascatalog_variant_to_phenotype(gwascatalog, rosetta):
+def a_test_gwascatalog_variant_to_phenotype(gwascatalog, rosetta):
+    # turned this off for now because it relies on gwascatalog being precached for CAIDs
 
     #relations = rosetta.cache.get('gwascatalog.sequence_variant_to_disease_or_phenotypic_feature(CAID:CA248392703)')
     #identifiers = [node.id for r,node in relations]
