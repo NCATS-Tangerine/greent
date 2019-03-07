@@ -162,13 +162,24 @@ def synonymize_knowledge_graph(knowledge_graph):
         nodes = knowledge_graph['nodes']
         for node in nodes:
             id = ':'.join(re.split(r'\..*:',node['id']))
-            n1 = KNode(id = id, type = node['type'])
-            rosetta.synonymizer.synonymize(n1)
-            if 'equivalent_identifiers' not in node:
-                node['equivalent_identifiers'] = [] 
-            node['equivalent_identifiers'].extend([x[0] for x in list(n1.synonyms) if x[0] not in node['equivalent_identifiers']])
-            id_mappings[node['id']] = n1.id
-            node['id'] = n1.id  
+            # try and make nodes with single type
+            nodes = []
+            if type(node['type']) == type([]):
+                nodes = [KNode(id = id, type = node_type) for node_type in node['type']]
+            else:
+                nodes = [KNode(id = id, type = node['type'])]
+            id_picks = [id]
+            for n in nodes:
+                rosetta.synonymizer.synonymize(n)
+                # if node Id after synonymization is d/t from kg node track change to use that
+                if n.id not in id_picks:
+                    id_picks.append(n.id)
+                if 'equivalent_identifiers' not in node:
+                    node['equivalent_identifiers'] = [] 
+                node['equivalent_identifiers'].extend([x[0] for x in list(n.synonyms) if x[0] not in node['equivalent_identifiers']])
+            id_last_change = id_picks[len(id_picks) - 1]
+            id_mappings[node['id']] = id_last_change
+            node['id'] = id_last_change
     else: 
         logger.warning('Unable to locate nodes in knowledge graph')
     return knowledge_graph, id_mappings
