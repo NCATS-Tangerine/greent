@@ -199,3 +199,40 @@ def test_disease_to_anatomy(uberon):
     assert 'pectoral girdle region' in [ node_name  for edge_tar_id, predicate, node_id , node_name in attributes ]
     assert 'axilla' in [ node_name  for edge_tar_id, predicate, node_id , node_name in attributes ]
     assert 'appendage girdle region' in [ node_name  for edge_tar_id, predicate, node_id , node_name in attributes ]
+
+
+def test_cell_component_to_chemical(uberon):
+    k = KNode('GO:0043257', type = node_types.CELLULAR_COMPONENT)
+    results = uberon.get_chemical_substance_by_cellular_component(k)
+    identifiers = [edge.target_id for edge, node in results]
+    attributes = [(edge.target_id, edge.original_predicate, node.id, node.name) for edge, node in results]
+    for edge_tar_id, predicate, node_id , node_name in attributes:
+        assert edge_tar_id == node_id
+
+def test_cell_component_to_anatomy(uberon):
+    k = KNode('GO:0032589', type = node_types.CELLULAR_COMPONENT)
+    results = uberon.get_anatomical_entity_by_cellular_component(k)
+    identifiers =  [edge.target_id for edge, node in results]
+    attributes = [(edge.target_id, edge.original_predicate, node.id, node.name) for edge, node in results]
+    for edge_tar_id, predicate, node_id , node_name in attributes:
+        assert edge_tar_id == node_id
+    
+    assert 'UBERON:0002050' in identifiers
+
+def test_cell_component_to_disease(uberon):
+    k = KNode('GO:0098590', type = node_types.CELLULAR_COMPONENT)
+    results = uberon.get_disease_by_cellular_component(k)
+    identifiers =  [edge.target_id for edge, node in results]
+    attributes = [(edge.target_id,edge.source_id, edge.original_predicate, node.id, node.name) for edge, node in results]
+    for edge_tar_id, edge_source_id, predicate, node_id , node_name in attributes:
+        assert edge_tar_id == k.id
+    assert 'MONDO:0010868' in [edge_source_id for edge_tar_id,edge_source_id,  predicate, node_id , node_name in attributes ]
+
+def test_cell_component_to_cell(uberon):
+    k = KNode('GO:0032590', type = node_types.CELLULAR_COMPONENT)
+    results = uberon.get_cell_by_cellular_component(k)
+    identifiers =  [edge.target_id for edge, node in results]
+    attributes = [(edge.target_id, edge.original_predicate, node.id, node.name) for edge, node in results]
+    for edge_tar_id, predicate, node_id , node_name in attributes:
+        assert edge_tar_id == node_id
+    assert 'CL:0000540' in identifiers

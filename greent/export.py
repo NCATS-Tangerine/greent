@@ -82,14 +82,26 @@ def export_edge_chunk(tx,edgelist,edgelabel):
     reason to worry about preserving information from an old edge.
     What defines the edge are the identifiers of its nodes, and the source.function that created it."""
     cypher = f"""UNWIND $batches as row
+            
             MATCH (a:{node_types.ROOT_ENTITY} {{id: row.source_id}}),(b:{node_types.ROOT_ENTITY} {{id: row.target_id}})
-            MERGE (a)-[r:{edgelabel} {{edge_source: row.provided_by, relation_label: row.original_predicate_label}}]->(b)
-            set r.source_database=row.database
-            set r.ctime=row.ctime 
-            set r.predicate_id=row.standard_id 
-            set r.relation=row.original_predicate_id 
-            set r.publications=row.publications
-            set r += row.properties
+            MERGE (a)-[r:{edgelabel} {{predicate_id: row.standard_id}}]->(b)
+            ON CREATE SET r.edge_source = [row.provided_by]
+            ON CREATE SET r.relation_label = [row.original_predicate_label]
+            ON CREATE SET r.source_database=[row.database]
+            ON CREATE SET r.ctime=[row.ctime]
+            ON CREATE SET r.publications=row.publications
+            ON CREATE SET r.relation = [row.original_predicate_id]
+            // FOREACH mocks if condition 
+            FOREACH (_ IN CASE WHEN row.provided_by in r.edge_source THEN [] ELSE [1] END |
+            SET r.edge_source = CASE WHEN EXISTS(r.edge_source) THEN r.edge_source + [row.provided_by] ELSE [row.provided_by] END
+            SET r.ctime = CASE WHEN EXISTS (r.ctime) THEN r.ctime + [row.ctime] ELSE [row.ctime] END
+            SET r.relation_label = CASE WHEN EXISTS(r.relation_label) THEN r.relation_label + [row.original_predicate_label] ELSE [row.original_predicate_label] END
+            SET r.source_database = CASE WHEN EXISTS(r.source_database) THEN r.source_database + [row.database] ELSE [row.database] END
+            SET r.predicate_id = row.standard_id
+            SET r.relation = CASE WHEN EXISTS(r.relation) THEN r.relation + [row.original_predicate_id] ELSE [row.original_predicate_id] END
+            SET r.publications = [pub in row.publications where not pub in r.publications ] + r.publications
+            )
+            SET r += row.properties
             """
     batch = [ {'source_id': edge.source_id,
                'target_id': edge.target_id,
@@ -101,7 +113,7 @@ def export_edge_chunk(tx,edgelist,edgelabel):
                'original_predicate_label': edge.original_predicate.label,
                'publication_count': len(edge.publications),
                'publications': edge.publications[:1000],
-               'properties': edge.properties
+               'properties': edge.properties if edge.properties != None else {}
                }
               for edge in edgelist]
 

@@ -150,7 +150,7 @@ class Annotator:
 
     async def async_get_raw_response(self, url, headers ={}):
         return await async_client.async_get_response(url, headers)
-
+    
     def convert_data_to_primitives(self, value):
         """
         Will preserve original data types will try to convert any 
@@ -158,4 +158,4 @@ class Annotator:
         """
         if type(value) in [int, float, str, bool, list]:
             return value
-        return str(value) 
+        return str(value)

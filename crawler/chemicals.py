@@ -70,7 +70,7 @@ def load_chemicals(rosetta, refresh=False):
     dump_cache(concord,rosetta)
 
 def get_chebi_label(ident):
-    res = requests.get(f'http://onto.renci.org/label/{ident}/').json()
+    res = requests.get(f'https://uberonto.renci.org/label/{ident}/').json()
     return res['label']
 
 def get_chembl_label(ident):

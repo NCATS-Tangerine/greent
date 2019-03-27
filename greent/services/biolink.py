@@ -92,8 +92,11 @@ class Biolink(Service):
                             while n.endswith(':'):
                                 n = n[:-1]
                             pubs.append(f'PMID:{n}')
-            if reverse:
-                source_node = KNode(association['subject']['id'], type=target_node_type, name=association['subject']['label'])
+            inverse = False 
+            if 'relation' in association:
+                inverse = association['relation'].get('inverse', False)
+            if reverse or inverse:
+                source_node = KNode(association['object']['id'], type=target_node_type, name=association['object']['label'])
                 target_node = input_node
                 newnode = source_node
             else:
@@ -149,7 +152,7 @@ class Biolink(Service):
         url = "{0}/bioentity/phenotype/{1}/diseases/".format(self.url, phenotype.id)
         response = self.page_calls(url)
         #response = requests.get(url).json()
-        return self.process_associations(response, 'phenotype_get_disease', node_types.DISEASE, phenotype.id, url, phenotype)
+        return self.process_associations(response, 'phenotype_get_disease', node_types.DISEASE, phenotype.id, url, phenotype, reverse= True)
 
 
     def gene_get_go(self, gene):

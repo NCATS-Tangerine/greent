@@ -39,6 +39,7 @@ class ChemicalAnnotator(Annotator):
                     self.convert_data_to_primitives(chembl_raw[key]) \
                     for key in keys_of_interest if key in chembl_raw.keys()
                     }
+        
         if len(keys_of_interest) != len(extracted.keys()):
             logger.warn(f"All keys were not annotated for {chembl_raw['molecule_chembl_id']}")
         
@@ -83,7 +84,6 @@ class ChemicalAnnotator(Annotator):
         extracted = {keys_of_interest[key] : \
             self.convert_data_to_primitives(kegg_dict[key]) \
             for key in keys_of_interest if key in kegg_dict.keys()}
-
         if len(keys_of_interest) != len(extracted.keys()):
             logger.warn(f"All keys were not annotated for {kegg_dict['ENTRY']}")
         return extracted

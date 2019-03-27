@@ -115,10 +115,6 @@ slots:
       - biolink:gene_get_process             # biolink returns no relation_id or an identifier that is not a curie
       - biolink:gene_get_process_or_function # biolink returns no relation_id or an identifier that is not a curie
 
-  capable of:
-    mappings:
-      - biolink:gene_get_function            # biolink returns no relation_id or an identifier that is not a curie
-      - RO:0002584
 
   affects:
     mappings:
@@ -135,6 +131,7 @@ slots:
       - RO:0002450
       - hetio:UPREGULATES_AuG
       - hetio:UPREGULATES_DuG
+      - GO:acts_upstream_of_or_within_positive_effect
 
     #In the model, here for the hetio mappings
   negatively regulates, entity to entity:
@@ -454,6 +451,7 @@ slots:
     mappings:
       - CTD:affects_transport_of
       - CTD:affects^transport
+      - RO:0002011
 
   increases transport of:
     mappings:
@@ -529,6 +527,7 @@ slots:
       - RO:0002338 # has_target_start_location
       - RO:0004026
       - RO:0004027
+      - RO:0001018
 
   contributes to:
     mappings:
@@ -560,7 +559,8 @@ slots:
       - RO:0002328 #Part of is capable of
       - RO:0002216 #Capable of part of
       - RO:0002329 #part of something that is capable of
-
+      - biolink:gene_get_function            # biolink returns no relation_id or an identifier that is not a curie
+      - RO:0002584
   causes:
     mappings:
       - RO:0002595  #Actually causally relates entity to process, while causes is supposed to be entity to entity...
@@ -580,6 +580,9 @@ slots:
       - RO:0009501  # Better to turn to B - (Causes) -> A  for Pheno -> Biological Process/ Molecular activity, where B = Biological process , A= Phenotypic feature.
       - RO:0004028 # ^^ Similar case like 0009501
       - RO:0002337
+      - RO:0002254
+      - RO:0002202
+      - RO:0002258
 
   disrupts:
     mappings:
@@ -717,3 +720,31 @@ slots:
   posetively regulates:
     mappings:
       - RO:0002598
+
+  mereotopologically related to:
+    mappings:
+      - RO:0002323
+  
+  moleculary interacts with:
+    mappings:
+      - CTD:molecularly_interacts_with
+  
+  decreases molecular interaction:
+    mappings:
+      - CTD:decreases_molecular_interaction_with
+  
+  increases molecular interaction:
+    mappings:
+      - CTD:increases_molecular_interaction_with
+  
+  part of:
+    mappings:
+      - RO:0002007
+  
+  overlaps:
+    mappings:
+      - RO:0002220
+
+  spatially disjoint from:
+    mappings:
+      - RO:0002163

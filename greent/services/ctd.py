@@ -311,20 +311,84 @@ class CTD(Service):
             logger.info(url)
             obj = requests.get (url).json ()
             logger.info(len(obj))
+            chemical_evidence_basket = {}
             for r in obj:
-                predicate_label = r['DirectEvidence']
-                if predicate_label == '':
+                #collect those that have evidence
+                if r['DirectEvidence'] != '':
+                    c_id = r['ChemicalID']
+                    if c_id not in chemical_evidence_basket:
+                        chemical_evidence_basket[c_id] = {
+                            'name': r['ChemicalName'],
+                            'evidences': []
+                        }
+                    evidence = {
+                        'DirectEvidence': r['DirectEvidence'],
+                        'refs': [f'PMID:{pmid}' for pmid in r['PubMedIDs'].split('|')]
+                    }
+                    chemical_evidence_basket[c_id]['evidences'].append(evidence)
+            # now start making the edges and nodes based
+            for c_id in chemical_evidence_basket:
+                chemical_info = chemical_evidence_basket[c_id]
+                treats_count = 0
+                marker_count = 0
+                treats_refs = []
+                marker_refs = []
+                for evidence in chemical_info['evidences']:
+                    if evidence['DirectEvidence'] == 'therapeutic':
+                        treats_count += 1
+                        treats_refs += evidence['refs'] 
+                    elif evidence['DirectEvidence'] == 'marker/mechanism':
+                        marker_count += 1
+                        marker_refs += evidence['refs']
+                predicate = self.get_chemical_label_id(treats_count, marker_count)
+                if predicate == None:
                     continue
-                    predicate_label = 'inferred'
-                predicate = LabeledID(identifier=f'CTD:{predicate_label}', label=predicate_label)
-                refs = [f'PMID:{pmid}' for pmid in r['PubMedIDs'].split('|')]
-                #Should this be substance?
-                drug_node = KNode(f"MESH:{r['ChemicalID']}", type=node_types.CHEMICAL_SUBSTANCE, name=r['ChemicalName'])
-                edge = self.create_edge(drug_node,disease_node,'ctd.disease_to_chemical',identifier,predicate,
-                                        publications=refs,url=url)
+                publications = []
+                # do some reorgnanizing of the pubmedids
+                if predicate.identifier == 'RO:0001001':
+                    publications  = treats_refs + marker_refs
+                if 'marker' in predicate.identifier :
+                    publications = marker_refs
+                if 'therapeutic' in predicate.identifier:
+                    publications = treats_refs
+                # make node and edge
+                drug_node = KNode(f'MESH:{c_id}', type=node_types.CHEMICAL_SUBSTANCE, name= chemical_info['name'])
+                edge = self.create_edge(
+                    drug_node,
+                    disease_node,
+                    'ctd.disease_to_chemical',
+                    identifier,
+                    predicate = predicate,
+                    publications= publications,
+                    url= url
+                )
                 key = (drug_node.id, edge.standard_predicate)
                 if key not in unique:
                     output.append( (edge,drug_node) )
-                    unique.add(key)
+                    unique.add(key)   
         return output
 
+    def get_chemical_label_id (self, therapeutic_count, marker_count, marker_predicate_label = 'marker/mechanism', therapeutic_predicate_label = 'therapeutic'):
+        """
+        This function applies rules to determine which edge to prefer in cases
+        where conflicting edges are returned for a chemical disease relation ship. 
+        """
+        if therapeutic_count == marker_count and therapeutic_count < 3:
+            return None
+        # avoid further checks if we find homogeneous types     
+        if marker_count == 0 and therapeutic_count > 0 :
+            return LabeledID(identifier = f'CTD:{therapeutic_predicate_label}', label = therapeutic_predicate_label)
+        if therapeutic_count == 0 and marker_count > 0:
+            return LabeledID(identifier= f'CTD:{marker_predicate_label}', label = marker_predicate_label)
+        
+        
+        marker = (therapeutic_count == 1 and marker_count > 1)\
+                or(marker_count / therapeutic_count > 2)
+
+        therapeutic = (marker_count == 1 and therapeutic_count > 1)\
+                    or(therapeutic_count / marker_count > 2)
+        if marker:
+            return LabeledID(identifier= f'CTD:{marker_predicate_label}', label = marker_predicate_label)
+        if therapeutic:
+            return LabeledID(identifier = f'CTD:{therapeutic_predicate_label}', label = therapeutic_predicate_label)
+        return LabeledID(identifier= 'RO:0001001', label='related to')

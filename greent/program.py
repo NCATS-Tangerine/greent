@@ -91,7 +91,8 @@ class Program:
         CL:0000003 native cell
         CL:0000255 eukaryotic cell
         """
-        self.excluded_identifiers = {'UBERON:0000064','UBERON:0000475','UBERON:0011216','UBERON:0000062','UBERON:0000465','UBERON:0010000','UBERON:0000061', 'UBERON:0000467','UBERON:0001062','UBERON:0000468', 'UBERON:0000479', 'GO:0044267', 'GO:0005515', 'CL:0000548', 'CL:0000003', 'CL:0000255'}
+        self.excluded_identifiers = self.rosetta.service_context.config.get('bad_identifiers')
+        # {'UBERON:0000064','UBERON:0000475','UBERON:0011216','UBERON:0000062','UBERON:0000465','UBERON:0010000','UBERON:0000061', 'UBERON:0000467','UBERON:0001062','UBERON:0000468', 'UBERON:0000479', 'GO:0044267', 'GO:0005515', 'CL:0000548', 'CL:0000003', 'CL:0000255'}
 
         response = requests.get(f"{os.environ['BROKER_API']}queues/")
         queues = response.json()

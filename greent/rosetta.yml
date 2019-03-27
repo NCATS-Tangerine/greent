@@ -199,6 +199,20 @@
         op    : biolink.sequence_variant_get_phenotype
       - link  : sequence_variant_to_disease_or_phenotypic_feature
         op    : gwascatalog.sequence_variant_to_disease_or_phenotypic_feature
+  cellular_component:
+    chemical_substance:
+      - link  : cellular_component_to_chemical_substance
+        op    : uberongraph.get_chemical_substance_by_cellular_component  
+    anatomical_entity:
+      - link  : cellular_component_to_anatomical_entity
+        op    : uberongraph.get_anatomical_entity_by_cellular_component
+    disease:
+      - link  : cellular_component_to_disease
+        op    : uberongraph.get_disease_by_cellular_component
+    cell:
+      - link  : cellular_component_to_cell
+        op    : uberongraph.get_cell_by_cellular_component
+      
 
 '@type_checks':
   genetic_condition: mondo.is_genetic_disease
