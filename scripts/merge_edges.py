@@ -74,7 +74,6 @@ class Merger:
                 if self.has_duplicate_edges(edges):
                     node_ids_with_dup.append((source_id,target))
         return node_ids_with_dup
-        
     def merge_similar_edges(self, edges_list):
         merges = {}
         for edge in edges_list:
@@ -90,10 +89,8 @@ class Merger:
             else:
                 removables.append(predicate_id)
         for r in removables:
-            merges.pop(r, None)]
+            merges.pop(r, None)
         return merges
-
-        
     def convert_attributes_to_list(self, edge, dont_convert = ['predicate_id']):
         final_dict = {}
         if type(edge) != type({}):
