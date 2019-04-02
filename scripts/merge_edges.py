@@ -116,6 +116,8 @@ class Merger:
         bucket_edge = self.convert_attributes_to_list(edge_list[0])     
         for edge in edge_list[1:]:
             bucket_edge = self.combine_two_edges(bucket_edge, edge)
+        predicate_id = bucket_edge['predicate_id']
+        bucket_edge['predicate_id'] = f'"{predicate_id}"'
         return bucket_edge
 
     def delete_edge(self, edge_id, watch_mode):
