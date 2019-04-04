@@ -9,6 +9,23 @@ from builder.obh_builder import get_ordered_names_from_csv
 def obh(rosetta):
 	return ObesityHubBuilder(rosetta, debug=True)
 
+def test_tabix(rosetta, obh):
+	things = []
+	filepath = 'sample_sugen.gz'
+	variants = obh.get_gwas_data_from_indexed_file(filepath, '1', 19299673, 19299673)
+	for variant in variants:
+		things.append(variant)
+	assert len(things) == 1
+	assert int(things[0][1]) == 19299673
+
+	things = []
+	variants = obh.get_gwas_data_from_indexed_file(filepath, '16', 11926548, 82335280)
+	for variant in variants:
+		things.append(variant)
+	assert len(things) == 2
+	assert int(things[0][1]) == 11926549
+	assert int(things[1][1]) == 82335280
+
 def a_test_cache(rosetta, obh):
 
 	#num_cached = obh.prepopulate_variant_cache('./sample_sugen3')
@@ -53,19 +70,29 @@ def test_sugen_file_reader(rosetta, obh):
 	assert obh.quality_control_check('./sample_sugen', delimiter='\t') == True
 
 	# p value is too strict
-	variant_info = obh.get_variants_from_gwas('./sample_sugen', .005, 'GRCh37', 'p1')
-	assert len(variant_info) == 0
+	significant_variants = obh.find_significant_variants_in_gwas('./sample_sugen', .005, 'HG19', 'p1')
+	assert len(significant_variants) == 0
 
 	# impute2 cutoff is too strict
-	variant_info = obh.get_variants_from_gwas('./sample_sugen', .05, 'GRCh37', 'p1', impute2_cutoff=0.7)
-	assert len(variant_info) == 0
+	significant_variants = obh.find_significant_variants_in_gwas('./sample_sugen', .05, 'HG19', 'p1', impute2_cutoff=0.7)
+	assert len(significant_variants) == 0
 
-	variant_info = obh.get_variants_from_gwas('./sample_sugen', .05, 'GRCh37', 'p1')
-	assert len(variant_info) == 5
+	variant_count = 0
+	significant_variants = obh.find_significant_variants_in_gwas('./sample_sugen', .05, 'HG19', 'p1')
+	for chromosome, position_dict in significant_variants.items():
+		for position, variants in position_dict.items():
+			for variant in variants:
+				variant_count += 1
 
-	variant_ids, p_values = zip(*variant_info)
-	assert 'NC_000001.10:g.19299674_19299676del' in variant_ids
-	assert .049 in p_values
+	assert variant_count == 9
+
+	hit = False
+	for variant in significant_variants[1][19299673]:
+		if variant.hgvs == 'NC_000001.10:g.19299674_19299676del':
+			hit = True
+			break
+
+	assert hit == True
 
 def test_gwas_builder(rosetta, obh):
 	#this will actually write to neo4j
