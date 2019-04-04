@@ -24,6 +24,11 @@ def biolink(rosetta):
     biolink = rosetta.core.biolink
     return biolink
 
+@pytest.fixture()
+def ensembl(rosetta):
+    ensembl = rosetta.core.ensembl
+    return ensembl
+
 def test_synonymization(rosetta, clingen):
     variant_node = KNode('CAID:CA128085', type=node_types.SEQUENCE_VARIANT)
     rosetta.synonymizer.synonymize(variant_node)
@@ -110,7 +115,7 @@ def test_sequence_variant_to_gene(myvariant):
     assert 'GAMMA:0000103' in pids
     assert 'SO:0001629' in pids
 
-def test_batch_sequence_variant_to_gene(myvariant):
+def a_test_batch_sequence_variant_to_gene(myvariant):
     variant_node = KNode('MYVARIANT_HG38:chr11:g.68032291C>G', type=node_types.SEQUENCE_VARIANT)
     variant_node2 = KNode('MYVARIANT_HG38:chrX:g.32389644G>A', type=node_types.SEQUENCE_VARIANT)
     variant_node3 = KNode('MYVARIANT_HG38:chr17:g.7674894G>A', type=node_types.SEQUENCE_VARIANT)
@@ -140,11 +145,11 @@ def test_batch_sequence_variant_to_gene(myvariant):
 def test_biolink(rosetta, biolink):
     variant_node = KNode('HGVS:NC_000023.9:g.32317682G>A', type=node_types.SEQUENCE_VARIANT)
     rosetta.synonymizer.synonymize(variant_node)
+    assert 'CLINVARVARIANT:94623' in variant_node.get_synonyms_by_prefix('CLINVARVARIANT')
     relations = biolink.sequence_variant_get_phenotype(variant_node)
     identifiers = [node.id for r,node in relations]
     assert 'HP:0000750' in identifiers
     assert 'HP:0003236' in identifiers
-    assert 'HP:0100748' in identifiers
     predicates = [ relation.standard_predicate for relation,n in relations ] 
     plabels = set( [p.label for p in predicates] )
     assert 'has_phenotype' in plabels
@@ -220,9 +225,51 @@ def this_is_slow_test_gwascatalog_phenotype_to_variant(gwascatalog):
     assert 'DBSNP:rs2462021' in identifiers
 
 def future_test_gene_to_sequence_variant(clingen):
-   node = KNode('HGNC.SYMBOL:SRY', type=node_types.GENE)
-   results = clingen.gene_to_sequence_variant(node)
-   assert len(results) > 1000
+    node = KNode('HGNC.SYMBOL:SH3BGRL3', type=node_types.GENE)
+    relations = clingen.gene_to_sequence_variant(node)
+    assert len(relations) == 2357
+
+    identifiers = [node.id for r,node in relations]
+    assert 'CAID:CA19707988' in identifiers
+    assert 'CAID:CA19752509' in identifiers
+
+def future_test_get_variants_by_region(clingen):
+
+    variant_nodes = clingen.get_variants_by_region('NC_000001.11', 26280000, 1000000)
+    identifiers = [node.id for node in variant_nodes]
+    assert 'CAID:CA19707988' in identifiers
+    assert 'CAID:CA19752509' in identifiers
+
+def test_sequence_variant_to_gene_ensembl(ensembl):
+    # using hg38
+    node = KNode('CAID:CA279509', type=node_types.GENE)
+    sequence_location = ['HG38', str(17), str(58206172)]
+    node.properties['sequence_location'] = sequence_location
+    relations = ensembl.sequence_variant_to_gene(node)
+    identifiers = [node.id for r,node in relations]
+    assert 'ENSEMBL:ENSG00000011143' in identifiers
+    assert 'ENSEMBL:ENSG00000121053' in identifiers
+    assert 'ENSEMBL:ENSG00000167419' in identifiers
+    assert len(identifiers) > 20
+
+    # same variant with hg19
+    node = KNode('CAID:CA279509', type=node_types.GENE)
+    sequence_location = ['HG19', str(17), str(56283533)]
+    node.properties['sequence_location'] = sequence_location
+    relations = ensembl.sequence_variant_to_gene(node)
+    identifiers = [node.id for r,node in relations]
+    assert 'ENSEMBL:ENSG00000011143' in identifiers
+    assert 'ENSEMBL:ENSG00000121053' in identifiers
+    assert 'ENSEMBL:ENSG00000167419' in identifiers
+    assert len(identifiers) > 20
+
+def test_sequence_variant_ld(ensembl):
+
+    node = KNode('DBSNP:rs1042779', type=node_types.SEQUENCE_VARIANT)
+    relations = ensembl.sequence_variant_to_sequence_variant(node)
+    identifiers = [node.id for r,node in relations]
+    assert 'DBSNP:rs6792369' in identifiers
+    assert 'DBSNP:rs2240920' in identifiers
 
 
 

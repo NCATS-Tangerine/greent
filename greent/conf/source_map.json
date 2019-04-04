@@ -4,6 +4,7 @@
     "chembio": "chem2bio2rdf",
     "clingen": "clingen",
     "ctd": "ctd",
+    "ensembl": "ensembl",
     "gwascatalog": "gwascatalog",
     "hetio": "hetio",
     "hmdb": "hmdb",

@@ -748,3 +748,7 @@ slots:
   spatially disjoint from:
     mappings:
       - RO:0002163
+
+  in linkage disequilibrium with:
+    mappings:
+      - NCIT:C16798
