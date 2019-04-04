@@ -32,7 +32,7 @@ class ClinGen(Service):
         for i in range(batches):
             variant_subset = variant_list[i*2000:i*2000+2000]
             hgvs_pseudo_file = separator.join(variant_subset)
-            query_url = f'{self.url}alleles?file={variant_format}'
+            query_url = f'{self.url}alleles?file={variant_format}&{self.synon_fields_param}'
             all_alleles_json = self.query_service(query_url, data=hgvs_pseudo_file)
             for index, allele_json in enumerate(all_alleles_json):
                 hgvs_id = f'HGVS:{variant_subset[index]}'
@@ -134,7 +134,6 @@ class ClinGen(Service):
                     clinvar_id = clinvar_json['variationId']
                     synonyms.add(LabeledID(identifier=f'CLINVARVARIANT:{clinvar_id}', label=f'{clinvar_id}'))
 
-
         if 'genomicAlleles' in allele_json:
             for genomic_allele in allele_json['genomicAlleles']:
                 for hgvs_id in genomic_allele['hgvs']:
@@ -151,8 +150,9 @@ class ClinGen(Service):
         for currie_gene_symbol in curie_gene_symbols:
             counter = 0
             gene_symbol = Text.un_curie(currie_gene_symbol)
+            query_url_main = f'{self.url}alleles?gene={gene_symbol}&fields=none+@id&limit=2000&skip='
             while True:
-                query_url = f'{self.url}alleles?gene={gene_symbol}&limit=100&skip={counter}'
+                query_url = f'{query_url_main}{counter}'
                 query_results = self.query_service(query_url)
                 if query_results:
                     for allele_json in query_results:
@@ -164,9 +164,33 @@ class ClinGen(Service):
                                 predicate = LabeledID(identifier=f'clingen.gene_to_sequence_variant',label=f'gene_to_sequence_variant')
                                 edge = self.create_edge(gene_node, variant_node, 'clingen.gene_to_sequence_variant', currie_gene_symbol, predicate, url=query_url)
                                 return_results.append((edge, variant_node))
-                    counter += 100
+                    counter += 2000
                 else:
                     break
+        return return_results
+
+    def get_variants_by_region(self, reference_sequence_label, center_position, region_size):
+        flanking_size = int(region_size / 2)
+        begin = center_position - flanking_size
+        if begin < 0: begin = 0
+        end = center_position + flanking_size
+        query_url_main = f'{self.url}alleles?refseq={reference_sequence_label}&begin={begin}&end={end}&fields=none+@id&limit=2000&skip='
+        counter = 0
+        return_results = []
+        while True:
+            query_url = f'{query_url_main}{counter}'
+            query_results = self.query_service(query_url)
+            if query_results:
+                for allele_json in query_results:
+                    if '@id' in allele_json:
+                        id_split = allele_json['@id'].rsplit('/', 1)
+                        if (len(id_split) > 1) and ('CA' in id_split[1]):
+                            variant_caid = id_split[1]
+                            variant_node = KNode(f'CAID:{variant_caid}', type=node_types.SEQUENCE_VARIANT)
+                            return_results.append(variant_node)
+                counter += 2000
+            else:
+                break
         return return_results
 
     def query_service(self, query_url, data=None):
