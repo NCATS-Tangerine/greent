@@ -88,9 +88,9 @@ def build_spec(spec_sequence, start_name, start_id, end_name=None, end_id=None):
         natural = f'{spec_sequence}({start_name})'
 
     out = {"name": name,
-           "natural_question": natural, 
+           "original_question": natural,
            "notes": '',
-           "machine_question": machine_question
+           "query_graph": machine_question
     }
     return out
 
@@ -100,16 +100,16 @@ def build_step(spec, name=None, curie=None, id=0, eid=0):
             "type": spec,
             "name": name,
             "curie": curie,
-            "id": f'n{id}'
+            "node_id": f'n{id}'
         }
     else:
         node = {
             "type": spec,
-            "id": f'n{id}'
+            "node_id": f'n{id}'
         }
     if id:
         edge = {
-            "id": f'e{eid}',
+            "edge_id": f'e{eid}',
             "source_id": f'n{id-1}',
             "target_id": f'n{id}'
         }
@@ -125,18 +125,18 @@ def specs_from_array_of_ids(pathway, identifier_list, end_name, end_id):
             all_specs = build_spec(pathway, identifier.label, identifier.identifier, end_name=end_name, end_id=end_id)
         else:
             current_spec = build_spec(pathway, identifier.label, identifier.identifier, end_name=end_name, end_id= end_id)
-            for node in current_spec['machine_question']['nodes']:
+            for node in current_spec['query_graph']['nodes']:
                 node_id = int(node['id'][-1])
                 node['id'] = f'n{node_id + current_index}'
-                all_specs['machine_question']['nodes'].append(node)
-            for edge in current_spec['machine_question']['edges']:
+                all_specs['query_graph']['nodes'].append(node)
+            for edge in current_spec['query_graph']['edges']:
                 edge_id = int(edge['id'][-1])
                 source_id = int(edge['source_id'][-1])
                 target_id = int(edge['target_id'][-1])
                 edge['id'] = f'e{edge_id + current_index}'
                 edge['source_id']= f'n{source_id + current_index}'
                 edge['target_id']= f'n{target_id + current_index}'
-                all_specs['machine_question']['edges'].append(edge)
+                all_specs['query_graph']['edges'].append(edge)
             current_index += 2
     return all_specs
 

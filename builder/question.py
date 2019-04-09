@@ -18,17 +18,17 @@ from greent.util import LoggingUtil, Text
 
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
-@swagger.definition('Node')
+@swagger.definition('QNode')
 class QNode(FromDictMixin):
     """
     Node Object
     ---
     schema:
-        id: Node
+        id: QNode
         required:
-            - id
+            - node_id
         properties:
-            id:
+            node_id:
                 type: string
                 required: true
             type:
@@ -43,13 +43,17 @@ class QNode(FromDictMixin):
                     $ref: '#/definitions/LabeledID'
     """
     def __init__(self, *args, **kwargs):
-        self.id = None
+        self.node_id = None
         self.type = None
         self.curie = None
         self.name = None
         self.synonyms = []
 
         super().__init__(*args, **kwargs)
+
+    @property
+    def id(self):
+        return self.node_id
 
     def __repr__(self):
         return f'{self.type} ({self.curie})'
@@ -100,19 +104,19 @@ class LabeledID(NamedTuple):
     def __gt__(self, other):
         return self.identifier > other.identifier
 
-@swagger.definition('Edge')
+@swagger.definition('QEdge')
 class QEdge(FromDictMixin):
     """
     Edge Object
     ---
     schema:
-        id: Edge
+        id: QEdge
         required:
-            - id
+            - edge_id
             - source_id
             - target_id
         properties:
-            id:
+            edge_id:
                 type: string
             source_id:
                 type: string
@@ -136,7 +140,7 @@ class QEdge(FromDictMixin):
                 default: 1
     """
     def __init__(self, *args, **kwargs):
-        self.id = None
+        self.edge_id = None
         self.source_id = None
         self.target_id = None
         self.provided_by = None
@@ -153,6 +157,10 @@ class QEdge(FromDictMixin):
 
         if self.min_length > self.max_length:
             raise ValueError("An edge's minimum length should be less than or equal to its maximum length.")
+
+    @property 
+    def id(self):
+        return self.edge_id
 
     def cypher_signature(self, id=None):
         # TODO: handle known predicates
@@ -179,9 +187,9 @@ class Question(FromDictMixin):
     schema:
         id: Question
         required:
-          - machine_question
+          - query_graph
         properties:
-            machine_question:
+            query_graph:
                 type: object
                 required:
                   - nodes
@@ -190,20 +198,20 @@ class Question(FromDictMixin):
                     nodes:
                         type: array
                         items:
-                            $ref: '#/definitions/Node'
+                            $ref: '#/definitions/QNode'
                     edges:
                         type: array
                         items:
-                            $ref: '#/definitions/Edge'
+                            $ref: '#/definitions/QEdge'
     """
 
     def __init__(self, *args, **kwargs):
-        self.machine_question = {}
+        self.query_graph = {}
 
         super().__init__(*args, **kwargs)
 
     def load_attribute(self, key, value):
-        if key == 'machine_question':
+        if key == 'query_graph':
             return {
                 'nodes': [QNode(n) for n in value['nodes']],
                 'edges': [QEdge(e) for e in value['edges']]
@@ -213,10 +221,10 @@ class Question(FromDictMixin):
 
     @property
     def cypher_signature(self):
-        node_map = {n.id:n for n in self.machine_question['nodes']}
+        node_map = {n.id:n for n in self.query_graph['nodes']}
         links = []
         known_ids = set()
-        for e in self.machine_question['edges']:
+        for e in self.query_graph['edges']:
             source_signature = node_map[e.source_id].cypher_signature(
                 f'{e.source_id}',
                 known=e.source_id in known_ids
@@ -231,10 +239,10 @@ class Question(FromDictMixin):
 
     @property
     def concept_cypher_signature(self):
-        node_map = {n.id:n for n in self.machine_question['nodes']}
+        node_map = {n.id:n for n in self.query_graph['nodes']}
         links = []
         known_ids = set()
-        for idx, e in enumerate(self.machine_question['edges']):
+        for idx, e in enumerate(self.query_graph['edges']):
             source_signature = node_map[e.source_id].concept_cypher_signature(
                 f'{e.source_id}',
                 known=e.source_id in known_ids
@@ -249,15 +257,15 @@ class Question(FromDictMixin):
 
     def generate_concept_cypher(self):
         """Generate a cypher query to find paths through the concept-level map."""
-        named_node_names = [n.id for n in self.machine_question['nodes'] if n.curie]
-        node_names = [n.id for n in self.machine_question['nodes']]
-        edge_names = [e.id for e in self.machine_question['edges']]
+        named_node_names = [n.id for n in self.query_graph['nodes'] if n.curie]
+        node_names = [n.id for n in self.query_graph['nodes']]
+        edge_names = [e.id for e in self.query_graph['edges']]
         cypherbuffer = [f"MATCH {s}" for s in self.concept_cypher_signature]
         node_list = f"""[{', '.join([f"'{n}'" for n in node_names])}]"""
         named_node_list = f"""[{', '.join([f"'{n}'" for n in named_node_names])}]"""
         edge_list = f"[{', '.join(edge_names)}]"
-        edge_switches = [f"CASE startnode({e.id}) WHEN {e.source_id} THEN ['{e.source_id}','{e.target_id}'] ELSE ['{e.target_id}','{e.source_id}'] END AS {e.id}_pair" for e in self.machine_question['edges']]
-        edge_pairs = [f"{e.id}_pair" for e in self.machine_question['edges']]
+        edge_switches = [f"CASE startnode({e.id}) WHEN {e.source_id} THEN ['{e.source_id}','{e.target_id}'] ELSE ['{e.target_id}','{e.source_id}'] END AS {e.id}_pair" for e in self.query_graph['edges']]
+        edge_pairs = [f"{e.id}_pair" for e in self.query_graph['edges']]
         cypherbuffer.append(f"WITH {', '.join(node_names + edge_names + edge_switches)}")
         cypherbuffer.append(f"WHERE robokop.traversable({node_list}, [{', '.join(edge_pairs)}], {named_node_list})")
         # This is to make sure that we don't get caught up in is_a and other funky relations.:
@@ -293,7 +301,7 @@ class Question(FromDictMixin):
                 edge = edges[e]
                 source_id = edge['source']
                 target_id = edge['target']
-                qedge = next(e2 for e2 in self.machine_question['edges'] if e2.id == e)
+                qedge = next(e2 for e2 in self.query_graph['edges'] if e2.id == e)
                 qedge_type = qedge.type
                 predicate = [Text.snakify(e2type) for e2type in qedge_type] if isinstance(qedge_type, list) and qedge_type else Text.snakify(qedge_type) if isinstance(qedge_type, str) else None
                 trans = {
@@ -305,6 +313,40 @@ class Question(FromDictMixin):
 
             plans.append(transitions)
         return plans
+    def get_edge_op_paths(self, graph):
+        """
+        Executes a cypher query and returns the result of operations bound to edges.
+        Returns:
+            A map of edge keys and their list of operations along their source node ids.
+        """
+        with graph.driver.session() as session:
+            result = session.run(self.generate_concept_cypher())
+        response = {}
+        logger.debug(result)
+        for row in result:
+            edges = row['edges']
+            print(len(edges))
+            for e in edges:
+                op = edges[e]['op']
+                source = edges[e]['source']
+                if e not in response:
+                    response[e] = {
+                        'input': source,
+                        'op': [op]
+                    }
+                elif op not in response[e]['op']:
+                    response[e]['op'].append(op)
+
+        for e_id in response:
+            edge = response[e_id]
+            new_edge = []
+            for op in edge['op']:
+                new_edge.append({
+                    'op': op,
+                    'input': edge['input']
+                })
+            response[e_id] = new_edge
+        return response
 
     def compile(self, rosetta, disconnected_graph = False):
         plan = None
@@ -312,7 +354,7 @@ class Question(FromDictMixin):
             plans = self.get_transitions(rosetta.type_graph, self.generate_concept_cypher())
             
             # merge plans
-            plan = {n.id: {n.id: [] for n in self.machine_question['nodes']} for n in self.machine_question['nodes']}
+            plan = {n.id: {n.id: [] for n in self.query_graph['nodes']} for n in self.query_graph['nodes']}
             for p in plans:
                 for source_id in p:
                     for target_id in p[source_id]:
@@ -328,7 +370,7 @@ class Question(FromDictMixin):
             raise RuntimeError('No viable programs.')
 
         from greent.program import Program
-        program = Program(plan, self.machine_question, rosetta, 0)
+        program = Program(plan, self.query_graph, rosetta, 0)
         programs = [program]
     
         return programs
@@ -339,9 +381,9 @@ class Question(FromDictMixin):
         unform types of  pairs of nodes which we don't have pair to pair connections.
         I.e (a)->(b) (c) -> (d) but no (b)->(c)
         """
-        source_node = self.machine_question['nodes'][0].concept_cypher_signature('n0')
-        target_node = self.machine_question['nodes'][1].concept_cypher_signature('n1')
-        cypher =[f'MATCH {source_node}-[e]-> {target_node}'] 
+        source_node = self.query_graph['nodes'][0].concept_cypher_signature('n0')
+        target_node = self.query_graph['nodes'][1].concept_cypher_signature('n1')
+        cypher =[f'MATCH {source_node}-[e]-> {target_node}']
         cypher += ['WHERE Exists(e.op) RETURN Collect(e) as edges']
         query = '\n'.join(cypher)
         result = ''
@@ -357,7 +399,7 @@ class Question(FromDictMixin):
                     }
                 edges.append(e)
         p = {}
-        for edge in self.machine_question['edges']:
+        for edge in self.query_graph['edges']:
             p[edge.source_id] = {}
             p[edge.source_id][edge.target_id] = {e['op']: e for e in edges}.values()
         return p

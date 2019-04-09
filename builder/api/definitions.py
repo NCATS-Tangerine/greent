@@ -4,16 +4,16 @@ API definitions
 
 from builder.api.setup import swagger
 from builder.util import FromDictMixin
-@swagger.definition('Node')
+@swagger.definition('QNode')
 class QNode(FromDictMixin):
     """
-    Node Object
+    QNode Object
     ---
-    id: Node
+    id: QNode
     required:
-        - id
+        - node_id
     properties:
-        id:
+        node_id:
             type: string
         type:
             type: string
@@ -30,12 +30,12 @@ class QNode(FromDictMixin):
     def dump(self):
         return {**vars(self)}
 
-@swagger.definition('Edge')
+@swagger.definition('QEdge')
 class QEdge(FromDictMixin):
     """
-    Edge Object
+    QEdge Object
     ---
-    id: Edge
+    id: QEdge
     required:
         - source_id
         - target_id
@@ -72,33 +72,33 @@ class Question(FromDictMixin):
       - nodes
       - edges
     properties:
-        machine_question:
+        query_graph:
             type: object
             properties:
                 nodes:
                     type: array
                     items:
-                        $ref: '#/definitions/Node'
+                        $ref: '#/definitions/QNode'
                 edges:
                     type: array
                     items:
-                        $ref: '#/definitions/Edge'
+                        $ref: '#/definitions/QEdge'
     example:
-        machine_question:
+        query_graph:
             nodes:
-              - id: n0
+              - node_id: n0
                 type: disease
                 curie: "MONDO:0005737"
                 name: "Ebola hemorrhagic fever"
-              - id: n1
+              - node_id: n1
                 type: gene
-              - id: n2
+              - node_id: n2
                 type: genetic_condition
             edges:
-              - id: e0
+              - edge_id: e0
                 source_id: n0
                 target_id: n1
-              - id: e1
+              - edge_id: e1
                 source_id: n1
                 target_id: n2
     """

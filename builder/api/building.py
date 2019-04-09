@@ -26,6 +26,7 @@ from builder.buildmain import setup
 from greent.graph_components import KNode
 from greent.util import LoggingUtil
 import re
+from builder.question import Question
 
 rosetta_config_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "rosetta.yml")
 properties_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "conf", "annotation_map.yaml")
@@ -208,7 +209,7 @@ def synonymize_binding_nodes(answer_set, id_mappings):
 class NormalizeAnswerSet(Resource):
     def post(self):
         """
-        Adds synonmys to node and normalize edge db source for a json blob of answer knowledge graph.
+        Adds synonyms to node and normalize edge db source for a json blob of answer knowledge graph.
         ---
         tags: [util]
         requestBody:
@@ -235,6 +236,25 @@ api.add_resource(NormalizeAnswerSet, '/normalize')
 
 class Annotator(Resource):
     def get(self, node_id, node_type):
+        """
+        Returns annotation for a node.
+        ---
+        tags: [util]
+        parameters:
+            - in: path
+              name: node_id
+              description: "curie of the node"
+              schema:
+                type: string
+              required: true
+            - in: path
+              name: node_type
+              description: " Biolink type name for the curie, eg. providing chemical_substance here will make sure the
+               annotation is done as a chemical substance."
+              schema:
+                type: string
+              required: true
+        """
         node = KNode(id= node_id, type= node_type)
         greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
         sys.path.insert(0, greent_path)
@@ -507,6 +527,45 @@ class Concepts(Resource):
         return concepts
 
 api.add_resource(Concepts, '/concepts')
+
+
+class OperationPath(Resource):
+
+    def post(self):
+        """
+        Transpiles question graph to cypher and returns query operations path.
+        ---
+        tags: [build]
+        requestBody:
+            name: question
+            description: The machine-readable question graph.
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/definitions/Question'
+            required: true
+        responses:
+            200:
+                description: Concept based path graph
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required:
+                            - task id
+                            properties:
+                                task id:
+                                    type: string
+                                    description: task ID to poll for KG update status
+        """
+        q = Question(request.json)
+        r = rossetta_setup_default()
+
+        return q.get_edge_op_paths(r.type_graph)
+
+
+api.add_resource(OperationPath, '/operationpath')
+
 
 if __name__ == '__main__':
 
