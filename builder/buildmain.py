@@ -126,11 +126,11 @@ def specs_from_array_of_ids(pathway, identifier_list, end_name, end_id):
         else:
             current_spec = build_spec(pathway, identifier.label, identifier.identifier, end_name=end_name, end_id= end_id)
             for node in current_spec['query_graph']['nodes']:
-                node_id = int(node['id'][-1])
+                node_id = int(node['node_id'][-1])
                 node['id'] = f'n{node_id + current_index}'
                 all_specs['query_graph']['nodes'].append(node)
             for edge in current_spec['query_graph']['edges']:
-                edge_id = int(edge['id'][-1])
+                edge_id = int(edge['edge_id'][-1])
                 source_id = int(edge['source_id'][-1])
                 target_id = int(edge['target_id'][-1])
                 edge['id'] = f'e{edge_id + current_index}'
