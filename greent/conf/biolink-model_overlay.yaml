@@ -566,6 +566,7 @@ slots:
       - RO:0002595  #Actually causally relates entity to process, while causes is supposed to be entity to entity...
       - RO:0002500  #Actually causally relates entity to process, and is only causally involved in
       - mondo#disease:triggers
+      - RO:0003303
 
   related to:
     mappings:
