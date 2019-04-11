@@ -30,6 +30,10 @@ class KNode(FromDictMixin):
 
         super().__init__(*args, **kwargs)
 
+        # Another hack to keep things running.
+        if isinstance(self.name, list):
+            self.name = self.name[0]
+
         if self.id.startswith('http'):
             self.id = Text.obo_to_curie(self.id)
 

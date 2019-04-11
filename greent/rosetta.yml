@@ -164,9 +164,10 @@
         op    : biolink.gene_get_pathways
       - link  : gene_to_pathway
         op    : chembio.graph_get_pathways_by_gene
-    sequence_variant:
-      - link  : gene_to_sequence_variant
-        op    : clingen.gene_to_sequence_variant
+    # most users probably won't want this many variants in the graph
+    #sequence_variant:
+    #  - link  : gene_to_sequence_variant
+    #    op    : clingen.gene_to_sequence_variant
     biological_process_or_activity:
       - link  : biological_process_or_activity
         op    : biolink.gene_get_process_or_function
@@ -194,11 +195,27 @@
     gene:
       - link  : sequence_variant_to_gene
         op    : myvariant.sequence_variant_to_gene
+      - link  : sequence_variant_to_gene
+        op    : ensembl.sequence_variant_to_gene
     disease_or_phenotypic_feature:
       - link  : sequence_variant_to_disease_or_phenotypic_feature
         op    : biolink.sequence_variant_get_phenotype
       - link  : sequence_variant_to_disease_or_phenotypic_feature
         op    : gwascatalog.sequence_variant_to_disease_or_phenotypic_feature
+  cellular_component:
+    chemical_substance:
+      - link  : cellular_component_to_chemical_substance
+        op    : uberongraph.get_chemical_substance_by_cellular_component  
+    anatomical_entity:
+      - link  : cellular_component_to_anatomical_entity
+        op    : uberongraph.get_anatomical_entity_by_cellular_component
+    disease:
+      - link  : cellular_component_to_disease
+        op    : uberongraph.get_disease_by_cellular_component
+    cell:
+      - link  : cellular_component_to_cell
+        op    : uberongraph.get_cell_by_cellular_component
+      
 
 '@type_checks':
   genetic_condition: mondo.is_genetic_disease

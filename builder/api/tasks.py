@@ -5,6 +5,8 @@ Tasks for Celery workers
 import os
 import sys
 import logging
+import redis
+import json
 
 from celery import Celery, signals
 from celery.utils.log import get_task_logger
@@ -34,6 +36,33 @@ celery.conf.update(
 celery.conf.task_queues = (
     Queue('update', routing_key='update'),
 )
+
+redis_client = redis.Redis(
+    host=os.environ['RESULTS_HOST'],
+    port=os.environ['RESULTS_PORT'],
+    db=os.environ['BUILDER_RESULTS_DB'],
+    password=os.environ['RESULTS_PASSWORD'])
+
+logger = logging.getLogger('builder')
+
+@signals.after_task_publish.connect()
+def initialize_queued_task_results(**kwargs):
+    # headers=None, body=None, exchange=None, routing_key=None
+    task_id = kwargs['headers']['id']
+    logger.info(f'Queuing task: {task_id}')
+
+    redis_key = 'celery-task-meta-'+task_id
+    initial_status = {"status": "QUEUED",
+        "result": None,
+        "traceback": None,
+        "children": [],
+        "task_id": task_id
+    }
+    redis_client.set(redis_key, json.dumps(initial_status))
+
+    # initial_status_again = redis_client.get(redis_key)
+    # logger.info(f'Got initial status {initial_status_again}')
+
 
 @signals.task_prerun.connect()
 def setup_logging(signal=None, sender=None, task_id=None, task=None, *args, **kwargs):

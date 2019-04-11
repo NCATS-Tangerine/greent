@@ -65,7 +65,7 @@ class GeneAnnotator(Annotator):
             """
             Exracts certain parts of  the HGNC gene data.
             """
-            new  = { keys_of_interest[key] : raw[key] for key in keys_of_interest if key in raw }
+            new  = { keys_of_interest[key] : self.convert_data_to_primitives(raw[key]) for key in keys_of_interest if key in raw }
             #sanity check
             if len(new.keys()) != len(keys_of_interest):
                 logger.warning(f"found data less than expected for {raw['hgnc_id']} ")
@@ -75,5 +75,5 @@ class GeneAnnotator(Annotator):
                 regex = re.compile(r'\d+|\D+')
                 match = regex.search(new['location'])[0]
                 new['chromosome'] = match
-            new['taxon'] = '9606'
+            new['taxon'] = 9606
             return new

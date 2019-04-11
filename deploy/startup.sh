@@ -3,8 +3,8 @@
 set -e
 
 cd $ROBOKOP_HOME/robokop-interfaces
-mkdir -p $ROBOKOP_HOME/task_logs
-chmod 777 $ROBOKOP_HOME/task_logs
+mkdir -p $ROBOKOP_HOME/logs/builder_task_logs
+chmod 777 $ROBOKOP_HOME/logs/builder_task_logs
 
 sleep 3s
 
@@ -18,8 +18,8 @@ fi
 echo "Setting up environment..."
 source ./deploy/setenv.sh
 
-echo "Initializing type graph..."
-./initialize_type_graph.sh
+# echo "Initializing type graph..."
+# ./initialize_type_graph.sh
 
 echo "Finding and removing stray pid files..."
 find . -prune -name "*.pid" -exec rm -rf {} \;

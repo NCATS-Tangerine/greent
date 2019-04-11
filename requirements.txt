@@ -1,3 +1,5 @@
+aiosparql
+aiohttp
 redis
 lru-dict
 flask

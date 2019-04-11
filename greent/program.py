@@ -35,6 +35,15 @@ class QueryDefinition:
         self.start_name = None
         self.end_name = None
 
+def get_name_for_curie(curie):
+    response = requests.get(f"https://bionames.renci.org/ID_to_label/{curie}/")
+    if response.ok:
+        logger.debug(response.json())
+        return response.json()[0]['label']
+    else:
+        logger.warning(f"Bionames ID_to_label failed for curie {curie}.")
+        return None
+
 class Program:
 
     def __init__(self, plan, machine_question, rosetta, program_number):
@@ -82,7 +91,8 @@ class Program:
         CL:0000003 native cell
         CL:0000255 eukaryotic cell
         """
-        self.excluded_identifiers = {'UBERON:0000064','UBERON:0000475','UBERON:0011216','UBERON:0000062','UBERON:0000465','UBERON:0010000','UBERON:0000061', 'UBERON:0000467','UBERON:0001062','UBERON:0000468', 'UBERON:0000479', 'GO:0044267', 'GO:0005515', 'CL:0000548', 'CL:0000003', 'CL:0000255'}
+        self.excluded_identifiers = self.rosetta.service_context.config.get('bad_identifiers')
+        # {'UBERON:0000064','UBERON:0000475','UBERON:0011216','UBERON:0000062','UBERON:0000465','UBERON:0010000','UBERON:0000061', 'UBERON:0000467','UBERON:0001062','UBERON:0000468', 'UBERON:0000479', 'GO:0044267', 'GO:0005515', 'CL:0000548', 'CL:0000003', 'CL:0000255'}
 
         response = requests.get(f"{os.environ['BROKER_API']}queues/")
         queues = response.json()
@@ -120,9 +130,17 @@ class Program:
     def initialize_instance_nodes(self):
         # No error checking here. You should have caught any malformed questions before this point.
         logger.debug("Initializing program {}".format(self.program_number))
+        
         for n in self.machine_question['nodes']:
             if not n.curie:
                 continue
+
+            # Ignore the name we're given. Get one from bionames.
+            if isinstance(n.curie, str):
+                n.name = get_name_for_curie(n.curie)
+            elif isinstance(n.curie, list):
+                n.name = [get_name_for_curie(c) for c in n.curie]
+
             start_node = KNode(n.curie, type=n.type, name=n.name)
             self.process_node(start_node, [n.id])
         return
@@ -154,7 +172,7 @@ class Program:
             results = list(filter(lambda x: x[1].id not in self.excluded_identifiers, results))
             for edge, node in results:
                 edge_label = Text.snakify(edge.standard_predicate.label)
-                if link['predicate'] is None or edge_label == link['predicate']:
+                if link['predicate'] is None or edge_label == link['predicate'] or (isinstance(link['predicate'], list) and (edge_label in link['predicate'])):
                     self.process_node(node, history, edge)
                 else:
                     pass

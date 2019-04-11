@@ -5,7 +5,7 @@ from greent.service import Service
 from greent.util import Text, LoggingUtil
 import logging,json
 
-logger = logging.getLogger(__name__)
+logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
 class MyVariant(Service):
     
@@ -13,11 +13,14 @@ class MyVariant(Service):
         super(MyVariant, self).__init__("myvariant", context)
         self.synonymizer = rosetta.synonymizer
         self.effects_ignore_list = ['intergenic_region', 'sequence_feature']
+        # we'll switch to this when they do
+        #self.url_fields = 'snpeff.ann.effect,snpeff.ann.feature_type,snpeff.ann.gene_id,dbnsfp.gtex'
+        self.url_fields = 'snpeff.ann.effect,snpeff.ann.feature_type,snpeff.ann.genename,dbnsfp.gtex'
 
     def batch_sequence_variant_to_gene(self, variant_nodes):
         if len(variant_nodes) <= 1000:
             annotation_dictionary = {}
-            post_params = {'fields' : 'snpeff', 'ids' : '', 'assembly': 'hg38'}
+            post_params = {'fields' : self.url_fields, 'ids' : '', 'assembly': 'hg38'}
             node_lookup = {}
             for node in variant_nodes:
                 # we could support hg19 as well, but calls need to be all one or the other
@@ -61,16 +64,16 @@ class MyVariant(Service):
         if not myvariant_ids:
             logger.warning(f'No MyVariant ID found for {variant_node.id}, sequence_variant_to_gene failed.')
         else: 
-            curie_myvariant_id = myvariant_ids.pop()
-            myvariant_id = Text.un_curie(curie_myvariant_id)
-            query_url = f'{self.url}variant/{myvariant_id}?assembly={myvariant_assembly}&fields=snpeff'
-            query_response = requests.get(query_url)
-            if query_response.status_code == 200:
-                query_json = query_response.json()
-                return_results = self.process_annotation(variant_node, query_json, curie_myvariant_id, query_url)
-            else:
-                logger.error(f'MyVariant returned a non-200 response: {query_response.status_code})')
-
+            for curie_myvariant_id in myvariant_ids:
+                myvariant_id = Text.un_curie(curie_myvariant_id)
+                query_url = f'{self.url}variant/{myvariant_id}?assembly={myvariant_assembly}&fields=snpeff'
+                query_response = requests.get(query_url)
+                if query_response.status_code == 200:
+                    query_json = query_response.json()
+                    return_results.extend(self.process_annotation(variant_node, query_json, curie_myvariant_id, query_url))
+                else:
+                    logger.error(f'MyVariant returned a non-200 response: {query_response.status_code})')
+                    
         return return_results
 
     def process_annotation(self, variant_node, annotation_json, curie_id, query_url):

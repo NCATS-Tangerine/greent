@@ -9,6 +9,23 @@ from builder.obh_builder import get_ordered_names_from_csv
 def obh(rosetta):
 	return ObesityHubBuilder(rosetta, debug=True)
 
+def test_tabix(rosetta, obh):
+	things = []
+	filepath = 'sample_sugen.gz'
+	variants = obh.get_gwas_data_from_indexed_file(filepath, '1', 19299673, 19299673)
+	for variant in variants:
+		things.append(variant)
+	assert len(things) == 1
+	assert int(things[0][1]) == 19299673
+
+	things = []
+	variants = obh.get_gwas_data_from_indexed_file(filepath, '16', 11926548, 82335280)
+	for variant in variants:
+		things.append(variant)
+	assert len(things) == 2
+	assert int(things[0][1]) == 11926549
+	assert int(things[1][1]) == 82335280
+
 def a_test_cache(rosetta, obh):
 
 	#num_cached = obh.prepopulate_variant_cache('./sample_sugen3')
@@ -48,30 +65,34 @@ def test_mwas_file_reader(rosetta, obh):
 
 def test_sugen_file_reader(rosetta, obh):
 
-	assert obh.quality_control_check('sample_sugen1', .00000001, .525, 100, delimiter=' ') == True
-	assert obh.quality_control_check('sample_sugen1', .00000001, .4, 100, delimiter=' ') == False
-	
-	assert obh.quality_control_check('sample_sugen2', .00000001, .525, 100, delimiter=' ') == True
-	assert obh.quality_control_check('sample_sugen2', 1e-5, .525, 1, delimiter=' ') == False
-	assert obh.quality_control_check('sample_sugen2', 1e-20, .525, 1, delimiter=' ') == True
+	assert obh.quality_control_check('./sample_sugen', p_value_threshold=.05, max_hits=1, delimiter='\t') == False
+	assert obh.quality_control_check('./sample_sugen', p_value_threshold=.05, max_hits=100, delimiter='\t') == True
+	assert obh.quality_control_check('./sample_sugen', delimiter='\t') == True
 
-	hgvs_ids, p_values = obh.get_hgvs_identifiers_from_gwas('./sample_sugen1', .000001, 'GRCh37', 'p1')
-	assert len(hgvs_ids) == 0
-	assert len(p_values.keys()) == 0
+	# p value is too strict
+	significant_variants = obh.find_significant_variants_in_gwas('./sample_sugen', .005, 'HG19', 'p1')
+	assert len(significant_variants) == 0
 
-	hgvs_ids, p_values = obh.get_hgvs_identifiers_from_gwas('./sample_sugen2', .000001, 'GRCh37', 'p1')
-	assert len(hgvs_ids) == 0
-	hgvs_ids, p_values = obh.get_hgvs_identifiers_from_gwas('./sample_sugen2', .000001, 'GRCh37', 'p1', impute2_cutoff=0)
-	assert 'NC_000023.10:g.32407761G>A' in hgvs_ids
-	assert float(p_values['NC_000023.10:g.32407761G>A']) < .00001
-	assert 'NC_000001.10:g.10235_10236insA' in hgvs_ids
-	assert float(p_values['NC_000001.10:g.10235_10236insA']) < .000001
+	# impute2 cutoff is too strict
+	significant_variants = obh.find_significant_variants_in_gwas('./sample_sugen', .05, 'HG19', 'p1', impute2_cutoff=0.7)
+	assert len(significant_variants) == 0
 
-	hgvs_ids, p_values = obh.get_hgvs_identifiers_from_gwas('./sample_sugen3', .000001, 'GRCh37', 'p1', impute2_cutoff=0)
-	assert len(hgvs_ids) == 5
+	variant_count = 0
+	significant_variants = obh.find_significant_variants_in_gwas('./sample_sugen', .05, 'HG19', 'p1')
+	for chromosome, position_dict in significant_variants.items():
+		for position, variants in position_dict.items():
+			for variant in variants:
+				variant_count += 1
 
-	hgvs_ids, p_values = obh.get_hgvs_identifiers_from_gwas('./sample_sugen3', 1, 'GRCh37', 'p1', impute2_cutoff=0)
-	assert len(hgvs_ids) == 24
+	assert variant_count == 9
+
+	hit = False
+	for variant in significant_variants[1][19299673]:
+		if variant.hgvs == 'NC_000001.10:g.19299674_19299676del':
+			hit = True
+			break
+
+	assert hit == True
 
 def test_gwas_builder(rosetta, obh):
 	#this will actually write to neo4j
