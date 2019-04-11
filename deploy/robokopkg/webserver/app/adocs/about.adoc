@@ -1,0 +1,84 @@
+== Concept Map
+
+++++
+<p>
+    The ROBOKOP Knowledge Graph (ROBOKOPKG) was built from gathering output from several biomedical knowledge sources by using the ROBOKOP Knowledge Graph Builder(<a href="https://github.com/NCATS-Gamma/robokop-interfaces">ROBOKOPKGB</a>). The Knowledge Graph was built semantically based on the <a href="https://biolink.github.io/biolink-model/" target="blank">biolink model</a>. 
+</p>
+<p>
+    <div class="col-md-6">
+            <img src="{{host + url_for('static', filename='images/rosetta.png')}}" class="img-responsive">
+            <figcaption class="figure-caption text-right">Small section of ROBOKOPKG Concept graph.</figcaption>
+    </div>
+    <div class="col-md-6">
+        <p>
+        The picture is a small portion of the concept graph. Here we can see two main types of relationships. The <span style="background: rgb(104,189,246)">Relationship</span> in the picture denotes a hierachical relation between concepts. Here we can infer that "biological_entity" node has "biological_process_or_activity", "chemical_entity" and "organismal_entity" as sub-concepts. As we go down the hierarchy, we find that concepts are more specific. 
+        </p>
+        <p>
+        The <span style="background: #6DCE9E"> Relationship</span> is used to calculate what services should be invoked when putting in instances of the concepts. For example, we can start from a "biological_process_or_activity" node and fetch related "anatomical_entity" (or in this case one of its sub concepts) via the "bio_process_cell_type" edge. Which contains details about what service should be invoked to achive this.
+        </p>
+        <p>
+        To view the full concept graph, you can run:
+++++
+
+//hide
+//setup
+//output
+[source,cypher]
+----
+MATCH (c:Concept) return c
+----
+
+++++
+        </p>
+    </div>
+</p>
+++++
+
+//------------------------------------------- slide - 2 -----------------------------------------------
+
+== Our Nodes
+
+++++
+<p>
+    By using our concept map we can run our services to crawl an populate an instance of a knowledge graph. The nodes have several properties. Depending on thier type some meta-data has been ammended to them from some source. <a href="http://robokop.renci.org:6010/api/operations">Here</a> you can view what annotations sources where used when building this Knowledge Graph instance. 
+</p>
+<p>
+    Another interesting thing is the use of synonym curies. When the build the Knowledge graph we often found ourselves in situations where different knowledges sources refer the same biomedical entity using different identifiers. In ROBOKOPKDB there are a set of services that enable conversion of identifiers to a set of equivalent identifiers when ever possible. The identifiers are maintained as a property called "equivalent_identifiers" on the nodes themselves. 
+</p>
+<p> 
+    You can run the following query to inspect what a typical node looks like:
+++++
+
+//hide
+//setup
+//output
+[source,cypher]
+----
+MATCH (p:phenotypic_feature{id:'HP:0012241'}) RETURN p
+----
+
+
+++++
+</p>
+++++
+
+
+== Our Edges
+
+++++
+<p>
+After executing a service opration using the ROBOKOPKGB tool we end up with predicates relating two nodes. The set of predicates that are used in one knowledge source can be different from another, although they semantically mean the same thing. In our edges we maintain the original knowledge source's predicate and a normalize predicate value, and use this normalized value as our edge's predicate id. A full JSON map of the predicates in our database is available <a href="ROBOKOP.renci.org:6010/api/predicates" target="blank">here</a>.
+</p>
+<p>
+We also keep the edge source and other properties of edges as a list values. This helps when multiple edges from different knowledge source are normalized to the same predicate id. They are "merged" together sharing this predicate id.
+</p>
+
+++++
+
+//hide
+//setup
+//output
+[source,cypher]
+----
+Match (x:disease{id:'MONDO:0002367'})-[e:disease_to_gene_association]-(g:gene{id:'HGNC:7029'}) return *
+----

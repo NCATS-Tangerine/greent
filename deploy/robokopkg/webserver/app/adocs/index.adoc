@@ -1,0 +1,33 @@
+++++
+<div class="container-fluid">
+    <div class="col-xs-2 ng-content" >
+        <div class="text-center">
+            <h2 class="responsive">RobokopKG</h2>
+        </div>
+    </div>
+    <div class="col-xs-10 ng-content" style="border-left:solid 3px #cfcfcf;">
+        <div class="row" style="padding-left:40px">
+            <p class="lead">
+++++
+=== Learn about *Robokop Knowledge Graph*
+++++
+                <div class="icon-holder">
+                    <a play-topic="{{host}}/guide/learn"><i class="fa fa-play-circle-o" style="padding-right:4px"></i> Learn More</a>
+                </div> 
+            </p>
+
+            <div class="clearfix" style="margin-bottom:15px"></div>
+            
+            <p class="lead">
+++++
+=== Browse *Dump files*
+++++
+                <div class="icon-holder">                                      
+                    <a play-topic="{{host}}guide/dumps">
+                        Browse
+                    </a>
+                </div>
+            </p>
+        </div>
+    </div>
+++++

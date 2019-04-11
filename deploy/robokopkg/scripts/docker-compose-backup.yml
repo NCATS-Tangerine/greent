@@ -1,0 +1,13 @@
+version: "3"
+services:
+  neo4j:
+    image: patrickkwang/robokop-neo4j # this might need to change
+    container_name: neo4j
+    entrypoint:
+      - /bin/sh
+    stdin_open: true
+    tty: true
+    volumes:
+      - ../../../neo4j_data:/data
+      - ../../../neo4j_logs:/logs
+      - ../../../neo4j_ssl:/ssl

@@ -1,0 +1,56 @@
+version: "3"
+services:
+  neo4j:
+    build:
+      context: ./neo4j/
+    container_name: neo4j
+    environment:
+      - NEO4J_dbms_connectors_default__listen__address=0.0.0.0
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*  # un-sandbox apoc procedures: http://blog.armbruster-it.de/2017/05/running-neo4j-3-2-apoc-docker/
+      - NEO4J_dbms_memory_heap_max__size=${NEO4J_HEAP_MEMORY}
+      - NEO4J_dbms_memory_heap_initial__size=${NEO4J_HEAP_MEMORY_INIT}
+      - NEO4J_dbms_memory_pagecache_size=${NEO4J_CACHE_MEMORY}
+      - NEO4J_dbms_read__only=true
+      - NEO4J_browser_remote__content__hostname__whitelist=robokopkg.renci.org
+      - NEO4J_dbms_security_auth__enabled=false
+      - NEO4J_browser_post__connect__cmd=play http://robokopkg.renci.org/guide
+      - NEO4J_unsupported_dbms_executiontime__limit_enabled=true
+      - NEO4J_unsupported_dbms_executiontime__limit_time=10m
+    ports:
+      - "${NEO4J_BOLT_PORT}:${NEO4J_BOLT_PORT}"
+    volumes:
+      # - ../../../neo4j_data:/data
+      # - ../../../neo4j_logs:/logs
+      - ../../../neo4j_ssl:/ssl
+      - ./data_dump:/dumps
+    networks:
+      - internal
+  guides_server:
+    container_name: guides_server
+    build:
+      context: ./webserver/
+    environment:
+      - SERVER_DOMAIN=http://robokopkg.renci.org
+    volumes:
+      - ./webserver/app:/home/murphy/robokopkg
+      - ./data_dump:/home/murphy/dumps
+      - ./change_logs:/home/murphy/change_logs
+    networks:
+      - internal
+  nginx:
+    container_name: nginx
+    build:
+      context: ./nginx/
+    ports: 
+      - 80:80
+      - 443:443
+    networks:
+      - internal
+    depends_on:
+      - guides_server
+      - neo4j
+      
+networks:
+  internal:
+      
+    
