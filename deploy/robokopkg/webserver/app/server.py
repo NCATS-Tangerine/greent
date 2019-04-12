@@ -24,9 +24,11 @@ def get_list_of_files():
 
 def get_change_log(dump_file_name):
     change_logs = []
-    with open(os.path.join(change_logs_dir, f'{dump_file_name}.changelog')) as diff_file:
-        change_logs = diff_file.readlines()
-    change_logs.append('oik')
+    try:
+        with open(os.path.join(change_logs_dir, f'{dump_file_name}.changelog')) as diff_file:
+            change_logs = diff_file.readlines()
+    except:
+        logger.warning(f'Change log for {dump_file_name} not found. Ignoring...')    
     return change_logs
 
 @app.route('/guide')
