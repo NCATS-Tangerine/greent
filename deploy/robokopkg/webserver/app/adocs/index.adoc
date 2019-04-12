@@ -23,7 +23,7 @@
 === Browse *Dump files*
 ++++
                 <div class="icon-holder">                                      
-                    <a play-topic="{{host}}guide/dumps">
+                    <a play-topic="{{host}}/guide/dumps">
                         Browse
                     </a>
                 </div>
