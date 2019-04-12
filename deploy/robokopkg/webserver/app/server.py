@@ -7,8 +7,8 @@ from logging import Logger
 logger = Logger(__name__)
 app = Flask(__name__)
 static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static')
-dumps_dir = os.path.join(static_file_dir, 'dumps')
-change_logs_dir = os.path.join(static_file_dir, 'change_logs')
+dumps_dir = os.path.join(os.environ.get('HOME'), 'dumps')
+change_logs_dir = os.path.join(os.environ.get('HOME'), 'change_logs')
 CORS(app)
 
 def get_domain_name_from_env():
