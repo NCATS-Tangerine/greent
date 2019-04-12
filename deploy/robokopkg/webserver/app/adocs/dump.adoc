@@ -7,7 +7,7 @@ Browse through the slides to download the version that best suites your needs.
 ++++
     <div class="col col-sm-3 text-center"> 
         <h3 class="">
-            <a href="{{host + '/'+ file.filename)}}" target="blank">
+            <a href="{{host + '/'+ file.filename}}" target="blank">
                 <i class="fa fa-download" aria-hidden="true" style="font-size:42px"></i>
             </a>
         </h3>
