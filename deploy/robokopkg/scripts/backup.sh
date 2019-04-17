@@ -2,7 +2,7 @@
 
 docker kill $(docker ps -f name=neo4j -q) 
 
-docker-compose -f docker-compose-backup.yml up -d
+docker-compose -f scripts/docker-compose-backup.yml up -d
 
 # ------------- back up process start 
 
