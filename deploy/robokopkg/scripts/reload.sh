@@ -35,7 +35,7 @@ done
 
 docker kill $(docker ps -f name=neo4j -q)
 
-docker-compose -f docker-compose-backup.yml up -d
+docker-compose -f scripts/docker-compose-backup.yml up -d
 
 docker exec $(docker ps -f name=neo4j -q) bash bin/neo4j-admin load --from /data/$backup_file --force true
 
