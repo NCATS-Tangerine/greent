@@ -8,6 +8,6 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - ../../../neo4j_data:/data
-      - ../../../neo4j_logs:/logs
-      - ../../../neo4j_ssl:/ssl
+      - ../../../../../neo4j_data:/data
+      - ../../../../../neo4j_logs:/logs
+      - ../../../../../neo4j_ssl:/ssl
