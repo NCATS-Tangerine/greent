@@ -14,7 +14,7 @@ function printHelp(){
 }
 
 # Default to latest if args are not provided
-backup_file='graph.latest.db.dump'
+backup_file='graph.db.latest.dump'
 
 while getopts :hf: opt; do
     case $opt in 
