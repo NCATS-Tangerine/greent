@@ -1,13 +1,17 @@
-# Small modification to the neo4j:3.2.6 image
-# * add apoc plugin
-
-FROM neo4j:3.2.6
-
+FROM neo4j:3.5.4
 LABEL maintainer="patrick@covar.com"
-ENV REFRESHED_AT 2018-03-16
 
-ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+ENV APOC_URI https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/3.5.0.2/apoc-3.5.0.2-all.jar
+ENV ROBOKOP_URI https://github.com/NCATS-Gamma/robokop-neo4j-plugin/releases/download/v2.0.0/robokop-2.0.0.jar
 
-## Add apoc
-RUN wget --quiet https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/3.2.3.5/apoc-3.2.3.5-all.jar \
-    -O /var/lib/neo4j/plugins/apoc.jar
+RUN mkdir /plugins
+
+RUN wget $APOC_URI \
+    && mv apoc-3.5.0.2-all.jar /plugins
+
+RUN wget $ROBOKOP_URI \
+    && mv robokop-2.0.0.jar /plugins
+
+EXPOSE 7474 7473 7687
+
+CMD ["neo4j"]
