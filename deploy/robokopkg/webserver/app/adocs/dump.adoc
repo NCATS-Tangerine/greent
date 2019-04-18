@@ -1,0 +1,28 @@
+== Robokop Dumps
+Browse through the slides to download the version that best suites your needs.
+++++
+{% for file in files %}
+++++
+== Dump {{file.filename}} 
+++++
+    <div class="col col-sm-3 text-center"> 
+        <h3 class="">
+            <a href="{{host + '/'+ file.filename}}" target="blank">
+                <i class="fa fa-download" aria-hidden="true" style="font-size:42px"></i>
+            </a>
+        </h3>
+    </div>
+    {% if file.changelog|length > 0 %}
+        <div class="col col-sm-9">
+++++
+=== Change logs
+++++
+            <ul>
+                {% for change in file.changelog %}
+                    <li>{{change}}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {%endif%}
+{% endfor %}
+++++
