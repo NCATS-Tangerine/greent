@@ -1,7 +1,8 @@
 version: "3"
 services:
   neo4j:
-    image: patrickkwang/robokop-neo4j
+    build:
+      context: ./neo4j/
     container_name: neo4j
     environment:
       - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
