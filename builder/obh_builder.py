@@ -12,7 +12,7 @@ import logging, time, csv, tabix, pickle, gzip
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
-GWASNode = namedtuple('GWASNode', ['node', 'filepath'])
+OBHNode = namedtuple('OBHNode', ['node', 'filepath'])
 GWASAssociation = namedtuple('GWASAssociation', ['variant_node', 'p_value'])
 # if python 3.7
 #SequenceVariant = namedtuple('SequenceVariant', ['build', 'chrom', 'pos', 'ref', 'alt', 'hgvs', 'node'], defaults=(None, None))
@@ -102,105 +102,143 @@ class ObesityHubBuilder(object):
                         reference_patch='p1',
                         analysis_id=None):
         
-        # grab all of the significant variants from all of the gwas files
-        significant_variants = {}
-        for gwas_node in gwas_nodes:
-            self.find_significant_variants_in_gwas(gwas_node.filepath, p_value_cutoff, reference_genome, reference_patch, variant_dictionary=significant_variants)
+        cached_variants_file_path = f'./cache/obh_{analysis_id}.p'
+        try:
+            significant_variants = pickle.load(open(cached_variants_file_path, "rb"))
+            significant_variants_were_cached = True
+            logger.info(f'Significant variants already loaded for {analysis_id}')
+        except (OSError, IOError) as e:
+            significant_variants_were_cached = False
 
-        # batch synonymize any variants that need it
-        self.prepopulate_variant_synonymization_cache(significant_variants)
+        cached_labled_ids_path = f'./cache/obh_{analysis_id}_labels.p'
+        try:
+            labled_variant_ids = pickle.load(open(cached_labled_ids_path, "rb"))
+            labels_were_cached = True
+            logger.info(f'Significant labels loaded for {analysis_id}')
+        except (OSError, IOError) as e:
+            labels_were_cached = False
 
-        # walk through and create synonymized sequence variant nodes, do some precaching, go ahead and write LD variant nodes
-        uncached_variant_annotation_nodes = []
-        labled_variant_ids = []
-        with BufferedWriter(self.rosetta) as writer:
-            for chromosome, position_dict in significant_variants.items():
-                for position, variants in position_dict.items():
-                    variants_with_synonymized_nodes = []
-                    for variant in variants:
-                        curie_hgvs = f'HGVS:{variant.hgvs}'
-                        variant_node = KNode(curie_hgvs, name=variant.hgvs, type=node_types.SEQUENCE_VARIANT)
-                        self.rosetta.synonymizer.synonymize(variant_node)
 
-                        # TODO do this with an annotater
-                        sequence_location = [variant.build, str(variant.chrom), str(variant.pos)]
-                        variant_node.properties['sequence_location'] = sequence_location
+        if not significant_variants_were_cached or not labels_were_cached:
+            # grab all of the significant variants from all of the gwas files
+            logger.info(f'No cached variants found, finding significant variants for {analysis_id}')
+            significant_variants = {}
+            for gwas_node in gwas_nodes:
+                #if not self.quality_control_check(gwas_node.filepath, p_value_cutoff, max_hits, delimiter='\t'):
+                #    logger.debug(f'GWAS File: {gwas_node.filepath} did not pass QC.')
+                #    continue
+                self.find_significant_variants_in_gwas(gwas_node.filepath, p_value_cutoff, reference_genome, reference_patch, variant_dictionary=significant_variants)
 
-                        writer.write_node(variant_node)
+            # batch synonymize any variants that need it
+            self.prepopulate_variant_synonymization_cache(significant_variants)
 
-                        variant_with_node = SequenceVariant(variant.build, variant.chrom, variant.pos, variant.ref, variant.alt, hgvs=variant.hgvs, node=variant_node)
-                        variants_with_synonymized_nodes.append(variant_with_node)
-                        labled_variant_ids.append(LabeledID(identifier=variant_node.id, label=variant_node.name))
+            # walk through and create synonymized sequence variant nodes, do some precaching, go ahead and write LD variant nodes
+            uncached_variant_annotation_nodes = []
+            labled_variant_ids = []
+            redis_counter = 0
+            with BufferedWriter(self.rosetta) as writer, self.cache.redis.pipeline() as redis_pipe:
+                for chromosome, position_dict in significant_variants.items():
+                    for position, variants in position_dict.items():
+                        variants_with_synonymized_nodes = []
+                        for variant in variants:
+                            curie_hgvs = f'HGVS:{variant.hgvs}'
+                            variant_node = KNode(curie_hgvs, name=variant.hgvs, type=node_types.SEQUENCE_VARIANT)
+                            self.rosetta.synonymizer.synonymize(variant_node)
 
-                        # check if myvariant key exists in cache, otherwise add it to buffer for batch precaching calls
-                        if self.cache.get(f'myvariant.sequence_variant_to_gene({variant_node.id})') is None:
-                            uncached_variant_annotation_nodes.append(variant_node)
+                            # TODO do this with an annotater
+                            sequence_location = [variant.build, str(variant.chrom), str(variant.pos)]
+                            variant_node.properties['sequence_location'] = sequence_location
 
-                        # ensembl cant handle batches, and for now NEEDS to be precached individually here
-                        # (the properties on the nodes needed by ensembl wont be available to the runner)
-                        nearby_cache_key = f'ensembl.sequence_variant_to_gene({variant_node.id})'
-                        cached_nearby_genes = self.cache.get(nearby_cache_key)
-                        if cached_nearby_genes is None:
-                            cached_nearby_genes = self.ensembl.sequence_variant_to_gene(variant_node)
-                            self.cache.set(nearby_cache_key, cached_nearby_genes)
+                            writer.write_node(variant_node)
 
-                        # sequence variant to sequence variant is never 'run' so go ahead and cache AND write these relationships
-                        linkage_cache_key = f'ensembl.sequence_variant_to_sequence_variant({variant_node.id})'
-                        linked_variant_edge_nodes = self.cache.get(linkage_cache_key) 
-                        if linked_variant_edge_nodes is None:
-                            linked_variant_edge_nodes = self.ensembl.sequence_variant_to_sequence_variant(variant_node)
-                            self.cache.set(linkage_cache_key, linked_variant_edge_nodes)
+                            variant_with_node = SequenceVariant(variant.build, variant.chrom, variant.pos, variant.ref, variant.alt, hgvs=variant.hgvs, node=variant_node)
+                            variants_with_synonymized_nodes.append(variant_with_node)
+                            labled_variant_ids.append(LabeledID(identifier=variant_node.id, label=variant_node.name))
 
-                        for ld_edge_node in linked_variant_edge_nodes:
-                            writer.write_node(ld_edge_node[1])
-                            writer.write_edge(ld_edge_node[0])
-                        
-                    if len(uncached_variant_annotation_nodes) >= 1000:
-                        self.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
-                        uncached_variant_annotation_nodes = []
+                            # check if myvariant key exists in cache, otherwise add it to buffer for batch precaching calls
+                            if self.cache.get(f'myvariant.sequence_variant_to_gene({variant_node.id})') is None:
+                                uncached_variant_annotation_nodes.append(variant_node)
 
-                    significant_variants[chromosome][position] = variants_with_synonymized_nodes
-            
-            if uncached_variant_annotation_nodes:
-                self.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
-                uncached_variant_annotation_nodes = []
+                            # ensembl cant handle batches, and for now NEEDS to be precached individually here
+                            # (the properties on the nodes needed by ensembl wont be available to the runner)
+                            nearby_cache_key = f'ensembl.sequence_variant_to_gene({variant_node.id})'
+                            cached_nearby_genes = self.cache.get(nearby_cache_key)
+                            if cached_nearby_genes is None:
+                                nearby_genes = self.ensembl.sequence_variant_to_gene(variant_node)
+                                redis_pipe.set(nearby_cache_key, pickle.dumps(nearby_genes))
+                                redis_counter += 1
+
+                            # sequence variant to sequence variant is never 'run' so go ahead and cache AND write these relationships
+                            linkage_cache_key = f'ensembl.sequence_variant_to_sequence_variant({variant_node.id})'
+                            linked_variant_edge_nodes = self.cache.get(linkage_cache_key)
+                            if linked_variant_edge_nodes is None:
+                                linked_variant_edge_nodes = self.ensembl.sequence_variant_to_sequence_variant(variant_node)
+                                redis_pipe.set(linkage_cache_key, pickle.dumps(linked_variant_edge_nodes))
+                                redis_counter += 1
+
+                            for ld_edge_node in linked_variant_edge_nodes:
+                                writer.write_node(ld_edge_node[1])
+                                writer.write_edge(ld_edge_node[0])
+
+                            if redis_counter == 2000:
+                                redis_pipe.execute()
+                            
+                        if len(uncached_variant_annotation_nodes) >= 1000:
+                            self.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
+                            uncached_variant_annotation_nodes = []
+
+                        significant_variants[chromosome][position] = variants_with_synonymized_nodes
+                
+                if uncached_variant_annotation_nodes:
+                    self.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
+                    uncached_variant_annotation_nodes = []
+
+            try:
+                pickle.dump(significant_variants, open(cached_variants_file_path, "wb" ))
+                pickle.dump(labled_variant_ids, open(cached_labled_ids_path, "wb" ))
+
+            except (OSError, IOError) as e:
+                logger.error(f'Could not write significant variants cache dump!!! {e}')
 
         # all precaching is done, variant nodes are already written 
         predicate = LabeledID(identifier=f'RO:0002609', label=f'related_to')
-        for gwas_node in gwas_nodes:
-            #if not self.quality_control_check(gwas_node.filepath, p_value_cutoff, max_hits, delimiter='\t'):
-            #    logger.debug(f'GWAS File: {gwas_node.filepath} did not pass QC.')
-            #    continue
-            self.rosetta.synonymizer.synonymize(gwas_node.node)
-            with BufferedWriter(self.rosetta) as writer:
+        with BufferedWriter(self.rosetta) as writer:
+            for gwas_node in gwas_nodes:
+                
+                self.rosetta.synonymizer.synonymize(gwas_node.node)
                 writer.write_node(gwas_node.node)
 
                 # walk through and for each variant find it's row in the specific gwas file to grab the p value
+                tabix_handler = tabix.open(f'{gwas_node.filepath}')
                 for chromosome, position_dict in significant_variants.items():
                     for position, variants in position_dict.items():
-                        gwas_data = self.get_gwas_data_from_indexed_file(f'{gwas_node.filepath}', f'{chromosome}', position, position)
+                        gwas_data = self.get_gwas_data_from_indexed_file(f'{gwas_node.filepath}', f'{chromosome}', position, position, tabix_handler=tabix_handler)
                         if gwas_data:
                             for variant in variants:
                                 for data in gwas_data:
                                     # TODO these indexes should be dynamic, right now assume SUGEN indexing
                                     if (variant.ref == data[3]) and (variant.alt == data[4]):
                                         try:
-                                            p_value = float(data[14])
+                                            p_value = float(data[5])
                                         except ValueError as e:
                                             logger.warning(f'Bad p value in file {gwas_node.filepath}: {e}')
                                             continue
 
                                         # write the relationship, in this case both nodes already exist and it just creates and writes the edge
-                                        self.write_new_association(gwas_node.node, variant.node, predicate, p_value, analysis_id=analysis_id, node_exists=True)
+                                        self.write_new_association(writer, gwas_node.node, variant.node, predicate, p_value, analysis_id=analysis_id, node_exists=True)
                         else:
                             logger.debug(f'OBH_Builder couldnt find a variant it expected in ({gwas_node.filepath}) at {chromosome}:{position}')
 
+        chunked_labled_variant_ids = [labled_variant_ids[i:i + 1000] for i in range(0, len(labled_variant_ids), 1000)]
 
-        path = f'{node_types.SEQUENCE_VARIANT},{node_types.GENE}'
-        run(path,'','',None,None,None,'greent.conf', identifier_list=labled_variant_ids)
+        pool = Pool(4)
 
-        path = f'{node_types.SEQUENCE_VARIANT},{node_types.DISEASE_OR_PHENOTYPIC_FEATURE}'
-        run(path,'','',None,None,None,'greent.conf', identifier_list=labled_variant_ids)
+        pool.map(run_seq_to_gene, chunked_labled_variant_ids)
+
+        pool.map(run_seq_to_disease, chunked_labled_variant_ids)
+
+        pool.close()
+        pool.join()
 
         logger.info(f'create_gwas_graph complete - {len(labled_variant_ids)} significant variants found and processed.')
 
@@ -210,14 +248,16 @@ class ObesityHubBuilder(object):
                                     filepath, 
                                     chromosome, 
                                     position_start, 
-                                    position_end):
+                                    position_end,
+                                    tabix_handler=None):
         # "not sure why tabix needs position -1" - according to PyVCF Docs
         # seems to be true for now
         position_start -= 1
         #
         try:
-            tb = tabix.open(filepath)
-            records = tb.query(chromosome, position_start, position_end)
+            if not tabix_handler:
+                tabix_handler = tabix.open(filepath)
+            records = tabix_handler.query(chromosome, position_start, position_end)
             return records
         except tabix.TabixError as e:
             logger.info(f'TabixError Query({filepath}) {chromosome}:{position_start}-{position_end}')
@@ -431,12 +471,12 @@ class ObesityHubBuilder(object):
         metabolites_processed = 0
         predicate = LabeledID(identifier=f'RO:0002609', label=f'related_to')
 
-        for source_node in source_nodes:
-            filepath = f'{mwas_file_directory}/{mwas_file_names[source_node.id]}'
-            identifiers, p_values = self.get_metabolite_identifiers_from_mwas(filepath, p_value_cutoff)
-            if identifiers:
-                self.rosetta.synonymizer.synonymize(source_node)
-                with BufferedWriter(self.rosetta) as writer:
+        with BufferedWriter(self.rosetta) as writer:
+            for source_node in source_nodes:
+                filepath = f'{mwas_file_directory}/{mwas_file_names[source_node.id]}'
+                identifiers, p_values = self.get_metabolite_identifiers_from_mwas(filepath, p_value_cutoff)
+                if identifiers:
+                    self.rosetta.synonymizer.synonymize(source_node)
                     writer.write_node(source_node)
 
                 labled_metabolite_ids = []
@@ -445,7 +485,7 @@ class ObesityHubBuilder(object):
                     metabolite_node = KNode(metabolite_id.identifier, name=metabolite_id.label, type=node_types.CHEMICAL_SUBSTANCE)
                     self.rosetta.synonymizer.synonymize(metabolite_node)
                     labled_metabolite_ids.append(LabeledID(identifier=metabolite_node.id, label=metabolite_node.name))
-                    new_edge = self.write_new_association(source_node, metabolite_node, predicate, p_value, analysis_id=analysis_id)
+                    new_edge = self.write_new_association(writer, source_node, metabolite_node, predicate, p_value, analysis_id=analysis_id)
 
                     self.write_new_association(source_node, metabolite_node, predicate, p_value)
                 
@@ -453,15 +493,13 @@ class ObesityHubBuilder(object):
 
         logger.info(f'create_mwas_graph complete - {metabolites_processed} significant metabolites found and processed.')
 
-    def load_metabolite_info(self, metabolites_file_path, file_names_postfix='', file_name_truncation=None):
+    def load_metabolite_info(self, metabolite_info_file_path, file_names_directory='', file_names_postfix='',  file_name_extension='', file_name_truncation=None,):
                
         metabolite_nodes = []
-        file_names_by_id = {}
         try:
-            with open(metabolites_file_path) as f:
+            with open(metabolite_info_file_path) as f:
                 csv_reader = csv.reader(f)
                 headers = next(csv_reader)
-                line_counter = 0
                 try:
                     label_index = headers.index('biochemical')
                     file_name_index = headers.index('metabolite_std')
@@ -469,12 +507,11 @@ class ObesityHubBuilder(object):
                     pubchem_index = headers.index('pubchem')
                     kegg_index = headers.index('kegg')
                 except ValueError:
-                    logger.warning(f'Error reading file headers for {metabolites_file_path}')
-                    return metabolite_nodes, file_names_by_id
+                    logger.warning(f'Error reading file headers for {metabolite_info_file_path}')
+                    return metabolite_nodes
 
                 for data in csv_reader:
                     try:
-                        line_counter += 1 
                         if data[pubchem_index] != '#N/A':
                             m_id = f'PUBCHEM:{data[pubchem_index]}'
                         elif data[hmdb_index] != '#N/A':
@@ -488,20 +525,26 @@ class ObesityHubBuilder(object):
                         m_filename = f'{data[file_name_index]}{file_names_postfix}'
                         # temporary workaround for truncated incorrect names
                         m_filename = m_filename[0:file_name_truncation]
-                        file_names_by_id[m_id] = m_filename
+
+                        if file_name_extension:
+                            m_filename = m_filename + file_name_extension
+
+                        if file_names_directory:
+                            m_filename = file_names_directory + '/' + m_filename
 
                         new_metabolite_node = KNode(m_id, name=m_label, type=node_types.CHEMICAL_SUBSTANCE)
-                        metabolite_nodes.append(new_metabolite_node)
+                        new_obh_node = OBHNode(new_metabolite_node, m_filename)
+                        metabolite_nodes.append(new_obh_node)
 
                         self.metabolite_labled_id_lookup[m_filename] = LabeledID(identifier=m_id, label=m_label)
 
                     except (KeyError) as e:
-                        logger.warning(f'metabolites_file ({metabolites_file_path}) could not be parsed: {e}')
+                        logger.warning(f'metabolites_file ({metabolite_info_file_path}) could not be parsed: {e}')
 
         except (IOError) as e:
-            logger.warning(f'metabolites_file ({metabolites_file_path}) could not be loaded: {e}')
+            logger.warning(f'metabolites_file ({metabolite_info_file_path}) could not be loaded: {e}')
 
-        return metabolite_nodes, file_names_by_id
+        return metabolite_nodes
 
     def get_metabolite_identifiers_from_mwas(self, mwas_filepath, p_value_cutoff):
         metabolite_ids = []
@@ -548,7 +591,7 @@ class ObesityHubBuilder(object):
 
         return metabolite_ids, corresponding_p_values
 
-    def write_new_association(self, source_node, associated_node, predicate, p_value, analysis_id=None, node_exists=False):
+    def write_new_association(self, writer, source_node, associated_node, predicate, p_value, analysis_id=None, node_exists=False):
 
         if self.concept_model:
             standard_predicate = self.concept_model.standardize_relationship(predicate)
@@ -559,8 +602,7 @@ class ObesityHubBuilder(object):
         provided_by = 'OBH_Builder'
         props={'p_value': p_value}
         if analysis_id:
-            props['analysis_id'] = analysis_id
-            #provided_by = f'OBH_{analysis_id}'
+            props['namespace'] = analysis_id
 
         ctime = time.time()
         new_edge = KEdge(source_id=source_node.id,
@@ -574,10 +616,9 @@ class ObesityHubBuilder(object):
                      url=None,
                      properties=props)
         
-        with BufferedWriter(self.rosetta) as writer:
-            if not node_exists:
-                writer.write_node(associated_node)
-            writer.write_edge(new_edge)
+        if not node_exists:
+            writer.write_node(associated_node)
+        writer.write_edge(new_edge)
 
         return new_edge
 
@@ -619,6 +660,14 @@ class ObesityHubBuilder(object):
 
         return True
 
+def run_seq_to_disease(labled_variant_ids):
+    path = f'{node_types.SEQUENCE_VARIANT},{node_types.DISEASE_OR_PHENOTYPIC_FEATURE}'
+    run(path,'','',None,None,None,'greent.conf', identifier_list=labled_variant_ids)
+
+def run_seq_to_gene(labled_variant_ids):
+    path = f'{node_types.SEQUENCE_VARIANT},{node_types.GENE}'
+    run(path,'','',None,None,None,'greent.conf', identifier_list=labled_variant_ids)
+
 def get_ordered_names_from_csv(file_path, name_header):
     ordered_names = []
     with open(file_path) as f:
@@ -640,14 +689,12 @@ def get_ordered_names_from_csv(file_path, name_header):
 if __name__=='__main__':
 
     obh = ObesityHubBuilder(Rosetta(), debug=True)
+    obesity_id = 'HP:0001513'
+
+    obesity_node = KNode(obesity_id, name='Obesity', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
+    gwas_directory = '/var/example_directory'
+    source_nodes = [OBHNode(obesity_node, f'{gwas_directory}/example_file.gz')]
 
     #obh.prepopulate_gwascatalog_cache()
+    obh.create_gwas_graph(source_nodes, 1e-5, analysis_id='example_id')
 
-    #p_value_cutoff = 1e-5
-    #gwas_directory = '/example_directory'
-    #obesity_id = 'HP:0001513'
-    #obesity_node = KNode(obesity_id, name='Obesity', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
-    #associated_nodes = [obesity_node]
-    #associated_file_names = {obesity_id: 'example_gwas_file'}
-    #obh.create_gwas_graph(associated_nodes, associated_file_names, gwas_directory, p_value_cutoff, analysis_id='testing_gwas')
-   
