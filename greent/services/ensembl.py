@@ -9,8 +9,9 @@ logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)#
 
 class Ensembl(Service):
     
-    def __init__(self, context):
+    def __init__(self, context, rosetta):
         super(Ensembl, self).__init__("ensembl", context)
+        self.synonymizer = rosetta.synonymizer
 
     def sequence_variant_to_gene(self, variant_node):
         flanking_region_size = 500000
@@ -50,6 +51,7 @@ class Ensembl(Service):
             gene_ids = self.parse_genes_from_ensembl(query_json)
             for gene_id in gene_ids:
                 gene_node = KNode(f'ENSEMBL:{gene_id}', name=f'{gene_id}', type=node_types.GENE)
+                self.synonymizer.synonymize(gene_node)
                 edge = self.create_edge(variant_node, gene_node, 'ensembl.sequence_variant_to_gene', variant_node.id, predicate, url=query_url)
                 results.append((edge, gene_node))
         else:
@@ -89,6 +91,7 @@ class Ensembl(Service):
                     r_squared = variant_info[1]
                     props = {'r2' : r_squared}
                     new_variant_node = KNode(f'DBSNP:{new_variant_id}', name=f'{new_variant_id}', type=node_types.SEQUENCE_VARIANT)
+                    self.synonymizer.synonymize(new_variant_node)
                     edge = self.create_edge(variant_node, new_variant_node, 'ensembl.sequence_variant_to_sequence_variant', dbsnp_curie, predicate, url=query_url, properties=props)
                     return_results.append((edge, new_variant_node))
             else:
