@@ -48,3 +48,11 @@ def dumps():
 @app.route('/guide/learn')
 def about():
     return render_template('guide/about.html',**{'host': get_domain_name_from_env()})
+
+@app.route('/guide/methods')
+def methods():
+    return render_template('guide/methods.html',**{'host': get_domain_name_from_env()})
+
+@app.route('/guide/queries')
+def queries():
+    return render_template('guide/queries.html',**{'host': get_domain_name_from_env()})
