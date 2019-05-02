@@ -1,0 +1,21 @@
+== How to Access ROBOKOP KG
+
+++++
+<p>
+The simplest way to access ROBOKOP KG is to use the browser in which you are currently viewing this guide.  The database here will be kept up to date with the version that backs <a href="http://robokop.renci.org">ROBOKOP</a>.  Neo4j documentation for using the browser can be found <a href="https://neo4j.com/developer/guide-neo4j-browser/">here</a>.   You may also access this database using a <a href="https://neo4j.com/docs/driver-manual/current/get-started/">Neo4j driver</a> if you prefer a programmatic interface. 
+</p>
+
+<p>
+Using the KG in this way is simplest for normal queries but there are two use cases that we do not support in this instance.  First, the current instance is read only; you cannot make any updates to the KG.  Second, to provide a shared resource that will perform reasonably well for all users, we require that user queries must complete in 10 minutes, after which a query is killed.
+</p>
+
+<p> 
+If these restrictions interfere with your use of ROBOKOP KG, you may want to create a local instance for yourself.  There are two ways to accomplish this.  The simplest is to install a local copy of <a href="">Neo4j</a>, then pull the latest database export from <a href="">the exports page</a>, and install it using <a href="">neo4j-admin</a>.
+</P>
+
+<p>
+The more complicated way to create your own version of ROBOKOP KG is to build it from scratch.   Instructions for building are found at our <a href="https://github.com/NCATS-Gamma/robokop-interfaces">github site</a>.   For most users this will be overkill, but if you wish to incorporate more data into the KG, you may find this to be the most productive and reproducable route.
+</p>
+
+++++
+

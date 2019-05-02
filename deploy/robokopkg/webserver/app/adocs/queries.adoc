@@ -1,0 +1,155 @@
+== One Hop Queries
+
+++++
+<p>
+The simplest queries are those that go a single step from a named entity.  These one hop queries can be useful in exploring the data.
+</p>
+<p>
+Find all genes associated with Ebola Hemmorhagic Fever:
+++++
+[source,cypher]
+----
+match (a:disease {id:"MONDO:0005737"})-[x]-(g:gene) return *
+----
+++++
+</p>
+
+<p>
+Each relation has a predicate, and for many queries you may be interested in a subset of these predicates.  A query like this can show you what predicates exist for a particular node. Find the relations that chemicals have to the gene named INS (insulin):
+++++
+[source,cypher]
+----
+match (a:chemical_substance)-[x]->(b:gene {name:"INS"}) return distinct type(x), count(*) as c order by c desc
+----
+++++
+</p>
+
+<p>
+Find the chemicals that increase the response to insulin:
+++++
+[source,cypher]
+----
+match (a:chemical_substance)-[x:increases_response_to]->(g:gene {name:"INS"}) return *
+----
+++++
+</p>
+
+<p>
+Find diseases that have a basis in the regulation of membrane potential (GO:0042391):
+++++
+[source,cypher]
+----
+match (d:disease)-[:disease_has_basis_in]->(b:biological_process_or_activity {id:"GO:0042391"}) return *
+----
+++++
+</p>
+++++
+
+//------------------------------------------- slide - 2 -----------------------------------------------
+
+== Multiple Hop Queries
+
+++++
+<p>
+More complicated queries can be created by stringing together multiple hops. 
+</p>
+
+<p>
+Find all genes that are part of a gene family with the FTO gene (HGNC:24687)
+++++
+[source,cypher]
+----
+match (g:gene {id:"HGNC:24678"})--(f:gene_family)--(g2:gene) return *
+----
+++++
+</p>
+<p>
+Find all genetic conditions that share a gene with Ebola:
+++++
+[source,cypher]
+----
+match (d:disease {id:"MONDO:0005737"})--(g:gene)--(c:genetic_condition) return *
+----
+++++
+</p>
+<p>
+Find all processes that occur in cells that are associated with the liver:
+++++
+[source,cypher]
+----
+match (b:anatomical_entity {name:"liver"})--(c:cell)--(d:biological_process_or_activity) return *
+----
+++++
+</p>
+<p>
+Find any concpets that connect brain to diabetes.  In this case, the connection are brain-affecting phenotypes that occur in diabetes.
+++++
+[source,cypher]
+----
+match p=(b:anatomical_entity {name:"brain"})--()--(d:disease {id:"MONDO:0005148"}) return *
+----
+++++
+</p>
+++++
+
+
+== NonLinear Queries
+
+++++
+<p>
+All of the queries so far find linear paths.  But cypher allows more complex query patterns.
+</p>
+<p>
+Find chemicals that treat leukemia (MONDO:0005059) and interact with a gene that is involved with leukemia.
+++++
+[source,cypher]
+----
+match p=(a:disease {id:"MONDO:0005059"})<-[e1:treats]-(c:chemical_substance)-[e2]-(g:gene)-[e3]-(a) return * limit 10
+----
+++++
+</p>
+<p>
+Find all genes connected to LEP through both a shared biological process, and a shared chemical:
+++++
+[source,cypher]
+----
+match (g1:gene {id:"HGNC:6553"})-[e1]-(b:biological_process_or_activity)-[e2]-(g:gene)-[e3]-(c:chemical_substance)-[e4]-(g1) return * limit 20
+----
+++++
+</p>
+<p>
+Find all genes, biological processes, and chemicals that are connected to Hyperglycemia, and to one another.
+++++
+[source,cypher]
+----
+match (c:chemical_substance)-[e1]-(d:disease {id:"MONDO:0002909"})-[e2]-(b:biological_process_or_activity)-[e3]-(g:gene)-[e4]-(c)-[e5]-(b),(g)-[e6]-(d) return *
+----
+++++
+</p>
+++++
+
+== Jaccard Similarities
+
+++++
+<p>
+Robokop KG can be used to perform more complicated calculations in queries, such as Jaccard similarity coefficients.
+</p>
+<p>
+Find diseases that have a jaccard coefficient of greater than 0.2 with obesity, when measured on shared genes.
+++++
+[source,cypher]
+----
+"MATCH (query:disease {id:"MONDO:0011122"})--(b:gene)--(result:disease) 
+ WITH query, result, count(distinct b) as intersection, collect(distinct b.id) as i
+ MATCH (query)--(qm:gene)
+ WITH query,result, intersection,i, COLLECT(distinct qm.id) AS s1
+ MATCH (result)--(rm:gene)
+ WITH query,result,intersection,i, s1, COLLECT(distinct rm.id) AS s2
+ WITH query,result,intersection,s1+filter(x IN s2 WHERE NOT x IN s1) AS union, s1, s2
+ WITH query,result,intersection,union,s1,s2, ((1.0*intersection)/SIZE(union)) AS jaccard
+ WHERE jaccard > 0.2
+ RETURN result, jaccard ORDER BY jaccard DESC
+----
+++++
+</p>
+++++

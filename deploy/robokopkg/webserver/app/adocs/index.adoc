@@ -9,10 +9,11 @@
         <div class="row" style="padding-left:40px">
             <p class="lead">
 ++++
-=== Learn about *Robokop Knowledge Graph*
+=== Learn about the contents of *ROBOKOP Knowledge Graph (KG)*
+
 ++++
                 <div class="icon-holder">
-                    <a play-topic="{{host}}/guide/learn"><i class="fa fa-play-circle-o" style="padding-right:4px"></i> Learn More</a>
+                    <a play-topic="{{host}}/guide/learn"><i class="fa fa-play-circle-o" style="padding-right:4px"></i>Learn</a>
                 </div> 
             </p>
 
@@ -20,7 +21,21 @@
             
             <p class="lead">
 ++++
+=== Methods for accessing ROBOKOP KG
+
+++++
+                <div class="icon-holder">
+                    <a play-topic="{{host}}/guide/methods">Methods</a>
+                </div> 
+            </p>
+
+            <div class="clearfix" style="margin-bottom:15px"></div>
+            
+            <p class="lead">
+
+++++
 === Browse *Dump files*
+
 ++++
                 <div class="icon-holder">                                      
                     <a play-topic="{{host}}/guide/dumps">

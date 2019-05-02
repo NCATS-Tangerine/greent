@@ -31,13 +31,19 @@ def get_variants_for_phenotype(url,identifier):
 #        print(path.relationships)
 #        break
 
+def testq(url):
+    q = 'match (s:sequence_variant)-[e]-(a:disease {id:"MONDO:0011122"})-[ed]-(c:chemical_substance)-[f]-(s2:sequence_variant)-[ld]-(s) where e.namespace = "obesity_diet" and e.p_value < 1e-4 and f.p_value < 1e-4 return *'
+    result = run_query(url,q)
+    print(len(result))
+
 def go():
     url = 'bolt://obesityhub.edc.renci.org:7687'
-    variants = get_variants_for_phenotype(url,'EFO:0003940') #Physical Activity
-    for variant in variants:
-        if variant.properties['id'].startswith('HGVS'):
-            print(variant.properties['id'])
-    print(len(variants))
+    testq(url)
+    #variants = get_variants_for_phenotype(url,'EFO:0003940') #Physical Activity
+    #for variant in variants:
+    #    if variant.properties['id'].startswith('HGVS'):
+    #        print(variant.properties['id'])
+    #print(len(variants))
 
 if __name__ == '__main__':
     go()
