@@ -1,25 +1,33 @@
 import pytest
 from greent import node_types
 from greent.graph_components import KNode, LabeledID
-from greent.conftest import rosetta
+from greent.conftest import Rosetta
 from builder.gtex_builder import GTExBuilder
-from builder.obh_builder import get_ordered_names_from_csv
 
 @pytest.fixture()
-def gtex(rosetta):
+def gtb(rosetta):
 	return GTExBuilder(rosetta, debug=True)
 
-def test_gtex_builder(rosetta, gtex):
+def test_gtex_builder(rosetta, gtb):
     # this will actually write to neo4j
     # create a graph with just one node / file
 
-    gtex_id = ''
-    gtex_node = KNode(gtex_id, name='', type=node_types.ANATOMICAL_ENTITY)
+    # load the redis cache
+    gtb.prepopulate_gtex_catalog_cache()
 
+    # directory with GTEx data to process
+    gtex_directory = 'C:/Phil/Work/Informatics/GTEx/GTEx_data/'
+
+    # create a node
+    gtex_id = '0002190'  # ex. uberon "Adipose Subcutaneous"
+    gtex_node = KNode(gtex_id, name='gtex_tissue', type=node_types.ANATOMICAL_ENTITY)
+
+    # assign the node to an array
     associated_nodes = [gtex_node]
-    associated_file_names = {id: 'sample_gtex'}
 
-    gtex_directory = '.'
+    # assign the name of the GTEx data file
+    associated_file_names = {'little_signif.csv'}
 
-    gtex.create_gtex_graph(associated_nodes, associated_file_names, gtex_directory, data_set_tag='testing_analysis')
+    # call the GTEx builder
+    gtb.create_gtex_graph(associated_nodes, associated_file_names, gtex_directory, 'testing_gtex')
     pass
