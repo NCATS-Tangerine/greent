@@ -21,19 +21,6 @@
             
             <p class="lead">
 ++++
-=== Methods for accessing ROBOKOP KG
-
-++++
-                <div class="icon-holder">
-                    <a play-topic="{{host}}/guide/methods">Methods</a>
-                </div> 
-            </p>
-
-            <div class="clearfix" style="margin-bottom:15px"></div>
-            
-            <p class="lead">
-
-++++
 === ROBOKOP KG Queries
 
 ++++
@@ -57,6 +44,20 @@
                     </a>
                 </div>
             </p>
+
+++++
+
+=== Methods for accessing ROBOKOP KG
+
+++++
+                <div class="icon-holder">
+                    <a play-topic="{{host}}/guide/methods">Methods</a>
+                </div> 
+            </p>
+
+            <div class="clearfix" style="margin-bottom:15px"></div>
+            
+            <p class="lead">
 
 ++++
 
