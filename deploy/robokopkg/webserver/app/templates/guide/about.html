@@ -50,7 +50,10 @@
     <br/>
     <div>
       <p>
-    The ROBOKOP Knowledge Graph (ROBOKOPKG) was built from gathering output from several biomedical knowledge sources by using the ROBOKOP Knowledge Graph Builder(<a href="https://github.com/NCATS-Gamma/robokop-interfaces">ROBOKOPKGB</a>). The Knowledge Graph was built semantically based on the <a href="https://biolink.github.io/biolink-model/" target="blank">biolink model</a>.
+    The ROBOKOP Knowledge Graph (ROBOKOP KG) integrates knowledge from biomedical knowledge sources using the ROBOKOP Knowledge Graph Builder(<a href="https://github.com/NCATS-Gamma/robokop-interfaces">ROBOKOP KGB</a>). The Knowledge Graph is semantically based on the <a href="https://biolink.github.io/biolink-model/" target="blank">BioLink model</a>, which defines the node and edge types in the graph.
+</p>
+<p>
+In addition to the data itself, which will be discussed later, the KG contains its schema in the form of the Concept Map.   The nodes in the Concept Map have the label "Concept", and represent types in the BioLink Model.   The names of these Concept nodes, such as "chemical_substance" are the types of data nodes in the graph.
 </p>
 <p>
     <div class="col-md-6">
@@ -59,19 +62,22 @@
     </div>
     <div class="col-md-6">
         <p>
-        The picture is a small portion of the concept graph. Here we can see two main types of relationships. The <span style="background: rgb(104,189,246)">Relationship</span> in the picture denotes a hierachical relation between concepts. Here we can infer that "biological_entity" node has "biological_process_or_activity", "chemical_entity" and "organismal_entity" as sub-concepts. As we go down the hierarchy, we find that concepts are more specific.
+        This figure shows a small portion of the Concept Map, and shows the two types of relationships. The <span style="background: rgb(104,189,246)">Blue</span> relationships denote hierachical "is-a" relations between concepts as defined in the BioLink Model.  Here we can see that "biological_entity" node has "biological_process_or_activity", "chemical_entity" and "organismal_entity" as sub-concepts. As we go down the hierarchy, we find that concepts are more specific.
         </p>
         <p>
-        The <span style="background: #6DCE9E"> Relationship</span> is used to calculate what services should be invoked when putting in instances of the concepts. For example, we can start from a "biological_process_or_activity" node and fetch related "anatomical_entity" (or in this case one of its sub concepts) via the "bio_process_cell_type" edge. Which contains details about what service should be invoked to achive this.
+        The <span style="background: #6DCE9E">Green</span> relations are used to express the services invoked in ROBOKOP KGB to create relations between instances of the connected types.  For example, the edge connecting "biological_process_or_activity" and "anatomical_entity" contains details about what service can be invoked to produce edges between entities of those types.
         </p>
         <p>
         To view the full concept graph, you can run:
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Concept) return c<!--/code--></pre>
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (c:Concept) RETURN c<!--/code--></pre>
 </div>
 </div>
         </p>
+        <p>
+        The sources used to build the current KG are viewable <a href="http://robokop.renci.org:6010/api/operations">here</a>.
+    </p>
     </div>
 </p>
 	</div>
@@ -82,23 +88,39 @@
 
 <slide class="row-fluid">
   <div class="col-sm-12">
-    <h3>Our Nodes</h3>
+    <h3>Nodes</h3>
     <br/>
     <div>
       <p>
-    By using our concept map we can run our services to crawl an populate an instance of a knowledge graph. The nodes have several properties. Depending on thier type some meta-data has been ammended to them from some source. <a href="http://robokop.renci.org:6010/api/operations">Here</a> you can view what annotations sources where used when building this Knowledge Graph instance.
-</p>
-<p>
-    Another interesting thing is the use of synonym curies. When the build the Knowledge graph we often found ourselves in situations where different knowledges sources refer the same biomedical entity using different identifiers. In ROBOKOPKDB there are a set of services that enable conversion of identifiers to a set of equivalent identifiers when ever possible. The identifiers are maintained as a property called "equivalent_identifiers" on the nodes themselves.
-</p>
-<p>
-    You can run the following query to inspect what a typical node looks like:
+    Each node in the KG has one or more types, which are implemented as labels in neo4j.  The number of nodes of each type are viewable with this query:
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (p:phenotypic_feature{id:'HP:0012241'}) RETURN p<!--/code--></pre>
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (a) RETURN DISTINCT LABELS(a), COUNT(*) AS c ORDER BY c DESC<!--/code--></pre>
 </div>
 </div>
 </p>
+<p>
+Each node will have a set of properties dependent upon its type.  These queries return example nodes for a disease, a gene, and a chemical_substance.  The gene properties include infomation such as gene family, taxon, and chromosome, while the chemical's properties relate to the structure and function of the chemical, including whether it is considered a drug.
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (a:disease {id:"MONDO:0005148"}) RETURN a<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (a:gene {id:"HGNC:7897"}) RETURN a<!--/code--></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (a:chemical_substance {id:"CHEBI:5118"}) RETURN a<!--/code--></pre>
+</div>
+</div>
+</p>
+<p>
+Note that all of these entities shared some properties. Each contains an id property in the form of a CURIE.  Each contains a "name" property with a human-readable name (which is not guaranteed to be unique).  Each also contains an "equivalent_identifiers" property.  The array value contains a number of other CURIEs that should be considered equivalent to the primary identifier.  To find the primary identifier given any other identifier, you can use the synonymizer tool <a href="ROBOKOP.renci.org/simple/synonymize" target="blank">here</a>.
+</p>
+----
 	</div>
   </div>
 </slide>
@@ -107,20 +129,61 @@
 
 <slide class="row-fluid">
   <div class="col-sm-12">
-    <h3>Our Edges</h3>
+    <h3>Edges</h3>
     <br/>
     <div>
       <p>
-After executing a service opration using the ROBOKOPKGB tool we end up with predicates relating two nodes. The set of predicates that are used in one knowledge source can be different from another, although they semantically mean the same thing. In our edges we maintain the original knowledge source's predicate and a normalize predicate value, and use this normalized value as our edge's predicate id. A full JSON map of the predicates in our database is available <a href="ROBOKOP.renci.org:6010/api/predicates" target="blank">here</a>.
+Edges between nodes in ROBOKOP KG define a relationship between two entities.  The predicate of the edge tells the user what that relationship is. The set of predicates that are used in one knowledge source can be different from another, although they semantically mean the same thing. In our edges we maintain the original knowledge source's predicate and a normalized predicate value. The normalized value is used as the neo4j edge type, while the original predicate is retained as the "relation" property of the edge.  A full JSON map of the predicates in our database is available <a href="ROBOKOP.renci.org:6010/api/predicates" target="blank">here</a>.  To explore the counts of different edge types, you can use this cypher query:
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (a:chemical_substance)-[x]-(b:disease) RETURN type(x),count(*) as ct order by ct desc<!--/code--></pre>
+</div>
+</div>
 </p>
+
 <p>
 We also keep the edge source and other properties of edges as a list values. This helps when multiple edges from different knowledge source are normalized to the same predicate id. They are "merged" together sharing this predicate id.
 </p>
 <div class="listingblock">
 <div class="content">
-<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->Match (x:disease{id:'MONDO:0002367'})-[e:disease_to_gene_association]-(g:gene{id:'HGNC:7029'}) return *<!--/code--></pre>
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->Match (x:disease{id:'MONDO:0002367'})-[e:disease_to_gene_association]-(g:gene{id:'HGNC:7029'}) return e<!--/code--></pre>
 </div>
 </div>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Sources</h3>
+    <br/>
+    <div>
+      <p>
+ROBOKOP KG is built from numerous sources, many of which are themselves data integrators of various types.  Because the source is captured on the neo4j edge, we can find how many edges are coming from each data source with this query, which takes some time to run:
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (a)-[x]-(b) RETURN DISTINCT x.source_database, COUNT(*) AS ce ORDER BY ce DESC<!--/code--></pre>
+</div>
+</div>
+</p>
+
+<p>
+The following summarizes the main data sources, as of April 2019:
+</p>
+
+<ul>
+<li><a href="https://api.monarchinitiative.org/api/">Monarch Biolink</a>: A source of edges on diseases, phenotypes, processes, and genes integrated from multiple sources.
+<li><a href="http://ctdbase.org">Comparative Toxicogenomics Database</a>: A collection of curated information relating chemicals, diseases, and genes.
+<li><a href="http://hmdb.ca">The Human Metabolome Database</a>: Relations between metabolites, genes, and diseases.
+<li><a href="https://het.io">Het.io</a>: A data integration relating genes, anatomical features, and diseases.
+<li><a href="https://www.genome.jp/kegg">Kyoto Encyclopedia of Genes and Genomes (KEGG)</a>:
+<li><a href="http://mychem.info">Mychem.info</a>: An aggregation service that includes data from DrugCentral and Aeolus.
+<li><a href="http://pharos.nih.gov">Pharos</a>: Relationships between genes, chemicals, and diseases, with an emphasis on drug targets.
+<li><a href="https://www.ebi.ac.uk/quickgo">QuickGo</a>: Relationships between genes and GO terms (processes and cellular components)
+<li><a href=""https://stars-app.renci.org/uberongraph/sparql">UberonGraph</a>: A combination of GO, UBERON, MONDO, and other bio-ontologies.
+</ul>
 	</div>
   </div>
 </slide>

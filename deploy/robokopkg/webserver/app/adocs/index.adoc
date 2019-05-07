@@ -34,6 +34,20 @@
             <p class="lead">
 
 ++++
+=== ROBOKOP KG Queries
+
+++++
+                <div class="icon-holder">
+                    <a play-topic="{{host}}/guide/queries">Queries</a>
+                </div> 
+            </p>
+
+            <div class="clearfix" style="margin-bottom:15px"></div>
+            
+            <p class="lead">
+
+++++
+
 === Browse *Dump files*
 
 ++++
@@ -43,6 +57,17 @@
                     </a>
                 </div>
             </p>
+
+++++
+
+=== Feedback
+
+++++
+
+            <p>
+            For questions or comments, please post an issue to <a href="https://github.com/NCATS-Gamma/robokop-interfaces/issues">The ROBOKOP KG github</a> and tag your issue with "robokop-kg".
+            </p>
+
         </div>
     </div>
 ++++

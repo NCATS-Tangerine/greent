@@ -10,7 +10,7 @@ Using the KG in this way is simplest for normal queries but there are two use ca
 </p>
 
 <p> 
-If these restrictions interfere with your use of ROBOKOP KG, you may want to create a local instance for yourself.  There are two ways to accomplish this.  The simplest is to install a local copy of <a href="">Neo4j</a>, then pull the latest database export from <a href="">the exports page</a>, and install it using <a href="">neo4j-admin</a>.
+If these restrictions interfere with your use of ROBOKOP KG, you may want to create a local instance for yourself.  There are two ways to accomplish this.  The simplest is to install a local copy of <a href="https://neo4j.com">Neo4j</a>, then pull the latest database dump from <a href="/guide/dump">the robokopkg dumps page</a>, and install it using <a href="https://neo4j.com/docs/operations-manual/current/tools/dump-load/">neo4j-admin</a>.
 </P>
 
 <p>
