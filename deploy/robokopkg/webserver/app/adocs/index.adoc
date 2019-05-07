@@ -45,6 +45,9 @@
                 </div>
             </p>
 
+            <div class="clearfix" style="margin-bottom:15px"></div>
+
+            <p class="lead">
 ++++
 
 === Methods for accessing ROBOKOP KG
