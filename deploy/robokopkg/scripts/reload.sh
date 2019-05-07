@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 function printHelp(){
     echo "
@@ -6,8 +6,8 @@ function printHelp(){
         then bring it back up. File argument is optional. graph.latest.db.dump will be loaded if 
         -f is not provided.
         Arguments:
-            -f    file          file name to reload eg `-f graph.latest.db.dump` .
-            
+            -f    file          file name to reload eg '-f graph.latest.db.dump' .
+            -c    compose-file  Path to the docker-compose file to start Neo4j in backup mode.
             -h    help          display this message.
 
     "
@@ -15,8 +15,8 @@ function printHelp(){
 
 # Default to latest if args are not provided
 backup_file='graph.db.latest.dump'
-
-while getopts :hf: opt; do
+compose_file_location='scripts/docker-compose-backup.yml'
+while getopts :hf:c: opt; do
     case $opt in 
         h) 
         printHelp
@@ -25,6 +25,9 @@ while getopts :hf: opt; do
         f) 
         backup_file=$OPTARG
         ;;
+        c)
+        compose_file_location=$OPTARG
+        ;;
         \?) 
         echo "Invalid option -$OPTARG" 
         printHelp
@@ -32,12 +35,15 @@ while getopts :hf: opt; do
         ;;
     esac
 done
-
+backup_file='//data/'$backup_file
+echo $backup_file
 docker kill $(docker ps -f name=neo4j -q)
 
-docker-compose -f scripts/docker-compose-backup.yml up -d
+docker-compose -f $compose_file_location up -d
 
-docker exec $(docker ps -f name=neo4j -q) bash bin/neo4j-admin load --from /data/$backup_file --force true
+docker exec $(docker ps -f name=neo4j -q) ls -lh $backup_file
+
+docker exec $(docker ps -f name=neo4j -q) bash bin/neo4j-admin load --from $backup_file --force true
 
 docker kill $(docker ps -f name=neo4j -q)
 

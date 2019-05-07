@@ -9,26 +9,96 @@ Blue nodes are semantic types from the [biolink-model](https://biolink.github.io
 
 ## Installation
 
+### Prerequisites
+[Install Docker](https://www.docker.com/get-started) if not installed on your computer. 
+
+Make a ``<workspace>`` directory. 
+
+```
+$ mkdir <workspace>
+$ cd <workspace> 
+```
+We will setup our enviroment using [these](https://github.com/NCATS-Gamma/robokop#environment-settings) enviroment settings. Copy and save them to ``<workspace>/shared/robokop.env``.
+
+If you would like to run the neo4j and redis-cache instance on the same host as the app you can use these values. If you choose to have Neo4j and Redis hosted on a different host you would change these values.
+```
+# neo4j host name  
+NEO4J_HOST=neo4j
+# cache host name
+CACHE_HOST=request_cache
+```
+ 
+
+If you wish to test robokopkg instance on a smaller computer, you can modify the following values to fit your hardware, but the default values are the ones used on [RobokopKG](http://robokopkg.renci.org).
+
+```
+NEO4J_HEAP_MEMORY
+NEO4J_HEAP_MEMORY_INIT
+NEO4J_CACHE_MEMORY
+```
+
+And finally, set the password variables found on the bottom section of the file. 
+
+Run the following to make sure that your terminal is set up with the enviroment variable before running docker commands.
+
+```
+$ set -a 
+$ source <workspace>/shared/robokop.env
+```
+
+From the ``<workspace>`` directory, clone the repository.
+```
+$ git clone https://github.com/NCATS-Gamma/robokop-interfaces.git
+$ cd robokop-interfaces
+```
+
 ### Graph Database
-[Download](https://neo4j.com/download/), install, and start Neo4J 3.2.6.
+The graph and concept map will be stored in a Neo4j server instance. Start the Neo4j instance with:
+
 ```
-$ <neo4j-install-dir>/bin/neo4j start
+[robokop-interfaces/] $ docker-compose  -f deploy/graph/docker-compose.yml up -d
 ```
+
+Optionally you can load our latest build of the knowledge graph available at [RobokopKG](http://robokopkg.renci.org). Once you download a version of dump file best suited, run the following commands:
+
+```
+[robokop-interfaces/] $ cp <dump_file> <workspace>/neo4j_data/
+[robokop-interfaces/] $ cd deploy/graph
+[robokop-interfaces/deploy/graph] $ ../robokopkg/scripts/reload.sh -f <dump_file_name_only> -c ../robokopkg/scripts/docker-compose-backup.yml
+[robokop-interfaces/deploy/graph] $ cd <workspace>/robokop-interfaces/ 
+```
+
 ### Cache
-[Download](http://download.redis.io/releases/redis-4.0.8.tar.gz), install, and start Redis 4.0.8
+Start the Redis container.
 ```
-<redis-install-dir>/src/redis-server
+[robokop-interfaces/] $ docker-compose -f deploy/cache/docker-compose.yml up -d 
 ```
+
 ### App
-Clone the repository.
+
+Now that the backend for the App is up we can start the app containers.
+
+##### Building the container
+We need to build the container with the current user and group permissions so that log file ownership and the code directory does not get elevated. 
+
 ```
-$ git clone <repo>
-$ cd repo/greent
-$ pip install -r requirements.txt
+[robokop-interfaces/] $ cd deploy
+[robokop-interfaces/deploy] $ docker build --build-arg UID=$(id -u) --build-arg GID=$(id -g) -t robokop_interfaces .
 ```
-Initialize the type graph. This imports the graph of Translator services, overlays local service configurations, and imports locally defined services. It configures all of these according to the biolink-model.
+
+##### Composing up
+
 ```
-$ PYTHONPATH=$PWD/.. rosetta.py --delete-type-graph --initialize-type-graph --debug
+[robokop-interfaces/deploy] $ docker-compose up -d 
+```
+
+
+#### Initial Database setup
+
+If you have not imported database dump into your neo4j instance, you will need to run the following command to initialize the type graph. This imports the graph of Translator services, overlays local service configurations, and imports locally defined services. It configures all of these according to the biolink-model.
+
+```
+$ docker exec $(docker ps -f name=interfaces -q) bash -c "source robokop-interfaces/deploy/setenv.sh && robokop-interfaces/initialize_type_graph.sh"
 ```
 Via the Neo4J interface at http://localhost:7474/browser/ query the entire type graph:
 
@@ -93,12 +163,13 @@ We cache in Redis. Objects are serialized using Python's pickle scheme.
 ### List cache contents
 To find out what operations(id) combinations are cached:
 ```
-$ ~/app/redis-4.0.8/src/redis-cli --raw keys '*ctd*'
+$  docker exec $(docker ps -f name=request_cache -q) redis-cli -p $CACHE_PORT -a $CACHE_PASSWORD --raw keys '*' 
 ```
 ### Delete specific keys
 To delete specific keys or patterns of keys from the cache:
 ```
-$ ~/app/redis-4.0.8/src/redis-cli --raw keys '*' | xargs ~/app/redis-4.0.8/src/redis-cli --raw del
+$  docker exec $(docker ps -f name=request_cache -q) redis-cli -p $CACHE_PORT -a $CACHE_PASSWORD --raw keys '*' | \
+xargs docker exec $(docker ps -f name=request_cache -q) redis-cli -p $CACHE_PORT -a $CACHE_PASSWORD --raw del
 ```
 
 ## Adding Edges
@@ -126,9 +197,9 @@ Operations are named:
 ```
 <objectName>.<methodName>
 ```
-where <objectName> is a member of core.py, the central service manager.
+where ``objectName`` is a member of core.py, the central service manager.
          
-1. Find the "@operators" tag in the configuration file.
+1. Find the ``@operators`` tag in the configuration file.
 2. Find the [biolink-model element](https://github.com/NCATS-Gamma/robokop-interfaces/blob/master/greent/conf/biolink-model.yaml) for the source type to your service.
 3. Follow the pattern in the configuration to enter your predicate (link) and operator (op)
 
