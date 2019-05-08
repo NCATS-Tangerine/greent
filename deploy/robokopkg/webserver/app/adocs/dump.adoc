@@ -13,6 +13,7 @@ Browse through the slides to download the version that best suites your needs.
         </h3>
     </div>
     {% if file.changelog|length > 0 %}
+    {% raw %}
         <div class="col col-sm-9">
 ++++
 === Change logs
@@ -23,6 +24,7 @@ Browse through the slides to download the version that best suites your needs.
                 {% endfor %}
             </ul>
         </div>
+    {% endraw %}
     {%endif%}
 {% endfor %}
 ++++
