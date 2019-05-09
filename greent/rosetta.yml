@@ -13,7 +13,7 @@
 
 '@concepts' :
 
-  anatomical_entity  : [ 'UBERON']
+  anatomical_entity  : [ 'UBERON', 'GTEX' ]
   biological_process : [ 'GO.BIOLOGICAL_PROCESS' ]
   cell               : [ 'CL' ]
   cellular_component : [ 'GO.CELLULAR_COMPONENT' ]
