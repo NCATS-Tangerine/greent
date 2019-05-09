@@ -1,0 +1,210 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>One Hop Queries</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>One Hop Queries</h3>
+    <br/>
+    <div>
+      <p>
+The simplest queries are those that go a single step from a named entity.  These one hop queries can be useful in exploring the data.
+</p>
+<p>
+Find all genes associated with Ebola Hemmorhagic Fever:
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (a:disease {id:"MONDO:0005737"})-[x]-(g:gene) return *<!--/code--></pre>
+</div>
+</div>
+</p>
+
+<p>
+Each relation has a predicate, and for many queries you may be interested in a subset of these predicates.  A query like this can show you what predicates exist for a particular node. Find the relations that chemicals have to the gene named INS (insulin):
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (a:chemical_substance)-[x]-&gt;(b:gene {name:"INS"}) return distinct type(x), count(*) as c order by c desc<!--/code--></pre>
+</div>
+</div>
+</p>
+
+<p>
+Find the chemicals that increase the response to insulin:
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (a:chemical_substance)-[x:increases_response_to]-&gt;(g:gene {name:"INS"}) return *<!--/code--></pre>
+</div>
+</div>
+</p>
+
+<p>
+Find diseases that have a basis in the regulation of membrane potential (GO:0042391):
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (d:disease)-[:disease_has_basis_in]-&gt;(b:biological_process_or_activity {id:"GO:0042391"}) return *<!--/code--></pre>
+</div>
+</div>
+</p>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Multiple Hop Queries</h3>
+    <br/>
+    <div>
+      <p>
+More complicated queries can be created by stringing together multiple hops.
+</p>
+
+<p>
+Find all genes that are part of a gene family with the FTO gene (HGNC:24687)
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (g:gene {id:"HGNC:24678"})--(f:gene_family)--(g2:gene) return *<!--/code--></pre>
+</div>
+</div>
+</p>
+<p>
+Find all genetic conditions that share a gene with Ebola:
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (d:disease {id:"MONDO:0005737"})--(g:gene)--(c:genetic_condition) return *<!--/code--></pre>
+</div>
+</div>
+</p>
+<p>
+Find all processes that occur in cells that are associated with the liver:
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (b:anatomical_entity {name:"liver"})--(c:cell)--(d:biological_process_or_activity) return *<!--/code--></pre>
+</div>
+</div>
+</p>
+<p>
+Find any concpets that connect brain to diabetes.  In this case, the connection are brain-affecting phenotypes that occur in diabetes.
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match p=(b:anatomical_entity {name:"brain"})--()--(d:disease {id:"MONDO:0005148"}) return *<!--/code--></pre>
+</div>
+</div>
+</p>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>NonLinear Queries</h3>
+    <br/>
+    <div>
+      <p>
+All of the queries so far find linear paths.  But cypher allows more complex query patterns.
+</p>
+<p>
+Find chemicals that treat leukemia (MONDO:0005059) and interact with a gene that is involved with leukemia.
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match p=(a:disease {id:"MONDO:0005059"})&lt;-[e1:treats]-(c:chemical_substance)-[e2]-(g:gene)-[e3]-(a) return * limit 10<!--/code--></pre>
+</div>
+</div>
+</p>
+<p>
+Find all genes connected to LEP through both a shared biological process, and a shared chemical:
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (g1:gene {id:"HGNC:6553"})-[e1]-(b:biological_process_or_activity)-[e2]-(g:gene)-[e3]-(c:chemical_substance)-[e4]-(g1) return * limit 20<!--/code--></pre>
+</div>
+</div>
+</p>
+<p>
+Find all genes, biological processes, and chemicals that are connected to Hyperglycemia, and to one another.
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (c:chemical_substance)-[e1]-(d:disease {id:"MONDO:0002909"})-[e2]-(b:biological_process_or_activity)-[e3]-(g:gene)-[e4]-(c)-[e5]-(b),(g)-[e6]-(d) return *<!--/code--></pre>
+</div>
+</div>
+</p>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Jaccard Similarities</h3>
+    <br/>
+    <div>
+      <p>
+Robokop KG can be used to perform more complicated calculations in queries, such as Jaccard similarity coefficients.
+</p>
+<p>
+Find diseases that have a jaccard coefficient of greater than 0.2 with obesity, when measured on shared genes.
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->MATCH (query:disease {id:"MONDO:0011122"})--(b:gene)--(result:disease)
+WITH query, result, count(distinct b) as intersection, collect(distinct b.id) as i
+MATCH (query)--(qm:gene)
+WITH query,result, intersection,i, COLLECT(distinct qm.id) AS s1
+MATCH (result)--(rm:gene)
+WITH query,result,intersection,i, s1, COLLECT(distinct rm.id) AS s2
+WITH query,result,intersection,s1+filter(x IN s2 WHERE NOT x IN s1) AS union, s1, s2
+WITH query,result,intersection,union,s1,s2, ((1.0*intersection)/SIZE(union)) AS jaccard
+WHERE jaccard &gt; 0.2
+RETURN result, jaccard ORDER BY jaccard DESC<!--/code--></pre>
+</div>
+</div>
+</p>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>

@@ -1,0 +1,91 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Access our instance of ROBOKOP KG</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Access our instance of ROBOKOP KG</h3>
+    <br/>
+    <div>
+      <p>
+The simplest way to access ROBOKOP KG is to use the browser in which you are currently viewing this guide.  The database here will be kept up to date with the version that backs <a href="http://robokop.renci.org">ROBOKOP</a>.  Neo4j documentation for using the browser can be found <a href="https://neo4j.com/developer/guide-neo4j-browser/">here</a>.   You may also access this database using a <a href="https://neo4j.com/docs/driver-manual/current/get-started/">Neo4j driver</a> if you prefer a programmatic interface.
+</p>
+
+<p>
+Using the KG in this way is simplest for normal queries but there are two use cases that we do not support in this instance.  First, the current instance is read only; you cannot make any updates to the KG.  Second, to provide a shared resource that will perform reasonably well for all users, we require that user queries must complete in 10 minutes, after which a query is killed.
+</p>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Stand up neo4j and import ROBOKOP KG</h3>
+    <br/>
+    <div>
+      <p>
+If these restrictions interfere with your use of ROBOKOP KG, you may want to create a local instance for yourself.  There are two ways to accomplish this.  The simplest is to install a local copy of <a href="https://neo4j.com">Neo4j</a>, then pull the latest database dump from <a play-topic="{{host}}/guide/dumps">the robokop kg dumps page</a>, and install it using <a href="https://neo4j.com/docs/operations-manual/current/tools/dump-load/">neo4j-admin</a>.
+</P>
+	</div>
+  </div>
+</slide>
+
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Build ROBOKOP KG from scratch</h3>
+    <br/>
+    <div>
+      <p>
+The more complicated way to create your own version of ROBOKOP KG is to build it from scratch.   Instructions for building are found at our <a href="https://github.com/NCATS-Gamma/robokop-interfaces">github site</a>.   For most users this will be overkill, but if you wish to incorporate more data into the KG, you may find this to be the most productive and reproducable route.
+</p>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>
