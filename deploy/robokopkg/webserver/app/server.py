@@ -20,7 +20,8 @@ def get_list_of_files():
     for dirname, dirnames, filenames in os.walk(dumps_dir):
         for filename in filenames:
             files.append(filename)
-    return files
+    # return sorted so recent files show up first on UI
+    return sorted(files, reverse= True)
 
 def get_change_log(dump_file_name):
     change_logs = []
