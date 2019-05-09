@@ -10,7 +10,7 @@ from greent.services.chemotext import Chemotext
 from greent.services.clingen import ClinGen
 from greent.services.ctd import CTD
 from greent.services.ensembl import Ensembl
-from greent.services.gtexcatalog import GTExCatalog
+from greent.services.gtex import GTEx
 from greent.services.gwascatalog import GWASCatalog
 from greent.services.hetio import HetIO
 from greent.services.hmdb_beacon import HMDB
@@ -55,7 +55,7 @@ class GreenT:
             "ctd"              : lambda :  CTD(self.service_context),
             "ensembl"          : lambda :  Ensembl(self.service_context, rosetta),   
             "go"               : lambda :  GO2(self.service_context),
-            "gtexcatalog"      : lambda :  GTExCatalog(self.service_context, rosetta),
+            "gtex"             : lambda :  GTEx(self.service_context, rosetta),
             "gwascatalog"      : lambda :  GWASCatalog(self.service_context, rosetta),
             "hetio"            : lambda :  HetIO (self.service_context),
             "hgnc"             : lambda :  HGNC(self.service_context),

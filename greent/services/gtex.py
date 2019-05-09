@@ -12,23 +12,28 @@ logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 # The GTEX catalog service.
 # An interface to the GTEx significant variant/gene expression effects on tissues.
 #############
-class GTExCatalog(Service):
+class GTEx(Service):
     ########
     # constructor
     ########
     def __init__(self, context, rosetta):
-        super(GTExCatalog, self).__init__("gtexcatalog", context)
+        super(GTEx, self).__init__("gtexcatalog", context)
         self.synonymizer = rosetta.synonymizer
 
     ########
-    # pre-populate the redis cache database.
-    # This should be done if not already accomplished using the builder functionality
+    # define the variant/gene relationship
     ########
-    def prepopulate_gtex_catalog_cache(self):
+    def sequence_variant_to_gene(self):
         return None
 
     ########
-    # define the variant/gene tissue expression relationships
+    # define the variant/anatomy relationship
     ########
-    def variant_to_gene_expression(self):
+    def sequence_variant_to_anatomy(self):
+        return None
+
+    ########
+    # define the gene/anatomy relationship
+    ########
+    def gene_to_anatomy(self):
         return None
