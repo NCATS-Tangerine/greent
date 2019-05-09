@@ -8,6 +8,7 @@ from builder.gtex_builder import GTExBuilder
 def gtb(rosetta):
 	return GTExBuilder(rosetta, debug=True)
 
+"""
 def test_gtex_builder(rosetta, gtb):
     # this will actually write to neo4j
     # create a graph with just one node / file
@@ -31,3 +32,9 @@ def test_gtex_builder(rosetta, gtb):
     # call the GTEx builder
     gtb.create_gtex_graph(associated_nodes, associated_file_names, gtex_directory, 'testing_gtex')
     pass
+"""
+
+def test_gtex_cache_loaded(rosetta, gtb):
+   cached = rosetta.cache.get('myvariant.sequence_variant_to_gene(CAID:CA248392703)')
+   assert(cached)
+
