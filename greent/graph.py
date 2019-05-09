@@ -40,6 +40,7 @@ class TypeGraph(Service):
         self.set_concept_model()
         self.TYPE = "Type"
         self.CONCEPT = "Concept"
+        self.ROOT_ENTITY= "named_thing"
         config = self.get_config()
         self.driver = GraphDatabase.driver(self.url, auth=("neo4j", config['neo4j_password']))
 
@@ -57,6 +58,23 @@ class TypeGraph(Service):
                 db.exec("MATCH (n:Type) DETACH DELETE n")
         except Exception as e:
             traceback.print_exc()
+    
+    def create_indexes(self):
+        """
+        Creates indexes for all Concept types present in the db.
+        """
+        try:
+            with self.driver.session() as session:
+                db = GraphDB(session)
+                concepts = db.exec(f"MATCH (c:Concept) return c.name as name")
+                for concept in concepts:
+                    if concept['name'] == self.ROOT_ENTITY:
+                        #avoid recreating index for root entity 
+                        continue
+                    db.exec(f"CREATE INDEX ON :{concept['name']}(id)")
+        except Exception as e:
+            traceback.print_exc()
+
 
     def create_constraints(self):
         """Neo4j demands that constraints are by label.  That is, you might have a constraint that
@@ -66,9 +84,7 @@ class TypeGraph(Service):
         try:
             with self.driver.session() as session:
                 db = GraphDB(session)
-                concepts = db.exec(f"MATCH (c:Concept) return c.name as name")
-                for concept in concepts:
-                    db.exec(f"CREATE CONSTRAINT ON (p:{concept['name']}) ASSERT p.id IS UNIQUE")
+                db.exec(f"CREATE CONSTRAINT ON (p:{self.ROOT_ENTITY}) ASSERT p.id IS UNIQUE")
         except Exception as e:
             traceback.print_exc()
 
