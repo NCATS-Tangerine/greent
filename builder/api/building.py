@@ -31,6 +31,7 @@ from builder.question import Question
 rosetta_config_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "rosetta.yml")
 properties_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "conf", "annotation_map.yaml")
 predicates_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "conf", "predicates.json")
+node_props_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "conf", "properties.json")
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
@@ -454,6 +455,81 @@ class Predicates(Resource):
         return pred_dict, 201
 
 api.add_resource(Predicates, '/predicates')
+
+class NodeProperties(Resource):
+    def get(self):
+        """
+        Get a JSON object of properties for each node type
+        ---
+        tags: [util]
+        responses:
+            200:
+                description: Operations
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            additionalProperties:
+                                type: object
+                                additionalProperties:
+                                    type: array
+                                    items:
+                                        type: string
+        """
+        with open(node_props_file, 'r') as f:
+            prop_dict = json.load(f)
+
+        return prop_dict
+
+    def post(self):
+        """
+        Force update of node-type property list from neo4j database
+        ---
+        tags: [util]
+        responses:
+            200:
+                description: Node-type property list
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            additionalProperties:
+                                type: object
+                                additionalProperties:
+                                    type: array
+                                    items:
+                                        type: string
+            400:
+                description: "Something went wrong. Old node-type properties list will be retained"
+                content:
+                    text/plain:
+                        schema:
+                            type: string
+        """
+        driver = GraphDatabase.driver(
+            f"bolt://{os.environ['NEO4J_HOST']}:{os.environ['NEO4J_BOLT_PORT']}",
+            auth=basic_auth("neo4j", os.environ['NEO4J_PASSWORD'])
+        )
+        with driver.session() as session:
+            result = session.run('MATCH (n) WITH labels(n) AS types, keys(n) as props UNWIND types AS type UNWIND props AS prop RETURN type, collect(DISTINCT prop) AS props')
+            records = [list(r) for r in result]
+
+        type_blacklist = ['Concept', 'named_thing', 'Type']
+        prop_blacklist = ['id', 'name', 'equivalent_identifiers']
+        prop_dict = dict()
+        for row in records:
+            node_type = row[0]
+            if node_type in type_blacklist:
+                continue
+            properties = [r for r in row[1] if r not in prop_blacklist]
+            prop_dict[node_type] = properties
+
+        with open(node_props_file, 'w') as f:
+            json.dump(prop_dict, f, indent=2)
+
+        return prop_dict, 201
+
+api.add_resource(NodeProperties, '/node_properties')
 
 
 class Connections(Resource):
