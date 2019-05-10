@@ -76,7 +76,7 @@ MATCH (a:chemical_substance {id:"CHEBI:5118"}) RETURN a
 ++++
 </p>
 <p>
-Note that all of these entities shared some properties. Each contains an id property in the form of a CURIE.  Each contains a "name" property with a human-readable name (which is not guaranteed to be unique).  Each also contains an "equivalent_identifiers" property.  The array value contains a number of other CURIEs that should be considered equivalent to the primary identifier.  To find the primary identifier given any other identifier, you can use the synonymizer tool <a href="ROBOKOP.renci.org/simple/synonymize" target="blank">here</a>.
+Note that all of these entities shared some properties. Each contains an id property in the form of a CURIE.  Each contains a "name" property with a human-readable name (which is not guaranteed to be unique).  Each also contains an "equivalent_identifiers" property.  The array value contains a number of other CURIEs that should be considered equivalent to the primary identifier.  To find the primary identifier given any other identifier, you can use the synonymizer tool <a href="http://ROBOKOP.renci.org/simple/synonymize" target="blank">here</a>.
 </p>
 ----
 
@@ -88,7 +88,7 @@ Note that all of these entities shared some properties. Each contains an id prop
 
 ++++
 <p>
-Edges between nodes in ROBOKOP KG define a relationship between two entities.  The predicate of the edge tells the user what that relationship is. The set of predicates that are used in one knowledge source can be different from another, although they semantically mean the same thing. In our edges we maintain the original knowledge source's predicate and a normalized predicate value. The normalized value is used as the neo4j edge type, while the original predicate is retained as the "relation" property of the edge.  A full JSON map of the predicates in our database is available <a href="ROBOKOP.renci.org:6010/api/predicates" target="blank">here</a>.  To explore the counts of different edge types, you can use this cypher query:
+Edges between nodes in ROBOKOP KG define a relationship between two entities.  The predicate of the edge tells the user what that relationship is. The set of predicates that are used in one knowledge source can be different from another, although they semantically mean the same thing. In our edges we maintain the original knowledge source's predicate and a normalized predicate value. The normalized value is used as the neo4j edge type, while the original predicate is retained as the "relation" property of the edge.  A full JSON map of the predicates in our database is available <a href="http://ROBOKOP.renci.org:6010/api/predicates" target="blank">here</a>.  To explore the counts of different edge types, you can use this cypher query:
 ++++
 [source,cypher]
 ----
@@ -139,7 +139,7 @@ The following summarizes the main data sources, as of April 2019:
 <li><a href="http://mychem.info">Mychem.info</a>: An aggregation service that includes data from DrugCentral and Aeolus.
 <li><a href="http://pharos.nih.gov">Pharos</a>: Relationships between genes, chemicals, and diseases, with an emphasis on drug targets.
 <li><a href="https://www.ebi.ac.uk/quickgo">QuickGo</a>: Relationships between genes and GO terms (processes and cellular components)
-<li><a href=""https://stars-app.renci.org/uberongraph/sparql">UberonGraph</a>: A combination of GO, UBERON, MONDO, and other bio-ontologies.
+<li><a href="https://stars-app.renci.org/uberongraph/sparql">UberonGraph</a>: A combination of GO, UBERON, MONDO, and other bio-ontologies.
 </ul>
 
 ++++

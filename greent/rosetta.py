@@ -85,6 +85,7 @@ class Rosetta:
         if build_indexes:
             """Create neo4j indices for identifier on different labels"""
             self.type_graph.create_constraints()
+            self.type_graph.create_indexes()
 
     # deprecated
     def configure_local_operators(self):

@@ -40,6 +40,7 @@ class TypeGraph(Service):
         self.set_concept_model()
         self.TYPE = "Type"
         self.CONCEPT = "Concept"
+        self.ROOT_ENTITY= "named_thing"
         config = self.get_config()
         self.driver = GraphDatabase.driver(self.url, auth=("neo4j", config['neo4j_password']))
 
@@ -57,6 +58,23 @@ class TypeGraph(Service):
                 db.exec("MATCH (n:Type) DETACH DELETE n")
         except Exception as e:
             traceback.print_exc()
+    
+    def create_indexes(self):
+        """
+        Creates indexes for all Concept types present in the db.
+        """
+        try:
+            with self.driver.session() as session:
+                db = GraphDB(session)
+                concepts = db.exec(f"MATCH (c:Concept) return c.name as name")
+                for concept in concepts:
+                    if concept['name'] == self.ROOT_ENTITY:
+                        #avoid recreating index for root entity 
+                        continue
+                    db.exec(f"CREATE INDEX ON :{concept['name']}(id)")
+        except Exception as e:
+            traceback.print_exc()
+
 
     def create_constraints(self):
         """Neo4j demands that constraints are by label.  That is, you might have a constraint that
@@ -66,7 +84,7 @@ class TypeGraph(Service):
         try:
             with self.driver.session() as session:
                 db = GraphDB(session)
-                db.exec(f"CREATE CONSTRAINT ON (p:{ROOT_ENTITY}) ASSERT p.id IS UNIQUE")
+                db.exec(f"CREATE CONSTRAINT ON (p:{self.ROOT_ENTITY}) ASSERT p.id IS UNIQUE")
         except Exception as e:
             traceback.print_exc()
 
@@ -107,26 +125,11 @@ class TypeGraph(Service):
     # make private
     def find_or_create(self, db, name, iri=None):
         """ Find a type node, creating it if necessary. Link it to a concept. """
-        properties = {"name": name, "iri": iri}
-        result = db.get_node(properties, self.TYPE)
-        n = result.peek()
-        if not n:
-            n = db.create_type(properties)
-            concept = self.type_to_concept.get(name)
-            if concept:
-                logger.debug(f"   adding node {name} to concept {concept.name}")
-                concept_node = self._find_or_create_concept(db, concept)
-                self.build_concept(db, concept)
-                db.add_label(properties={"name": name},
-                             node_type=self.TYPE,
-                             label=concept.name)
-                db.create_relationship(
-                    name_a=concept.name, type_a=self.CONCEPT,
-                    properties={
-                        "name": "is_a"
-                    },
-                    name_b=name, type_b=self.TYPE)
-        return n
+        concept = self.type_to_concept.get(name)
+        if concept:
+            logger.error(f"   adding node {name} to concept {concept.name}")
+            self._find_or_create_concept(db, concept)
+            self.build_concept(db, concept)
 
     def configure_operators (self, operators):
         with self.driver.session() as session:
@@ -182,7 +185,6 @@ class TypeGraph(Service):
             concept_node = result.peek()
             if not concept_node:
                 concept_node = db.create_node(properties, node_type=self.CONCEPT)
-                db.add_label(properties, node_type=self.CONCEPT, label=concept.name)
         except:
             print("concept-> {}".format(concept.name))
             traceback.print_exc()
