@@ -470,11 +470,9 @@ class NodeProperties(Resource):
                         schema:
                             type: object
                             additionalProperties:
-                                type: object
-                                additionalProperties:
-                                    type: array
-                                    items:
-                                        type: string
+                                type: array
+                                items:
+                                    type: string
         """
         with open(node_props_file, 'r') as f:
             prop_dict = json.load(f)
@@ -494,11 +492,9 @@ class NodeProperties(Resource):
                         schema:
                             type: object
                             additionalProperties:
-                                type: object
-                                additionalProperties:
-                                    type: array
-                                    items:
-                                        type: string
+                                type: array
+                                items:
+                                    type: string
             400:
                 description: "Something went wrong. Old node-type properties list will be retained"
                 content:
@@ -511,11 +507,11 @@ class NodeProperties(Resource):
             auth=basic_auth("neo4j", os.environ['NEO4J_PASSWORD'])
         )
         with driver.session() as session:
-            result = session.run('MATCH (n) WITH labels(n) AS types, keys(n) as props UNWIND types AS type UNWIND props AS prop RETURN type, collect(DISTINCT prop) AS props')
+            result = session.run("MATCH (n) WITH labels(n) AS types, apoc.map.sortedProperties(apoc.meta.types(n)) as props UNWIND types AS type UNWIND props AS prop RETURN type, collect(DISTINCT apoc.text.join(prop, ':')) AS props")
             records = [list(r) for r in result]
 
         type_blacklist = ['Concept', 'named_thing', 'Type']
-        prop_blacklist = ['id', 'name', 'equivalent_identifiers']
+        prop_blacklist = ['id:STRING', 'name:STRING', 'equivalent_identifiers:STRING[]']
         prop_dict = dict()
         for row in records:
             node_type = row[0]
