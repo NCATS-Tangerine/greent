@@ -35,4 +35,19 @@ app.config['SWAGGER'] = {
     'title': 'ROBOKOP Builder API',
     'uiversion': 3
 }
-swagger = Swagger(app, template=template)
+swagger_config = {
+    "headers": [
+    ],
+    "specs": [
+        {
+            "endpoint": 'apispec_1',
+            "route": '/builder/spec',
+            "rule_filter": lambda rule: True,  # all in
+            "model_filter": lambda tag: True,  # all in
+        }
+    ],
+    "swagger_ui": True,
+    "specs_route": "/apidocs/",
+    "openapi": "3.0.1"
+}
+swagger = Swagger(app, template=template, config=swagger_config)
