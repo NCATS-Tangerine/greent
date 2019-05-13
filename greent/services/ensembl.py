@@ -9,9 +9,10 @@ logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)#
 
 class Ensembl(Service):
     
-    def __init__(self, context, rosetta):
+    def __init__(self, context):
         super(Ensembl, self).__init__("ensembl", context)
-        self.synonymizer = rosetta.synonymizer
+        self.clingen = context.core.clingen
+        self.cache = context.cache
 
     def sequence_variant_to_gene(self, variant_node):
         flanking_region_size = 500000
@@ -45,14 +46,20 @@ class Ensembl(Service):
         options_url = '?feature=gene'
         query_url = f'{service_url}{overlap_url}{chromosome}:{start_position}-{end_position}{options_url}'
 
-        query_response = requests.get(query_url, headers={ "Content-Type" : "application/json"})
+        query_response = requests.get(query_url, headers={"Content-Type" : "application/json"})
         if query_response.status_code == 200:
             query_json = query_response.json()
             gene_ids = self.parse_genes_from_ensembl(query_json)
-            for gene_id in gene_ids:
+            for gene_id, gene_start, gene_end in gene_ids:
                 gene_node = KNode(f'ENSEMBL:{gene_id}', name=f'{gene_id}', type=node_types.GENE)
-                self.synonymizer.synonymize(gene_node)
-                edge = self.create_edge(variant_node, gene_node, 'ensembl.sequence_variant_to_gene', variant_node.id, predicate, url=query_url)
+                if position < gene_start:
+                    distance = gene_start - position
+                elif position > gene_end:
+                    distance = position - gene_end
+                else:
+                    distance = 0
+                props = {'distance' : distance}
+                edge = self.create_edge(variant_node, gene_node, 'ensembl.sequence_variant_to_gene', variant_node.id, predicate, url=query_url, properties=props)
                 results.append((edge, gene_node))
         else:
             logger.error(f'Ensembl returned a non-200 response: {query_response.status_code})')
@@ -66,9 +73,11 @@ class Ensembl(Service):
         for gene in json_genes:
             try:
                 gene_id = gene['gene_id']
-                genes.append(gene_id)
-            except KeyError:
-                logger.debug(f'gene_id not found in ensembl result: {gene}')
+                start = gene['start']
+                end = gene['end']
+                genes.append((gene_id, start, end))
+            except KeyError as e:
+                logger.debug(f'gene properties not found in ensembl result: {gene} : {e}')
         return genes
 
     def sequence_variant_to_sequence_variant(self, variant_node):
@@ -90,10 +99,17 @@ class Ensembl(Service):
                     new_variant_id = variant_info[0]
                     r_squared = variant_info[1]
                     props = {'r2' : r_squared}
-                    new_variant_node = KNode(f'DBSNP:{new_variant_id}', name=f'{new_variant_id}', type=node_types.SEQUENCE_VARIANT)
-                    self.synonymizer.synonymize(new_variant_node)
-                    edge = self.create_edge(variant_node, new_variant_node, 'ensembl.sequence_variant_to_sequence_variant', dbsnp_curie, predicate, url=query_url, properties=props)
-                    return_results.append((edge, new_variant_node))
+                    new_variant_curie = f'DBSNP:{new_variant_id}'
+                    new_variant_node = KNode(new_variant_curie, name=f'{new_variant_id}', type=node_types.SEQUENCE_VARIANT)
+                    synonyms = self.cache.get(f'synonymize({new_variant_curie})') 
+                    if synonyms is None:
+                        synonyms = self.clingen.get_synonyms_by_other_ids(new_variant_node)
+                        self.cache.set(f'synonymize({new_variant_curie})', synonyms)
+                    for synonym in synonyms:
+                        if Text.get_curie(synonym.identifier) == 'CAID':
+                            caid_node = KNode(synonym.identifier, name=f'{new_variant_id}', type=node_types.SEQUENCE_VARIANT)
+                            edge = self.create_edge(variant_node, caid_node, 'ensembl.sequence_variant_to_sequence_variant', dbsnp_curie, predicate, url=query_url, properties=props)
+                            return_results.append((edge, caid_node))
             else:
                 logger.error(f'Ensembl returned a non-200 response: {query_response.status_code})')
 
