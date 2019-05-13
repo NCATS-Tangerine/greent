@@ -53,7 +53,7 @@ class GreenT:
             "chemotext"        : lambda :  Chemotext (self.service_context),
             "clingen"          : lambda :  ClinGen(self.service_context),
             "ctd"              : lambda :  CTD(self.service_context),
-            "ensembl"          : lambda :  Ensembl(self.service_context, rosetta),   
+            "ensembl"          : lambda :  Ensembl(self.service_context),
             "go"               : lambda :  GO2(self.service_context),
             "gtex"             : lambda :  GTEx(self.service_context, rosetta),
             "gwascatalog"      : lambda :  GWASCatalog(self.service_context, rosetta),

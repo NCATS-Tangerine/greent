@@ -54,6 +54,7 @@ classes:
       - PHAROS.DRUG
       - DRUG.INTERACTION
       - CTD
+      - METABOLON
 
   anatomical entity:
     id_prefixes:
