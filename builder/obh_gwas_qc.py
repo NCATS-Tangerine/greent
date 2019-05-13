@@ -25,10 +25,12 @@ def process_file_for_qc(filename, file_path, output_path, impute2_cutoff=0.5,  a
         headers = next(f).split()
         new_headers = headers[:5]
         new_headers.append('PVALUE')
+        new_headers.append('BETA')
         try:
             impute2_index = headers.index('IMPUTE2_INFO')
             alt_af_index = headers.index('ALT_AF')
             pvalue_index = headers.index('PVALUE')
+            beta_index = headers.index('BETA')
         except ValueError:
             print('OBH_QC error reading file headers for' + gwas_file_path)
             return 
@@ -46,11 +48,12 @@ def process_file_for_qc(filename, file_path, output_path, impute2_cutoff=0.5,  a
                     if alt_af_min <= alt_af_freq <= alt_af_max:
                         clean_data = data[:5]
                         clean_data.append(data[pvalue_index])
+                        clean_data.append(data[beta_index])
 
                         output_file.write('\t'.join(clean_data) + '\n')
 
-            except (IndexError, ValueError) as e:
-                print('OBH_QC error on line' + line_counter + ':' + e)
+            except (IndexError, ValueError):
+                print('OBH_QC ' + filename + ' had corrupt line: ' + str(line_counter))
 
 if __name__=='__main__':
 
