@@ -17,8 +17,14 @@ class GTEx(Service):
     # constructor
     ########
     def __init__(self, context, rosetta):
-        super(GTEx, self).__init__("gtexcatalog", context)
+        super(GTEx, self).__init__("gtex", context)
         self.synonymizer = rosetta.synonymizer
+
+    ########
+    # define the manual way to preload redis cache
+    ########
+    def prepopulate_gtex_catalog_cache(self):
+        return None
 
     ########
     # define the variant/gene relationship
