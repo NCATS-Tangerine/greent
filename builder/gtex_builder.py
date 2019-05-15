@@ -16,7 +16,9 @@ import time
 
 # declare logger and initialize it
 import logging
+
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
+
 
 ##############
 # class: GTExBuilder
@@ -133,7 +135,7 @@ class GTExBuilder(object):
             full_file_path = f'{data_directory}{file_name}'
 
             # parse the CSV file to get the gtex variants into a array of SequenceVariant objects
-            # TODO: this is a big file. not sure if we will run out of mem turning into objects
+            # this is a big file. not sure if we will run out of mem turning into objects
             gtex_var_dict = self.parse_csv_data(full_file_path)
 
             # pre-populate the cache
@@ -144,9 +146,6 @@ class GTExBuilder(object):
             labled_variant_ids = []
             redis_counter = 0
 
-            # TODO: create a edge predicate
-            predicate = LabeledID(identifier=f'RO:', label=f'affects expression')
-
             # open a pipe to the redis cache DB
             with BufferedWriter(self.rosetta) as graph_writer, self.cache.redis.pipeline() as redis_pipe:
                 # loop through the variants
@@ -155,23 +154,23 @@ class GTExBuilder(object):
                     for position, variants in position_dict.items():
                         # for each variant at the position
                         # note that the "variant" element is actually an array consisting of
-                        # [SequenceVariant obj, GTExVariant obj]
+                        # SequenceVariant obj, GTExVariant obj
                         for var_data_obj in variants:
                             # give the data elements better names for readability
                             sequence_variant = var_data_obj.SequenceVariant
                             gtex_details = var_data_obj.GTExVariant
 
-                            # create a curie of the HGVS value
+                            # create curies for the various id values
                             curie_hgvs = f'HGVS:{sequence_variant.hgvs}'
                             curie_uberon = f'UBERON:{gtex_details.uberon}'
                             curie_ensembl = f'ENSEMBL:{gtex_details.ensembl}'
 
-                            # create a variant, GTEx and gene nodes with a HGVS, UBERON or ENSEMBL expression as the id and name
+                            # create a variant, gene and GTEx nodes with a HGVS, UBERON or ENSEMBL expression as the id and name
                             variant_node = KNode(curie_hgvs, name=curie_hgvs, type=node_types.SEQUENCE_VARIANT)
                             gene_node = KNode(curie_ensembl, type=node_types.GENE)
                             gtex_node = KNode(curie_uberon, name=gtex_details.tissue_name, type=node_types.ANATOMICAL_ENTITY)
 
-                            # call to load the new nodes' with synonyms
+                            # call to load the each node with synonyms
                             self.rosetta.synonymizer.synonymize(variant_node)
                             self.rosetta.synonymizer.synonymize(gene_node)
                             self.rosetta.synonymizer.synonymize(gtex_node)
@@ -180,15 +179,37 @@ class GTExBuilder(object):
                             variant_node.properties['sequence_location'] = [sequence_variant.build, str(sequence_variant.chrom), str(sequence_variant.pos)]
                             graph_writer.write_node(variant_node)
 
-                            # add properties to the gtex node (anatomical) and write it out
-                            gtex_node.properties['gtex'] = [gtex_details.pval_nominal, gtex_details.pval_beta]
+                            # for now insure that the gene node has a name
+                            # this can happen if gene is not currently in the graph DB
+                            if gene_node.name is None:
+                                gene_node.name = curie_ensembl
+
+                            # write out the gene node
+                            graph_writer.write_node(gene_node)
+
+                            # write out the anatomical gtex node
                             graph_writer.write_node(gtex_node)
 
+                            # get the polarity of beta to get the direction of expression.
+                            # positive value increases expression, negative decreases
+                            if float(gtex_details.pval_beta) > 0.0:
+                                label_name = f'increases expression'
+                                label_id = f'CTD:increases_expression_of'
+                            else:
+                                label_name = f'decreases expression'
+                                label_id = f'CTD:decreases_expression_of'
+
+                            # create the edge label predicate
+                            predicate = LabeledID(identifier=label_id, label=label_name)
+
+                            # set the properties for the edge
+                            edge_properties = [gtex_details.ensembl, gtex_details.pval_nominal, gtex_details.pval_beta]
+
                             # associate the gtex node with an edge to the sequence variant node
-                            self.write_new_association(graph_writer, variant_node, gtex_node, predicate, analysis_id)
+                            self.write_new_association(graph_writer, variant_node, gtex_node, predicate, edge_properties, analysis_id)
 
                             # associate the gtex node with an edge to the gene node
-                            self.write_new_association(graph_writer, gene_node, gtex_node, predicate, analysis_id, True)
+                            self.write_new_association(graph_writer, gene_node, gtex_node, predicate, edge_properties, analysis_id)
 
                             # create a new variant, gene and gtex edge labels
                             labled_variant_ids.append(LabeledID(identifier=variant_node.id, label=variant_node.name))
@@ -238,8 +259,6 @@ class GTExBuilder(object):
         variant_dictionary = {}
 
         # open the file and start reading
-        # we are looking for the following data points
-        #
         with open(file_path, 'r') as inFH:
             # open up a csv reader
             csv_reader = csv.reader(inFH)
@@ -382,24 +401,30 @@ class GTExBuilder(object):
         return seq_var
 
     #######
-    # write_new_association - Writes an association edge into the graph DB
+    # write_new_association - Writes an association edge with properties into the graph DB
     #######
-    def write_new_association(self, writer, source_node, associated_node, predicate, ensembl, analysis_id=None, node_exists=False):
-
+    def write_new_association(self, writer, source_node, associated_node, predicate, properties, analysis_id=None):
+        # if the concept model is loaded standardize the predicate label
         if self.concept_model:
             standard_predicate = self.concept_model.standardize_relationship(predicate)
         else:
-            logger.warning('OBH builder: concept_model was missing, predicate standardization failed')
+            logger.warning('GTEx builder: concept_model was missing, predicate standardization failed')
             standard_predicate = predicate
 
-        provided_by = 'gtex_builder'
-        props = {'ENSEMBL': ensembl}
+        # assign the this parser as the data provider
+        provided_by = 'GTEx'
 
+        # create a property with the ensembl, p-value and beta values
+        props = {'ENSEMBL': properties[0], 'p-value': float(properties[1]), 'beta': float(properties[2])}
+
+        # if the analysis was passed in use it
         if analysis_id:
             props['namespace'] = analysis_id
 
+        # get a timestamp
         ctime = time.time()
 
+        # create the edge
         new_edge = KEdge(source_id=source_node.id,
                          target_id=associated_node.id,
                          provided_by=provided_by,
@@ -411,11 +436,10 @@ class GTExBuilder(object):
                          url=None,
                          properties=props)
 
-        if not node_exists:
-            writer.write_node(associated_node)
-
+        # write out the new edge
         writer.write_edge(new_edge)
 
+        # return the edge
         return new_edge
 
     #######
@@ -570,7 +594,7 @@ if __name__ == '__main__':
     gtex_data_directory = 'C:/Phil/Work/Informatics/GTEx/GTEx_data/'
 
     # assign the name of the GTEx data file
-    associated_file_names = {'little_signif.csv'}
+    associated_file_names = {'test_signif_Adipose_Subcutaneous.csv'}
     # associated_file_names = {'signif_variant_gene_pairs.csv'}
 
     # call the GTEx builder to load the cache and graph database
