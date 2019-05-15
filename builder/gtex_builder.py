@@ -5,10 +5,13 @@ from greent.graph_components import KEdge
 
 from greent.export import BufferedWriter
 from greent.util import LoggingUtil
+from greent.util import Text
 
 from builder.question import LabeledID
 
 from collections import namedtuple
+
+import hashlib
 
 import csv
 import pickle
@@ -31,7 +34,7 @@ class GTExBuilder(object):
     SequenceVariant.__new__.__defaults__ = (None, None)
 
     # object to store GTEx details of the variant
-    GTExVariant = namedtuple('GTEx', ['tissue_name', 'uberon', 'ensembl', 'pval_nominal', 'pval_beta'])
+    GTExVariant = namedtuple('GTEx', ['tissue_name', 'uberon', 'ensembl', 'pval_nominal', 'slope'])
     GTExVariant.__new__.__defaults__ = (None, None)
 
     # object to store data parsing objects
@@ -146,6 +149,10 @@ class GTExBuilder(object):
             labled_variant_ids = []
             redis_counter = 0
 
+            # create static edge labels for variant/gtex and gene/gtex edges
+            variant_gtex_label = LabeledID(identifier=f'GTEx:affects_expression_in', label=f'affects expression in')
+            gene_gtex_label = LabeledID(identifier=f'gene_to_expression_site_association', label=f'gene to expression site association')
+
             # open a pipe to the redis cache DB
             with BufferedWriter(self.rosetta) as graph_writer, self.cache.redis.pipeline() as redis_pipe:
                 # loop through the variants
@@ -165,7 +172,7 @@ class GTExBuilder(object):
                             curie_uberon = f'UBERON:{gtex_details.uberon}'
                             curie_ensembl = f'ENSEMBL:{gtex_details.ensembl}'
 
-                            # create a variant, gene and GTEx nodes with a HGVS, UBERON or ENSEMBL expression as the id and name
+                            # create a variant, gene and GTEx nodes with a HGVS, ENSEMBL or UBERON expression as the id and name
                             variant_node = KNode(curie_hgvs, name=curie_hgvs, type=node_types.SEQUENCE_VARIANT)
                             gene_node = KNode(curie_ensembl, type=node_types.GENE)
                             gtex_node = KNode(curie_uberon, name=gtex_details.tissue_name, type=node_types.ANATOMICAL_ENTITY)
@@ -190,26 +197,36 @@ class GTExBuilder(object):
                             # write out the anatomical gtex node
                             graph_writer.write_node(gtex_node)
 
-                            # get the polarity of beta to get the direction of expression.
+                            # get the polarity of slope to get the direction of expression.
                             # positive value increases expression, negative decreases
-                            if float(gtex_details.pval_beta) > 0.0:
+                            if float(gtex_details.slope) > 0.0:
+                                label_id = f'GTEx:increases_expression_of'
                                 label_name = f'increases expression'
-                                label_id = f'CTD:increases_expression_of'
                             else:
+                                label_id = f'GTEx:decreases_expression_of'
                                 label_name = f'decreases expression'
-                                label_id = f'CTD:decreases_expression_of'
 
-                            # create the edge label predicate
+                            # create the edge label predicate for the gene/variant relationship
                             predicate = LabeledID(identifier=label_id, label=label_name)
 
+                            # create a composite hyper edge id. the components of the composite are: (in this order):
+                            # <uberon tissue id>_<ensemble gene id>_<variant CAID id>
+                            composite_id = str.encode(f'{gtex_details.uberon}_{gtex_details.ensembl}_{Text.un_curie(variant_node.id)}')
+
+                            # now MD5 hash the encoded string and turn it into an int
+                            hyper_egde_id = int(hashlib.md5(composite_id).hexdigest()[:8], 16)
+
                             # set the properties for the edge
-                            edge_properties = [gtex_details.ensembl, gtex_details.pval_nominal, gtex_details.pval_beta]
+                            edge_properties = [gtex_details.ensembl, gtex_details.pval_nominal, gtex_details.slope, analysis_id]
 
-                            # associate the gtex node with an edge to the sequence variant node
-                            self.write_new_association(graph_writer, variant_node, gtex_node, predicate, edge_properties, analysis_id)
+                            # associate the variant node with an edge to the gene node
+                            self.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_egde_id, edge_properties)
 
-                            # associate the gtex node with an edge to the gene node
-                            self.write_new_association(graph_writer, gene_node, gtex_node, predicate, edge_properties, analysis_id)
+                            # associate the sequence variant node with an edge to the gtex node
+                            self.write_new_association(graph_writer, variant_node, gtex_node, variant_gtex_label, hyper_egde_id, None)
+
+                            # associate the gene node with an edge to the gtex node
+                            self.write_new_association(graph_writer, gene_node, gtex_node, gene_gtex_label, hyper_egde_id, None)
 
                             # create a new variant, gene and gtex edge labels
                             labled_variant_ids.append(LabeledID(identifier=variant_node.id, label=variant_node.name))
@@ -240,7 +257,7 @@ class GTExBuilder(object):
                             redis_pipe.execute()
 
                         # if we reached a good count on the pending variant to gene records execute redis
-                        if len(uncached_variant_annotation_nodes) > 0:  # 1000:
+                        if len(uncached_variant_annotation_nodes) > 0:  # TODO: 1000:
                             self.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
 
                             # clear for the next variant group
@@ -272,7 +289,7 @@ class GTExBuilder(object):
             variant_id_index = header_line.index('variant_id')
             ensembl_id_index = header_line.index('gene_id')
             pval_nominal_index = header_line.index('pval_nominal')
-            pval_beta_index = header_line.index('pval_beta')
+            pval_slope_index = header_line.index('slope')
 
             # for the rest of the lines in the file
             for line in csv_reader:
@@ -282,10 +299,10 @@ class GTExBuilder(object):
                 variant_id = line[variant_id_index]
                 ensembl = line[ensembl_id_index]
                 pval_nominal = line[pval_nominal_index]
-                pval_beta = line[pval_beta_index]
+                slope = line[pval_slope_index]
 
                 # create the GTEx data object
-                gtex_data = self.GTExVariant(tissue_name, uberon, ensembl.split('.', 1)[0], pval_nominal, pval_beta)
+                gtex_data = self.GTExVariant(tissue_name, uberon, ensembl.split('.', 1)[0], pval_nominal, slope)
 
                 # get the SequenceVariant object filled in with the HGVS value
                 seq_var_data = self.get_sequence_variant_obj(variant_id.split('_'))
@@ -403,7 +420,7 @@ class GTExBuilder(object):
     #######
     # write_new_association - Writes an association edge with properties into the graph DB
     #######
-    def write_new_association(self, writer, source_node, associated_node, predicate, properties, analysis_id=None):
+    def write_new_association(self, writer, source_node, associated_node, predicate, hyper_egde_id, properties=None):
         # if the concept model is loaded standardize the predicate label
         if self.concept_model:
             standard_predicate = self.concept_model.standardize_relationship(predicate)
@@ -414,12 +431,11 @@ class GTExBuilder(object):
         # assign the this parser as the data provider
         provided_by = 'GTEx'
 
-        # create a property with the ensembl, p-value and beta values
-        props = {'ENSEMBL': properties[0], 'p-value': float(properties[1]), 'beta': float(properties[2])}
-
-        # if the analysis was passed in use it
-        if analysis_id:
-            props['namespace'] = analysis_id
+        # create a property with the ensembl, p-value and slope, hyper edge id and namespace values
+        if properties != None:
+            props = {'hyper_edge_id': hyper_egde_id, 'ENSEMBL': properties[0], 'p-value': float(properties[1]), 'slope': float(properties[2]), 'namespace': properties[3]}
+        else:
+            props = {'hyper_edge_id': hyper_egde_id}
 
         # get a timestamp
         ctime = time.time()
@@ -594,7 +610,7 @@ if __name__ == '__main__':
     gtex_data_directory = 'C:/Phil/Work/Informatics/GTEx/GTEx_data/'
 
     # assign the name of the GTEx data file
-    associated_file_names = {'test_signif_Adipose_Subcutaneous.csv'}
+    associated_file_names = {'test_signif_Adrenal_Gland.csv'}
     # associated_file_names = {'signif_variant_gene_pairs.csv'}
 
     # call the GTEx builder to load the cache and graph database
