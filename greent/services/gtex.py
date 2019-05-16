@@ -1,12 +1,19 @@
-import requests
 from greent import node_types
 from greent.graph_components import KNode, LabeledID
 from greent.service import Service
 from greent.util import Text, LoggingUtil
-import logging,json
-from collections import defaultdict
+from greent.rosetta import Rosetta
 
+from builder.gtex_builder import GTExBuilder
+
+import requests
+import json
+
+# declare a logger...
+import logging
+# ... and initialize it
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
+
 
 #############
 # The GTEX catalog service.
@@ -21,9 +28,23 @@ class GTEx(Service):
         self.synonymizer = rosetta.synonymizer
 
     ########
-    # define the manual way to preload redis cache
+    # define the manual way to launch processing an input data file
     ########
-    def prepopulate_gtex_catalog_cache(self):
+    def create_gtex_graph(self, file_path, file_names):
+
+        # check the inputs
+        if file_path is None or file_names is None:
+            logger.error('Error: Missing or invalid input arguments')
+
+        # create a new builder object
+        gtb = GTExBuilder(Rosetta())
+
+        # load the redis cache with GTEx data
+        gtb.prepopulate_gtex_catalog_cache()
+
+        # call the GTEx builder to load the cache and graph database
+        gtb.create_gtex_graph(file_path, file_names, 'GTEx service')
+
         return None
 
     ########

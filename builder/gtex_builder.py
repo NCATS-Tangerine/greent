@@ -12,15 +12,14 @@ from builder.question import LabeledID
 from collections import namedtuple
 
 import hashlib
-
 import csv
 import pickle
 import time
 
-# declare logger and initialize it
+# declare a logger...
 import logging
-
-logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
+# ... and initialize it
+logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
 
 ##############
@@ -141,12 +140,8 @@ class GTExBuilder(object):
             # this is a big file. not sure if we will run out of mem turning into objects
             gtex_var_dict = self.parse_csv_data(full_file_path)
 
-            # pre-populate the cache
-            self.prepopulate_variant_synonymization_cache(gtex_var_dict)
-
             # init arrays and counters for data element processing
             uncached_variant_annotation_nodes = []
-            labled_variant_ids = []
             redis_counter = 0
 
             # create static edge labels for variant/gtex and gene/gtex edges
@@ -172,7 +167,7 @@ class GTExBuilder(object):
                             curie_uberon = f'UBERON:{gtex_details.uberon}'
                             curie_ensembl = f'ENSEMBL:{gtex_details.ensembl}'
 
-                            # create a variant, gene and GTEx nodes with a HGVS, ENSEMBL or UBERON expression as the id and name
+                            # create variant, gene and GTEx nodes with the HGVS, ENSEMBL or UBERON expression as the id and name
                             variant_node = KNode(curie_hgvs, name=curie_hgvs, type=node_types.SEQUENCE_VARIANT)
                             gene_node = KNode(curie_ensembl, type=node_types.GENE)
                             gtex_node = KNode(curie_uberon, name=gtex_details.tissue_name, type=node_types.ANATOMICAL_ENTITY)
@@ -186,7 +181,7 @@ class GTExBuilder(object):
                             variant_node.properties['sequence_location'] = [sequence_variant.build, str(sequence_variant.chrom), str(sequence_variant.pos)]
                             graph_writer.write_node(variant_node)
 
-                            # for now insure that the gene node has a name
+                            # for now insure that the gene node has a name after synonymization
                             # this can happen if gene is not currently in the graph DB
                             if gene_node.name is None:
                                 gene_node.name = curie_ensembl
@@ -228,9 +223,6 @@ class GTExBuilder(object):
                             # associate the gene node with an edge to the gtex node
                             self.write_new_association(graph_writer, gene_node, gtex_node, gene_gtex_label, hyper_egde_id, None)
 
-                            # create a new variant, gene and gtex edge labels
-                            labled_variant_ids.append(LabeledID(identifier=variant_node.id, label=variant_node.name))
-
                             # check if the key doesnt exist in the cache, add it to buffer for batch loading later
                             if self.cache.get(f'myvariant.sequence_variant_to_gene({variant_node.id})') is None:
                                 uncached_variant_annotation_nodes.append(variant_node)
@@ -257,7 +249,7 @@ class GTExBuilder(object):
                             redis_pipe.execute()
 
                         # if we reached a good count on the pending variant to gene records execute redis
-                        if len(uncached_variant_annotation_nodes) > 0:  # TODO: 1000:
+                        if len(uncached_variant_annotation_nodes) > 0:  # 1000:
                             self.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
 
                             # clear for the next variant group
@@ -267,7 +259,7 @@ class GTExBuilder(object):
     #######
     # parse_csv_data - Parses a CSV file and creates a dictionary of sequence variant objects
     #
-    # Ex. The row header, and a row of data:
+    # Ex. The row header, and an example row of data:
     # tissue_name,            tissue_uberon,  variant_id,         gene_id,            tss_distance,   ma_samples, ma_count,   maf,        pval_nominal,   slope,      slope_se, pval_nominal_threshold,   min_pval_nominal,   pval_beta
     # Heart Atrial Appendage, 0006618,        1_1440550_T_C_b37,  ENSG00000225630.1,  875530,         12,         13,         0.0246212,  2.29069e-05,    0.996346,   0.230054, 4.40255e-05,              2.29069e-05,        0.0353012
     #######
@@ -330,7 +322,7 @@ class GTExBuilder(object):
     #
     # The variant id layout is:
     # chr, position, ref, alt, hg version
-    # 1_1440550_T_C_b37
+    # ex: 1_1440550_T_C_b37
     #######
     def get_sequence_variant_obj(self, variant_id):
         try:
@@ -432,19 +424,19 @@ class GTExBuilder(object):
         provided_by = 'GTEx'
 
         # create a property with the ensembl, p-value and slope, hyper edge id and namespace values
-        if properties != None:
+        if properties is not None:
             props = {'hyper_edge_id': hyper_egde_id, 'ENSEMBL': properties[0], 'p-value': float(properties[1]), 'slope': float(properties[2]), 'namespace': properties[3]}
         else:
             props = {'hyper_edge_id': hyper_egde_id}
 
         # get a timestamp
-        ctime = time.time()
+        c_time = time.time()
 
         # create the edge
         new_edge = KEdge(source_id=source_node.id,
                          target_id=associated_node.id,
                          provided_by=provided_by,
-                         ctime=ctime,
+                         ctime=c_time,
                          original_predicate=predicate,
                          standard_predicate=standard_predicate,
                          input_id=source_node.id,
