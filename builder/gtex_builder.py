@@ -136,6 +136,8 @@ class GTExBuilder(object):
             # get the full path to the input file
             full_file_path = f'{data_directory}{file_name}'
 
+            logger.debug(f'Working file: {full_file_path}')
+
             # parse the CSV file to get the gtex variants into a array of SequenceVariant objects
             # this is a big file. not sure if we will run out of mem turning into objects
             gtex_var_dict = self.parse_csv_data(full_file_path)
@@ -147,6 +149,9 @@ class GTExBuilder(object):
             # create static edge labels for variant/gtex and gene/gtex edges
             variant_gtex_label = LabeledID(identifier=f'GTEx:affects_expression_in', label=f'affects expression in')
             gene_gtex_label = LabeledID(identifier=f'gene_to_expression_site_association', label=f'gene to expression site association')
+
+            # load up the synonymization cahce of all the variant
+            self.prepopulate_variant_synonymization_cache(gtex_var_dict)
 
             # open a pipe to the redis cache DB
             with BufferedWriter(self.rosetta) as graph_writer, self.cache.redis.pipeline() as redis_pipe:
@@ -214,14 +219,14 @@ class GTExBuilder(object):
                             # set the properties for the edge
                             edge_properties = [gtex_details.ensembl, gtex_details.pval_nominal, gtex_details.slope, analysis_id]
 
-                            # associate the variant node with an edge to the gene node
-                            self.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_egde_id, edge_properties)
+                            # associate the gene node with an edge to the gtex anatomy node
+                            self.write_new_association(graph_writer, gene_node, gtex_node, gene_gtex_label, hyper_egde_id, None, True)
 
-                            # associate the sequence variant node with an edge to the gtex node
+                            # associate the sequence variant node with an edge to the gtex anatomy node
                             self.write_new_association(graph_writer, variant_node, gtex_node, variant_gtex_label, hyper_egde_id, None)
 
-                            # associate the gene node with an edge to the gtex node
-                            self.write_new_association(graph_writer, gene_node, gtex_node, gene_gtex_label, hyper_egde_id, None)
+                            # associate the sequence variant node with an edge to the gene node. also include the GTEx properties
+                            self.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_egde_id, edge_properties)
 
                             # check if the key doesnt exist in the cache, add it to buffer for batch loading later
                             if self.cache.get(f'myvariant.sequence_variant_to_gene({variant_node.id})') is None:
@@ -245,11 +250,11 @@ class GTExBuilder(object):
                                 redis_counter += 1
 
                             # if we reached a good count on the pending nearby gene records execute redis
-                            # if redis_counter == 2000:
-                            redis_pipe.execute()
+                            if redis_counter > 0:
+                                redis_pipe.execute()
 
                         # if we reached a good count on the pending variant to gene records execute redis
-                        if len(uncached_variant_annotation_nodes) > 0:  # 1000:
+                        if len(uncached_variant_annotation_nodes) > 1000:
                             self.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
 
                             # clear for the next variant group
@@ -266,6 +271,9 @@ class GTExBuilder(object):
     def parse_csv_data(self, file_path):
         # init the return
         variant_dictionary = {}
+
+        # init a counter
+        c = 0
 
         # open the file and start reading
         with open(file_path, 'r') as inFH:
@@ -285,6 +293,9 @@ class GTExBuilder(object):
 
             # for the rest of the lines in the file
             for line in csv_reader:
+                #increment the counter
+                c += 1
+
                 # get the data elements
                 tissue_name = line[tissue_name_index]
                 uberon = line[tissue_uberon_index]
@@ -313,6 +324,8 @@ class GTExBuilder(object):
                 # put away the pertinent elements needed to create a graph node
                 variant_dictionary[seq_var_data.chrom][seq_var_data.pos].append(results)
 
+        logger.debug(f'CSV record count: {c}')
+
         # return the array to the caller
         return variant_dictionary
 
@@ -332,13 +345,15 @@ class GTExBuilder(object):
             ref_allele = variant_id[2]
             alt_allele = variant_id[3]
             reference_genome = variant_id[4]
-            chromosome = int(variant_id[0])
+            chromosome = variant_id[0]
 
             # X or Y to integer values for proper indexing
             if chromosome == 'X':
                 chromosome = 23
             elif chromosome == 'Y':
                 chromosome = 24
+            else:
+                chromosome = int(variant_id[0])
 
             # get the HGVS chromosome label
             ref_chromosome = self.reference_chrom_labels[reference_genome][reference_patch][chromosome]
@@ -403,6 +418,12 @@ class GTExBuilder(object):
         # layout the final HGVS expression in curie format
         hgvs: str = f'{ref_chromosome}:g.{variation}'
 
+        # convert the reference genome to a project standard. danger, hack job ahead.
+        if reference_genome == 'b37':
+            reference_genome = 'HG19'
+        else:
+            reference_genome = 'HG38'
+
         # create the sequence_variant object
         seq_var = self.SequenceVariant(reference_genome, chromosome, position, ref_allele, alt_allele, hgvs=hgvs, node=None)
 
@@ -412,7 +433,7 @@ class GTExBuilder(object):
     #######
     # write_new_association - Writes an association edge with properties into the graph DB
     #######
-    def write_new_association(self, writer, source_node, associated_node, predicate, hyper_egde_id, properties=None):
+    def write_new_association(self, writer, source_node, associated_node, predicate, hyper_edge_id, properties=None, force_create=False):
         # if the concept model is loaded standardize the predicate label
         if self.concept_model:
             standard_predicate = self.concept_model.standardize_relationship(predicate)
@@ -425,9 +446,9 @@ class GTExBuilder(object):
 
         # create a property with the ensembl, p-value and slope, hyper edge id and namespace values
         if properties is not None:
-            props = {'hyper_edge_id': hyper_egde_id, 'ENSEMBL': properties[0], 'p-value': float(properties[1]), 'slope': float(properties[2]), 'namespace': properties[3]}
+            props = {'ENSEMBL': properties[0], 'p-value': float(properties[1]), 'slope': float(properties[2]), 'namespace': properties[3]}
         else:
-            props = {'hyper_edge_id': hyper_egde_id}
+            props = {}
 
         # get a timestamp
         c_time = time.time()
@@ -437,6 +458,7 @@ class GTExBuilder(object):
                          target_id=associated_node.id,
                          provided_by=provided_by,
                          ctime=c_time,
+                         hyper_edge_id=hyper_edge_id,
                          original_predicate=predicate,
                          standard_predicate=standard_predicate,
                          input_id=source_node.id,
@@ -445,17 +467,10 @@ class GTExBuilder(object):
                          properties=props)
 
         # write out the new edge
-        writer.write_edge(new_edge)
+        writer.write_edge(new_edge, force_create)
 
         # return the edge
         return new_edge
-
-    #######
-    # populate the redis cache with the baseline info
-    #######
-    def prepopulate_gtex_catalog_cache(self):
-        self.gtex.prepopulate_gtex_catalog_cache()
-        return None
 
     #######
     # prepopulate_variant_synonymization_cache - populate the variant synomization cache by walking through the variant list
@@ -492,78 +507,31 @@ class GTExBuilder(object):
     # process_variant_synonymization_cache - processes an array of un-cached variant nodes.
     #######
     def process_variant_synonymization_cache(self, batch_of_hgvs):
-        # get the incoming list of HGVS variants synomynized against clingen
         batch_synonyms = self.clingen.get_batch_of_synonyms(batch_of_hgvs)
 
-        # open a connection to the redis cache
         with self.cache.redis.pipeline() as redis_pipe:
-            # init a counter
             count = 0
 
-            # for each clingen synonymized record
             for hgvs_curie, synonyms in batch_synonyms.items():
-
-                # get the key
                 key = f'synonymize({hgvs_curie})'
-
-                # set the key and data to process
                 redis_pipe.set(key, pickle.dumps(synonyms))
-
-                # increment the counter
                 count += 1
 
-                # init an array of SNP IDs
-                dbsnp_labled_ids = []
-
-                # init the CA label id
                 caid_labled_id = None
 
-                # for each synonymized entry
                 for syn in synonyms:
-                    # is this a DBSNP id, add it to the list
-                    if syn.identifier.startswith('DBSNP'):
-                        dbsnp_labled_ids.append(syn)
-                    # is this a CA id, set the CA label
-                    elif syn.identifier.startswith('CAID'):
+                    if syn.identifier.startswith('CAID'):
                         caid_labled_id = syn
+                        synonyms.remove(caid_labled_id)
+                        redis_pipe.set(f'synonymize({caid_labled_id.identifier})', pickle.dumps(synonyms))
+                        synonyms.add(caid_labled_id)
+                        count += 1
+                        break
 
-                # if we got a CA id
-                if caid_labled_id:
-                    # clear out the synonyms' CA label
-                    synonyms.remove(caid_labled_id)
-
-                    # set the CA id and new synonym
-                    redis_pipe.set(f'synonymize({caid_labled_id.identifier})', pickle.dumps(synonyms))
-
-                    # add the new label to the list
-                    synonyms.add(caid_labled_id)
-
-                    # increment the counter
-                    count += 1
-
-                # for each DBSNP synonym
-                for dbsnp_labled_id in dbsnp_labled_ids:
-                    # clear out the synonyms
-                    synonyms.remove(dbsnp_labled_id)
-
-                    # set the new key
-                    redis_pipe.set(f'synonymize({dbsnp_labled_id.identifier})', pickle.dumps(synonyms))
-
-                    # add it to the cache
-                    synonyms.add(dbsnp_labled_id)
-
-                    # increment the counter
-                    count += 1
-
-                # did we reach a batch process limit
                 if count == 8000:
-                    # execute the pending synonym
                     redis_pipe.execute()
-
-                    # reset the counter
                     count = 0
 
-            # process the remainder queued up
             if count > 0:
                 redis_pipe.execute()
 
@@ -574,18 +542,19 @@ class GTExBuilder(object):
         # get the list of batch operations
         batch_annotations = self.myvariant.batch_sequence_variant_to_gene(batch_of_nodes)
 
-        # get a reference to redis
-        with self.cache.redis.pipeline() as redis_pipe:
-            # for each records to process
-            for seq_var_curie, annotations in batch_annotations.items():
-                # set the request using the CA curie
-                key = f'myvariant.sequence_variant_to_gene({seq_var_curie})'
+        if batch_annotations != None:
+            # get a reference to redis
+            with self.cache.redis.pipeline() as redis_pipe:
+                # for each records to process
+                for seq_var_curie, annotations in batch_annotations.items():
+                    # set the request using the CA curie
+                    key = f'myvariant.sequence_variant_to_gene({seq_var_curie})'
 
-                # set the commands
-                redis_pipe.set(key, pickle.dumps(annotations))
+                    # set the commands
+                    redis_pipe.set(key, pickle.dumps(annotations))
 
-            # execute the redis commands
-            redis_pipe.execute()
+                # execute the redis commands
+                redis_pipe.execute()
 
 
 #######
@@ -595,15 +564,11 @@ if __name__ == '__main__':
     # create a new builder object
     gtb = GTExBuilder(Rosetta())
 
-    # load the redis cache with GTEx data
-    gtb.prepopulate_gtex_catalog_cache()
-
     # directory with GTEx data to process
     gtex_data_directory = 'C:/Phil/Work/Informatics/GTEx/GTEx_data/'
 
     # assign the name of the GTEx data file
-    associated_file_names = {'test_signif_Adrenal_Gland.csv'}
-    # associated_file_names = {'signif_variant_gene_pairs.csv'}
+    associated_file_names = {'test_all_Adipose_Subcutaneous.csv'}  #'signif_variant_gene_pairs.csv', 'test_signif_Adrenal_Gland.csv', 'test_signif_Adipose_Subcutaneous.csv', 'test_signif_Heart_Atrial_Appendage.csv'
 
     # call the GTEx builder to load the cache and graph database
     gtb.create_gtex_graph(gtex_data_directory, associated_file_names, 'GTEx')

@@ -48,8 +48,8 @@ class BufferedWriter:
         if len(typednodes) >= self.node_buffer_size:
             self.flush()
 
-    def write_edge(self,edge):
-        if edge in self.written_edges[edge.source_id][edge.target_id]:
+    def write_edge(self,edge,force_create=False):
+        if edge in self.written_edges[edge.source_id][edge.target_id] and not force_create:
             return
         self.written_edges[edge.source_id][edge.target_id].add(edge)
         label = Text.snakify(edge.standard_predicate.label)
@@ -89,6 +89,7 @@ def export_edge_chunk(tx,edgelist,edgelabel):
             ON CREATE SET r.relation_label = [row.original_predicate_label]
             ON CREATE SET r.source_database=[row.database]
             ON CREATE SET r.ctime=[row.ctime]
+            ON CREATE SET r.hyper_edge_id=[row.hyper_edge_id]
             ON CREATE SET r.publications=row.publications
             ON CREATE SET r.relation = [row.original_predicate_id]
             // FOREACH mocks if condition 
@@ -102,12 +103,17 @@ def export_edge_chunk(tx,edgelist,edgelabel):
             SET r.publications = [pub in row.publications where not pub in r.publications ] + r.publications
             )
             SET r += row.properties
+            FOREACH (_ IN CASE WHEN row.hyper_edge_id in r.hyper_edge_id THEN [] ELSE [1] END |
+            SET r.hyper_edge_id = CASE WHEN EXISTS(r.hyper_edge_id) THEN r.hyper_edge_id  + [row.hyper_edge_id] END
+            )
             """
+
     batch = [ {'source_id': edge.source_id,
                'target_id': edge.target_id,
                'provided_by': edge.provided_by,
                'database': edge.provided_by.split('.')[0],
                'ctime': edge.ctime,
+               'hyper_edge_id': edge.hyper_edge_id,
                'standard_id': edge.standard_predicate.identifier,
                'original_predicate_id': edge.original_predicate.identifier,
                'original_predicate_label': edge.original_predicate.label,

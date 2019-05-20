@@ -2,9 +2,6 @@ from greent import node_types
 from greent.graph_components import KNode, LabeledID
 from greent.service import Service
 from greent.util import Text, LoggingUtil
-from greent.rosetta import Rosetta
-
-from builder.gtex_builder import GTExBuilder
 
 import requests
 import json
@@ -37,30 +34,58 @@ class GTEx(Service):
             logger.error('Error: Missing or invalid input arguments')
 
         # create a new builder object
-        gtb = GTExBuilder(Rosetta())
+        #gtb = GTExBuilder(Rosetta())
 
         # load the redis cache with GTEx data
-        gtb.prepopulate_gtex_catalog_cache()
+        #gtb.prepopulate_gtex_catalog_cache()
 
         # call the GTEx builder to load the cache and graph database
-        gtb.create_gtex_graph(file_path, file_names, 'GTEx service')
+        #gtb.create_gtex_graph(file_path, file_names, 'GTEx service')
 
         return None
 
     ########
     # define the variant/gene relationship
+    # param: KNode sv_node
     ########
-    def sequence_variant_to_gene(self):
-        return None
+    def sequence_variant_to_gene(self, sv_node):
+        # check the input parameters
+        if sv_node is None or not isinstance(sv_node, KNode):
+            return None
+
+        # declare the return value
+        retVal = []
+
+        # create a label identifier
+
+        #
+
+        # return to the caller
+        return retVal
 
     ########
-    # define the variant/anatomy relationship
+    # Retrieve the variant/anatomy relationship
+    #   check for valid input params
+    #   convert sequence variant HGVS expression to a GTEx variant id expression
+    #   call the GTEx API web service
+    #   for each significant variant returned
+    #
+    # param: KNode sv_node
     ########
-    def sequence_variant_to_anatomy(self):
+    def sequence_variant_to_anatomy(self, sv_node):
+        # check the input parameters
+        if sv_node is None or not isinstance(sv_node, KNode):
+            return None
+
         return None
 
     ########
     # define the gene/anatomy relationship
+    # param: KNode gene_node
     ########
-    def gene_to_anatomy(self):
+    def gene_to_anatomy(self, gene_node):
+        # check the input parameters
+        if gene_node is None or not isinstance(gene_node, KNode):
+            return None
+
         return None
