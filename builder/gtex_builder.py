@@ -59,9 +59,6 @@ class GTExBuilder(object):
     #
     #######
     def create_gtex_graph(self, data_directory, file_names, analysis_id=None):
-
-        GTExUtils.convert_to_gtex_variant_id('NC_000001.10:g.762345A>G')
-
         # for each file to parse
         for file_name in file_names:
             # get the full path to the input file
