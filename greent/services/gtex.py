@@ -19,9 +19,11 @@ logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
 
 #############
-# The GTEX service.
-# A service tht interfaces with the GTEx SmartAPI to gather significant variant/gene expression
-# effects on tissues and insert them into the graph DB.
+# Class: GTEX(service)
+# By: Phil Owen
+# Date: 5/21/2019
+# Desc: A service that interfaces with the GTEx SmartAPI to gather significant variant/gene expression
+#       effects on tissues and inserts them into the graph DB on demand.
 #############
 class GTEx(Service):
     # create static edge labels for variant/gtex and gene/gtex edges
@@ -131,8 +133,10 @@ class GTEx(Service):
 
 
 #############
-# The GTEX utils
-# A class that has a number of shared functions between the GTEx service and builder
+# Class: GTExUtils
+# By: Phil Owen
+# Date: 5/21/2019
+# Desc: A class that has a number of shared static functions between the GTEx service and builder.
 #############
 class GTExUtils:
     # object to store the details for a variant

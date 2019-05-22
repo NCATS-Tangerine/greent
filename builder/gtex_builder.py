@@ -1,11 +1,9 @@
 from greent.rosetta import Rosetta
 from greent import node_types
 from greent.graph_components import KNode
-
 from greent.export import BufferedWriter
 from greent.util import LoggingUtil
 from greent.util import Text
-
 from greent.services.gtex import GTExUtils
 
 from builder.question import LabeledID
@@ -21,9 +19,10 @@ logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
 
 ##############
-# class: GTExBuilder
-# by Phil Owen
-# desc: Class that pre-loads significant GTEx data elements into the redis cache and neo4j graph database.
+# Class: GTExBuilder
+# By: Phil Owen
+# Date: 5/21/2019
+# Desc: Class that pre-loads significant GTEx data elements into the redis cache and neo4j graph database.
 ##############
 class GTExBuilder(object):
     # create static edge labels for variant/gtex and gene/gtex edges
