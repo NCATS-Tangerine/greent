@@ -42,22 +42,22 @@ class GTEx(Service):
     # define the variant/gene relationship
     # param: KNode variant node, gene node
     ########
-    def sequence_variant_to_gene(self, variant_node, gene_node):
+    def sequence_variant_to_gene(self, variant_node):
         # check the input parameters
         if variant_node is None or not isinstance(variant_node, KNode):
             logger.error('Error: Missing or invalid input variant node argument')
             return None
 
-        if variant_node is None or not isinstance(gene_node, KNode):
-            logger.error('Error: Missing or invalid input gene node argument')
-            return None
+        # declare the return value
+        ret_val = []
+
+        # make the call to get the data from the SmartBag API
+
+        # loop through the returned data
 
         # call to load the each node with synonyms
         self.synonymizer.synonymize(variant_node)
-        self.synonymizer.synonymize(gene_node)
 
-        # declare the return value
-        ret_val = []
 
         # create a predicate label
 
@@ -75,19 +75,14 @@ class GTEx(Service):
     #
     # param: KNode variant_node, gtex anatomy node
     ########
-    def sequence_variant_to_anatomy(self, variant_node, gtex_node):
+    def sequence_variant_to_anatomy(self, variant_node):
         # check the input parameters
         if variant_node is None or not isinstance(variant_node, KNode):
             logger.error('Error: Missing or invalid input variant node argument')
             return None
 
-        if gtex_node is None or not isinstance(gtex_node, KNode):
-            logger.error('Error: Missing or invalid input anatomy node argument')
-            return None
-
         # call to load the each node with synonyms
         self.synonymizer.synonymize(variant_node)
-        self.synonymizer.synonymize(gtex_node)
 
         return None
 
@@ -95,19 +90,14 @@ class GTEx(Service):
     # define the gene/anatomy relationship
     # param: KNode gene node, gtex anatomy node
     ########
-    def gene_to_anatomy(self, gene_node, gtex_node):
+    def gene_to_anatomy(self, gene_node):
         # check the input parameters
         if gene_node is None or not isinstance(gene_node, KNode):
             logger.error('Error: Missing or invalid input gene node argument')
             return None
 
-        if gtex_node is None or not isinstance(gtex_node, KNode):
-            logger.error('Error: Missing or invalid input anatomy node argument')
-            return None
-
         # call to load the each node with synonyms
         self.synonymizer.synonymize(gene_node)
-        self.synonymizer.synonymize(gtex_node)
 
         return None
 

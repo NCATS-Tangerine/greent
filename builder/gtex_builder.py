@@ -104,7 +104,7 @@ class GTExBuilder(object):
                             curie_ensembl = f'ENSEMBL:{gtex_details.ensembl}'
 
                             # create variant, gene and GTEx nodes with the HGVS, ENSEMBL or UBERON expression as the id and name
-                            variant_node = KNode(curie_hgvs, name=curie_hgvs, type=node_types.SEQUENCE_VARIANT)
+                            variant_node = KNode(curie_hgvs, name=curie_hgvs, type=node_types.NAMED_THING)
                             gene_node = KNode(curie_ensembl, type=node_types.GENE)
                             gtex_node = KNode(curie_uberon, name=gtex_details.tissue_name, type=node_types.ANATOMICAL_ENTITY)
 

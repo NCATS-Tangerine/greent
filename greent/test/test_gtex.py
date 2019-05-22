@@ -19,25 +19,23 @@ def test_gtex_cache_loaded(rosetta, gtex):
 def test_sequence_variant_to_gene(rosetta, gtex):
     # create a couple nodes
     variant_node = KNode("HGVS:NC_000001.10:g.178632324A>G", name="HGVS:NC_000001.10:g.178632324A>G")
-    gene_node = KNode("ENSEMBL:ENSG00000116191")
 
     # call the func to make that association
-    results = gtex.sequence_variant_to_gene(variant_node, gene_node)
+    results = gtex.sequence_variant_to_gene(variant_node)
 
     assert len(results) > 0
 
     # check to make sure the node and edges were created properly
     for edge, node in results:
-        assert node.type == node_types.GENE or node.type == node_types.SEQUENCE_VARIANT
+        assert node.type == node_types.SEQUENCE_VARIANT or node.type == node_types.GENE
         assert edge.standard_predicate.identifier != 'GAMMA:0'
 
 
 def test_sequence_variant_to_anatomy(rosetta, gtex):
     variant_node = KNode("HGVS:NC_000001.10:g.178632324A>G", name="HGVS:NC_000001.10:g.178632324A>G")
-    gtex_node = KNode("UBERON:0002190", name="Adipose Subcutaneous")
 
     # call the func to make that association
-    results = gtex.sequence_variant_to_anatomy(variant_node, gtex_node)
+    results = gtex.sequence_variant_to_anatomy(variant_node)
 
     assert len(results) > 0
 
@@ -49,10 +47,9 @@ def test_sequence_variant_to_anatomy(rosetta, gtex):
 
 def test_gene_to_anatomy(rosetta, gtex):
     gene_node = KNode("ENSEMBL:ENSG00000116191")
-    gtex_node = KNode("UBERON:0002190", name="Adipose Subcutaneous")
 
     # call the func to make that association
-    results = gtex.gene_to_anatomy(gene_node, gtex_node)
+    results = gtex.gene_to_anatomy(gene_node)
 
     assert len(results) > 0
 
