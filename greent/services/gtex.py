@@ -130,11 +130,11 @@ class GTEx(Service):
 #############
 class GTExUtils:
     # object to store the details for a variant
-    SequenceVariant = namedtuple('sequencevariant', ['build', 'chrom', 'pos', 'ref', 'alt', 'hgvs', 'node'])
+    SequenceVariant = namedtuple('sequencevariant', ['build', 'chrom', 'pos', 'ref', 'alt', 'node'])
     SequenceVariant.__new__.__defaults__ = (None, None)
 
     # object to store GTEx details of the variant
-    GTExVariant = namedtuple('gtexvariant', ['tissue_name', 'uberon', 'ensembl', 'pval_nominal', 'slope'])
+    GTExVariant = namedtuple('gtexvariant', ['tissue_name', 'uberon', 'hgvs', 'ensembl', 'pval_nominal', 'slope'])
     GTExVariant.__new__.__defaults__ = (None, None)
 
     # object to store data parsing objects
@@ -215,17 +215,19 @@ class GTExUtils:
     # chr, position, ref, alt, hg version
     # ex: 1_762345_A_G_b37 becomes NC_000001.10:g.762345A>G
     #######
-    # noinspection PyCallByClass
     @staticmethod
-    def get_sequence_variant_obj(variant_id):
+    def get_sequence_variant_obj(gtex_variant_id):
         try:
+            # split the string into the components
+            variant_id = gtex_variant_id.split('_')
+
             # get position indexes into the data element
             reference_patch = 'p1'
+            chromosome = variant_id[0]
             position = int(variant_id[1])
             ref_allele = variant_id[2]
             alt_allele = variant_id[3]
             reference_genome = variant_id[4]
-            chromosome = variant_id[0]
 
             # X or Y to integer values for proper indexing
             if chromosome == 'X':
@@ -241,71 +243,8 @@ class GTExUtils:
             logger.warning(f'Reference chromosome and/or version not found: {variant_id}')
             return ''
 
-        # get the length of the reference allele
-        len_ref = len(ref_allele)
-
-        # is there an alt allele
-        if alt_allele == '.':
-            # deletions
-            if len_ref == 1:
-                variation = f'{position}del'
-            else:
-                variation = f'{position}_{position + len_ref - 1}del'
-
-        elif alt_allele.startswith('<'):
-            # we know about these but don't support them yet
-            return ''
-
-        else:
-            # get the length of the alternate allele
-            len_alt = len(alt_allele)
-
-            # if this is a SNP
-            if (len_ref == 1) and (len_alt == 1):
-                # simple layout of ref/alt SNP
-                variation = f'{position}{ref_allele}>{alt_allele}'
-            # if the alternate allele is larger than the reference is an insert
-            elif (len_alt > len_ref) and alt_allele.startswith(ref_allele):
-                # get the length of the insertion
-                diff = len_alt - len_ref
-
-                # get the position offset
-                offset = len_alt - diff
-
-                # layout the insert
-                variation = f'{position + offset - 1}_{position + offset}ins{alt_allele[offset:]}'
-            # if the reference is larger than the deletion it is a deletion
-            elif (len_ref > len_alt) and ref_allele.startswith(alt_allele):
-                # get the length of the deletion
-                diff = len_ref - len_alt
-
-                # get the position offset
-                offset = len_ref - diff
-
-                # if the diff is only 1 BP
-                if diff == 1:
-                    # layout the SNP deletion
-                    variation = f'{position + offset}del'
-                # else this is more that a single BP deletion
-                else:
-                    # layout the deletion
-                    variation = f'{position + offset}_{position + offset + diff - 1}del'
-            # we do not support this allele
-            else:
-                logger.warning(f'Format of variant not recognized for hgvs conversion: {ref_allele} to {alt_allele}')
-                return ''
-
-        # layout the final HGVS expression in curie format
-        hgvs: str = f'{ref_chromosome}:g.{variation}'
-
-        # convert the reference genome to a project standard. danger, hack job ahead.
-        if reference_genome == 'b37':
-            reference_genome = 'HG19'
-        else:
-            reference_genome = 'HG38'
-
         # create the sequence_variant object
-        seq_var = GTExUtils.SequenceVariant(reference_genome, chromosome, position, ref_allele, alt_allele, hgvs=hgvs, node=None)
+        seq_var = GTExUtils.SequenceVariant(reference_genome, chromosome, position, ref_allele, alt_allele, node=None)
 
         # return the expression to the caller
         return seq_var
