@@ -12,10 +12,9 @@ import csv
 import pickle
 
 
-# declare a logger...
+# declare a logger and initialize it.
 import logging
-# ... and initialize it
-logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
+logger = LoggingUtil.init_logging(__name__, logging.INFO)
 
 
 ##############
@@ -71,8 +70,8 @@ class GTExBuilder(object):
             uncached_variant_annotation_nodes = []
             redis_counter = 0
 
-            # load up the synonymization cahce of all the variant
-            # self.prepopulate_variant_synonymization_cache(gtex_var_dict)
+            # load up the synonymization cache of all the variant
+            self.prepopulate_variant_synonymization_cache(gtex_var_dict)
 
             # init some progress counters
             var_counter = 0
@@ -99,7 +98,7 @@ class GTExBuilder(object):
                             gtex_details = var_data_obj.GTExVariant
 
                             # create curies for the various id values
-                            curie_hgvs = f'HGVS:{sequence_variant.hgvs}'
+                            curie_hgvs = f'HGVS:{gtex_details.hgvs}'
                             curie_uberon = f'UBERON:{gtex_details.uberon}'
                             curie_ensembl = f'ENSEMBL:{gtex_details.ensembl}'
 
@@ -154,27 +153,6 @@ class GTExBuilder(object):
                             if self.cache.get(f'myvariant.sequence_variant_to_gene({variant_node.id})') is None:
                                 uncached_variant_annotation_nodes.append(variant_node)
 
-                            # setup for a get on nearby genes from the ensembl cache
-                            nearby_cache_key = f'ensembl.sequence_variant_to_gene({variant_node.id})'
-
-                            # execute the query to get the nearby sequence var/gene from the ensembl cache
-                            cached_nearby_genes = self.cache.get(nearby_cache_key)
-
-                            # did we not find it write it out to the ensembl cache
-                            if cached_nearby_genes is None:
-                                # get the nearby gene from the query results
-                                nearby_genes = self.ensembl.sequence_variant_to_gene(variant_node)
-
-                                # set the info into the redis pipeline writer
-                                redis_pipe.set(nearby_cache_key, pickle.dumps(nearby_genes))
-
-                                # increment the record counter
-                                redis_counter += 1
-
-                            # if we reached a good count on the pending nearby gene records execute redis
-                            if redis_counter > 1000:
-                                redis_pipe.execute()
-
                         # if we reached a good count on the pending variant to gene records execute redis
                         if len(uncached_variant_annotation_nodes) > 1000:
                             self.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
@@ -186,8 +164,12 @@ class GTExBuilder(object):
                     if (pos_counter % 10000) == 0:
                         logger.debug(f'Processed {var_counter} variants at {pos_counter} position(s).')
 
+                # if we reached a good count on the pending variant to gene records execute redis
+                if uncached_variant_annotation_nodes:
+                    self.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
+
                 # output some final feedback for the user
-                logger.debug(f'Building complete. Processed {var_counter} variants at {pos_counter} position(s).')
+                logger.info(f'Building complete. Processed {var_counter} variants at {pos_counter} position(s).')
         return 0
 
     #######
@@ -218,6 +200,7 @@ class GTExBuilder(object):
             # index into the array to the variant id position
             tissue_name_index = header_line.index('tissue_name')
             tissue_uberon_index = header_line.index('tissue_uberon')
+            hgvs_index = header_line.index('HGVS')
             variant_id_index = header_line.index('variant_id')
             ensembl_id_index = header_line.index('gene_id')
             pval_nominal_index = header_line.index('pval_nominal')
@@ -231,18 +214,17 @@ class GTExBuilder(object):
                 # get the data elements
                 tissue_name = line[tissue_name_index]
                 uberon = line[tissue_uberon_index]
+                hgvs = line[hgvs_index]
                 variant_id = line[variant_id_index]
                 ensembl = line[ensembl_id_index]
                 pval_nominal = line[pval_nominal_index]
                 slope = line[pval_slope_index]
 
-                # create the GTEx data object
-                gtex_data = GTExUtils.GTExVariant(tissue_name, uberon, ensembl.split('.', 1)[0], pval_nominal, slope)
+                # create the GTEx data object. also remove the transcript appended onto the ensembl id
+                gtex_data = GTExUtils.GTExVariant(tissue_name, uberon, hgvs, ensembl.split('.', 1)[0], pval_nominal, slope)
 
                 # get the SequenceVariant object filled in with the HGVS value
-                seq_var_data = GTExUtils.get_sequence_variant_obj(variant_id.split('_'))
-
-                logger.debug(f'{variant_id} became {seq_var_data.hgvs}')
+                seq_var_data = GTExUtils.get_sequence_variant_obj(variant_id)
 
                 # load the needed data into an object array of the two types
                 results = GTExUtils.DataParsingResults(seq_var_data, gtex_data)
@@ -258,7 +240,7 @@ class GTExBuilder(object):
                 # put away the pertinent elements needed to create a graph node
                 variant_dictionary[seq_var_data.chrom][seq_var_data.pos].append(results)
 
-        logger.debug(f'CSV record count: {line_counter}')
+        logger.info(f'CSV record count: {line_counter}')
 
         # return the array to the caller
         return variant_dictionary
@@ -281,8 +263,8 @@ class GTExBuilder(object):
                 # [SequenceVariant obj, uberon id, ensembl (aka gene) id]
                 for variant in variants:
                     # look up the variant by the HGVS expresson
-                    if self.cache.get(f'synonymize(HGVS:{variant[0].hgvs})') is None:
-                        uncached_variants.append(variant[0].hgvs)
+                    if self.cache.get(f'synonymize(HGVS:{variant.GTExVariant.hgvs})') is None:
+                        uncached_variants.append(variant.GTExVariant.hgvs)
 
                     # if there is enough in the batch process it
                     if len(uncached_variants) == 10000:
@@ -295,7 +277,7 @@ class GTExBuilder(object):
         if uncached_variants:
             self.process_variant_synonymization_cache(uncached_variants)
 
-        logger.debug("Variant synonymization cache prepopulation complete.")
+        logger.info("Variant synonymization cache prepopulation complete.")
 
     #######
     # process_variant_synonymization_cache - processes an array of un-cached variant nodes.
@@ -329,7 +311,7 @@ class GTExBuilder(object):
             if count > 0:
                 redis_pipe.execute()
 
-        logger.debug("Variant synonymization cache processing complete.")
+        logger.info("Variant synonymization cache processing complete.")
 
     #######
     # populate the variant annotation cache in redis
@@ -354,7 +336,7 @@ class GTExBuilder(object):
                 # execute the redis commands
             redis_pipe.execute()
 
-        logger.debug("Variant annotation cache prepopulating complete.")
+        logger.info("Variant annotation cache prepopulating complete.")
 
 #######
 # Main - Stand alone entry point
@@ -368,9 +350,9 @@ if __name__ == '__main__':
 
     # assign the name of the GTEx data file
     # available test files:
-    # 'test_all_Adipose_Subcutaneous.csv', signif_variant_gene_pairs.csv', 'test_signif_Adrenal_Gland.csv'
-    # 'test_signif_Adipose_Subcutaneous.csv', 'test_signif_Heart_Atrial_Appendage.csv'
-    associated_file_names = {'test_signif_Adipose_Subcutaneous.csv'}
+    # 'signif_variant_gene_pairs.csv', 'test_signif_Adipose_Subcutaneous_all.csv', 'test_signif_Adipose_Subcutaneous_100k.csv'
+    # 'test_signif_Adipose_Subcutaneous_10k.csv', 'test_signif_Adipose_Subcutaneous_100.csv', 'test_signif_Adipose_Subcutaneous_6.csv'
+    associated_file_names = {'test_signif_Adipose_Subcutaneous_100k.csv'}
 
     # call the GTEx builder to load the cache and graph database
     gtb.create_gtex_graph(gtex_data_directory, associated_file_names, 'GTEx')
