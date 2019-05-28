@@ -129,25 +129,25 @@ class GTExBuilder(object):
 
                             # get the polarity of slope to get the direction of expression.
                             # positive value increases expression, negative decreases
-                            label_id, label_name = GTExUtils.get_expression_direction(gtex_details.slope)
+                            #label_id, label_name = GTExUtils.get_expression_direction(gtex_details.slope)
 
                             # create the edge label predicate for the gene/variant relationship
-                            predicate = LabeledID(identifier=label_id, label=label_name)
+                            #predicate = LabeledID(identifier=label_id, label=label_name)
 
                             # get a MD5 hash int of the composite hyper edge ID
-                            hyper_egde_id = GTExUtils.get_hyper_edge_id(gtex_details.uberon, gtex_details.ensembl, Text.un_curie(variant_node.id))
+                            #hyper_egde_id = GTExUtils.get_hyper_edge_id(gtex_details.uberon, gtex_details.ensembl, Text.un_curie(variant_node.id))
 
                             # set the properties for the edge
-                            edge_properties = [gtex_details.ensembl, gtex_details.pval_nominal, gtex_details.slope, analysis_id]
+                            #edge_properties = [gtex_details.ensembl, gtex_details.pval_nominal, gtex_details.slope, analysis_id]
 
                             # associate the sequence variant node with an edge to the gtex anatomy node
-                            GTExUtils.write_new_association(graph_writer, variant_node, gtex_node, self.variant_gtex_label, hyper_egde_id, self.concept_model, None)
+                            #GTExUtils.write_new_association(graph_writer, variant_node, gtex_node, self.variant_gtex_label, hyper_egde_id, self.concept_model, None)
 
                             # associate the gene node with an edge to the gtex anatomy node
-                            GTExUtils.write_new_association(graph_writer, gene_node, gtex_node, self.gene_gtex_label, hyper_egde_id, self.concept_model, None, True)
+                            #GTExUtils.write_new_association(graph_writer, gene_node, gtex_node, self.gene_gtex_label, hyper_egde_id, self.concept_model, None, True)
 
                             # associate the sequence variant node with an edge to the gene node. also include the GTEx properties
-                            GTExUtils.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_egde_id, self.concept_model, edge_properties)
+                            #GTExUtils.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_egde_id, self.concept_model, edge_properties)
 
                             # check if the key doesnt exist in the cache, add it to buffer for batch loading later
                             if self.cache.get(f'myvariant.sequence_variant_to_gene({variant_node.id})') is None:
@@ -352,7 +352,7 @@ if __name__ == '__main__':
     # available test files:
     # 'signif_variant_gene_pairs.csv', 'test_signif_Adipose_Subcutaneous_all.csv', 'test_signif_Adipose_Subcutaneous_100k.csv'
     # 'test_signif_Adipose_Subcutaneous_10k.csv', 'test_signif_Adipose_Subcutaneous_100.csv', 'test_signif_Adipose_Subcutaneous_6.csv'
-    associated_file_names = {'test_signif_Adipose_Subcutaneous_100k.csv'}
+    associated_file_names = {'signif_variant_gene_pairs.csv'}
 
     # call the GTEx builder to load the cache and graph database
     gtb.create_gtex_graph(gtex_data_directory, associated_file_names, 'GTEx')
