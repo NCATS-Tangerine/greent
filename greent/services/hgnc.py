@@ -47,7 +47,7 @@ class HGNC(Service):
                 response = requests.get(url , headers= headers)
                 return response.json()
             except Exception as e:
-                logger.error(response)
+                logger.error(f'Exception caught trying to access: {url} after {num_tries} attempts.')
                 logger.error(f'Threw exception {e}')
                 num_tries += 1
                 time.sleep(wait_time)
