@@ -52,7 +52,7 @@ class MyVariant(Service):
                 logger.error(f'MyVariant non-200 response on batch: {query_response.status_code})')
             return annotation_dictionary
         else:
-            return self.batch_sequence_variant_to_gene(variant_nodes[0:1000]).update(self.batch_sequence_variant_to_gene(hgvs_list[1000:]))
+            return self.batch_sequence_variant_to_gene(variant_nodes[0:1000]).update(self.batch_sequence_variant_to_gene(variant_nodes[1000:]))
 
     def sequence_variant_to_gene(self, variant_node):
         return_results = []

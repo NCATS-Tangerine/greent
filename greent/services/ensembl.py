@@ -111,7 +111,7 @@ class Ensembl(Service):
                             edge = self.create_edge(variant_node, caid_node, 'ensembl.sequence_variant_to_sequence_variant', dbsnp_curie, predicate, url=query_url, properties=props)
                             return_results.append((edge, caid_node))
             else:
-                logger.error(f'Ensembl returned a non-200 response: {query_response.status_code})')
+                logger.error(f'Ensembl returned a non-200 response for {variant_node.identifier}: {query_response.status_code})')
 
         return return_results
 
