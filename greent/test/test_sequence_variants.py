@@ -190,10 +190,12 @@ def a_test_gwascatalog_variant_to_phenotype(gwascatalog, rosetta):
     results = gwascatalog.sequence_variant_to_disease_or_phenotypic_feature(variant_node)
     assert len(results) == 0
   
-def this_is_real_test_batch_gwascatalog_var_to_phenotype(rosetta, gwascatalog):
+def test_batch_gwascatalog_var_to_phenotype(rosetta, gwascatalog):
 
     gwascatalog.prepopulate_cache()
-    
+
+    assert gwascatalog.is_precached()
+
     relations = rosetta.cache.get('gwascatalog.sequence_variant_to_disease_or_phenotypic_feature(CAID:CA16058750)')
     identifiers = [node.id for r,node in relations]
     assert 'EFO:0003898' in identifiers
@@ -210,6 +212,9 @@ def this_is_real_test_batch_gwascatalog_var_to_phenotype(rosetta, gwascatalog):
     assert 'EFO:0004340' in identifiers
     assert 'EFO:0003917' in identifiers
     assert 'EFO:0005939' in identifiers
+
+    assert len(gwascatalog.get_all_sequence_variants()) > 50000
+
 
 def this_is_slow_test_gwascatalog_phenotype_to_variant(gwascatalog):
     #phenotype_node = KNode('EFO:0003898', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
@@ -264,12 +269,41 @@ def test_sequence_variant_to_gene_ensembl(ensembl):
     assert len(identifiers) > 20
 
 def test_sequence_variant_ld(ensembl):
-
     node = KNode('DBSNP:rs1042779', type=node_types.SEQUENCE_VARIANT)
     relations = ensembl.sequence_variant_to_sequence_variant(node)
     identifiers = [node.id for r,node in relations]
-    assert 'DBSNP:rs6792369' in identifiers
-    assert 'DBSNP:rs2240920' in identifiers
+    assert 'CAID:CA11500281' in identifiers
+    assert 'CAID:CA11500270' in identifiers
+
+
+def test_rsid_with_allele_synonymization(rosetta, clingen):
+    rsid = 'rs7035767'
+    snp_allele = 'A'
+    synonyms = clingen.get_synonyms_by_rsid_with_sequence(rsid, snp_allele)
+    identifiers = [identifier for identifier,name in synonyms]
+    assert 'CAID:CA188678660' in identifiers
+    assert 'CAID:CA13024337' not in identifiers
+    snp_allele = 'G'
+    synonyms = clingen.get_synonyms_by_rsid_with_sequence(rsid, snp_allele)
+    identifiers = [identifier for identifier,name in synonyms]
+    assert 'CAID:CA13024337' in identifiers
+    assert 'CAID:CA188678660' not in identifiers
+
+    rsid = 'rs369602258'
+    snp_allele = 'G'
+    synonyms = clingen.get_synonyms_by_rsid_with_sequence(rsid, snp_allele)
+    identifiers = [identifier for identifier,name in synonyms]
+    assert 'CAID:CA6146346' in identifiers
+    assert 'CAID:CA321211' not in identifiers
+    snp_allele = 'T'
+    synonyms = clingen.get_synonyms_by_rsid_with_sequence(rsid, snp_allele)
+    identifiers = [identifier for identifier,name in synonyms]
+    assert 'CAID:CA321211' in identifiers
+    assert 'CAID:CA6146346' not in identifiers
+
+
+
+                                    
 
 
 
