@@ -209,6 +209,9 @@
         op    : biolink.sequence_variant_get_phenotype
       - link  : sequence_variant_to_disease_or_phenotypic_feature
         op    : gwascatalog.sequence_variant_to_disease_or_phenotypic_feature
+    sequence_variant:
+      - link  : sequence_variant_to_sequence_variant
+        op    : ensembl.sequence_variant_to_sequence_variant
   cellular_component:
     chemical_substance:
       - link  : cellular_component_to_chemical_substance

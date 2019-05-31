@@ -119,52 +119,66 @@ class KEGG(Service):
         # with it.
         # For gene, we really have to use the orthology section, not the EC.  And it may return multiple values.
         url = f'{self.url}/get/{reaction_id}'
-        print(url)
-        reaction = {}
+        reactions = []
         raw_results = requests.get(url)
-        estring = None
-        elist = []
+        #estring = None
+        #elist = []
+        ko2eclist = {}
+        ko2genes = {}
+        last = ''
         for line in raw_results.text.split('\n'):
-            if line.startswith('ENZYME'):
-                parts = line.split()
-                if not '-' in parts[1]:
-                    #Got a decent EC we can use to look stuff up
-                    estring = parts[1]
-                    ec = f'EC:{estring}'
-            elif line.startswith('EQUATION'):
+            if line.startswith(' '):
+                sw = last
+            elif len(line) > 2:
+                sw = line.split()[0]
+                last = sw
+            if sw == 'EQUATION':
                 parts = line[9:].split('=')
                 left = self.parse_chemicals(parts[0])
                 right = self.parse_chemicals(parts[1])
-            elif line.startswith('ORTHOLOGY'):
+            elif sw == 'ORTHOLOGY':
+                elist = []
                 if '[' in line:
                     ni = line.index('[')
                     nj = line.index(']',ni+1)
                     ecs = line[ni+1:nj].split()
-                    elist = [ x.split(':')[-1] for x in ecs ]
-                ko = line.split()[1]
-                genes = self.get_human_genes(ko)
-                if len(genes) > 0:
-                    reaction['enzyme'] = genes
+                    elisto = [ x.split(':')[-1] for x in ecs ]
+                    elist = list(filter( lambda z: '-' not in z, elisto))
+                if line.startswith(sw):
+                    ko = line.split()[1]
+                else:
+                    ko = line.split()[0]
+                ko2eclist[ko] = elist
+                ko2genes[ko] = self.get_human_genes(ko)
         #Now, see if we can get substrates from anywhere
-        if estring is not None:
-            elist = [estring] + elist
-        for ec in elist:
-            substrates,products = self.get_rp_from_enzyme(ec)
-            genes = self.get_human_genes(ec)
-            if len(genes) > 0:
-                reaction['enzyme'] = genes
-            if len(left.intersection(substrates)) > 0:
-                reaction['reactants'] = left
-                reaction['products'] = right
-                return reaction
-            elif len(right.intersection(substrates)) > 0:
-                reaction['reactants'] = right
-                reaction['products'] = left
-                return reaction
-        #Cant establish direction?
-        reaction['reactants']=set()
-        reaction['products']=set()
-        return reaction
+        # But we need to be careful: different EC might give us different genes, and we need to check them all
+        # It's possible that the different ECs will also go different directions, so we need to return a list of
+        # reactions here.
+        for ko in ko2genes:
+            reaction = {}
+            if len(ko2genes[ko]) == 0:
+                continue
+            if len(ko2eclist[ko]) == 0:
+                continue
+            #I believe that I don't need to check every enzyme.  They all point the same way.  So if I find one,
+            # I can move to the next ko
+            reaction['enzyme'] = ko2genes[ko]
+            for ec in ko2eclist[ko]:
+                substrates,products = self.get_rp_from_enzyme(ec)
+                if len(left.intersection(substrates)) > 0:
+                    reaction['reactants'] = left
+                    reaction['products'] = right
+                    break
+                elif len(right.intersection(substrates)) > 0:
+                    reaction['reactants'] = right
+                    reaction['products'] = left
+                    break
+            if 'reactants' not in reaction:
+                #Cant establish direction?
+                reaction['reactants']=set()
+                reaction['products']=set()
+            reactions.append(reaction)
+        return reactions
 
     def chemical_get_enzyme(self,chemnode):
         """To get an enzyme from chemicals, we first look up the reactions for the chemical.
@@ -174,23 +188,24 @@ class KEGG(Service):
         chemids = set([Text.un_curie(x) for x in chemnode.get_synonyms_by_prefix('KEGG.COMPOUND')])
         results = []
         for reaction_id in reactions:
-            rxn = self.get_reaction(reaction_id)
-            if 'enzyme' in rxn:
-                for gene_id in rxn['enzyme']:
-                    enzyme = KNode(gene_id, type=node_types.GENE)
-                    if len(chemids.intersection(rxn['reactants'])) > 0:
-                        predicate = LabeledID('CTD:increases^degradation', label='increases degradation of')
-                        #predicate = LabeledID('RO:0002449','negatively regulates, entity to entity')
-                        input_identifier = chemids.intersection(rxn['reactants']).pop()
-                    elif len(chemids.intersection(rxn['products'])) > 0:
-                        predicate = LabeledID('CTD:increases^chemical synthesis', label='increases synthesis of')
-                        #predicate = LabeledID('RO:0002450','positively regulates, entity to entity')
-                        input_identifier = chemids.intersection(rxn['products']).pop()
-                    else:
-                        logger.error(f"Mismatch between query and answer: {rxn} {chemids}")
-                        continue
-                    edge = self.create_edge(enzyme, chemnode, f'kegg.chemical_get_enzyme',  input_identifier, predicate)
-                    results.append( (edge, enzyme))
+            rxns = self.get_reaction(reaction_id)
+            for rxn in rxns:
+                if 'enzyme' in rxn:
+                    for gene_id in rxn['enzyme']:
+                        enzyme = KNode(gene_id, type=node_types.GENE)
+                        if len(chemids.intersection(rxn['reactants'])) > 0:
+                            predicate = LabeledID('CTD:increases^degradation', label='increases degradation of')
+                            #predicate = LabeledID('RO:0002449','negatively regulates, entity to entity')
+                            input_identifier = chemids.intersection(rxn['reactants']).pop()
+                        elif len(chemids.intersection(rxn['products'])) > 0:
+                            predicate = LabeledID('CTD:increases^chemical synthesis', label='increases synthesis of')
+                            #predicate = LabeledID('RO:0002450','positively regulates, entity to entity')
+                            input_identifier = chemids.intersection(rxn['products']).pop()
+                        else:
+                            logger.error(f"Mismatch between query and answer: {rxn} {chemids}")
+                            continue
+                        edge = self.create_edge(enzyme, chemnode, f'kegg.chemical_get_enzyme',  input_identifier, predicate)
+                        results.append( (edge, enzyme))
         return results
 
     def chemical_get_chemical(self,chemnode):
@@ -201,32 +216,33 @@ class KEGG(Service):
         chemids = set([Text.un_curie(x) for x in chemnode.get_synonyms_by_prefix('KEGG.COMPOUND')])
         results = []
         for reaction_id in reactions:
-            rxn = self.get_reaction(reaction_id)
-            #Only rxns with enzymes are directional I think.
-            if 'enzyme' in rxn and len(rxn['enzyme']) > 0:
-                if len(chemids.intersection(rxn['reactants'])) > 0:
-                    predicate = LabeledID('RO:0001001','derives into')
-                    input_identifier = chemids.intersection(rxn['reactants']).pop()
-                    other_chems = rxn['products']
-                    forward = True
-                elif len(chemids.intersection(rxn['products'])) > 0:
-                    predicate = LabeledID('RO:0001001','derives into')
-                    input_identifier = chemids.intersection(rxn['products']).pop()
-                    other_chems = rxn['reactants']
-                    forward = False
-                else:
-                    logger.error(f"Mismatch between query and answer: {rxn} {chemids}")
-                    continue
-                for chem in other_chems:
-                    output = KNode(f'KEGG.COMPOUND:{chem}', type=node_types.METABOLITE)
-                    if forward:
-                        subj = chemnode
-                        obj = output
+            rxns = self.get_reaction(reaction_id)
+            for rxn in rxns:
+                #Only rxns with enzymes are directional I think.
+                if 'enzyme' in rxn and len(rxn['enzyme']) > 0:
+                    if len(chemids.intersection(rxn['reactants'])) > 0:
+                        predicate = LabeledID('RO:0001001','derives into')
+                        input_identifier = chemids.intersection(rxn['reactants']).pop()
+                        other_chems = rxn['products']
+                        forward = True
+                    elif len(chemids.intersection(rxn['products'])) > 0:
+                        predicate = LabeledID('RO:0001001','derives into')
+                        input_identifier = chemids.intersection(rxn['products']).pop()
+                        other_chems = rxn['reactants']
+                        forward = False
                     else:
-                        subj = output
-                        obj = chemnode
-                    edge = self.create_edge(subj, obj, f'kegg.chemical_get_chemical',  input_identifier, predicate)
-                    results.append( (edge, output))
+                        logger.error(f"Mismatch between query and answer: {rxn} {chemids}")
+                        continue
+                    for chem in other_chems:
+                        output = KNode(f'KEGG.COMPOUND:{chem}', type=node_types.METABOLITE)
+                        if forward:
+                            subj = chemnode
+                            obj = output
+                        else:
+                            subj = output
+                            obj = chemnode
+                        edge = self.create_edge(subj, obj, f'kegg.chemical_get_chemical',  input_identifier, predicate)
+                        results.append( (edge, output))
         return results
 
 

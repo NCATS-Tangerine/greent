@@ -38,8 +38,9 @@ class QueryDefinition:
 def get_name_for_curie(curie):
     response = requests.get(f"https://bionames.renci.org/ID_to_label/{curie}/")
     if response.ok:
-        logger.debug(response.json())
-        return response.json()[0]['label']
+        response_json = response.json()
+        #logger.debug(response_json)
+        return response_json[0]['label'] if response_json else None
     else:
         logger.warning(f"Bionames ID_to_label failed for curie {curie}.")
         return None
@@ -137,9 +138,10 @@ class Program:
 
             # Ignore the name we're given. Get one from bionames.
             if isinstance(n.curie, str):
-                n.name = get_name_for_curie(n.curie)
+                bionames_name = get_name_for_curie(n.curie)
             elif isinstance(n.curie, list):
-                n.name = [get_name_for_curie(c) for c in n.curie]
+                bionames_name = [get_name_for_curie(c) for c in n.curie]
+            n.name = bionames_name if bionames_name else n.name
 
             start_node = KNode(n.curie, type=n.type, name=n.name)
             self.process_node(start_node, [n.id])

@@ -10,8 +10,22 @@ def kegg(rosetta):
     kegg = rosetta.core.kegg
     return kegg
 
-#There's no reaction in kegg for making codeine from morphine, but there are some where codeine looks like it's
-# on the right.  Make sure we don't get confused hre.
+def test_chem_to_enzyme_Trypanothione(kegg):
+    l = KNode('KEGG.COMPOUND:C02090', name='trypanothione', type=node_types.CHEMICAL_SUBSTANCE)
+    results = kegg.chemical_get_enzyme(l)
+    ids = [node.id for edge,node in results]
+    print(ids)
+    assert('NCBIGene:6241' in ids)
+
+def test_chem_to_eynzyme_tyrosine_tat(kegg):
+    #Why don't I get the gene ASS1 when I look at degradation of L-aspartic acid?
+    l = KNode('KEGG.COMPOUND:C00082', name='L-tyrosine', type = node_types.CHEMICAL_SUBSTANCE)
+    results = kegg.chemical_get_enzyme(l)
+    ids = [node.id for edge,node in results]
+    for tid in ids:
+        print(tid)
+    assert('NCBIGene:6898' in ids)
+
 def test_chem_to_chem(kegg,rosetta):
     codeine = KNode('CHEBI:16714',name='Codeine',type=node_types.CHEMICAL_SUBSTANCE)
     rosetta.synonymizer.synonymize(codeine)
@@ -25,6 +39,8 @@ def test_chem_to_chem(kegg,rosetta):
         rosetta.synonymizer.synonymize(node)
         ids.append(node.id)
     assert len(results) > 0
+    for myid in ids:
+        print(myid)
     assert morphine in ids
     assert codeine6glucoronide in ids
     assert norcodeine in ids
@@ -33,24 +49,34 @@ def test_chem_to_chem_morphine(kegg,rosetta):
     morphine = KNode('CHEBI:17303',name='Morphine',type=node_types.CHEMICAL_SUBSTANCE)
     rosetta.synonymizer.synonymize(morphine)
     normorphine = 'KEGG.COMPOUND:C11785'
+    codeine  = 'KEGG.COMPOUND:C06174'
+    morp3g = 'KEGG.COMPOUND:C16643'
     results = kegg.chemical_get_chemical(morphine)
     ids = []
     for edge,node in results:
         if edge.source_id == 'CHEBI:17303':
             ids.append(node.id)
+        else:
+            ids.append(edge.source_id)
     assert len(results) > 0
-    assert normorphine in ids
+    #There is a morphine->normorphine rxn in kegg, but it lacks an 'orthology' element, so we are going to not pull it.
+    #  We may need to rethink?  It's a little hard to tell how many rxns have an enzyme (like this one) and not an orthology section.  I think it's some, but not too many (30%?)
+    assert normorphine not in ids
+    #Pick up the reverse rxn, codeine->morphine
+    assert codeine in ids
+    assert morp3g in ids
 
 def test_chem_to_chem_caffiene(kegg,rosetta):
     caffiene = KNode('CHEBI:27732',name='Caffiene',type=node_types.CHEMICAL_SUBSTANCE)
     rosetta.synonymizer.synonymize(caffiene)
     results = kegg.chemical_get_chemical(caffiene)
-    theobromine = 'KEGG.COMPOUND:07480'
+    theobromine = 'KEGG.COMPOUND:C07480'
     ids = []
     for edge,node in results:
         if edge.source_id == 'CHEBI:27732':
             ids.append(node.id)
-    assert theobromine in ids
+    #Really, it should be, but this reaction doesn't appear in KEGG (for humans)
+    assert theobromine not in ids
 
 def test_chem_to_reaction(kegg):
     hete = KNode('KEGG.COMPOUND:C04805', name="5-HETE", type=node_types.CHEMICAL_SUBSTANCE)
@@ -73,8 +99,10 @@ def test_get_reaction(kegg):
     assert 'C00127' in reaction['products']
     assert 'C04805' in reaction['products']
 
-def test_get_reaction_morphinetonormorphine(kegg):
-    reaction = kegg.get_reaction('rn:R08265')
+def test_get_reaction_morphinetomorphine3gluc(kegg):
+    reactions = kegg.get_reaction('rn:R08262')
+    assert len(reactions) == 1
+    reaction = reactions[0]
     assert 'enzyme' in reaction
 
 
@@ -117,7 +145,7 @@ def test_get_reaction(kegg):
 
 def test_chem_to_eynzyme_ass1(kegg):
     #Why don't I get the gene ASS1 when I look at degradation of L-aspartic acid?
-    l = KNode('KEGG.COMPOUND:00049', 'L-aspartic acid', type = node_types.CHEMICAL_SUBSTANCE)
+    l = KNode('KEGG.COMPOUND:C00049', name='L-aspartic acid', type = node_types.CHEMICAL_SUBSTANCE)
     results = kegg.chemical_get_enzyme(l)
     ids = [node.id for edge,node in results]
     print(ids)
@@ -148,11 +176,11 @@ def test_chem_to_enzyme_norcodeine_to_cyp3a4(kegg):
     ids = [ node.id for edge,node in results ]
     assert 'NCBIGene:1576' in ids
 
-def test_chem_to_enzymes_morphine_and_normorphine(kegg):
+def test_chem_to_enzymes_morphine_and_morphine3gluc(kegg):
     morhpine = KNode('KEGG.COMPOUND:C01516', name="Morphine", type=node_types.CHEMICAL_SUBSTANCE)
     results = kegg.chemical_get_enzyme(morhpine)
     morphine_enzymes = set([ node.id for edge,node in results ])
-    normorhpine = KNode('KEGG.COMPOUND:C11785', name="Normorphine", type=node_types.CHEMICAL_SUBSTANCE)
+    normorhpine = KNode('KEGG.COMPOUND:C16643', name="Morphine3Gluc", type=node_types.CHEMICAL_SUBSTANCE)
     results = kegg.chemical_get_enzyme(normorhpine)
     normorphine_enzymes = set([ node.id for edge,node in results ])
     shared = morphine_enzymes.intersection(normorphine_enzymes)

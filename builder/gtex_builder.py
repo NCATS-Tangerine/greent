@@ -14,7 +14,7 @@ import pickle
 
 # declare a logger and initialize it.
 import logging
-logger = LoggingUtil.init_logging(__name__, logging.INFO)
+logger = LoggingUtil.init_logging(__name__, logging.DEBUG, format='medium')
 
 
 ##############
@@ -66,10 +66,6 @@ class GTExBuilder(object):
             # this is a big file. not sure if we will run out of mem turning into objects
             gtex_var_dict = self.parse_csv_data(full_file_path)
 
-            # init arrays and counters for data element processing
-            uncached_variant_annotation_nodes = []
-            redis_counter = 0
-
             # load up the synonymization cache of all the variant
             self.prepopulate_variant_synonymization_cache(gtex_var_dict)
 
@@ -78,7 +74,7 @@ class GTExBuilder(object):
             pos_counter = 0
 
             # open a pipe to the redis cache DB
-            with BufferedWriter(self.rosetta) as graph_writer, self.cache.redis.pipeline() as redis_pipe:
+            with BufferedWriter(self.rosetta) as graph_writer:
                 # loop through the variants
                 for chromosome, position_dict in gtex_var_dict.items():
                     # for each position in the chromosome
@@ -90,83 +86,73 @@ class GTExBuilder(object):
                         # note that the "variant" element is actually an array consisting of
                         # SequenceVariant obj, GTExVariant obj
                         for var_data_obj in variants:
-                            # increment a variant counter
-                            var_counter += 1
+                            try:
+                                # increment a variant counter
+                                var_counter += 1
 
-                            # give the data elements better names for readability
-                            sequence_variant = var_data_obj.SequenceVariant
-                            gtex_details = var_data_obj.GTExVariant
+                                # give the data elements better names for readability
+                                sequence_variant = var_data_obj.SequenceVariant
+                                gtex_details = var_data_obj.GTExVariant
 
-                            # create curies for the various id values
-                            curie_hgvs = f'HGVS:{gtex_details.hgvs}'
-                            curie_uberon = f'UBERON:{gtex_details.uberon}'
-                            curie_ensembl = f'ENSEMBL:{gtex_details.ensembl}'
+                                # create curies for the various id values
+                                curie_hgvs = f'HGVS:{gtex_details.hgvs}'
+                                curie_uberon = f'UBERON:{gtex_details.uberon}'
+                                curie_ensembl = f'ENSEMBL:{gtex_details.ensembl}'
 
-                            # create variant, gene and GTEx nodes with the HGVS, ENSEMBL or UBERON expression as the id and name
-                            variant_node = KNode(curie_hgvs, name=curie_hgvs, type=node_types.NAMED_THING)
-                            gene_node = KNode(curie_ensembl, type=node_types.GENE)
-                            gtex_node = KNode(curie_uberon, name=gtex_details.tissue_name, type=node_types.ANATOMICAL_ENTITY)
+                                # create variant, gene and GTEx nodes with the HGVS, ENSEMBL or UBERON expression as the id and name
+                                variant_node = KNode(curie_hgvs, name=curie_hgvs, type=node_types.SEQUENCE_VARIANT)
+                                gene_node = KNode(curie_ensembl, type=node_types.GENE)
+                                gtex_node = KNode(curie_uberon, name=gtex_details.tissue_name, type=node_types.ANATOMICAL_ENTITY)
 
-                            # call to load the each node with synonyms
-                            self.rosetta.synonymizer.synonymize(variant_node)
-                            self.rosetta.synonymizer.synonymize(gene_node)
-                            self.rosetta.synonymizer.synonymize(gtex_node)
+                                # call to load the each node with synonyms
+                                self.rosetta.synonymizer.synonymize(variant_node)
+                                self.rosetta.synonymizer.synonymize(gene_node)
+                                self.rosetta.synonymizer.synonymize(gtex_node)
 
-                            # add properties to the variant node and write it out
-                            variant_node.properties['sequence_location'] = [sequence_variant.build, str(sequence_variant.chrom), str(sequence_variant.pos)]
-                            graph_writer.write_node(variant_node)
+                                # add properties to the variant node and write it out
+                                variant_node.properties['sequence_location'] = [sequence_variant.build, str(sequence_variant.chrom), str(sequence_variant.pos)]
+                                graph_writer.write_node(variant_node)
 
-                            # for now insure that the gene node has a name after synonymization
-                            # this can happen if gene is not currently in the graph DB
-                            if gene_node.name is None:
-                                gene_node.name = curie_ensembl
+                                # for now insure that the gene node has a name after synonymization
+                                # this can happen if gene is not currently in the graph DB
+                                if gene_node.name is None:
+                                    gene_node.name = curie_ensembl
 
-                            # write out the gene node
-                            graph_writer.write_node(gene_node)
+                                # write out the gene node
+                                graph_writer.write_node(gene_node)
 
-                            # write out the anatomical gtex node
-                            graph_writer.write_node(gtex_node)
+                                # write out the anatomical gtex node
+                                graph_writer.write_node(gtex_node)
 
-                            # get the polarity of slope to get the direction of expression.
-                            # positive value increases expression, negative decreases
-                            #label_id, label_name = GTExUtils.get_expression_direction(gtex_details.slope)
+                                # get the polarity of slope to get the direction of expression.
+                                # positive value increases expression, negative decreases
+                                label_id, label_name = GTExUtils.get_expression_direction(gtex_details.slope)
 
-                            # create the edge label predicate for the gene/variant relationship
-                            #predicate = LabeledID(identifier=label_id, label=label_name)
+                                # create the edge label predicate for the gene/variant relationship
+                                predicate = LabeledID(identifier=label_id, label=label_name)
 
-                            # get a MD5 hash int of the composite hyper edge ID
-                            #hyper_egde_id = GTExUtils.get_hyper_edge_id(gtex_details.uberon, gtex_details.ensembl, Text.un_curie(variant_node.id))
+                                # get a MD5 hash int of the composite hyper edge ID
+                                hyper_egde_id = GTExUtils.get_hyper_edge_id(gtex_details.uberon, gtex_details.ensembl, Text.un_curie(variant_node.id))
 
-                            # set the properties for the edge
-                            #edge_properties = [gtex_details.ensembl, gtex_details.pval_nominal, gtex_details.slope, analysis_id]
+                                # set the properties for the edge
+                                edge_properties = [gtex_details.ensembl, gtex_details.pval_nominal, gtex_details.slope, analysis_id]
 
-                            # associate the sequence variant node with an edge to the gtex anatomy node
-                            #GTExUtils.write_new_association(graph_writer, variant_node, gtex_node, self.variant_gtex_label, hyper_egde_id, self.concept_model, None)
+                                # associate the sequence variant node with an edge to the gtex anatomy node
+                                GTExUtils.write_new_association(graph_writer, variant_node, gtex_node, self.variant_gtex_label, hyper_egde_id, self.concept_model, None, True)
 
-                            # associate the gene node with an edge to the gtex anatomy node
-                            #GTExUtils.write_new_association(graph_writer, gene_node, gtex_node, self.gene_gtex_label, hyper_egde_id, self.concept_model, None, True)
+                                # associate the gene node with an edge to the gtex anatomy node
+                                GTExUtils.write_new_association(graph_writer, gene_node, gtex_node, self.gene_gtex_label, hyper_egde_id, self.concept_model, None)
 
-                            # associate the sequence variant node with an edge to the gene node. also include the GTEx properties
-                            #GTExUtils.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_egde_id, self.concept_model, edge_properties)
+                                # associate the sequence variant node with an edge to the gene node. also include the GTEx properties
+                                GTExUtils.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_egde_id, self.concept_model, edge_properties, True)
 
-                            # check if the key doesnt exist in the cache, add it to buffer for batch loading later
-                            if self.cache.get(f'myvariant.sequence_variant_to_gene({variant_node.id})') is None:
-                                uncached_variant_annotation_nodes.append(variant_node)
-
-                        # if we reached a good count on the pending variant to gene records execute redis
-                        if len(uncached_variant_annotation_nodes) > 1000:
-                            self.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
-
-                            # clear for the next variant group
-                            uncached_variant_annotation_nodes = []
+                            except Exception as e:
+                                logger.error(f'Exception caught trying to process variant: {curie_hgvs}-{curie_uberon}-{curie_ensembl} at file position: {var_counter}. Exception: {e}')
+                                logger.error('Continuing...')
 
                     # output some feedback for the user
                     if (pos_counter % 10000) == 0:
-                        logger.debug(f'Processed {var_counter} variants at {pos_counter} position(s).')
-
-                # if we reached a good count on the pending variant to gene records execute redis
-                if uncached_variant_annotation_nodes:
-                    self.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
+                        logger.info(f'Processed {var_counter} variants at {pos_counter} position(s).')
 
                 # output some final feedback for the user
                 logger.info(f'Building complete. Processed {var_counter} variants at {pos_counter} position(s).')
@@ -176,12 +162,15 @@ class GTExBuilder(object):
     # parse_csv_data - Parses a CSV file and creates a dictionary of sequence variant objects
     #
     # Ex. The row header, and an example row of data:
-    # tissue_name,            tissue_uberon,  variant_id,         gene_id,            tss_distance,   ma_samples, ma_count,   maf,        pval_nominal,   slope,      slope_se, pval_nominal_threshold,   min_pval_nominal,   pval_beta
-    # Heart Atrial Appendage, 0006618,        1_1440550_T_C_b37,  ENSG00000225630.1,  875530,         12,         13,         0.0246212,  2.29069e-05,    0.996346,   0.230054, 4.40255e-05,              2.29069e-05,        0.0353012
+    # tissue_name,          tissue_uberon,  hgvs,                       variant_id,         gene_id,            tss_distance,   ma_samples,
+    # Adipose Subcutaneous, 0002190,        NC_000001.10:g.753865G>C,   1_753865_G_C_b37,   ENSG00000237683.5,  614486,         12,
+    # (cont.)
+    # ma_count, maf,        pval_nominal,   slope,    slope_se,   pval_nominal_threshold, min_pval_nominal,   pval_beta
+    # 12,       0.0159151,  4.94712e-05,    0.914962, 0.222374,   0.000132768,            4.94712e-05,        0.0448675
     #######
     @staticmethod
     def parse_csv_data(file_path):
-        logger.debug(f'Parsing CSV file: {file_path}')
+        logger.info(f'Parsing CSV file: {file_path}')
 
         # init the return
         variant_dictionary = {}
@@ -250,7 +239,8 @@ class GTExBuilder(object):
     # and batch synonymize any that need it
     #######
     def prepopulate_variant_synonymization_cache(self, variant_dict):
-        logger.debug("Starting variant synonymization cache prepopulation")
+        logger.info("Starting variant synonymization cache prepopulation")
+
         # create an array to bucket the unchached variants
         uncached_variants = []
 
@@ -283,7 +273,7 @@ class GTExBuilder(object):
     # process_variant_synonymization_cache - processes an array of un-cached variant nodes.
     #######
     def process_variant_synonymization_cache(self, batch_of_hgvs):
-        logger.debug("Starting variant synonymization cache processing")
+        logger.info("Starting variant synonymization cache processing")
 
         batch_synonyms = self.clingen.get_batch_of_synonyms(batch_of_hgvs)
 
@@ -317,7 +307,7 @@ class GTExBuilder(object):
     # populate the variant annotation cache in redis
     #######
     def prepopulate_variant_annotation_cache(self, batch_of_nodes):
-        logger.debug("Starting variant annotation cache prepopulation.")
+        logger.info("Starting variant annotation cache prepopulation.")
 
         # get the list of batch operations
         batch_annotations = self.myvariant.batch_sequence_variant_to_gene(batch_of_nodes)
@@ -350,9 +340,10 @@ if __name__ == '__main__':
 
     # assign the name of the GTEx data file
     # available test files:
-    # 'signif_variant_gene_pairs.csv', 'test_signif_Adipose_Subcutaneous_all.csv', 'test_signif_Adipose_Subcutaneous_100k.csv'
-    # 'test_signif_Adipose_Subcutaneous_10k.csv', 'test_signif_Adipose_Subcutaneous_100.csv', 'test_signif_Adipose_Subcutaneous_6.csv'
-    associated_file_names = {'signif_variant_gene_pairs.csv'}
+    # 'signif_variant_gene_pairs', 'test_signif_Adipose_Subcutaneous_all', 'test_signif_Adipose_Subcutaneous_100k'
+    # 'test_signif_Adipose_Subcutaneous_10k', 'test_signif_Adipose_Subcutaneous_100', 'test_signif_Adipose_Subcutaneous_6'
+    # 'hypertest_1-var_2-genes_1-tissue', 'hypertest_1-var_2-tissues_1-gene'
+    associated_file_names = {'hypertest_1-var_2-genes_1-tissue.csv'}
 
     # call the GTEx builder to load the cache and graph database
     gtb.create_gtex_graph(gtex_data_directory, associated_file_names, 'GTEx')

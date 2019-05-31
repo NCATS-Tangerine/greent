@@ -84,7 +84,7 @@ def export_edge_chunk(tx,edgelist,edgelabel):
     cypher = f"""UNWIND $batches as row
             
             MATCH (a:{node_types.ROOT_ENTITY} {{id: row.source_id}}),(b:{node_types.ROOT_ENTITY} {{id: row.target_id}})
-            MERGE (a)-[r:{edgelabel} {{predicate_id: row.standard_id}}]->(b)
+            MERGE (a)-[r:{edgelabel} {{id: apoc.util.md5([a.id, b.id, '{edgelabel}']), predicate_id: row.standard_id}}]->(b)
             ON CREATE SET r.edge_source = [row.provided_by]
             ON CREATE SET r.relation_label = [row.original_predicate_label]
             ON CREATE SET r.source_database=[row.database]

@@ -11,7 +11,7 @@ logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 class ClinGen(Service):
     def __init__(self, context):
         super(ClinGen, self).__init__("clingen", context)
-        self.synon_fields_param = 'fields=none+@id+externalRecords+genomicAlleles.hgvs'
+        self.synon_fields_param = 'fields=none+@id+externalRecords.dbSNP+externalRecords.ClinVarVariations+externalRecords.MyVariantInfo_hg38+genomicAlleles-genomicAlleles.referenceSequence'
         self.synonym_buffer = {}
 
     def get_batch_of_synonyms(self, variant_list, variant_format='hgvs'):
@@ -56,6 +56,12 @@ class ClinGen(Service):
             synonyms.update(self.parse_allele_json_for_synonyms(allele_json))
         return synonyms
 
+    def get_synonyms_by_rsid_with_sequence(self, rsid, actual_sequence):
+        if rsid.startswith('rs'):
+            rsid = rsid[2:]
+
+        return self.get_synonyms_by_parameter_matching('dbSNP.rs', rsid, match_sequence=actual_sequence)
+
     def get_synonyms_by_other_ids(self, variant_node):
         # Just looking for 1 hit because any hit should return all of the available synonyms and caid if they exist
         hgvs_ids = variant_node.get_synonyms_by_prefix('HGVS')
@@ -92,22 +98,46 @@ class ClinGen(Service):
 
         return set()
 
-    def get_synonyms_by_parameter_matching(self, url_param, url_param_value):
+    def get_synonyms_by_parameter_matching(self, url_param, url_param_value, match_sequence=None):
         synonyms = set()
         query_url = f'{self.url}alleles?{url_param}={url_param_value}&{self.synon_fields_param}'
         query_json = self.query_service(query_url)
         for allele_json in query_json:
-            synonyms.update(self.parse_allele_json_for_synonyms(allele_json))
+            synonyms.update(self.parse_allele_json_for_synonyms(allele_json, match_sequence))
         return synonyms
 
-    def parse_allele_json_for_synonyms(self, allele_json):
+    def parse_allele_json_for_synonyms(self, allele_json, match_sequence=None):
         synonyms = set()
         try:
             variant_caid = allele_json['@id'].rsplit('/', 1)[1]
         except (KeyError, IndexError):
             return synonyms
-        
+
         synonyms.add(LabeledID(identifier=f'CAID:{variant_caid}', label=f'{variant_caid}'))
+        
+        if 'genomicAlleles' in allele_json:
+            try:
+                for genomic_allele in allele_json['genomicAlleles']:
+                    if genomic_allele['referenceGenome'] == 'GRCh38':
+                        # TODO find out why coordinates is a list - could be there other coordinates here?
+                        sequence = genomic_allele['coordinates'][0]['allele']
+                        # TODO should we worry about upper / lowercase here .. right now everything should be upper
+                        if match_sequence and match_sequence != sequence:
+                            # this CAID doesn't match the sequence, bail
+                            logger.info(f'clingen had a mismatched sequence - wanted {match_sequence} but found {sequence}')
+                            return set()
+
+                        chromosome = genomic_allele['chromosome']
+                        start_position = genomic_allele['coordinates'][0]['start']
+                        robokop_variant = f'ROBO_VAR:HG38_{chromosome}_{start_position}_{sequence}'
+
+                        for hgvs_id in genomic_allele['hgvs']:
+                            synonyms.add(LabeledID(identifier=f'HGVS:{hgvs_id}', label=f'{hgvs_id}'))
+
+                        break
+
+            except KeyError as e:
+                logger.info(f'parsing sequence variant synonym and genomicAlleles had an issue: {e}')
                             
         if 'externalRecords' in allele_json:
             #try:
@@ -133,11 +163,6 @@ class ClinGen(Service):
                 for clinvar_json in allele_json['externalRecords']['ClinVarVariations']:
                     clinvar_id = clinvar_json['variationId']
                     synonyms.add(LabeledID(identifier=f'CLINVARVARIANT:{clinvar_id}', label=f'{clinvar_id}'))
-
-        if 'genomicAlleles' in allele_json:
-            for genomic_allele in allele_json['genomicAlleles']:
-                for hgvs_id in genomic_allele['hgvs']:
-                    synonyms.add(LabeledID(identifier=f'HGVS:{hgvs_id}', label=f'{hgvs_id}'))
 
         return synonyms
 
