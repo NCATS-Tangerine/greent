@@ -41,20 +41,20 @@ class GTExBuilder(object):
         self.concept_model = rosetta.type_graph.concept_model
 
     #######
-    # create_gtex_graph - Parses a CSV file and inserts the data into the graph DB
+    # create_gtex_graph - Parses CSV file(s) and inserts the data into the graph DB
+    #
     # The process will go something like this:
     #   Parse the CSV file of significant variant/gene pairs
     #       Create array of SequenceVariant objects
-    #   For each SequenceVarinat object
+    #   For each SequenceVariant object
     #       Pre-populate the variant synonymization cache in redis
     #   With the redis pipeline writer
     #       For each chromosome/variant position/variant
     #           Create a KNode for the sequence variant
     #           Synonymize the Sequence variant using the HGVS expression
     #           Write out the synonymized node to neo4j
-    #           Create a node label and save it
-    #
-    #
+    #           Create a hyper edge that will be used to identify a gene/anatomy/allele/gene relationship
+    #           write out the node/edge relationships
     #######
     def create_gtex_graph(self, data_directory, file_names, analysis_id=None):
         # for each file to parse
@@ -275,29 +275,56 @@ class GTExBuilder(object):
     def process_variant_synonymization_cache(self, batch_of_hgvs):
         logger.info("Starting variant synonymization cache processing")
 
+        # process a list of hgvs values
         batch_synonyms = self.clingen.get_batch_of_synonyms(batch_of_hgvs)
 
+        # open up a connection to the cache database
         with self.cache.redis.pipeline() as redis_pipe:
+            # init a counter
             count = 0
 
+            # for each hgvs item returned
             for hgvs_curie, synonyms in batch_synonyms.items():
+                # create a data key
                 key = f'synonymize({hgvs_curie})'
+
+                # set the key for the cache lookup
                 redis_pipe.set(key, pickle.dumps(synonyms))
+
+                # increment the counter
                 count += 1
 
+                # for each synonym
                 for syn in synonyms:
+                    # is this our id
                     if syn.identifier.startswith('CAID'):
+                        # save the id
                         caid_labled_id = syn
+
+                        # remove the synonym from the list
                         synonyms.remove(caid_labled_id)
+
+                        # set the new synonymization id
                         redis_pipe.set(f'synonymize({caid_labled_id.identifier})', pickle.dumps(synonyms))
+
+                        # add it back to the list with the new info
                         synonyms.add(caid_labled_id)
+
+                        # increase the counter again
                         count += 1
+
+                        # no need to continue
                         break
 
+                # did we reach a critical count to write out to the cache
                 if count == 8000:
+                    # execute the statement
                     redis_pipe.execute()
+
+                    # reset the counter
                     count = 0
 
+            # execute any remainder entries
             if count > 0:
                 redis_pipe.execute()
 
