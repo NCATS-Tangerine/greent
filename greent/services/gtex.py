@@ -33,10 +33,9 @@ class GTEx(Service):
     ########
     # constructor
     ########
-    def __init__(self, context, rosetta):
+    def __init__(self, context):
         super(GTEx, self).__init__("gtex", context)
-        self.synonymizer = rosetta.synonymizer
-        self.concept_model = rosetta.type_graph.concept_model
+
 
     ########
     # define the variant/gene relationship
