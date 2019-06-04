@@ -14,7 +14,7 @@ import pickle
 
 # declare a logger and initialize it.
 import logging
-logger = LoggingUtil.init_logging(__name__, logging.DEBUG, format='medium')
+logger = LoggingUtil.init_logging(__name__, logging.INFO, format='medium')
 
 
 ##############
