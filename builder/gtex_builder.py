@@ -371,7 +371,7 @@ if __name__ == '__main__':
     # 'test_signif_Adipose_Subcutaneous_all', 'test_signif_Adipose_Subcutaneous_100k', 'test_signif_Adipose_Subcutaneous_10k', 'test_signif_Adipose_Subcutaneous_100', 'test_signif_Adipose_Subcutaneous_6'
     # 'test_signif_Stomach_all', 'test_signif_Stomach_100k', 'test_signif_Stomach_10k', 'test_signif_Stomach_100', 'test_signif_Stomach_6'
     # 'hypertest_1-var_2-genes_1-tissue', 'hypertest_1-var_2-tissues_1-gene'
-    associated_file_names = {'test_signif_Adipose_Subcutaneous_100.csv', 'test_signif_Stomach_100.csv'}
+    associated_file_names = {'test_signif_Stomach_6.csv'}
 
     # call the GTEx builder to load the cache and graph database
     gtb.create_gtex_graph(gtex_data_directory, associated_file_names, 'GTEx')
