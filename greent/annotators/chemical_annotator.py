@@ -14,7 +14,8 @@ class ChemicalAnnotator(Annotator):
             'CHEMBL': self.get_chembl_data, 
             'CHEBI' : self.get_chebi_data,
             'KEGG' : self.get_kegg_data,
-            'PUBCHEM': self.get_pubchem_data
+            'PUBCHEM': self.get_pubchem_data,
+            'DRUGBANK': self.get_mychem_data
         }
         self.tripleStore = TripleStoreAsync('https://stars-app.renci.org/uberongraph/sparql')
         
@@ -25,8 +26,7 @@ class ChemicalAnnotator(Annotator):
         """
         conf = self.get_prefix_config('CHEMBL')
         keys_of_interest = conf['keys']
-        id_parts = chembl_id.split(':')
-        suffix = id_parts[-1]
+        suffix = Text.un_curie(chembl_id)
         url_part = f'{suffix}.json'
         response_json = await self.async_get_json(conf['url'] + url_part)
         return self.extract_chembl_data(response_json, keys_of_interest)
@@ -73,8 +73,7 @@ class ChemicalAnnotator(Annotator):
           
     async def get_kegg_data(self, kegg_id):
         conf = self.get_prefix_config('KEGG')
-        kegg_id_parts = kegg_id.split(':')  #KEGG.COMPOUND:C14850
-        kegg_c_id = kegg_id_parts[-1]
+        kegg_c_id = Text.un_curie(kegg_id)
         url = conf['url'] + kegg_c_id 
         response = await self.async_get_text(url)
         kegg_dict = self.parse_flat_file_to_dict(response)
@@ -184,3 +183,39 @@ class ChemicalAnnotator(Annotator):
         else:
             logger.error(f"got this : {pubchem_raw} for pubchem")
         return result
+
+    def extract_mychem_data(self, mychem_raw, keys_of_interest = []):
+        response = {}
+
+        if 'drugbank' in mychem_raw:
+            for k in keys_of_interest:
+                for key in k:    
+                    outter_key, inner_key = key.split('.')
+                    if inner_key in mychem_raw[outter_key]:
+                        cats = []
+                        if inner_key == 'categories':
+                            cats = [x['category'] for x in mychem_raw[outter_key][inner_key]]
+                            response[key] = cats
+                        else:
+                            response[key] = mychem_raw[outter_key][inner_key]                    
+        return response
+
+
+    async def get_mychem_data(self, mychem_id):
+        """
+        Gets Mychem.info annotations.
+        """
+        conf = self.get_prefix_config('MYCHEM')
+        y = []
+        for k in conf['keys']:
+            for m in k:
+                y.append(k[m]['source'])
+        # y = [conf['keys'][x][k]['source'] for k in x for x in conf['keys']]
+        fields = ','.join(y)
+        url = conf['url'] + Text.un_curie(mychem_id) + '?fields='  + fields
+        headers = {
+            'Accept': 'application/json'
+        }
+        result = await self.async_get_json(url, headers= headers)
+        result = result
+        return self.extract_mychem_data(result, conf['keys'])
