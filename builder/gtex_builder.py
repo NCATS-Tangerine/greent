@@ -64,6 +64,9 @@ class GTExBuilder(object):
             # init a progress counter
             line_counter = 0
 
+            # get a ref to the util class
+            gtu = GTExUtils()
+
             # open a pipe to the redis cache DB
             with BufferedWriter(self.rosetta) as graph_writer:
                 # loop through the variants
@@ -115,7 +118,7 @@ class GTExBuilder(object):
                             self.rosetta.synonymizer.synonymize(gtex_node)
 
                             # get the SequenceVariant object filled in with the sequence location data
-                            seq_var_data = GTExUtils.get_sequence_variant_obj(variant_id)
+                            seq_var_data = gtu.get_sequence_variant_obj(variant_id)
 
                             # add properties to the variant node and write it out
                             variant_node.properties['sequence_location'] = [seq_var_data.build, str(seq_var_data.chrom), str(seq_var_data.pos)]
@@ -134,25 +137,25 @@ class GTExBuilder(object):
 
                             # get the polarity of slope to get the direction of expression.
                             # positive value increases expression, negative decreases
-                            label_id, label_name = GTExUtils.get_expression_direction(slope)
+                            label_id, label_name = gtu.get_expression_direction(slope)
 
                             # create the edge label predicate for the gene/variant relationship
                             predicate = LabeledID(identifier=label_id, label=label_name)
 
                             # get a MD5 hash int of the composite hyper edge ID
-                            hyper_egde_id = GTExUtils.get_hyper_edge_id(uberon, ensembl, Text.un_curie(variant_node.id))
+                            hyper_egde_id = gtu.get_hyper_edge_id(uberon, ensembl, Text.un_curie(variant_node.id))
 
                             # set the properties for the edge
                             edge_properties = [ensembl, pval_nominal, slope, analysis_id]
 
                             # associate the sequence variant node with an edge to the gtex anatomy node
-                            GTExUtils.write_new_association(graph_writer, variant_node, gtex_node, self.variant_gtex_label, hyper_egde_id, self.concept_model, None, True)
+                            gtu.write_new_association(graph_writer, variant_node, gtex_node, self.variant_gtex_label, hyper_egde_id, self.concept_model, None, True)
 
                             # associate the gene node with an edge to the gtex anatomy node
-                            GTExUtils.write_new_association(graph_writer, gene_node, gtex_node, self.gene_gtex_label, hyper_egde_id, self.concept_model, None)
+                            gtu.write_new_association(graph_writer, gene_node, gtex_node, self.gene_gtex_label, hyper_egde_id, self.concept_model, None)
 
                             # associate the sequence variant node with an edge to the gene node. also include the GTEx properties
-                            GTExUtils.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_egde_id, self.concept_model, edge_properties, True)
+                            gtu.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_egde_id, self.concept_model, edge_properties, True)
 
                         except Exception as e:
                             logger.error(f'Exception caught trying to process variant: {curie_hgvs}-{curie_uberon}-{curie_ensembl}. Exception: {e}')
@@ -318,7 +321,8 @@ if __name__ == '__main__':
     gtb = GTExBuilder(Rosetta())
 
     # directory with GTEx data to process
-    gtex_data_directory = 'C:/Phil/Work/Informatics/GTEx/GTEx_data/'
+    # gtex_data_directory = 'C:/Phil/Work/Informatics/GTEx/GTEx_data/'
+    gtex_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/bag/data/'
 
     # assign the name of the GTEx data file
     # available test files:
