@@ -321,8 +321,8 @@ if __name__ == '__main__':
     gtb = GTExBuilder(Rosetta())
 
     # directory with GTEx data to process
-    gtex_data_directory = 'C:/Phil/Work/Informatics/GTEx/GTEx_data/'
-    # gtex_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/bag/data/'
+    # gtex_data_directory = 'C:/Phil/Work/Informatics/GTEx/GTEx_data/'
+    gtex_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/bag/data/'
 
     # assign the name of the GTEx data file
     # available test files:
