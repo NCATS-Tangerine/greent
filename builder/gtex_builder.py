@@ -112,10 +112,10 @@ class GTExBuilder(object):
                             gene_node = KNode(curie_ensembl, type=node_types.GENE)
                             gtex_node = KNode(curie_uberon, name=tissue_name, type=node_types.ANATOMICAL_ENTITY)
 
-                            # # call to load the each node with synonyms
-                            # self.rosetta.synonymizer.synonymize(variant_node)
-                            # self.rosetta.synonymizer.synonymize(gene_node)
-                            # self.rosetta.synonymizer.synonymize(gtex_node)
+                            # call to load the each node with synonyms
+                            self.rosetta.synonymizer.synonymize(variant_node)
+                            self.rosetta.synonymizer.synonymize(gene_node)
+                            self.rosetta.synonymizer.synonymize(gtex_node)
 
                             # # get the SequenceVariant object filled in with the sequence location data
                             # seq_var_data = gtu.get_sequence_variant_obj(variant_id)
