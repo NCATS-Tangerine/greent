@@ -66,12 +66,14 @@ class BufferedWriter():
                 session.write_transaction(export_node_chunk,self.node_queues[node_type],node_type)
                 self.node_queues[node_type] = []
 
-            if len(self.written_nodes) > self.maxWrittenNodes:
-                self.written_nodes.clear()
-
             for edge_label in self.edge_queues:
                 session.write_transaction(export_edge_chunk,self.edge_queues[edge_label],edge_label)
                 self.edge_queues[edge_label] = []
+
+            # clear the memory on a threshold boundary to avoid using up all memory when
+            # processing large data sets
+            if len(self.written_nodes) > self.maxWrittenNodes:
+                self.written_nodes.clear()
 
             if len(self.written_edges) > self.maxWrittenEdges:
                 self.written_edges.clear()
