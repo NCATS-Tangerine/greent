@@ -112,10 +112,10 @@ class GTExBuilder(object):
                             gene_node = KNode(curie_ensembl, type=node_types.GENE)
                             gtex_node = KNode(curie_uberon, name=tissue_name, type=node_types.ANATOMICAL_ENTITY)
 
-                            # call to load the each node with synonyms
-                            self.rosetta.synonymizer.synonymize(variant_node)
-                            self.rosetta.synonymizer.synonymize(gene_node)
-                            self.rosetta.synonymizer.synonymize(gtex_node)
+                            # # call to load the each node with synonyms
+                            # self.rosetta.synonymizer.synonymize(variant_node)
+                            # self.rosetta.synonymizer.synonymize(gene_node)
+                            # self.rosetta.synonymizer.synonymize(gtex_node)
 
                             # # get the SequenceVariant object filled in with the sequence location data
                             # seq_var_data = gtu.get_sequence_variant_obj(variant_id)
@@ -161,9 +161,9 @@ class GTExBuilder(object):
                             logger.error(f'Exception caught trying to process variant: {curie_hgvs}-{curie_uberon}-{curie_ensembl}. Exception: {e}')
                             logger.error('Continuing...')
 
-                    # output some feedback for the user
-                    if (line_counter % 100000) == 0:
-                        logger.info(f'Processed {line_counter} variants.')
+                        # output some feedback for the user
+                        if (line_counter % 100000) == 0:
+                            logger.info(f'Processed {line_counter} variants.')
 
                 # output some final feedback for the user
                 logger.info(f'Building complete. Processed {line_counter} variants.')
