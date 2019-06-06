@@ -70,8 +70,8 @@ class BufferedWriter():
             for edge_label in self.edge_queues:
                 session.write_transaction(export_edge_chunk,self.edge_queues[edge_label],edge_label)
                 self.edge_queues[edge_label] = []
-                if len(self.written_edges) > self.maxWrittenEdges:
-                    self.written_edges = []
+                # if len(self.written_edges) > self.maxWrittenEdges:
+                #    self.written_edges = []
 
     def __exit__(self,*args):
         self.flush()
