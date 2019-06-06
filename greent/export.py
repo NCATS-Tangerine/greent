@@ -67,14 +67,14 @@ class BufferedWriter():
                 self.node_queues[node_type] = []
 
             if len(self.written_nodes) > self.maxWrittenNodes:
-                self.written_nodes = []
+                self.written_nodes = set()
 
             for edge_label in self.edge_queues:
                 session.write_transaction(export_edge_chunk,self.edge_queues[edge_label],edge_label)
                 self.edge_queues[edge_label] = []
 
             if len(self.written_edges) > self.maxWrittenEdges:
-                self.written_edges = []
+                self.written_edges = defaultdict(lambda: defaultdict( set ) )
 
     def __exit__(self,*args):
         self.flush()
