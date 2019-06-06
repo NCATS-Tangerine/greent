@@ -124,38 +124,38 @@ class GTExBuilder(object):
                             variant_node.properties['sequence_location'] = [seq_var_data.build, str(seq_var_data.chrom), str(seq_var_data.pos)]
                             graph_writer.write_node(variant_node)
 
-                            # # for now insure that the gene node has a name after synonymization
-                            # # this can happen if gene is not currently in the graph DB
-                            # if gene_node.name is None:
-                            #     gene_node.name = curie_ensembl
-                            #
-                            # # write out the gene node
-                            # graph_writer.write_node(gene_node)
-                            #
-                            # # write out the anatomical gtex node
-                            # graph_writer.write_node(gtex_node)
-                            #
-                            # # get the polarity of slope to get the direction of expression.
-                            # # positive value increases expression, negative decreases
-                            # label_id, label_name = gtu.get_expression_direction(slope)
-                            #
-                            # # create the edge label predicate for the gene/variant relationship
-                            # predicate = LabeledID(identifier=label_id, label=label_name)
-                            #
-                            # # get a MD5 hash int of the composite hyper edge ID
-                            # hyper_egde_id = gtu.get_hyper_edge_id(uberon, ensembl, Text.un_curie(variant_node.id))
-                            #
-                            # # set the properties for the edge
-                            # edge_properties = [ensembl, pval_nominal, slope, analysis_id]
-                            #
-                            # # associate the sequence variant node with an edge to the gtex anatomy node
-                            # gtu.write_new_association(graph_writer, variant_node, gtex_node, self.variant_gtex_label, hyper_egde_id, self.concept_model, None, True)
-                            #
-                            # # associate the gene node with an edge to the gtex anatomy node
-                            # gtu.write_new_association(graph_writer, gene_node, gtex_node, self.gene_gtex_label, hyper_egde_id, self.concept_model, None)
-                            #
-                            # # associate the sequence variant node with an edge to the gene node. also include the GTEx properties
-                            # gtu.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_egde_id, self.concept_model, edge_properties, True)
+                            # for now insure that the gene node has a name after synonymization
+                            # this can happen if gene is not currently in the graph DB
+                            if gene_node.name is None:
+                                gene_node.name = curie_ensembl
+
+                            # write out the gene node
+                            graph_writer.write_node(gene_node)
+
+                            # write out the anatomical gtex node
+                            graph_writer.write_node(gtex_node)
+
+                            # get the polarity of slope to get the direction of expression.
+                            # positive value increases expression, negative decreases
+                            label_id, label_name = gtu.get_expression_direction(slope)
+
+                            # create the edge label predicate for the gene/variant relationship
+                            predicate = LabeledID(identifier=label_id, label=label_name)
+
+                            # get a MD5 hash int of the composite hyper edge ID
+                            hyper_egde_id = gtu.get_hyper_edge_id(uberon, ensembl, Text.un_curie(variant_node.id))
+
+                            # set the properties for the edge
+                            edge_properties = [ensembl, pval_nominal, slope, analysis_id]
+
+                            # associate the sequence variant node with an edge to the gtex anatomy node
+                            gtu.write_new_association(graph_writer, variant_node, gtex_node, self.variant_gtex_label, hyper_egde_id, self.concept_model, None, True)
+
+                            # associate the gene node with an edge to the gtex anatomy node
+                            gtu.write_new_association(graph_writer, gene_node, gtex_node, self.gene_gtex_label, hyper_egde_id, self.concept_model, None)
+
+                            # associate the sequence variant node with an edge to the gene node. also include the GTEx properties
+                            gtu.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_egde_id, self.concept_model, edge_properties, True)
 
                         except Exception as e:
                             logger.error(f'Exception caught trying to process variant: {curie_hgvs}-{curie_uberon}-{curie_ensembl}. Exception: {e}')
