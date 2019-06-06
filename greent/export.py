@@ -10,7 +10,7 @@ from sys import stdout
 
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
-class BufferedWriter:
+class BufferedWriter():
     """Buffered writer accepts individual nodes and edges to write to neo4j.
     It doesn't write the node/edge if it has already been written in its lifetime (it maintains a record)
     It then accumulates nodes/edges by label/type until a buffersize has been reached, at which point it does
@@ -33,6 +33,8 @@ class BufferedWriter:
         self.node_buffer_size = 100
         self.edge_buffer_size = 100
         self.driver = self.rosetta.type_graph.driver
+        self.maxWrittenNodes = 100000
+        self.maxWrittenEdges = 100000
 
     def __enter__(self):
         return self
@@ -63,9 +65,13 @@ class BufferedWriter:
             for node_type in self.node_queues:
                 session.write_transaction(export_node_chunk,self.node_queues[node_type],node_type)
                 self.node_queues[node_type] = []
+                if len(self.written_nodes) > self.maxWrittenNodes:
+                    self.written_nodes = []
             for edge_label in self.edge_queues:
                 session.write_transaction(export_edge_chunk,self.edge_queues[edge_label],edge_label)
                 self.edge_queues[edge_label] = []
+                if len(self.written_edges) > self.maxWrittenEdges:
+                    self.written_edges = []
 
     def __exit__(self,*args):
         self.flush()

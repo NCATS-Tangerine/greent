@@ -122,8 +122,8 @@ class GTExBuilder(object):
 
                             # add properties to the variant node and write it out
                             variant_node.properties['sequence_location'] = [seq_var_data.build, str(seq_var_data.chrom), str(seq_var_data.pos)]
-                            # graph_writer.write_node(variant_node)
-                            #
+                            graph_writer.write_node(variant_node)
+
                             # # for now insure that the gene node has a name after synonymization
                             # # this can happen if gene is not currently in the graph DB
                             # if gene_node.name is None:
@@ -321,8 +321,8 @@ if __name__ == '__main__':
     gtb = GTExBuilder(Rosetta())
 
     # directory with GTEx data to process
-    # gtex_data_directory = 'C:/Phil/Work/Informatics/GTEx/GTEx_data/'
-    gtex_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/bag/data/'
+    gtex_data_directory = 'C:/Phil/Work/Informatics/GTEx/GTEx_data/'
+    # gtex_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/bag/data/'
 
     # assign the name of the GTEx data file
     # available test files:
