@@ -253,7 +253,7 @@ class GTExUtils:
         return new_edge
 
     #######
-    # prepopulate_variant_synonymization_cache - populate the variant synomization cache by walking through the variant list
+    # prepopulate_variant_synonymization_cache - populate the variant synonymization cache by walking through the variant list
     # and batch synonymize any that need it
     #######
     def prepopulate_variant_synonymization_cache(self, data_directory, file_names):
