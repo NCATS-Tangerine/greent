@@ -2,11 +2,12 @@ from greent.graph_components import KNode, LabeledID
 from greent.service import Service
 from greent.util import LoggingUtil
 from greent.graph_components import KEdge
-
 from collections import namedtuple
 
 import hashlib
 import time
+import pickle
+import csv
 
 # from greent import node_types
 # import requests
@@ -26,16 +27,16 @@ logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 #       effects on tissues and inserts them into the graph DB on demand.
 #############
 class GTEx(Service):
-    # create static edge labels for variant/gtex and gene/gtex edges
-    variant_gtex_label = LabeledID(identifier=f'GTEx:affects_expression_in', label=f'affects expression in')
-    gene_gtex_label = LabeledID(identifier=f'gene_to_expression_site_association', label=f'gene to expression site association')
-
     ########
     # constructor
     ########
     def __init__(self, context):
         super(GTEx, self).__init__("gtex", context)
+        self.rosetta = context.rosetta
 
+        # create static edge labels for variant/gtex and gene/gtex edges
+        self.variant_gtex_label = LabeledID(identifier=f'GTEx:affects_expression_in', label=f'affects expression in')
+        self.gene_gtex_label = LabeledID(identifier=f'gene_to_expression_site_association', label=f'gene to expression site association')
 
     ########
     # define the variant/gene relationship
@@ -55,12 +56,9 @@ class GTEx(Service):
         # loop through the returned data
 
         # call to load the each node with synonyms
-        self.synonymizer.synonymize(variant_node)
-
+        self.rosetta.synonymizer.synonymize(variant_node)
 
         # create a predicate label
-
-        #
 
         # return to the caller
         return ret_val
@@ -81,7 +79,7 @@ class GTEx(Service):
             return None
 
         # call to load the each node with synonyms
-        self.synonymizer.synonymize(variant_node)
+        self.context.synonymizer.synonymize(variant_node)
 
         return None
 
@@ -96,27 +94,7 @@ class GTEx(Service):
             return None
 
         # call to load the each node with synonyms
-        self.synonymizer.synonymize(gene_node)
-
-        return None
-
-    ########
-    # define the manual way to launch processing an input data file
-    ########
-    @staticmethod
-    def create_gtex_graph(file_path, file_names):
-        # check the inputs
-        if file_path is None or file_names is None:
-            logger.error('Error: Missing or invalid input arguments')
-
-        # create a new builder object
-        # gtb = GTExBuilder(Rosetta())
-
-        # load the redis cache with GTEx data
-        # gtb.prepopulate_gtex_catalog_cache()
-
-        # call the GTEx builder to load the cache and graph database
-        # gtb.create_gtex_graph(file_path, file_names, 'GTEx service')
+        self.rosetta.synonymizer.synonymize(gene_node)
 
         return None
 
@@ -128,41 +106,26 @@ class GTEx(Service):
 # Desc: A class that has a number of shared static functions between the GTEx service and builder.
 #############
 class GTExUtils:
-    # object to store the details for a variant
-    SequenceVariant = namedtuple('sequencevariant', ['build', 'chrom', 'pos', 'ref', 'alt', 'node'])
-    SequenceVariant.__new__.__defaults__ = (None, None)
+    ########
+    # constructor
+    ########
+    def __init__(self, rosetta):
+        self.rosetta = rosetta
+        self.myvariant = rosetta.core.myvariant
+        self.cache = rosetta.cache
+        self.clingen = rosetta.core.clingen
 
-    # object to store GTEx details of the variant
-    GTExVariant = namedtuple('gtexvariant', ['tissue_name', 'uberon', 'hgvs', 'ensembl', 'pval_nominal', 'slope'])
-    GTExVariant.__new__.__defaults__ = (None, None)
+        # object to store the details for a variant
+        self.SequenceVariant = namedtuple('sequencevariant', ['build', 'chrom', 'pos', 'ref', 'alt', 'node'])
+        self.SequenceVariant.__new__.__defaults__ = (None, None)
 
-    # object to store data parsing objects
-    DataParsingResults = namedtuple('data_parsing', ['SequenceVariant', 'GTExVariant'])
-    DataParsingResults.__new__.__defaults__ = (None, None)
+        # object to store GTEx details of the variant
+        self.GTExVariant = namedtuple('gtexvariant', ['tissue_name', 'uberon', 'hgvs', 'ensembl', 'pval_nominal', 'slope'])
+        self.GTExVariant.__new__.__defaults__ = (None, None)
 
-    #######
-    # list of chromosome number for HGVS gene assembly version conversions (hg37, hg38)
-    #######
-    reference_chrom_labels = {
-        'b37': {
-            'p1': {
-                1: 'NC_000001.10',  2: 'NC_000002.11', 3: 'NC_000003.11', 4: 'NC_000004.11', 5: 'NC_000005.9',
-                6: 'NC_000006.11', 7: 'NC_000007.13', 8: 'NC_000008.10', 9: 'NC_000009.11', 10: 'NC_000010.10', 11: 'NC_000011.9',
-                12: 'NC_000012.11', 13: 'NC_000013.10', 14: 'NC_000014.8', 15: 'NC_000015.9', 16: 'NC_000016.9', 17: 'NC_000017.10',
-                18: 'NC_000018.9', 19: 'NC_000019.9', 20: 'NC_000020.10', 21: 'NC_000021.8', 22: 'NC_000022.10', 23: 'NC_000023.10',
-                24: 'NC_000024.9'
-            }
-        },
-        'b38': {
-            'p1': {
-                1: 'NC_000001.11', 2: 'NC_000002.12', 3: 'NC_000003.12', 4: 'NC_000004.12', 5: 'NC_000005.10',
-                6: 'NC_000006.12', 7: 'NC_000007.14', 8: 'NC_000008.11', 9: 'NC_000009.12', 10: 'NC_000010.11', 11: 'NC_000011.10',
-                12: 'NC_000012.12', 13: 'NC_000013.11', 14: 'NC_000014.9', 15: 'NC_000015.10', 16: 'NC_000016.10', 17: 'NC_000017.11',
-                18: 'NC_000018.10', 19: 'NC_000019.10',  20: 'NC_000020.11', 21: 'NC_000021.9', 22: 'NC_000022.11', 23: 'NC_000023.11',
-                24: 'NC_000024.10'
-            }
-        }
-    }
+        # object to store data parsing objects
+        self.DataParsingResults = namedtuple('data_parsing', ['SequenceVariant', 'GTExVariant'])
+        self.DataParsingResults.__new__.__defaults__ = (None, None)
 
     #################
     # get_expression_direction() - get the polarity of slope to get the direction of expression.
@@ -214,14 +177,15 @@ class GTExUtils:
     # chr, position, ref, alt, hg version
     # ex: 1_762345_A_G_b37 becomes NC_000001.10:g.762345A>G
     #######
-    @staticmethod
-    def get_sequence_variant_obj(gtex_variant_id):
+    def get_sequence_variant_obj(self, gtex_variant_id):
+        # init the variant id storage
+        variant_id = None
+
         try:
             # split the string into the components
             variant_id = gtex_variant_id.split('_')
 
             # get position indexes into the data element
-            reference_patch = 'p1'
             chromosome = variant_id[0]
             position = int(variant_id[1])
             ref_allele = variant_id[2]
@@ -235,15 +199,12 @@ class GTExUtils:
                 chromosome = 24
             else:
                 chromosome = int(variant_id[0])
-
-            # get the HGVS chromosome label
-            ref_chromosome = GTExUtils.reference_chrom_labels[reference_genome][reference_patch][chromosome]
         except KeyError:
             logger.warning(f'Reference chromosome and/or version not found: {variant_id}')
             return ''
 
         # create the sequence_variant object
-        seq_var = GTExUtils.SequenceVariant(reference_genome, chromosome, position, ref_allele, alt_allele, node=None)
+        seq_var = self.SequenceVariant(reference_genome, chromosome, position, ref_allele, alt_allele, node=None)
 
         # return the expression to the caller
         return seq_var
@@ -290,3 +251,153 @@ class GTExUtils:
 
         # return the edge
         return new_edge
+
+    #######
+    # prepopulate_variant_synonymization_cache - populate the variant synomization cache by walking through the variant list
+    # and batch synonymize any that need it
+    #######
+    def prepopulate_variant_synonymization_cache(self, data_directory, file_names):
+        logger.info("Starting variant synonymization cache prepopulation")
+
+        # create an array to bucket the unchached variants
+        uncached_variants = []
+
+        # init a line counter
+        line_counter = 0
+
+        # for each file to parse
+        for file_name in file_names:
+            # get the full path to the input file
+            full_file_path = f'{data_directory}{file_name}'
+
+            logger.info(f'Pre-populating data elements in file: {full_file_path}')
+
+            # open the file and start reading
+            with open(file_name, 'r') as inFH:
+                # open up a csv reader
+                csv_reader = csv.reader(inFH)
+
+                # read the header
+                header_line = next(csv_reader)
+
+                # index into the array to the HGVS position
+                hgvs_index = header_line.index('HGVS')
+
+                # for the rest of the lines in the file
+                for line in csv_reader:
+                    # increment the counter
+                    line_counter += 1
+
+                    try:
+                        # get the HGVS data element
+                        hgvs = line[hgvs_index]
+
+                        # look up the variant by the HGVS expresson
+                        if self.cache.get(f'synonymize(HGVS:{hgvs})') is None:
+                            uncached_variants.append(hgvs)
+
+                        # if there is enough in the batch process it
+                        if len(uncached_variants) == 10000:
+                            self.process_variant_synonymization_cache(uncached_variants)
+
+                            # clear out the bucket
+                            uncached_variants = []
+
+                    except Exception as e:
+                        logger.error(f'Exception caught at line: {line_counter}. Exception: {e}')
+
+                    # output some feedback for the user
+                    if (line_counter % 100000) == 0:
+                        logger.info(f'Processed {line_counter} variants.')
+
+            # process any that are in the last batch
+            if uncached_variants:
+                self.process_variant_synonymization_cache(uncached_variants)
+
+        logger.info(f'Variant synonymization cache prepopulation complete. Processed: {line_counter} variants.')
+
+    #######
+    # process_variant_synonymization_cache - processes an array of un-cached variant nodes.
+    #######
+    def process_variant_synonymization_cache(self, batch_of_hgvs):
+        logger.info("Starting variant synonymization cache processing")
+
+        # process a list of hgvs values
+        batch_synonyms = self.clingen.get_batch_of_synonyms(batch_of_hgvs)
+
+        # open up a connection to the cache database
+        with self.cache.redis.pipeline() as redis_pipe:
+            # init a counter
+            count = 0
+
+            # for each hgvs item returned
+            for hgvs_curie, synonyms in batch_synonyms.items():
+                # create a data key
+                key = f'synonymize({hgvs_curie})'
+
+                # set the key for the cache lookup
+                redis_pipe.set(key, pickle.dumps(synonyms))
+
+                # increment the counter
+                count += 1
+
+                # for each synonym
+                for syn in synonyms:
+                    # is this our id
+                    if syn.identifier.startswith('CAID'):
+                        # save the id
+                        caid_labled_id = syn
+
+                        # remove the synonym from the list
+                        synonyms.remove(caid_labled_id)
+
+                        # set the new synonymization id
+                        redis_pipe.set(f'synonymize({caid_labled_id.identifier})', pickle.dumps(synonyms))
+
+                        # add it back to the list with the new info
+                        synonyms.add(caid_labled_id)
+
+                        # increase the counter again
+                        count += 1
+
+                        # no need to continue
+                        break
+
+                # did we reach a critical count to write out to the cache
+                if count == 10000:
+                    # execute the statement
+                    redis_pipe.execute()
+
+                    # reset the counter
+                    count = 0
+
+            # execute any remainder entries
+            if count > 0:
+                redis_pipe.execute()
+
+        logger.info("Variant synonymization cache processing complete.")
+
+    #######
+    # populate the variant annotation cache in redis
+    #######
+    def prepopulate_variant_annotation_cache(self, batch_of_nodes):
+        logger.info("Starting variant annotation cache prepopulation.")
+
+        # get the list of batch operations
+        batch_annotations = self.myvariant.batch_sequence_variant_to_gene(batch_of_nodes)
+
+        if batch_annotations is not None:
+            # get a reference to redis
+            with self.cache.redis.pipeline() as redis_pipe:
+                # for each records to process
+                for seq_var_curie, annotations in batch_annotations.items():
+                    # set the request using the CA curie
+                    key = f'myvariant.sequence_variant_to_gene({seq_var_curie})'
+
+                    # set the commands
+                    redis_pipe.set(key, pickle.dumps(annotations))
+
+                # execute the redis commands
+            redis_pipe.execute()
+
+        logger.info("Variant annotation cache prepopulating complete.")
