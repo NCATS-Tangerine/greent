@@ -114,6 +114,7 @@ class GTExUtils:
         self.myvariant = rosetta.core.myvariant
         self.cache = rosetta.cache
         self.clingen = rosetta.core.clingen
+        self.concept_model = rosetta.type_graph.concept_model
 
         # object to store the details for a variant
         self.SequenceVariant = namedtuple('sequencevariant', ['build', 'chrom', 'pos', 'ref', 'alt', 'node'])
@@ -212,11 +213,10 @@ class GTExUtils:
     #######
     # write_new_association - Writes an association edge with properties into the graph DB
     #######
-    @staticmethod
-    def write_new_association(writer, source_node, associated_node, predicate, hyper_edge_id, concept_model, properties=None, force_create=False):
+    def write_new_association(self, writer, source_node, associated_node, predicate, hyper_edge_id, properties=None, force_create=False):
         # if the concept model is loaded standardize the predicate label
-        if concept_model:
-            standard_predicate = concept_model.standardize_relationship(predicate)
+        if self.concept_model:
+            standard_predicate = self.concept_model.standardize_relationship(predicate)
         else:
             logger.warning('GTEx Utils: concept_model was missing, predicate standardization failed')
             standard_predicate = predicate
@@ -273,7 +273,7 @@ class GTExUtils:
             logger.info(f'Pre-populating data elements in file: {full_file_path}')
 
             # open the file and start reading
-            with open(file_name, 'r') as inFH:
+            with open(full_file_path, 'r') as inFH:
                 # open up a csv reader
                 csv_reader = csv.reader(inFH)
 

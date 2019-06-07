@@ -27,11 +27,6 @@ class GTExBuilder(object):
     #######
     def __init__(self, rosetta):
         self.rosetta = rosetta
-        self.cache = rosetta.cache
-        self.clingen = rosetta.core.clingen
-        self.myvariant = rosetta.core.myvariant
-        self.ensembl = rosetta.core.ensembl
-        self.concept_model = rosetta.type_graph.concept_model
 
         # create static edge labels for variant/gtex and gene/gtex edges
         self.variant_gtex_label = LabeledID(identifier=f'GTEx:affects_expression_in', label=f'affects expression in')
@@ -143,13 +138,13 @@ class GTExBuilder(object):
                             edge_properties = [ensembl, pval_nominal, slope, analysis_id]
 
                             # associate the sequence variant node with an edge to the gtex anatomy node
-                            self.gtu.write_new_association(graph_writer, variant_node, gtex_node, self.variant_gtex_label, hyper_egde_id, self.concept_model, None, True)
+                            self.gtu.write_new_association(graph_writer, variant_node, gtex_node, self.variant_gtex_label, hyper_egde_id, None, True)
 
                             # associate the gene node with an edge to the gtex anatomy node
-                            self.gtu.write_new_association(graph_writer, gene_node, gtex_node, self.gene_gtex_label, hyper_egde_id, self.concept_model, None)
+                            self.gtu.write_new_association(graph_writer, gene_node, gtex_node, self.gene_gtex_label, hyper_egde_id, None)
 
                             # associate the sequence variant node with an edge to the gene node. also include the GTEx properties
-                            self.gtu.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_egde_id, self.concept_model, edge_properties, True)
+                            self.gtu.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_egde_id, edge_properties, True)
 
                         except Exception as e:
                             logger.error(f'Exception caught trying to process variant: {curie_hgvs}-{curie_uberon}-{curie_ensembl}. Exception: {e}')
