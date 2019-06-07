@@ -24,7 +24,7 @@ def start(args) :
             print('starting annotation and synonmization')
             results = grab_all(args.annotate, rosetta)
             lids = [LabeledID(x['id'],x['label']) for x in results]
-            pool_size = 1
+            pool_size = 10
             chunks = pool_size * 2
             chunksize = int(len(lids)/chunks)
             single_run_size = chunksize if chunksize > 0 else 1 
