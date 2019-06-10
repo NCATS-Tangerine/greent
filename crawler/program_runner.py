@@ -115,6 +115,19 @@ def get_identifiers(input_type,rosetta):
             elif line.startswith('name:'):
                 label = line[5:].strip()
                 chebi_labels[tid] = label
+        # go for KEGG
+        print('pull KEGG')
+        content = requests.get('http://rest.kegg.jp/list/compound').content.decode('utf-8')
+
+        for line in content.split('\n'):
+            if line :
+                identifier, label = line.split('\t')
+                identifier = identifier.replace('cpd', 'KEGG.compound')
+                identifier= identifier.replace('CPD', 'KEGG.compound')
+                # maybe pick the first one for kegg,
+                label = label.split(';')[0].strip(' ')
+                lids.append(LabeledID(identifier, label))
+
         for ident in identifiers:
             try:
                 lids.append(LabeledID(ident,chebi_labels[ident]))
