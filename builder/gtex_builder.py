@@ -21,11 +21,11 @@ logger = LoggingUtil.init_logging(__name__, logging.INFO, format='medium')
 # Date: 5/21/2019
 # Desc: Class that pre-loads significant GTEx data elements into the redis cache and neo4j graph database.
 ##############
-class GTExBuilder(object):
+class GTExBuilder:
     #######
     # Constructor
     #######
-    def __init__(self, rosetta):
+    def __init__(self, rosetta: Rosetta):
         self.rosetta = rosetta
 
         # create static edge labels for variant/gtex and gene/gtex edges
@@ -33,7 +33,7 @@ class GTExBuilder(object):
         self.gene_gtex_label = LabeledID(identifier=f'gene_to_expression_site_association', label=f'gene to expression site association')
 
         # get a ref to the util class
-        self.gtu = GTExUtils(rosetta)
+        self.gtu = GTExUtils(self.rosetta)
 
     #######
     # create_gtex_graph - Parses the CSV file(s) and inserts the data into the graph DB
@@ -45,7 +45,7 @@ class GTExBuilder(object):
     # ma_count, maf,        pval_nominal,   slope,    slope_se,   pval_nominal_threshold, min_pval_nominal,   pval_beta
     # 12,       0.0159151,  4.94712e-05,    0.914962, 0.222374,   0.000132768,            4.94712e-05,        0.0448675
     #######
-    def create_gtex_graph(self, data_directory, file_names, analysis_id=None):
+    def create_gtex_graph(self, data_directory: str, file_names: list, analysis_id: str = None):
         # for each file to parse
         for file_name in file_names:
             # get the full path to the input file
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     # 'test_signif_Adipose_Subcutaneous_all', 'test_signif_Adipose_Subcutaneous_100k', 'test_signif_Adipose_Subcutaneous_10k', 'test_signif_Adipose_Subcutaneous_100', 'test_signif_Adipose_Subcutaneous_6'
     # 'test_signif_Stomach_all', 'test_signif_Stomach_100k', 'test_signif_Stomach_10k', 'test_signif_Stomach_100', 'test_signif_Stomach_6'
     # 'hypertest_1-var_2-genes_1-tissue', 'hypertest_1-var_2-tissues_1-gene'
-    associated_file_names = {'test_signif_Stomach_6.csv'}
+    associated_file_names = ['test_signif_Stomach_6.csv']
 
     # load up the synonymization cache of all the variant
     gtb.gtu.prepopulate_variant_synonymization_cache(gtex_data_directory, associated_file_names)

@@ -1,4 +1,6 @@
-from greent.graph_components import KNode, LabeledID
+from greent.graph_components import KNode
+from greent.graph_components import LabeledID
+from greent.export import BufferedWriter
 from greent.service import Service
 from greent.util import LoggingUtil
 from greent.graph_components import KEdge
@@ -32,6 +34,7 @@ class GTEx(Service):
     ########
     def __init__(self, context):
         super(GTEx, self).__init__("gtex", context)
+
         self.rosetta = context.rosetta
 
         # create static edge labels for variant/gtex and gene/gtex edges
@@ -42,7 +45,7 @@ class GTEx(Service):
     # define the variant/gene relationship
     # param: KNode variant node, gene node
     ########
-    def sequence_variant_to_gene(self, variant_node):
+    def sequence_variant_to_gene(self, variant_node: KNode):
         # check the input parameters
         if variant_node is None or not isinstance(variant_node, KNode):
             logger.error('Error: Missing or invalid input variant node argument')
@@ -72,7 +75,7 @@ class GTEx(Service):
     #
     # param: KNode variant_node, gtex anatomy node
     ########
-    def sequence_variant_to_anatomy(self, variant_node):
+    def sequence_variant_to_anatomy(self, variant_node: KNode):
         # check the input parameters
         if variant_node is None or not isinstance(variant_node, KNode):
             logger.error('Error: Missing or invalid input variant node argument')
@@ -87,7 +90,7 @@ class GTEx(Service):
     # define the gene/anatomy relationship
     # param: KNode gene node, gtex anatomy node
     ########
-    def gene_to_anatomy(self, gene_node):
+    def gene_to_anatomy(self, gene_node: KNode):
         # check the input parameters
         if gene_node is None or not isinstance(gene_node, KNode):
             logger.error('Error: Missing or invalid input gene node argument')
@@ -109,7 +112,7 @@ class GTExUtils:
     ########
     # constructor
     ########
-    def __init__(self, rosetta):
+    def __init__(self, rosetta: object):
         self.rosetta = rosetta
         self.myvariant = rosetta.core.myvariant
         self.cache = rosetta.cache
@@ -133,7 +136,7 @@ class GTExUtils:
     # positive value increases expression, negative decreases
     #################
     @staticmethod
-    def get_expression_direction(slope):
+    def get_expression_direction(slope: str) -> (str, str):
         try:
             # get the polarity of slope to get the direction of expression.
             # positive value increases expression, negative decreases
@@ -155,7 +158,7 @@ class GTExUtils:
     # <uberon tissue id>_<ensemble gene id>_<variant CAID id>
     #################
     @staticmethod
-    def get_hyper_edge_id(uberon, ensembl, variant):
+    def get_hyper_edge_id(uberon: str, ensembl: str, variant: str) -> int:
         # check the input parameters
         if uberon is None or ensembl is None or variant is None:
             hyper_egde_id = 0
@@ -178,7 +181,7 @@ class GTExUtils:
     # chr, position, ref, alt, hg version
     # ex: 1_762345_A_G_b37 becomes NC_000001.10:g.762345A>G
     #######
-    def get_sequence_variant_obj(self, gtex_variant_id):
+    def get_sequence_variant_obj(self, gtex_variant_id: str) -> namedtuple:
         # init the variant id storage
         variant_id = None
 
@@ -213,7 +216,7 @@ class GTExUtils:
     #######
     # write_new_association - Writes an association edge with properties into the graph DB
     #######
-    def write_new_association(self, writer, source_node, associated_node, predicate, hyper_edge_id, properties=None, force_create=False):
+    def write_new_association(self, writer: BufferedWriter, source_node: KNode, associated_node: KNode, predicate: LabeledID, hyper_edge_id: int, properties: list = None, force_create: bool = False) -> KEdge:
         # if the concept model is loaded standardize the predicate label
         if self.concept_model:
             standard_predicate = self.concept_model.standardize_relationship(predicate)
@@ -256,7 +259,7 @@ class GTExUtils:
     # prepopulate_variant_synonymization_cache - populate the variant synonymization cache by walking through the variant list
     # and batch synonymize any that need it
     #######
-    def prepopulate_variant_synonymization_cache(self, data_directory, file_names):
+    def prepopulate_variant_synonymization_cache(self, data_directory: str, file_names: list):
         logger.info("Starting variant synonymization cache prepopulation")
 
         # create an array to bucket the unchached variants
@@ -319,7 +322,7 @@ class GTExUtils:
     #######
     # process_variant_synonymization_cache - processes an array of un-cached variant nodes.
     #######
-    def process_variant_synonymization_cache(self, batch_of_hgvs):
+    def process_variant_synonymization_cache(self, batch_of_hgvs: list):
         logger.info("Starting variant synonymization cache processing")
 
         # process a list of hgvs values
@@ -376,28 +379,3 @@ class GTExUtils:
                 redis_pipe.execute()
 
         logger.info("Variant synonymization cache processing complete.")
-
-    #######
-    # populate the variant annotation cache in redis
-    #######
-    def prepopulate_variant_annotation_cache(self, batch_of_nodes):
-        logger.info("Starting variant annotation cache prepopulation.")
-
-        # get the list of batch operations
-        batch_annotations = self.myvariant.batch_sequence_variant_to_gene(batch_of_nodes)
-
-        if batch_annotations is not None:
-            # get a reference to redis
-            with self.cache.redis.pipeline() as redis_pipe:
-                # for each records to process
-                for seq_var_curie, annotations in batch_annotations.items():
-                    # set the request using the CA curie
-                    key = f'myvariant.sequence_variant_to_gene({seq_var_curie})'
-
-                    # set the commands
-                    redis_pipe.set(key, pickle.dumps(annotations))
-
-                # execute the redis commands
-            redis_pipe.execute()
-
-        logger.info("Variant annotation cache prepopulating complete.")
