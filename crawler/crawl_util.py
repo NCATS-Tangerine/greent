@@ -2,6 +2,8 @@ from ftplib import FTP
 from greent.util import Text
 from builder.question import LabeledID
 from io import BytesIO
+from greent.neo4jbase import Neo4JREST
+from greent.rosetta import Rosetta
 
 def pull_via_ftp(ftpsite, ftpdir, ftpfile):
     ftp = FTP(ftpsite)
@@ -58,3 +60,41 @@ def dump_cache(concord,rosetta,outf=None):
         if outf is not None:
             outf.write(f'{key}: {value}\n')
         rosetta.cache.set(key,value)
+
+############
+# gets a simple array of sequnce variant ids
+############
+def get_variant_list(rosetta):
+    # get a connection to the graph database
+    db_conn = rosetta.type_graph.driver;
+
+    # init the returned variant id list
+    var_list = []
+
+    # open a db session
+    with db_conn.session() as session:
+        # execute the query, get the results
+        response = session.run('match (a:sequence_variant) return distinct a.id as id')
+
+    # did we get a valid response
+    if response is not None:
+        # did we get rows back
+        if len(response._records) > 0:
+            # de-queue the returned data into a list for iteration
+            rows = list(response._records)
+
+            # free up the memory
+            response = None
+
+            # go through each record and save only what we need (the ID) into a simple array
+            for r in rows:
+                # append the id to the list
+                var_list.append(r[0])
+
+            # free up the memory
+            rows = None
+
+    # return the simple array to the caller
+    return var_list
+
+
