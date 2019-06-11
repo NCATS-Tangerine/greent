@@ -28,9 +28,9 @@ def get_all_variant_ids(rosetta):
     return var_list
 
 # simple tester
-if __name__ == '__main__':
-    from greent.rosetta import Rosetta
-
-    # create a new builder object
-    data = get_all_variant_ids(Rosetta())
+# if __name__ == '__main__':
+#     from greent.rosetta import Rosetta
+#
+#     # create a new builder object
+#     data = get_all_variant_ids(Rosetta())
 
