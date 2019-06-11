@@ -11,10 +11,6 @@ import time
 import pickle
 import csv
 
-# from greent import node_types
-# import requests
-# import json
-
 # declare a logger...
 import logging
 # ... and initialize it
