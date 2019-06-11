@@ -18,7 +18,7 @@ def load_sequence_variants(rosetta, force_reload=False):
     # do_something(all_variants)
 
 ################
-# gets the list of variant ids
+# gets the list of sequence variant ids
 ################
 def get_all_variant_ids(rosetta):
     # call the crawler util function to get a simple list of variant ids
@@ -28,8 +28,9 @@ def get_all_variant_ids(rosetta):
     return var_list
 
 # simple tester
-# if __name__ == '__main__':
-#     from greent.rosetta import Rosetta
-#
-#     # create a new builder object
-#     data = get_all_variant_ids(Rosetta())
+if __name__ == '__main__':
+    from greent.rosetta import Rosetta
+
+    # create a new builder object
+    data = get_all_variant_ids(Rosetta())
+
