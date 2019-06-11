@@ -61,9 +61,12 @@ def dump_cache(concord,rosetta,outf=None):
 
 
 ############
-# gets a simple array of sequence variant ids
+# Gets a simple array of sequence variant ids
+#
+# param: Rosetts object
+# returns: a list of sequence variant IDs
 ############
-def get_variant_list(rosetta: list) -> list:
+def get_variant_list(rosetta: object) -> list:
     # get a connection to the graph database
     db_conn = rosetta.type_graph.driver
 
