@@ -20,9 +20,11 @@ def load_sequence_variants(rosetta, force_reload=False):
 ################
 # gets the list of sequence variant ids
 ################
-def get_all_variant_ids(rosetta):
+def get_all_variant_ids(rosetta: list) -> list:
     # call the crawler util function to get a simple list of variant ids
     var_list = get_variant_list(rosetta)
+
+    # TODO: work the list here?
 
     # return to the caller
     return var_list
