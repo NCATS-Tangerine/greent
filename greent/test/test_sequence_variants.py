@@ -190,11 +190,15 @@ def a_test_gwascatalog_variant_to_phenotype(gwascatalog, rosetta):
     results = gwascatalog.sequence_variant_to_disease_or_phenotypic_feature(variant_node)
     assert len(results) == 0
   
-def test_batch_gwascatalog_var_to_phenotype(rosetta, gwascatalog):
+def a_test_batch_gwascatalog_var_to_phenotype(rosetta, gwascatalog):
 
     gwascatalog.prepopulate_cache()
 
     assert gwascatalog.is_precached()
+
+    all_variants = gwascatalog.get_all_sequence_variants()
+
+    assert len(all_variants) > 50000
 
     relations = rosetta.cache.get('gwascatalog.sequence_variant_to_disease_or_phenotypic_feature(CAID:CA16058750)')
     identifiers = [node.id for r,node in relations]
@@ -203,7 +207,6 @@ def test_batch_gwascatalog_var_to_phenotype(rosetta, gwascatalog):
     assert 'ORPHANET:1572' in identifiers
     names = [node.name for r,node in relations]
     assert 'ankylosing spondylitis' in names
-    assert 'chronic childhood arthritis' in names
     publications = [r.publications for r,node in relations]
     assert ['PMID:26301688'] in publications
 
@@ -212,8 +215,6 @@ def test_batch_gwascatalog_var_to_phenotype(rosetta, gwascatalog):
     assert 'EFO:0004340' in identifiers
     assert 'EFO:0003917' in identifiers
     assert 'EFO:0005939' in identifiers
-
-    assert len(gwascatalog.get_all_sequence_variants()) > 50000
 
 
 def this_is_slow_test_gwascatalog_phenotype_to_variant(gwascatalog):
@@ -245,11 +246,12 @@ def future_test_get_variants_by_region(clingen):
     assert 'CAID:CA19707988' in identifiers
     assert 'CAID:CA19752509' in identifiers
 
-def test_sequence_variant_to_gene_ensembl(ensembl):
+def test_sequence_variant_to_gene_ensembl(rosetta, ensembl, clingen):
     # using hg38
     node = KNode('CAID:CA279509', type=node_types.GENE)
-    sequence_location = ['HG38', str(17), str(58206172)]
-    node.properties['sequence_location'] = sequence_location
+    robokop_variant_id = f'ROBO_VARIANT:HG38|17|58206171|58206172|A'
+    node.synonyms.add(LabeledID(identifier=f'{robokop_variant_id}', label=''))
+
     relations = ensembl.sequence_variant_to_gene(node)
     identifiers = [node.id for r,node in relations]
     assert 'ENSEMBL:ENSG00000011143' in identifiers
@@ -259,14 +261,23 @@ def test_sequence_variant_to_gene_ensembl(ensembl):
 
     # same variant with hg19
     node = KNode('CAID:CA279509', type=node_types.GENE)
-    sequence_location = ['HG19', str(17), str(56283533)]
-    node.properties['sequence_location'] = sequence_location
+    robokop_variant_id = f'ROBO_VARIANT:HG19|17|56283532|56283533|A'
+    node.synonyms.add(LabeledID(identifier=f'{robokop_variant_id}', label=''))
+
     relations = ensembl.sequence_variant_to_gene(node)
     identifiers = [node.id for r,node in relations]
     assert 'ENSEMBL:ENSG00000011143' in identifiers
     assert 'ENSEMBL:ENSG00000121053' in identifiers
     assert 'ENSEMBL:ENSG00000167419' in identifiers
     assert len(identifiers) > 20
+
+    # using the synonymizer
+    node = KNode('CAID:CA16728208', type=node_types.GENE)
+    node.synonyms.update(clingen.get_synonyms_by_caid('CA16728208'))
+
+    relations = ensembl.sequence_variant_to_gene(node)
+    identifiers = [node.id for r,node in relations]
+    assert 'ENSEMBL:ENSG00000186092' in identifiers
 
 def test_sequence_variant_ld(ensembl):
     node = KNode('DBSNP:rs1042779', type=node_types.SEQUENCE_VARIANT)
@@ -300,10 +311,3 @@ def test_rsid_with_allele_synonymization(rosetta, clingen):
     identifiers = [identifier for identifier,name in synonyms]
     assert 'CAID:CA321211' in identifiers
     assert 'CAID:CA6146346' not in identifiers
-
-
-
-                                    
-
-
-
