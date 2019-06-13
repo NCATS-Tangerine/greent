@@ -102,7 +102,7 @@ class Synonymizer:
                 node.synonyms.remove(LabeledID(identifier=lid, label=None))
                 num_left -= 1
             if num_left > 1 and '' in labels:
-                node.synonyms.remove(LabeledID(identifier=lid, label=''))
+                node.synonyms.remove(LabeledID(identifier=lid, label=''))   
         #Now find the best one for an id
         type_curies = self.concepts.get(node.type).id_prefixes
         #Now start looking for the best curies
@@ -137,7 +137,7 @@ class Synonymizer:
                 prefix = Text.get_curie(synonym.identifier)
             else:
                 prefix = Text.get_curie(synonym)
-            if prefix.upper() not in uc:
+            if prefix == None or prefix.upper() not in uc:
                 bad_synonyms.add(synonym)
         for bs in bad_synonyms:
             node.synonyms.remove(bs)

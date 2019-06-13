@@ -15,7 +15,8 @@ class ChemicalAnnotator(Annotator):
             'CHEBI' : self.get_chebi_data,
             'KEGG' : self.get_kegg_data,
             'PUBCHEM': self.get_pubchem_data,
-            'DRUGBANK': self.get_mychem_data
+            'DRUGBANK': self.get_mychem_data,
+            'KEGG.COMPOUND':self.get_kegg_data
         }
         self.tripleStore = TripleStoreAsync('https://stars-app.renci.org/uberongraph/sparql')
         
@@ -62,7 +63,7 @@ class ChemicalAnnotator(Annotator):
         restructures chebi raw data
         """
         extract = {}
-        if 'property_value' in chebi_raw['all_properties']:
+        if 'all_properties' in chebi_raw and 'property_value' in chebi_raw['all_properties']:
             for prop in chebi_raw['all_properties']['property_value']:
                 prop_parts = prop.split(' ')
                 prop_name = prop_parts[0].split('/')[-1]

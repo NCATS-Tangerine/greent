@@ -118,23 +118,24 @@ class ClinGen(Service):
         if 'genomicAlleles' in allele_json:
             try:
                 for genomic_allele in allele_json['genomicAlleles']:
-                    if genomic_allele['referenceGenome'] == 'GRCh38':
+                    if 'referenceGenome' in genomic_allele and genomic_allele['referenceGenome'] == 'GRCh38':
                         # TODO find out why coordinates is a list - could be there other coordinates here?
                         sequence = genomic_allele['coordinates'][0]['allele']
                         # TODO should we worry about upper / lowercase here .. right now everything should be upper
                         if match_sequence and match_sequence != sequence:
                             # this CAID doesn't match the sequence, bail
-                            logger.info(f'clingen had a mismatched sequence - wanted {match_sequence} but found {sequence}')
+                            #logger.info(f'clingen had a mismatched sequence - wanted {match_sequence} but found {sequence}')
                             return set()
 
                         chromosome = genomic_allele['chromosome']
                         start_position = genomic_allele['coordinates'][0]['start']
-                        robokop_variant = f'ROBO_VAR:HG38_{chromosome}_{start_position}_{sequence}'
+                        end_position = genomic_allele['coordinates'][0]['end']
+                        robokop_variant_id = f'HG38|{chromosome}|{start_position}|{end_position}|{sequence}'
+                        synonyms.add(LabeledID(identifier=f'ROBO_VARIANT:{robokop_variant_id}', label=robokop_variant_id))
 
+                        # TODO do we want all of the other hgvs? or just grch38?
                         for hgvs_id in genomic_allele['hgvs']:
                             synonyms.add(LabeledID(identifier=f'HGVS:{hgvs_id}', label=f'{hgvs_id}'))
-
-                        break
 
             except KeyError as e:
                 logger.info(f'parsing sequence variant synonym and genomicAlleles had an issue: {e}')

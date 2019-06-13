@@ -82,6 +82,7 @@ classes:
     id_prefixes:
       - CAID
       - HGVS
+      - ROBO_VARIANT
       - DBSNP
       - CLINVARVARIANT
       - MYVARIANT_HG19

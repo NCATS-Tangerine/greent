@@ -26,7 +26,7 @@ class KEGG(Service):
 
     def parse_chemicals(self, line):
         n = line.split()
-        return set( filter( lambda x: x.startswith('C'), n))
+        return set(map(lambda x : x.split('(')[0], filter( lambda x: x.startswith('C'), n)))      
 
     def chemical_get_reaction(self,chemnode):
         identifiers = chemnode.get_synonyms_by_prefix('KEGG.COMPOUND')
