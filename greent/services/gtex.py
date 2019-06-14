@@ -316,7 +316,7 @@ class GTExUtils:
         logger.info(f'Variant synonymization cache prepopulation complete. Processed: {line_counter} variants.')
 
     #######
-    # process_variant_synonymization_cache - processes an array of un-cached variant nodes.
+    # process_variant_synonymization_cache - processes an array of un-cached variants by HGVS expression.
     #######
     def process_variant_synonymization_cache(self, batch_of_hgvs: list):
         logger.info("Starting variant synonymization cache processing")
@@ -375,3 +375,27 @@ class GTExUtils:
                 redis_pipe.execute()
 
         logger.info("Variant synonymization cache processing complete.")
+
+    #######
+    # process_variant_annotation_cache - processes an array of un-cached variant nodes.
+    #######
+    def prepopulate_variant_annotation_cache(self, batch_of_nodes: list):
+        logger.info("Starting variant annotation cache processing")
+
+        # get a batch of variants
+        batch_annotations = self.myvariant.batch_sequence_variant_to_gene(batch_of_nodes)
+
+        # open a connection to the redis cache DB
+        with self.cache.redis.pipeline() as redis_pipe:
+            # for each variant
+            for seq_var_curie, annotations in batch_annotations.items():
+                # assemble the redis key
+                key = f'myvariant.sequence_variant_to_gene({seq_var_curie})'
+
+                # add the key and data to the list to execute
+                redis_pipe.set(key, pickle.dumps(annotations))
+
+            # write the records out to the cache DB
+            redis_pipe.execute()
+
+        logger.info("Variant annotation processing complete.")

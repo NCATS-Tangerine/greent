@@ -9,6 +9,7 @@ from greent.services.gtex import GTExUtils
 from builder.question import LabeledID
 
 import csv
+import pickle
 
 # declare a logger and initialize it.
 import logging
@@ -27,6 +28,8 @@ class GTExBuilder:
     #######
     def __init__(self, rosetta: Rosetta):
         self.rosetta = rosetta
+        self.cache = rosetta.cache
+        self.ensembl = rosetta.core.ensembl
 
         # create static edge labels for variant/gtex and gene/gtex edges
         self.variant_gtex_label = LabeledID(identifier=f'GTEx:affects_expression_in', label=f'affects expression in')
@@ -53,44 +56,49 @@ class GTExBuilder:
 
             logger.info(f'Creating GTEx graph data elements in file: {full_file_path}')
 
-            # init a progress counter
-            line_counter = 0
-
             # open a pipe to the redis cache DB
-            with BufferedWriter(self.rosetta) as graph_writer:
-                # loop through the variants
-                # open the file and start reading
-                with open(full_file_path, 'r') as inFH:
-                    # open up a csv reader
-                    csv_reader = csv.reader(inFH)
+            with BufferedWriter(self.rosetta) as graph_writer, self.cache.redis.pipeline() as redis_pipe:
+                # create arrays to bucket the unchached variants and thier annotations
+                uncached_variants = []
+                uncached_variant_annotation_nodes = []
 
-                    # read the header
-                    header_line = next(csv_reader)
+                # init a progress counters
+                line_counter = 0
+                redis_counter = 0
 
-                    # index into the array to the variant id position
-                    tissue_name_index = header_line.index('tissue_name')
-                    tissue_uberon_index = header_line.index('tissue_uberon')
-                    hgvs_index = header_line.index('HGVS')
-                    variant_id_index = header_line.index('variant_id')
-                    ensembl_id_index = header_line.index('gene_id')
-                    pval_nominal_index = header_line.index('pval_nominal')
-                    pval_slope_index = header_line.index('slope')
+                try:
+                    # loop through the variants
+                    # open the file and start reading
+                    with open(full_file_path, 'r') as inFH:
+                        # open up a csv reader
+                        csv_reader = csv.reader(inFH)
 
-                    # for the rest of the lines in the file
-                    for line in csv_reader:
-                        # increment the counter
-                        line_counter += 1
+                        # read the header
+                        header_line = next(csv_reader)
 
-                        # get the data elements
-                        tissue_name = line[tissue_name_index]
-                        uberon = line[tissue_uberon_index]
-                        hgvs = line[hgvs_index]
-                        variant_id = line[variant_id_index]
-                        ensembl = line[ensembl_id_index].split(".", 1)[0]
-                        pval_nominal = line[pval_nominal_index]
-                        slope = line[pval_slope_index]
+                        # index into the array to the variant id position
+                        tissue_name_index = header_line.index('tissue_name')
+                        tissue_uberon_index = header_line.index('tissue_uberon')
+                        hgvs_index = header_line.index('HGVS')
+                        variant_id_index = header_line.index('variant_id')
+                        ensembl_id_index = header_line.index('gene_id')
+                        pval_nominal_index = header_line.index('pval_nominal')
+                        pval_slope_index = header_line.index('slope')
 
-                        try:
+                        # for the rest of the lines in the file
+                        for line in csv_reader:
+                            # increment the counter
+                            line_counter += 1
+
+                            # get the data elements
+                            tissue_name = line[tissue_name_index]
+                            uberon = line[tissue_uberon_index]
+                            hgvs = line[hgvs_index]
+                            variant_id = line[variant_id_index]
+                            ensembl = line[ensembl_id_index].split(".", 1)[0]
+                            pval_nominal = line[pval_nominal_index]
+                            slope = line[pval_slope_index]
+
                             # create curies for the various id values
                             curie_hgvs = f'HGVS:{hgvs}'
                             curie_uberon = f'UBERON:{uberon}'
@@ -109,20 +117,13 @@ class GTExBuilder:
                             # get the SequenceVariant object filled in with the sequence location data
                             seq_var_data = self.gtu.get_sequence_variant_obj(variant_id)
 
-                            # add properties to the variant node and write it out
+                            # add properties to the variant node
                             variant_node.properties['sequence_location'] = [seq_var_data.build, str(seq_var_data.chrom), str(seq_var_data.pos)]
-                            graph_writer.write_node(variant_node)
 
                             # for now insure that the gene node has a name after synonymization
                             # this can happen if gene is not currently in the graph DB
                             if gene_node.name is None:
                                 gene_node.name = curie_ensembl
-
-                            # write out the gene node
-                            graph_writer.write_node(gene_node)
-
-                            # write out the anatomical gtex node
-                            graph_writer.write_node(gtex_node)
 
                             # get the polarity of slope to get the direction of expression.
                             # positive value increases expression, negative decreases
@@ -137,6 +138,19 @@ class GTExBuilder:
                             # set the properties for the edge
                             edge_properties = [ensembl, pval_nominal, slope, analysis_id]
 
+                            ##########################
+                            # data details are ready. write all edges and nodes to the graph DB.
+                            ##########################
+
+                            # write out the sequence variant node
+                            graph_writer.write_node(variant_node)
+
+                            # write out the gene node
+                            graph_writer.write_node(gene_node)
+
+                            # write out the anatomical gtex node
+                            graph_writer.write_node(gtex_node)
+
                             # associate the sequence variant node with an edge to the gtex anatomy node
                             self.gtu.write_new_association(graph_writer, variant_node, gtex_node, self.variant_gtex_label, hyper_egde_id, None, True)
 
@@ -146,13 +160,73 @@ class GTExBuilder:
                             # associate the sequence variant node with an edge to the gene node. also include the GTEx properties
                             self.gtu.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_egde_id, edge_properties, True)
 
-                        except Exception as e:
-                            logger.error(f'Exception caught trying to process variant: {curie_hgvs}-{curie_uberon}-{curie_ensembl}. Exception: {e}')
-                            logger.error('Continuing...')
+                            ##########################
+                            # put the data into the redis cache (if not already)
+                            ##########################
 
-                        # output some feedback for the user
-                        if (line_counter % 100000) == 0:
-                            logger.info(f'Processed {line_counter} variants.')
+                            # look up the variant by the HGVS expresson
+                            if self.cache.get(f'synonymize(HGVS:{hgvs})') is None:
+                                uncached_variants.append(hgvs)
+
+                            # if there is enough in the batch process them and empty the array
+                            if len(uncached_variants) == 10000:
+                                self.gtu.process_variant_synonymization_cache(uncached_variants)
+                                uncached_variants = []
+
+                            # check if myvariant key exists in cache, otherwise add it to buffer for batch processing
+                            if self.cache.get(f'myvariant.sequence_variant_to_gene({variant_node.id})') is None:
+                                uncached_variant_annotation_nodes.append(variant_node)
+
+                            # if there is enough in the variant annotation batch process them and empty the array
+                            if len(uncached_variant_annotation_nodes) == 10000:
+                                self.gtu.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
+                                uncached_variant_annotation_nodes = []
+
+                            # ensembl cant handle batches, and for now NEEDS to be pre-cached individually here
+                            # (the properties on the nodes needed by ensembl wont be available to the runner)
+                            nearby_cache_key = f'ensembl.sequence_variant_to_gene({variant_node.id})'
+
+                            # grab the nearby genes
+                            cached_nearby_genes = self.cache.get(nearby_cache_key)
+
+                            # were there any nearby genes not cached
+                            if cached_nearby_genes is None:
+                                # get the data for the nearby genes
+                                nearby_genes = self.ensembl.sequence_variant_to_gene(variant_node)
+
+                                # add the key and data to the list to execute
+                                redis_pipe.set(nearby_cache_key, pickle.dumps(nearby_genes))
+
+                                # increment the counter
+                                redis_counter += 1
+
+                            # do we have enough to process
+                            if redis_counter > 500:
+                                # execute the redis load
+                                redis_pipe.execute()
+
+                                # reset the counter
+                                redis_counter = 0
+
+                            # output some feedback for the user
+                            if (line_counter % 100000) == 0:
+                                logger.info(f'Processed {line_counter} variants.')
+
+                        #  if there are remainder variants entries left to process
+                        if uncached_variants:
+                            self.gtu.process_variant_synonymization_cache(uncached_variants)
+
+                        # if there are remainder ensemble entries left to process
+                        if redis_counter > 0:
+                            redis_pipe.execute()
+
+                        # if there are remainder variant node entries left to process
+                        if uncached_variant_annotation_nodes:
+                            self.gtu.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
+
+                except Exception as e:
+                    logger.error(f'Exception caught trying to process variant: {curie_hgvs}-{curie_uberon}-{curie_ensembl}. Exception: {e}')
+                    logger.error('Continuing...')
 
                 # output some final feedback for the user
                 logger.info(f'Building complete. Processed {line_counter} variants.')
@@ -175,10 +249,7 @@ if __name__ == '__main__':
     # 'test_signif_Adipose_Subcutaneous_all', 'test_signif_Adipose_Subcutaneous_100k', 'test_signif_Adipose_Subcutaneous_10k', 'test_signif_Adipose_Subcutaneous_100', 'test_signif_Adipose_Subcutaneous_6'
     # 'test_signif_Stomach_all', 'test_signif_Stomach_100k', 'test_signif_Stomach_10k', 'test_signif_Stomach_100', 'test_signif_Stomach_6'
     # 'hypertest_1-var_2-genes_1-tissue', 'hypertest_1-var_2-tissues_1-gene'
-    associated_file_names = ['test_signif_Stomach_6.csv']
-
-    # load up the synonymization cache of all the variant
-    gtb.gtu.prepopulate_variant_synonymization_cache(gtex_data_directory, associated_file_names)
+    associated_file_names = ['test_signif_Stomach_10k.csv']
 
     # call the GTEx builder to load the cache and graph database
     gtb.create_gtex_graph(gtex_data_directory, associated_file_names, 'GTEx')
