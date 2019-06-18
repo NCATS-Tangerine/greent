@@ -27,9 +27,9 @@ def load_sequence_variants(rosetta, force_reload=False):
 # param: Rosetta object
 # return: a list of sequence variant IDs
 ################
-def get_all_variant_ids(rosetta: object) -> list:
+def get_all_variant_ids(rosetta: object, limit=None) -> list:
     # call the crawler util function to get a simple list of variant ids
-    var_list = get_variant_list(rosetta)
+    var_list = get_variant_list(rosetta, limit)
 
     # return to the caller
     return var_list
@@ -37,17 +37,18 @@ def get_all_variant_ids(rosetta: object) -> list:
 ################
 # batch loads the MyVariant and Ensembl data
 ################
-def load_MyVariant_and_Ensemble(rosetta: object):
+def load_MyVariant_and_Ensembl(rosetta: object):
     cache = rosetta.cache
     ensembl = rosetta.core.ensembl
     myvariant = rosetta.core.myvariant
     synonymizer = rosetta.synonymizer
 
     # get the list of variants
-    var_list = get_all_variant_ids(rosetta)
+    var_list = get_all_variant_ids(rosetta, 100)
 
     # create an array to handle the ones not already in cache that need to be processed
     uncached_variant_annotation_nodes = []
+    redis_counter = 0
 
     with cache.redis.pipeline() as redis_pipe:
         # for each variant
@@ -63,8 +64,8 @@ def load_MyVariant_and_Ensemble(rosetta: object):
                 uncached_variant_annotation_nodes.append(variant_node)
 
             # if there is enough in the variant annotation batch process them and empty the array
-            if len(uncached_variant_annotation_nodes) == 1000:
-                prepopulate_variant_annotation_cache(cache, uncached_variant_annotation_nodes)
+            if len(uncached_variant_annotation_nodes) == 100:
+                prepopulate_variant_annotation_cache(cache, myvariant, uncached_variant_annotation_nodes)
                 uncached_variant_annotation_nodes = []
 
             # ensembl cant handle batches, and for now NEEDS to be pre-cached individually here
@@ -99,11 +100,11 @@ def load_MyVariant_and_Ensemble(rosetta: object):
 
         # if there are remainder variant node entries left to process
         if uncached_variant_annotation_nodes:
-            prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
+            prepopulate_variant_annotation_cache(cache, myvariant, uncached_variant_annotation_nodes)
 
 # simple tester
 if __name__ == '__main__':
     from greent.rosetta import Rosetta
     # create a new builder object
-    data = load_MyVariant_and_Ensemble(Rosetta())
+    data = load_MyVariant_and_Ensembl(Rosetta())
 

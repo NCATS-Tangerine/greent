@@ -67,7 +67,7 @@ def dump_cache(concord,rosetta,outf=None):
 # param: Rosetts object
 # returns: a list of sequence variant IDs
 ############
-def get_variant_list(rosetta: object) -> list:
+def get_variant_list(rosetta: object, limit=None) -> list:
     # get a connection to the graph database
     db_conn = rosetta.type_graph.driver
 
@@ -76,8 +76,13 @@ def get_variant_list(rosetta: object) -> list:
 
     # open a db session
     with db_conn.session() as session:
+        query = 'match (a:sequence_variant) return distinct a.id as id'
+
+        if limit is not None:
+            query += f' limit {limit}'
+
         # execute the query, get the results
-        response = session.run('match (a:sequence_variant) return distinct a.id as id limit 10')
+        response = session.run(query)
 
     # did we get a valid response
     if response is not None:
