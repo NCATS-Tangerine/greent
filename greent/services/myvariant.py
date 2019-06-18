@@ -46,7 +46,7 @@ class MyVariant(Service):
                         variant_node = node_lookup[myvar_id]
                         annotation_dictionary[variant_node.id] = self.process_annotation(variant_node, annotation_json, myvar_id, query_url)
                     except KeyError as e:
-                        logger.warning(f'MyVariant batch call failed on an annotation.')
+                        logger.warning(f'MyVariant batch call failed on an annotation')
                         pass 
             else:
                 logger.error(f'MyVariant non-200 response on batch: {query_response.status_code})')

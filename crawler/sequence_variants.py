@@ -37,14 +37,14 @@ def get_all_variant_ids(rosetta: object, limit=None) -> list:
 ################
 # batch loads the MyVariant and Ensembl data
 ################
-def load_MyVariant_and_Ensembl(rosetta: object):
+def load_MyVariant_and_Ensembl(rosetta: object, limit=None):
     cache = rosetta.cache
     ensembl = rosetta.core.ensembl
     myvariant = rosetta.core.myvariant
     synonymizer = rosetta.synonymizer
 
     # get the list of variants
-    var_list = get_all_variant_ids(rosetta, 100)
+    var_list = get_all_variant_ids(rosetta, limit)
 
     # create an array to handle the ones not already in cache that need to be processed
     uncached_variant_annotation_nodes = []
@@ -106,5 +106,5 @@ def load_MyVariant_and_Ensembl(rosetta: object):
 if __name__ == '__main__':
     from greent.rosetta import Rosetta
     # create a new builder object
-    data = load_MyVariant_and_Ensembl(Rosetta())
+    data = load_MyVariant_and_Ensembl(Rosetta(), 1000)
 
