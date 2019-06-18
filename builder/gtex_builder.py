@@ -9,7 +9,6 @@ from greent.services.gtex import GTExUtils
 from builder.question import LabeledID
 
 import csv
-import pickle
 
 # declare a logger and initialize it.
 import logging
@@ -28,8 +27,6 @@ class GTExBuilder:
     #######
     def __init__(self, rosetta: Rosetta):
         self.rosetta = rosetta
-        self.cache = rosetta.cache
-        self.ensembl = rosetta.core.ensembl
 
         # create static edge labels for variant/gtex and gene/gtex edges
         self.variant_gtex_label = LabeledID(identifier=f'GTEx:affects_expression_in', label=f'affects expression in')
@@ -57,14 +54,9 @@ class GTExBuilder:
             logger.info(f'Creating GTEx graph data elements in file: {full_file_path}')
 
             # open a pipe to the redis cache DB
-            with BufferedWriter(self.rosetta) as graph_writer, self.cache.redis.pipeline() as redis_pipe:
-                # create arrays to bucket the unchached variants and thier annotations
-                uncached_variants = []
-                uncached_variant_annotation_nodes = []
-
+            with BufferedWriter(self.rosetta) as graph_writer:
                 # init a progress counters
                 line_counter = 0
-                redis_counter = 0
 
                 try:
                     # loop through the variants
@@ -160,70 +152,9 @@ class GTExBuilder:
                             # associate the sequence variant node with an edge to the gene node. also include the GTEx properties
                             self.gtu.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_egde_id, edge_properties, True)
 
-                            ##########################
-                            # put the data into the redis cache (if not already)
-                            ##########################
-
-                            # look up the variant by the HGVS expresson
-                            if self.cache.get(f'synonymize(HGVS:{hgvs})') is None:
-                                uncached_variants.append(hgvs)
-
-                            # if there is enough in the batch process them and empty the array
-                            if len(uncached_variants) == 10000:
-                                self.gtu.process_variant_synonymization_cache(uncached_variants)
-                                uncached_variants = []
-
-                            # check if myvariant key exists in cache, otherwise add it to buffer for batch processing
-                            if self.cache.get(f'myvariant.sequence_variant_to_gene({variant_node.id})') is None:
-                                uncached_variant_annotation_nodes.append(variant_node)
-
-                            # if there is enough in the variant annotation batch process them and empty the array
-                            if len(uncached_variant_annotation_nodes) == 10000:
-                                self.gtu.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
-                                uncached_variant_annotation_nodes = []
-
-                            # ensembl cant handle batches, and for now NEEDS to be pre-cached individually here
-                            # (the properties on the nodes needed by ensembl wont be available to the runner)
-                            nearby_cache_key = f'ensembl.sequence_variant_to_gene({variant_node.id})'
-
-                            # grab the nearby genes
-                            cached_nearby_genes = self.cache.get(nearby_cache_key)
-
-                            # were there any nearby genes not cached
-                            if cached_nearby_genes is None:
-                                # get the data for the nearby genes
-                                nearby_genes = self.ensembl.sequence_variant_to_gene(variant_node)
-
-                                # add the key and data to the list to execute
-                                redis_pipe.set(nearby_cache_key, pickle.dumps(nearby_genes))
-
-                                # increment the counter
-                                redis_counter += 1
-
-                            # do we have enough to process
-                            if redis_counter > 500:
-                                # execute the redis load
-                                redis_pipe.execute()
-
-                                # reset the counter
-                                redis_counter = 0
-
                             # output some feedback for the user
                             if (line_counter % 100000) == 0:
                                 logger.info(f'Processed {line_counter} variants.')
-
-                        #  if there are remainder variants entries left to process
-                        if uncached_variants:
-                            self.gtu.process_variant_synonymization_cache(uncached_variants)
-
-                        # if there are remainder ensemble entries left to process
-                        if redis_counter > 0:
-                            redis_pipe.execute()
-
-                        # if there are remainder variant node entries left to process
-                        if uncached_variant_annotation_nodes:
-                            self.gtu.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
-
                 except Exception as e:
                     logger.error(f'Exception caught trying to process variant: {curie_hgvs}-{curie_uberon}-{curie_ensembl}. Exception: {e}')
                     logger.error('Continuing...')
@@ -250,6 +181,9 @@ if __name__ == '__main__':
     # 'test_signif_Stomach_all', 'test_signif_Stomach_100k', 'test_signif_Stomach_10k', 'test_signif_Stomach_100', 'test_signif_Stomach_6'
     # 'hypertest_1-var_2-genes_1-tissue', 'hypertest_1-var_2-tissues_1-gene'
     associated_file_names = ['test_signif_Stomach_10k.csv']
+
+    # load up the synonymization cache of all the variant
+    gtb.gtu.prepopulate_variant_synonymization_cache(gtex_data_directory, associated_file_names)
 
     # call the GTEx builder to load the cache and graph database
     gtb.create_gtex_graph(gtex_data_directory, associated_file_names, 'GTEx')
