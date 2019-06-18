@@ -555,16 +555,16 @@ class ObesityHubBuilder(object):
                             redis_counter += 1
 
                         # sequence variant to sequence variant is never 'run' so go ahead and cache AND write these relationships
-                        linkage_cache_key = f'ensembl.sequence_variant_to_sequence_variant({variant_node.id})'
-                        linked_variant_edge_nodes = self.cache.get(linkage_cache_key)
-                        if linked_variant_edge_nodes is None:
-                            linked_variant_edge_nodes = self.ensembl.sequence_variant_to_sequence_variant(variant_node)
-                            redis_pipe.set(linkage_cache_key, pickle.dumps(linked_variant_edge_nodes))
-                            redis_counter += 1
+                        #linkage_cache_key = f'ensembl.sequence_variant_to_sequence_variant({variant_node.id})'
+                        #linked_variant_edge_nodes = self.cache.get(linkage_cache_key)
+                        #if linked_variant_edge_nodes is None:
+                        #    linked_variant_edge_nodes = self.ensembl.sequence_variant_to_sequence_variant(variant_node)
+                        #    redis_pipe.set(linkage_cache_key, pickle.dumps(linked_variant_edge_nodes))
+                        #    redis_counter += 1
 
-                        for ld_edge_node in linked_variant_edge_nodes:
-                            writer.write_node(ld_edge_node[1])
-                            writer.write_edge(ld_edge_node[0])
+                        #for ld_edge_node in linked_variant_edge_nodes:
+                        #    writer.write_node(ld_edge_node[1])
+                        #    writer.write_edge(ld_edge_node[0])
 
                         if redis_counter > 500:
                             redis_pipe.execute()
@@ -641,7 +641,7 @@ class ObesityHubBuilder(object):
             for source_node in source_nodes:
                 filename = mwas_file_names[source_node.id]
                 filepath = f'{mwas_file_directory}/{filename}'
-                identifiers, p_values = self.get_metabolite_identifiers_from_mwas(filepath, p_value_cutoff)
+                identifiers, p_values, beta_values = self.get_metabolite_identifiers_from_mwas(filepath, p_value_cutoff)
                 if identifiers:
                     self.rosetta.synonymizer.synonymize(source_node)
                     writer.write_node(source_node)
@@ -649,10 +649,11 @@ class ObesityHubBuilder(object):
                 labled_metabolite_ids = []
                 for metabolite_id in identifiers:
                     p_value = p_values.get(metabolite_id.identifier)
+                    beta = beta_values.get(metabolite_id.identifier)
                     metabolite_node = KNode(metabolite_id.identifier, name=metabolite_id.label, type=node_types.CHEMICAL_SUBSTANCE)
                     self.rosetta.synonymizer.synonymize(metabolite_node)
                     labled_metabolite_ids.append(LabeledID(identifier=metabolite_node.id, label=metabolite_node.name))
-                    new_edge = self.write_new_association(writer, source_node, metabolite_node, predicate, p_value, namespace=filename)
+                    new_edge = self.write_new_association(writer, source_node, metabolite_node, predicate, p_value, strength=beta, namespace=filename)
                 
                 metabolites_processed += len(labled_metabolite_ids)
 
@@ -721,6 +722,7 @@ class ObesityHubBuilder(object):
     def get_metabolite_identifiers_from_mwas(self, mwas_filepath, p_value_cutoff):
         metabolite_ids = []
         corresponding_p_values = {}
+        corresponding_beta_values = {}
         try:
             with open(mwas_filepath) as f:
                 csv_reader = csv.reader(f)
@@ -733,6 +735,8 @@ class ObesityHubBuilder(object):
                         name_index = headers.index(header)
                     elif ('pval' in header.lower()) or ('pvalue' in header.lower()):
                         pval_index = headers.index(header)
+                    elif 'beta' in header.lower():
+                        beta_index = headers.index(header)
 
                 if (name_index < 0) or (pval_index < 0):
                     logger.warning(f'Error reading file headers for {mwas_filepath} - {headers}')
@@ -747,9 +751,11 @@ class ObesityHubBuilder(object):
                             if p_value <= p_value_cutoff:
                                 m_name = data[name_index]
                                 if m_name in self.metabolite_labled_id_lookup:
+                                    beta_value = data[beta_index]
                                     m_labeled_id = self.metabolite_labled_id_lookup[m_name]
                                     metabolite_ids.append(m_labeled_id)
                                     corresponding_p_values[m_labeled_id.identifier] = p_value
+                                    corresponding_beta_values[m_labeled_id.identifier] = beta_value
                                 else:
                                     logger.warning(f'Could not find real id for metabolite {m_name} in {mwas_filepath}')  
 
@@ -761,7 +767,7 @@ class ObesityHubBuilder(object):
         except IOError:
             logger.warning(f'Could not open file: {mwas_filepath}')
 
-        return metabolite_ids, corresponding_p_values
+        return metabolite_ids, corresponding_p_values, corresponding_beta_values
 
     def write_new_association(self, writer, source_node, associated_node, predicate, p_value, strength=None, namespace=None, node_exists=False):
 

@@ -22,29 +22,47 @@ class Ensembl(Service):
         #logger.debug(f'ensembl: props given to ensembl: {variant_node.properties} ')
         #logger.debug(f'ensembl: variant : {variant_node.dump()}')
 
-        if ('sequence_location' not in variant_node.properties.keys()) or (not variant_node.properties['sequence_location']):
-            logger.debug(f'ensembl: variant location properties not set properly for variant: {variant_node.id}')
+        #if ('sequence_location' not in variant_node.properties.keys()) or (not variant_node.properties['sequence_location']):
+        #    logger.debug(f'ensembl: variant location properties not set properly for variant: {variant_node.id}')
+        #    return results
+        #seqvar_location = variant_node.properties['sequence_location']
+
+        robokop_ids = variant_node.get_synonyms_by_prefix('ROBO_VARIANT')
+        if not robokop_ids:
+            logger.debug(f'ensembl: robokop variant key not found for variant: {variant_node.id}')
             return results
+        else:
+            try:
+                robokop_key = robokop_ids.pop()
+                robokop_data = Text.un_curie(robokop_key).split('|')
+                reference_genome = robokop_data[0]
+                chromosome = robokop_data[1]
+                start_position = int(robokop_data[2])
+                end_position = int(robokop_data[3])
+            except IndexError as e:
+                logger.debug(f'ensembl: robokop variant key not set properly for variant: {variant_node.id} - {robokop_ids[0]}')
+                return results
 
-        seqvar_location = variant_node.properties['sequence_location']
-        
-        reference_genome = seqvar_location[0]
-        chromosome = seqvar_location[1]
-        position = int(seqvar_location[2])
+        #reference_genome = seqvar_location[0]
+        #chromosome = seqvar_location[1]
+        #position = int(seqvar_location[2])
 
-        start_position = position - flanking_region_size
-        if start_position < 0:
-            start_position = 0
-        end_position = position + flanking_region_size
+        flanking_min = start_position - flanking_region_size
+        if flanking_min < 0:
+            flanking_min = 0
+        flanking_max = end_position + flanking_region_size
         
         if reference_genome == 'HG19':
             service_url = 'https://grch37.rest.ensembl.org'
-        else:
+        elif reference_genome == 'HG38':
             service_url = self.url
+        else:
+            logger.debug(f'ensembl: robokop_id reference genome not recognized by ensembl : {reference_genome}')
+
 
         overlap_url = '/overlap/region/human/'
         options_url = '?feature=gene'
-        query_url = f'{service_url}{overlap_url}{chromosome}:{start_position}-{end_position}{options_url}'
+        query_url = f'{service_url}{overlap_url}{chromosome}:{flanking_min}-{flanking_max}{options_url}'
 
         query_response = requests.get(query_url, headers={"Content-Type" : "application/json"})
         if query_response.status_code == 200:
@@ -52,10 +70,10 @@ class Ensembl(Service):
             gene_ids = self.parse_genes_from_ensembl(query_json)
             for gene_id, gene_start, gene_end in gene_ids:
                 gene_node = KNode(f'ENSEMBL:{gene_id}', name=f'{gene_id}', type=node_types.GENE)
-                if position < gene_start:
-                    distance = gene_start - position
-                elif position > gene_end:
-                    distance = position - gene_end
+                if start_position < gene_start:
+                    distance = gene_start - start_position
+                elif end_position > gene_end:
+                    distance = end_position - gene_end
                 else:
                     distance = 0
                 props = {'distance' : distance}
