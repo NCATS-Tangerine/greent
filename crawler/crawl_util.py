@@ -2,6 +2,7 @@ from ftplib import FTP
 from greent.util import Text
 from builder.question import LabeledID
 from io import BytesIO
+import pickle
 
 def pull_via_ftp(ftpsite, ftpdir, ftpfile):
     ftp = FTP(ftpsite)
@@ -76,7 +77,7 @@ def get_variant_list(rosetta: object) -> list:
     # open a db session
     with db_conn.session() as session:
         # execute the query, get the results
-        response = session.run('match (a:sequence_variant) return distinct a.id as id')
+        response = session.run('match (a:sequence_variant) return distinct a.id as id limit 10')
 
     # did we get a valid response
     if response is not None:
@@ -90,3 +91,24 @@ def get_variant_list(rosetta: object) -> list:
 
     # return the simple array to the caller
     return var_list
+
+
+#######
+# process_variant_annotation_cache - processes an array of un-cached variant nodes.
+#######
+def prepopulate_variant_annotation_cache(cache, myvariant, batch_of_nodes: list):
+    # get a batch of variants
+    batch_annotations = myvariant.batch_sequence_variant_to_gene(batch_of_nodes)
+
+    # open a connection to the redis cache DB
+    with cache.redis.pipeline() as redis_pipe:
+        # for each variant
+        for seq_var_curie, annotations in batch_annotations.items():
+            # assemble the redis key
+            key = f'myvariant.sequence_variant_to_gene({seq_var_curie})'
+
+            # add the key and data to the list to execute
+            redis_pipe.set(key, pickle.dumps(annotations))
+
+        # write the records out to the cache DB
+        redis_pipe.execute()
