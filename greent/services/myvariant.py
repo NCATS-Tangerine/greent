@@ -26,7 +26,8 @@ class MyVariant(Service):
                 # we could support hg19 as well, but calls need to be all one or the other
                 # for now we only do hg38
                 myvariant_ids = node.get_synonyms_by_prefix('MYVARIANT_HG38')
-                for myvar_id in myvariant_ids:
+                if myvariant_ids:
+                    myvar_id = myvariant_ids.pop()
                     post_params['ids'] += f'{Text.un_curie(myvar_id)},'
                     node_lookup[myvar_id] = node
 
