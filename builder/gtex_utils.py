@@ -10,10 +10,9 @@ import time
 import pickle
 import csv
 
-# declare a logger...
+# declare a logger and initialize it
 import logging
-# ... and initialize it
-logger = LoggingUtil.init_logging(__name__, logging.INFO, format='medium')
+logger = LoggingUtil.init_logging("robokop-interfaces.builder.GTExUtils", logging.INFO, format='medium', logFilePath='/temp/log/')
 
 
 #############
