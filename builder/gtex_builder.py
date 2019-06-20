@@ -10,7 +10,7 @@ import csv
 
 # declare a logger and initialize it.
 import logging
-logger = LoggingUtil.init_logging(__name__, logging.INFO, format='medium')
+logger = LoggingUtil.init_logging("robokop-interfaces.builder.GTExBuilder", logging.INFO, format='medium', logFilePath='/temp/log/')
 
 
 ##############
@@ -204,25 +204,25 @@ class GTExBuilder:
 #######
 # Main - Stand alone entry point for testing
 #######
-if __name__ == '__main__':
-    # create a new builder object
-    gtb = GTExBuilder(Rosetta())
-
-    # directory with GTEx data to process
-    gtex_data_directory = 'C:/Phil/Work/Informatics/GTEx/GTEx_data/'
-    # gtex_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/bag/data/'
-
-    # assign the name of the GTEx data file
-    # available test files:
-    # 'signif_variant_gene_pairs',
-    # 'test_signif_Adipose_Subcutaneous_all', 'test_signif_Adipose_Subcutaneous_100k', 'test_signif_Adipose_Subcutaneous_10k', 'test_signif_Adipose_Subcutaneous_100', 'test_signif_Adipose_Subcutaneous_6'
-    # 'test_signif_Stomach_all', 'test_signif_Stomach_100k', 'test_signif_Stomach_10k', 'test_signif_Stomach_100', 'test_signif_Stomach_6'
-    # 'hypertest_1-var_2-genes_1-tissue', 'hypertest_1-var_2-tissues_1-gene', 'myvar_test'
-    associated_file_names = ['test_signif_Stomach_10k.csv']
-
-    # load up all the GTEx data
-    rv = gtb.load(gtex_data_directory, associated_file_names)
-
-    # check the return, output error if found
-    if rv is not None:
-        logger.error(rv)
+# if __name__ == '__main__':
+#     # create a new builder object
+#     gtb = GTExBuilder(Rosetta())
+#
+#     # directory with GTEx data to process
+#     gtex_data_directory = 'C:/Phil/Work/Informatics/GTEx/GTEx_data/'
+#     # gtex_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/bag/data/'
+#
+#     # assign the name of the GTEx data file
+#     # available test files:
+#     # 'signif_variant_gene_pairs',
+#     # 'test_signif_Adipose_Subcutaneous_all', 'test_signif_Adipose_Subcutaneous_100k', 'test_signif_Adipose_Subcutaneous_10k', 'test_signif_Adipose_Subcutaneous_100', 'test_signif_Adipose_Subcutaneous_6'
+#     # 'test_signif_Stomach_all', 'test_signif_Stomach_100k', 'test_signif_Stomach_10k', 'test_signif_Stomach_100', 'test_signif_Stomach_6'
+#     # 'hypertest_1-var_2-genes_1-tissue', 'hypertest_1-var_2-tissues_1-gene', 'myvar_test'
+#     associated_file_names = ['test_signif_Stomach_10k.csv']
+#
+#     # load up all the GTEx data
+#     rv = gtb.load(gtex_data_directory, associated_file_names)
+#
+#     # check the return, output error if found
+#     if rv is not None:
+#         logger.error(rv)
