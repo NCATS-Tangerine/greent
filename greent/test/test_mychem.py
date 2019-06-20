@@ -89,3 +89,7 @@ def x_test_with_pheno_filter(rosetta):
     assert len(results) > 0
 
 
+def test_drug_gene(mychem):
+    node = KNode('DRUGBANK:DB00802', type=node_types.CHEMICAL_SUBSTANCE) # Alfentanyl
+    results = mychem.get_gene_from_drug(node)
+    assert len(results) > 0

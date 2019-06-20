@@ -26,13 +26,12 @@ class MyVariant(Service):
                 # we could support hg19 as well, but calls need to be all one or the other
                 # for now we only do hg38
                 myvariant_ids = node.get_synonyms_by_prefix('MYVARIANT_HG38')
-
-                if len(myvariant_ids) == 0:
-                    logger.info(f'No MYVARIANT_HG38 synonym found for: {node.id}')
+                if myvariant_ids:
+                    myvar_id = myvariant_ids.pop()
+                    post_params['ids'] += f'{Text.un_curie(myvar_id)},'
+                    node_lookup[myvar_id] = node
                 else:
-                    for myvar_id in myvariant_ids:
-                        post_params['ids'] += f'{Text.un_curie(myvar_id)},'
-                        node_lookup[myvar_id] = node
+                    logger.info(f'No MYVARIANT_HG38 synonym found for: {node.id}')
 
             if not post_params['ids']:
                 logger.warning('batch_sequence_variant_to_gene called but all nodes provided had no MyVariant IDs')

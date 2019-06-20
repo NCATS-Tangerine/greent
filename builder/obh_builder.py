@@ -740,7 +740,7 @@ class ObesityHubBuilder(object):
 
                 if (name_index < 0) or (pval_index < 0):
                     logger.warning(f'Error reading file headers for {mwas_filepath} - {headers}')
-                    return new_ids, corresponding_p_values
+                    return metabolite_ids, corresponding_p_values, corresponding_beta_values
 
                 for data in csv_reader:
                     try:

@@ -186,3 +186,60 @@ class MyChem(Service):
         logger.error(f'got these keys: {list(hit_element.keys())}')
         return None
 
+    def get_gene_by_drug(self, input_node): 
+        drugbank_ids =input_node.get_synonyms_by_prefix('DRUGBANK')
+        response = []
+        for drugbank_id in drugbank_ids:
+            drugbank_id = Text.un_curie(drugbank_id)
+            url = f'{self.url}chem/{drugbank_id}?fields=drugbank.enzymes,drugbank.targets,drugbank.carriers,drugbank.transporters'
+            logger.debug(url)
+            results = self.query(url)
+            if 'drugbank' in results:
+                # maybe gene are everywhere they are enzymes they are 
+                genes = []
+                if 'enzymes' in results['drugbank']:
+                    # maybe we don't need this filter ... ???
+                    logger.debug('found enzymes')
+                    genes += list(filter(lambda x : x['organism'] == 'Humans' or True, results['drugbank']['enzymes']))
+                if 'transporters' in results['drugbank']:
+                    logger.debug('found transporters')
+                    genes += list(filter(lambda x: x['organism']== 'Humans' , results['drugbank']['transporters']))
+                if 'carriers' in results['drugbank']:
+                    logger.debug('found some carriers')
+                    genes += list(filter(lambda x: x['organism']== 'Humans' , results['drugbank']['carriers']))
+                if 'targets' in results['drugbank']:
+                    logger.debug('found targets')
+                    genes += list(filter(lambda x: x['organism']== 'Humans' , results['drugbank']['targets']))
+                for gene in genes:
+                    # Actions relate what the drug does to the enzyme ...  ?./>
+                    # so I think we can treat actions as relationship types
+                    # eg : Alfuzosin (DB00346) is a substrate for CYP34A (Uniprokb:P08684) which implies its metabolized by that enzyme ....
+                    # we might have (A drug)  that (inhibits) a gene  and the action here is inhibitor. 
+                    # So I think its safe to generalize the actions are what the drug is to the enzyme. Or how the enzyme acts to the drug.
+                    # so more like (Drug) - is a/an (action) for ->  (Enzyme/gene)
+                    # These are the actions I've encountered so far,
+                    # ['Substrate', 'Inhibitor', 'Inducer','antagonist', 'agonist']
+                    action_to_predicate_map = {                        
+                        'substrate': LabeledID(identifier='CTD:molecularly_interacts_with', label= 'is substrate for '),
+                        'inhibitor': LabeledID(identifier= 'CTD:decreases_activity_of', label = "inhibits"),
+                        'inducer': LabeledID(identifier = 'CTD:increases_activity_of', label="induces"),
+                        'antagonist': LabeledID(identifier= 'CTD:decreases_activity_of', label = "antagonist"),
+                        'agonist': LabeledID(identifier = 'CTD:increases_activity_of', label="agonist"),
+                        'binder': LabeledID(identifier=  'CTD:interacts_with', label ="binds_to")
+                    }                    
+                    actions = gene['actions']  if type(gene['actions']) == type([]) else [gene['actions']]
+                    # create the gene node
+                    gene_node = KNode(f"UNIPROTKB:{gene['uniprot']}", name= gene['gene_name'], type= node_types.GENE)
+                    publications = [f'PMID:{x}' for x in gene['pmids']] if 'pmids' in gene else []
+                    for action in actions:
+                        predicate = action_to_predicate_map.get(action, None)
+                        if predicate:
+                            edge = self.create_edge(
+                                input_node,
+                                gene_node,
+                                'mychem.get_gene_by_drug',
+                                input_node.id,
+                                predicate,
+                                publications=publications)
+                            response.append((edge, gene_node)) 
+        return response
