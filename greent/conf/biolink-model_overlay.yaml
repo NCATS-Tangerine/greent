@@ -191,11 +191,13 @@ slots:
     mappings:
       - CTD:increases_expression_of
       - CTD:increases^expression
+      - GTEx:increases_expression_of
 
   decreases expression of:
     mappings:
       - CTD:decreases_expression_of
       - CTD:decreases^expression
+      - GTEx:decreases_expression_of
 
   affects folding of:
     mappings:
@@ -592,7 +594,16 @@ slots:
       - RO:0004024
       - RO:0004025
 
+  gene to expression site association:
+    mappings:
+      - gene_to_expression_site_association
+
   #the following are not in the original biolink model
+
+  affects expression in:
+    mappings:
+      - GTEx:affects_expression_in
+
   is missense variant of:
     mappings:
       - SO:0001583

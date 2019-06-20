@@ -139,16 +139,16 @@ Find diseases that have a jaccard coefficient of greater than 0.2 with obesity, 
 ++++
 [source,cypher]
 ----
-MATCH (query:disease {id:"MONDO:0011122"})--(b:gene)--(result:disease) 
-WITH query, result, count(distinct b) as intersection, collect(distinct b.id) as i
-MATCH (query)--(qm:gene)
-WITH query,result, intersection,i, COLLECT(distinct qm.id) AS s1
-MATCH (result)--(rm:gene)
-WITH query,result,intersection,i, s1, COLLECT(distinct rm.id) AS s2
-WITH query,result,intersection,s1+filter(x IN s2 WHERE NOT x IN s1) AS union, s1, s2
-WITH query,result,intersection,union,s1,s2, ((1.0*intersection)/SIZE(union)) AS jaccard
-WHERE jaccard > 0.2
-RETURN result, jaccard ORDER BY jaccard DESC
+"MATCH (query:disease {id:"MONDO:0011122"})--(b:gene)--(result:disease) 
+ WITH query, result, count(distinct b) as intersection, collect(distinct b.id) as i
+ MATCH (query)--(qm:gene)
+ WITH query,result, intersection,i, COLLECT(distinct qm.id) AS s1
+ MATCH (result)--(rm:gene)
+ WITH query,result,intersection,i, s1, COLLECT(distinct rm.id) AS s2
+ WITH query,result,intersection,s1+filter(x IN s2 WHERE NOT x IN s1) AS union, s1, s2
+ WITH query,result,intersection,union,s1,s2, ((1.0*intersection)/SIZE(union)) AS jaccard
+ WHERE jaccard > 0.2
+ RETURN result, jaccard ORDER BY jaccard DESC
 ----
 ++++
 </p>

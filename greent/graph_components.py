@@ -115,6 +115,7 @@ class KEdge(FromDictMixin):
         self.target_id = None
         self.provided_by = None
         self.ctime = None
+        self.hyper_edge_id = None
         self.original_predicate = None
         self.standard_predicate = None
         self.input_id = None

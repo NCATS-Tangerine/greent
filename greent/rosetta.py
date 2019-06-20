@@ -403,9 +403,11 @@ def test_two_sided_query(rosetta):
         (c5:Concept {name: "phenotypic_feature" })
         --
         (c6:Concept {name: "disease" })
+        --
+        (c7:Concept {name: "sequence_variant" })
         FOREACH (n in relationships(p) | SET n.marked = TRUE)
         WITH p,c0,c6
-        MATCH q=(c0:Concept)-[*0..6 {marked:True}]->()<-[*0..6 {marked:True}]-(c6:Concept)
+        MATCH q=(c0:Concept)-[*0..7 {marked:True}]->()<-[*0..7 {marked:True}]-(c7:Concept)
         WHERE p=q
         AND ALL( r in relationships(p) WHERE  EXISTS(r.op) )FOREACH (n in relationships(p) | SET n.marked = FALSE)
         RETURN p, EXTRACT( r in relationships(p) | startNode(r) )"""

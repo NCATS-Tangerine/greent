@@ -13,14 +13,13 @@ Browse through the slides to download the version that best suites your needs.
         </h3>
     </div>
     {% if file.changelog|length > 0 %}
-    
         <div class="col col-sm-9">
 ++++
 === Change logs
 ++++
             <ul>
                 {% for change in file.changelog %}
-                    <li>{{change |safe }}</li>
+                    <li>{{change}}</li>
                 {% endfor %}
             </ul>
         </div>

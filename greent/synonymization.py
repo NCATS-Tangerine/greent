@@ -13,7 +13,7 @@ from greent.synonymizers import sequence_variant_synonymizer
 from builder.question import LabeledID
 
 
-logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG, format='medium')
+logger = LoggingUtil.init_logging(__name__, level=logging.INFO, format='medium')
 
 class Synonymizer:
 
