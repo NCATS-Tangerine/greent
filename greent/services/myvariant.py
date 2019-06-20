@@ -5,7 +5,7 @@ from greent.service import Service
 from greent.util import Text, LoggingUtil
 import logging,json
 
-logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
+logger = LoggingUtil.init_logging(__name__, logging.INFO, logFilePath='/temp/log/')
 
 class MyVariant(Service):
     
@@ -26,13 +26,18 @@ class MyVariant(Service):
                 # we could support hg19 as well, but calls need to be all one or the other
                 # for now we only do hg38
                 myvariant_ids = node.get_synonyms_by_prefix('MYVARIANT_HG38')
-                for myvar_id in myvariant_ids:
-                    post_params['ids'] += f'{Text.un_curie(myvar_id)},'
-                    node_lookup[myvar_id] = node
+
+                if len(myvariant_ids) == 0:
+                    logger.info(f'No MYVARIANT_HG38 synonym found for: {node.id}')
+                else:
+                    for myvar_id in myvariant_ids:
+                        post_params['ids'] += f'{Text.un_curie(myvar_id)},'
+                        node_lookup[myvar_id] = node
 
             if not post_params['ids']:
-                logger.warning('batch_sequence_variant_to_gene called but nodes provided had no MyVariant IDs')
+                logger.warning('batch_sequence_variant_to_gene called but all nodes provided had no MyVariant IDs')
                 return annotation_dictionary
+
             # remove that extra comma
             post_params['ids'] = post_params['ids'][:-1]
             query_url = f'{self.url}variant'
@@ -46,7 +51,7 @@ class MyVariant(Service):
                         variant_node = node_lookup[myvar_id]
                         annotation_dictionary[variant_node.id] = self.process_annotation(variant_node, annotation_json, myvar_id, query_url)
                     except KeyError as e:
-                        logger.warning(f'MyVariant batch call failed on an annotation')
+                        logger.warning(f'MyVariant batch call failed for annotation: {annotation_json["query"]}')
                         pass 
             else:
                 logger.error(f'MyVariant non-200 response on batch: {query_response.status_code})')
@@ -85,6 +90,7 @@ class MyVariant(Service):
                 # sometimes this is a list and sometimes a single instance
                 if not isinstance(annotations, list):
                     annotations = [annotations]
+
                 for annotation in annotations:
                     # for now we only take transcript feature type annotations
                     if annotation['feature_type'] != 'transcript':
@@ -124,7 +130,9 @@ class MyVariant(Service):
                             edge = self.create_edge(variant_node, temp_node, 'myvariant.sequence_variant_to_gene', curie_id, predicate, url=query_url, properties=props)
                             results.append((edge, temp_node))
                     else:
-                        logger.debug(f'MyVariant provided gene symbol: ({gene_symbol}), synonymization could not find a real ID.')
+                        logger.debug(f'MyVariant provided gene symbol {gene_symbol} using the HGNC.SYMBOL value for variant {variant_node.id}), synonymization could not find a real ID.')
+            else:
+                logger.error(f'no annotation snpeff found for variant {variant_node.id}')
 
         except KeyError as e:
             logger.error(f'myvariant annotation error:{e}')
