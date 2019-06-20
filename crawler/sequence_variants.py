@@ -6,7 +6,7 @@ from greent import node_types
 import logging
 import pickle
 
-logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
+logger = LoggingUtil.init_logging("robokop-interfaces.crawler.sequence_variants", level=logging.DEBUG, logFilePath='/temp/log/')
 
 def load_sequence_variants(rosetta, force_reload=False):
     all_variants = set()
@@ -27,7 +27,7 @@ def load_sequence_variants(rosetta, force_reload=False):
 # param: Rosetta object
 # return: a list of sequence variant IDs
 ################
-def get_all_variant_ids(rosetta: object, limit=None) -> list:
+def get_all_variant_ids(rosetta: object, limit: int=None) -> list:
     # call the crawler util function to get a simple list of variant ids
     var_list = get_variant_list(rosetta, limit)
 
@@ -37,74 +37,99 @@ def get_all_variant_ids(rosetta: object, limit=None) -> list:
 ################
 # batch loads the MyVariant and Ensembl data
 ################
-def load_MyVariant_and_Ensembl(rosetta: object, limit=None):
-    cache = rosetta.cache
-    ensembl = rosetta.core.ensembl
-    myvariant = rosetta.core.myvariant
-    synonymizer = rosetta.synonymizer
+def load_MyVariant_and_Ensembl(rosetta: object, limit: int=None) -> object:
+    # init the return value
+    ret_val = None
 
-    # get the list of variants
-    var_list = get_all_variant_ids(rosetta, limit)
+    try:
+        cache = rosetta.cache
+        ensembl = rosetta.core.ensembl
+        myvariant = rosetta.core.myvariant
+        synonymizer = rosetta.synonymizer
 
-    # create an array to handle the ones not already in cache that need to be processed
-    uncached_variant_annotation_nodes = []
-    redis_counter = 0
+        # get the list of variants
+        var_list = get_all_variant_ids(rosetta, limit)
 
-    with cache.redis.pipeline() as redis_pipe:
-        # for each variant
-        for var in var_list:
-            # create a variant node
-            variant_node = KNode(var, name=var, type=node_types.SEQUENCE_VARIANT)
+        # create an array to handle the ones not already in cache that need to be processed
+        uncached_variant_annotation_nodes = []
+        redis_counter = 0
 
-            # synonymize to get all the meta data
-            synonymizer.synonymize(variant_node)
+        # get a handle to the redis pipe
+        with cache.redis.pipeline() as redis_pipe:
+            # for each variant
+            for var in var_list:
+                # check to see if we have all the data elements we need. element [0] is the ID, element [1] is the synonym list
+                if len(var) == 2:
+                    # create a variant node
+                    variant_node = KNode(var[0], name=var[0], type=node_types.SEQUENCE_VARIANT)
 
-            # check if myvariant key exists in cache, otherwise add it to buffer for batch processing
-            if cache.get(f'myvariant.sequence_variant_to_gene({variant_node.id})') is None:
-                uncached_variant_annotation_nodes.append(variant_node)
+                    # did we get a CA ID
+                    if var[0].find("CAID") == 0:
+                        # get the synonym data from the graph DB call
+                        syn_set = set(var[1])
 
-            # if there is enough in the variant annotation batch process them and empty the array
-            if len(uncached_variant_annotation_nodes) == 100:
-                prepopulate_variant_annotation_cache(cache, myvariant, uncached_variant_annotation_nodes)
-                uncached_variant_annotation_nodes = []
+                        # add the synonyms to the node
+                        variant_node.add_synonyms(syn_set)
+                    # else let the regular way of synonymization do the work
+                    else:
+                        # synonymize to get all the meta data
+                        synonymizer.synonymize(variant_node)
 
-            # ensembl cant handle batches, and for now NEEDS to be pre-cached individually here
-            # (the properties on the nodes needed by ensembl wont be available to the runner)
-            nearby_cache_key = f'ensembl.sequence_variant_to_gene({variant_node.id})'
+                if variant_node.id.find("CAID") == -1:
+                    logger.info(f'Variant node {variant_node.id} does not have a CAID after synonymization.')
 
-            # grab the nearby genes
-            cached_nearby_genes = cache.get(nearby_cache_key)
+                # check if myvariant key exists in cache, otherwise add it to buffer for batch processing
+                if cache.get(f'myvariant.sequence_variant_to_gene({variant_node.id})') is None:
+                    uncached_variant_annotation_nodes.append(variant_node)
 
-            # were there any nearby genes not cached
-            if cached_nearby_genes is None:
-                # get the data for the nearby genes
-                nearby_genes = ensembl.sequence_variant_to_gene(variant_node)
+                # if there is enough in the variant annotation batch process them and empty the array
+                if len(uncached_variant_annotation_nodes) == 1000:
+                    prepopulate_variant_annotation_cache(cache, myvariant, uncached_variant_annotation_nodes)
+                    uncached_variant_annotation_nodes = []
 
-                # add the key and data to the list to execute
-                redis_pipe.set(nearby_cache_key, pickle.dumps(nearby_genes))
+                # ensembl cant handle batches, and for now NEEDS to be pre-cached individually here
+                nearby_cache_key = f'ensembl.sequence_variant_to_gene({variant_node.id})'
 
-                # increment the counter
-                redis_counter += 1
+                # grab the nearby genes
+                cached_nearby_genes = cache.get(nearby_cache_key)
 
-            # do we have enough to process
-            if redis_counter > 500:
-                # execute the redis load
+                # were there any nearby genes not cached
+                if cached_nearby_genes is None:
+                    # get the data for the nearby genes
+                    nearby_genes = ensembl.sequence_variant_to_gene(variant_node)
+
+                    # add the key and data to the list to execute
+                    redis_pipe.set(nearby_cache_key, pickle.dumps(nearby_genes))
+
+                    # increment the counter
+                    redis_counter += 1
+
+                # do we have enough to process
+                if redis_counter > 500:
+                    # execute the redis load
+                    redis_pipe.execute()
+
+                    # reset the counter
+                    redis_counter = 0
+
+            # if there are remainder ensemble entries left to process
+            if redis_counter > 0:
                 redis_pipe.execute()
 
-                # reset the counter
-                redis_counter = 0
+            # if there are remainder variant node entries left to process
+            if uncached_variant_annotation_nodes:
+                prepopulate_variant_annotation_cache(cache, myvariant, uncached_variant_annotation_nodes)
 
-        # if there are remainder ensemble entries left to process
-        if redis_counter > 0:
-            redis_pipe.execute()
+    except Exception as e:
+        logger.error(f'Exception caught. Exception: {e}')
+        ret_val = e
 
-        # if there are remainder variant node entries left to process
-        if uncached_variant_annotation_nodes:
-            prepopulate_variant_annotation_cache(cache, myvariant, uncached_variant_annotation_nodes)
+    # return to the caller
+    return ret_val
 
 # simple tester
-if __name__ == '__main__':
-    from greent.rosetta import Rosetta
-    # create a new builder object
-    data = load_MyVariant_and_Ensembl(Rosetta(), 1000)
-
+# if __name__ == '__main__':
+#     from greent.rosetta import Rosetta
+#
+#     # create a new builder object
+#     data = load_MyVariant_and_Ensembl(Rosetta(), 100)
