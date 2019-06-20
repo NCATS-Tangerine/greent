@@ -248,7 +248,7 @@ class GTExUtils:
                             logger.error('Continuing...')
 
                         # output some feedback for the user
-                        if (line_counter % 100000) == 0:
+                        if (line_counter % 250000) == 0:
                             logger.info(f'Processed {line_counter} variants.')
 
                 # process any that are in the last batch
