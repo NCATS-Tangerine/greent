@@ -5,7 +5,7 @@ from greent.service import Service
 from greent.util import Text, LoggingUtil
 import logging,json
 
-logger = LoggingUtil.init_logging(__name__, logging.INFO, logFilePath='/temp/log/')
+logger = LoggingUtil.init_logging(__name__, logging.INFO, logFilePath='~/logs/')
 
 class MyVariant(Service):
     

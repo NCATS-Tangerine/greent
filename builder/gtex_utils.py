@@ -12,7 +12,7 @@ import csv
 
 # declare a logger and initialize it
 import logging
-logger = LoggingUtil.init_logging("robokop-interfaces.builder.GTExUtils", logging.INFO, format='medium', logFilePath='/temp/log/')
+logger = LoggingUtil.init_logging("robokop-interfaces.builder.GTExUtils", logging.INFO, format='medium', logFilePath='~/log/')
 
 
 #############
