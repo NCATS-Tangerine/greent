@@ -9,10 +9,11 @@ import hashlib
 import time
 import pickle
 import csv
+import os
 
 # declare a logger and initialize it
 import logging
-logger = LoggingUtil.init_logging("robokop-interfaces.builder.GTExUtils", logging.INFO, format='medium', logFilePath='~/log/')
+logger = LoggingUtil.init_logging("robokop-interfaces.builder.GTExUtils", logging.INFO, format='medium', logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
 
 
 #############

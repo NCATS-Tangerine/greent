@@ -7,10 +7,11 @@ from greent.util import Text
 from builder.gtex_utils import GTExUtils
 from builder.question import LabeledID
 import csv
+import os
 
 # declare a logger and initialize it.
 import logging
-logger = LoggingUtil.init_logging("robokop-interfaces.builder.GTExBuilder", logging.INFO, format='medium', logFilePath='~/logs/')
+logger = LoggingUtil.init_logging("robokop-interfaces.builder.GTExBuilder", logging.INFO, format='medium', logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
 
 
 ##############

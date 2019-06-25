@@ -5,8 +5,9 @@ from greent import node_types
 
 import logging
 import pickle
+import os
 
-logger = LoggingUtil.init_logging("robokop-interfaces.crawler.sequence_variants", level=logging.DEBUG, logFilePath='~/logs/')
+logger = LoggingUtil.init_logging("robokop-interfaces.crawler.sequence_variants", level=logging.DEBUG, logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
 
 def load_sequence_variants(rosetta, force_reload=False):
     all_variants = set()
