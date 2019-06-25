@@ -1,5 +1,3 @@
-import json
-
 from greent.ontologies.go2 import GO2
 from greent.ontologies.hpo2 import HPO2
 from greent.ontologies.mondo2 import Mondo2

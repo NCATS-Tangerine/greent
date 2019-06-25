@@ -1207,6 +1207,9 @@
     "Type": [
       "is_a"
     ],
+    "anatomical_entity":[
+      "sequence_variant_to_anatomy"
+    ],
     "sequence_variant": [
       "is_a",
       "is_a"

@@ -115,7 +115,7 @@ def test_sequence_variant_to_gene(myvariant):
     assert 'GAMMA:0000103' in pids
     assert 'SO:0001629' in pids
 
-def a_test_batch_sequence_variant_to_gene(myvariant):
+def test_batch_sequence_variant_to_gene(myvariant):
     variant_node = KNode('MYVARIANT_HG38:chr11:g.68032291C>G', type=node_types.SEQUENCE_VARIANT)
     variant_node2 = KNode('MYVARIANT_HG38:chrX:g.32389644G>A', type=node_types.SEQUENCE_VARIANT)
     variant_node3 = KNode('MYVARIANT_HG38:chr17:g.7674894G>A', type=node_types.SEQUENCE_VARIANT)
@@ -260,16 +260,16 @@ def test_sequence_variant_to_gene_ensembl(rosetta, ensembl, clingen):
     assert len(identifiers) > 20
 
     # same variant with hg19
-    node = KNode('CAID:CA279509', type=node_types.GENE)
-    robokop_variant_id = f'ROBO_VARIANT:HG19|17|56283532|56283533|A'
-    node.synonyms.add(LabeledID(identifier=f'{robokop_variant_id}', label=''))
+    #node = KNode('CAID:CA279509', type=node_types.GENE)
+    #robokop_variant_id = f'ROBO_VARIANT:HG19|17|56283532|56283533|A'
+    #node.synonyms.add(LabeledID(identifier=f'{robokop_variant_id}', label=''))
 
-    relations = ensembl.sequence_variant_to_gene(node)
-    identifiers = [node.id for r,node in relations]
-    assert 'ENSEMBL:ENSG00000011143' in identifiers
-    assert 'ENSEMBL:ENSG00000121053' in identifiers
-    assert 'ENSEMBL:ENSG00000167419' in identifiers
-    assert len(identifiers) > 20
+    #relations = ensembl.sequence_variant_to_gene(node)
+    #identifiers = [node.id for r,node in relations]
+    #assert 'ENSEMBL:ENSG00000011143' in identifiers
+    #assert 'ENSEMBL:ENSG00000121053' in identifiers
+    #assert 'ENSEMBL:ENSG00000167419' in identifiers
+    #assert len(identifiers) > 20
 
     # using the synonymizer
     node = KNode('CAID:CA16728208', type=node_types.GENE)
@@ -278,6 +278,15 @@ def test_sequence_variant_to_gene_ensembl(rosetta, ensembl, clingen):
     relations = ensembl.sequence_variant_to_gene(node)
     identifiers = [node.id for r,node in relations]
     assert 'ENSEMBL:ENSG00000186092' in identifiers
+    assert 'ENSEMBL:ENSG00000240361' in identifiers
+
+    node = KNode('CAID:CA170990', type=node_types.GENE)
+    node.synonyms.update(clingen.get_synonyms_by_caid('CA170990'))
+
+    relations = ensembl.sequence_variant_to_gene(node)
+    identifiers = [node.id for r,node in relations]
+    assert 'ENSEMBL:ENSG00000177000' in identifiers
+    assert 'ENSEMBL:ENSG00000011021' in identifiers
 
 def test_sequence_variant_ld(ensembl):
     node = KNode('DBSNP:rs1042779', type=node_types.SEQUENCE_VARIANT)
@@ -285,7 +294,6 @@ def test_sequence_variant_ld(ensembl):
     identifiers = [node.id for r,node in relations]
     assert 'CAID:CA11500281' in identifiers
     assert 'CAID:CA11500270' in identifiers
-
 
 def test_rsid_with_allele_synonymization(rosetta, clingen):
     rsid = 'rs7035767'
