@@ -4,8 +4,9 @@ from greent.graph_components import KNode, LabeledID
 from greent.service import Service
 from greent.util import Text, LoggingUtil
 import logging,json
+import os
 
-logger = LoggingUtil.init_logging(__name__, logging.INFO, logFilePath='~/logs/')
+logger = LoggingUtil.init_logging(__name__, logging.INFO, logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
 
 class MyVariant(Service):
     
