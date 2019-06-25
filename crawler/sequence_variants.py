@@ -7,7 +7,7 @@ import logging
 import pickle
 import os
 
-logger = LoggingUtil.init_logging("robokop-interfaces.crawler.sequence_variants", level=logging.DEBUG, logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
+logger = LoggingUtil.init_logging("robokop-interfaces.crawler.sequence_variants", level=logging.INFO, logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
 
 def load_sequence_variants(rosetta, force_reload=False):
     all_variants = set()
