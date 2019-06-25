@@ -44,7 +44,7 @@ class LoggingUtil(object):
         # if there was a file path passed in use it
         if logFilePath is not None:
             # create a rotating file handler, 100mb max per file with a max number of 10 files
-            file_handler = RotatingFileHandler(filename=logFilePath + name + '.log', maxBytes=100000000, backupCount=10)
+            file_handler = RotatingFileHandler(filename=logFilePath + name + '.log', maxBytes=1000000, backupCount=10)
 
             # set the formatter
             file_handler.setFormatter(formatter)
