@@ -110,10 +110,27 @@ ChemicalAnnotator:
             - drugbank.accession_number:
                 source: 'drugbank.accession_number'
                 data_type: uri
-            - drugbank.groups:
-                source: 'drugbank.groups'
-                data_type: uri           
-            
+            -  drugbank.vet_approved:
+                source: 'drugbank.groups'      
+                data_type: boolean
+            -  drugbank.approved:
+                source: 'drugbank.groups'      
+                data_type: boolean
+            -  drugbank.nutraceutical:
+                source: 'drugbank.groups'      
+                data_type: boolean
+            -  drugbank.illicit:
+                source: 'drugbank.groups'      
+                data_type: boolean
+            -  drugbank.withdrawn:
+                source: 'drugbank.groups'      
+                data_type: boolean
+            -  drugbank.investigational:
+                source: 'drugbank.groups'      
+                data_type: boolean
+            -  drugbank.exprimental:
+                source: 'drugbank.groups'      
+                data_type: boolean
 GeneAnnotator:
     prefixes:
       - HGNC

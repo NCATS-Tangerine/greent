@@ -218,21 +218,22 @@ class MyChem(Service):
                     # So I think its safe to generalize the actions are what the drug is to the enzyme. Or how the enzyme acts to the drug.
                     # so more like (Drug) - is a/an (action) for ->  (Enzyme/gene)
                     # These are the actions I've encountered so far,
-                    # ['Substrate', 'Inhibitor', 'Inducer','antagonist', 'agonist']
+                    # ['Substrate', 'Inhibitor', 'Inducer','antagonist', 'agonist', 'activator']
                     action_to_predicate_map = {                        
                         'substrate': LabeledID(identifier='CTD:molecularly_interacts_with', label= 'is substrate for '),
                         'inhibitor': LabeledID(identifier= 'CTD:decreases_activity_of', label = "inhibits"),
                         'inducer': LabeledID(identifier = 'CTD:increases_activity_of', label="induces"),
                         'antagonist': LabeledID(identifier= 'CTD:decreases_activity_of', label = "antagonist"),
                         'agonist': LabeledID(identifier = 'CTD:increases_activity_of', label="agonist"),
-                        'binder': LabeledID(identifier=  'CTD:interacts_with', label ="binds_to")
+                        'binder': LabeledID(identifier=  'CTD:interacts_with', label ="binds_to"),
+                        'activator': LabeledID(identifier='CTD:molecularly_interacts_with', label= 'activator')
                     }                    
                     actions = gene['actions']  if type(gene['actions']) == type([]) else [gene['actions']]
                     # create the gene node
                     gene_node = KNode(f"UNIPROTKB:{gene['uniprot']}", name= gene['gene_name'], type= node_types.GENE)
                     publications = [f'PMID:{x}' for x in gene['pmids']] if 'pmids' in gene else []
                     for action in actions:
-                        predicate = action_to_predicate_map.get(action, None)
+                        predicate = action_to_predicate_map.get(action, LabeledID(identifier= 'CTD:interacts_with', label=action))
                         if predicate:
                             edge = self.create_edge(
                                 input_node,

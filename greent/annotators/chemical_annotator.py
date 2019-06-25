@@ -196,9 +196,11 @@ class ChemicalAnnotator(Annotator):
                         cats = []
                         if inner_key == 'categories':
                             cats = [x['category'] for x in mychem_raw[outter_key][inner_key]]
-                            response[key] = cats
-                        else:
-                            response[key] = mychem_raw[outter_key][inner_key]                    
+                            response[key] = cats   
+                            continue                                             
+                        response[key] = mychem_raw[outter_key][inner_key]    
+            if 'groups' in mychem_raw['drugbank']:
+                response.update({f'drugbank.{g}': True for g in mychem_raw['drugbank']['groups']})
         return response
 
 
