@@ -124,7 +124,7 @@ def export_edge_chunk(tx,edgelist,edgelabel):
                'provided_by': edge.provided_by,
                'database': edge.provided_by.split('.')[0],
                'ctime': edge.ctime,
-               'hyper_edge_id': edge.hyper_edge_id,
+               'hyper_edge_id': edge.hyper_edge_id if hasattr(edge,'hyper_edge_id') else None,
                'standard_id': edge.standard_predicate.identifier,
                'original_predicate_id': edge.original_predicate.identifier,
                'original_predicate_label': edge.original_predicate.label,
