@@ -194,13 +194,29 @@ class ChemicalAnnotator(Annotator):
                     outter_key, inner_key = key.split('.')
                     if inner_key in mychem_raw[outter_key]:
                         cats = []
-                        if inner_key == 'categories':
-                            cats = [x['category'] for x in mychem_raw[outter_key][inner_key]]
+                        if inner_key == 'categories':                           
+                            cats = []
+                            data = mychem_raw[outter_key][inner_key]
+                            if type(data) == type([]):
+                                cats = [x['category'] for x in mychem_raw[outter_key][inner_key]]
+                            elif type(data) == type({}): 
+                                cats = [data['category']]
+                            else:
+                                cats = [data]
                             response[key] = cats   
                             continue                                             
                         response[key] = mychem_raw[outter_key][inner_key]    
             if 'groups' in mychem_raw['drugbank']:
-                response.update({f'drugbank.{g}': True for g in mychem_raw['drugbank']['groups']})
+                groups = {}
+                if type(mychem_raw['drugbank']['groups']) == type([]):
+                    groups = {f'drugbank.{g}': True 
+                                for g in mychem_raw['drugbank']['groups']
+                            }
+                else:
+                    groups = {
+                        f"drugbank.{mychem_raw['drugbank']['groups']}" : True
+                    }
+                response.update(groups)
         return response
 
 
