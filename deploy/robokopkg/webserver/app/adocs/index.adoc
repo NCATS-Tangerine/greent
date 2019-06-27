@@ -21,36 +21,6 @@
             
             <p class="lead">
 ++++
-
-=== ROBOKOP KG Queries
-
-++++
-                <div class="icon-holder">
-                    <a play-topic="{{host}}/guide/queries">Queries</a>
-                </div> 
-            </p>
-
-            <div class="clearfix" style="margin-bottom:15px"></div>
-            
-            <p class="lead">
-
-++++
-
-=== Browse *Dump files*
-
-++++
-                <div class="icon-holder">                                      
-                    <a play-topic="{{host}}/guide/dumps">
-                        Browse
-                    </a>
-                </div>
-            </p>
-
-            <div class="clearfix" style="margin-bottom:15px"></div>
-
-            <p class="lead">
-++++
-
 === Methods for accessing ROBOKOP KG
 
 ++++
@@ -64,15 +34,15 @@
             <p class="lead">
 
 ++++
-
-=== Feedback
+=== Browse *Dump files*
 
 ++++
-
-            <p>
-            For questions or comments, please post an issue to <a href="https://github.com/NCATS-Gamma/robokop-interfaces/issues">The ROBOKOP KG github</a> and tag your issue with "robokop-kg".
+                <div class="icon-holder">                                      
+                    <a play-topic="{{host}}/guide/dumps">
+                        Browse
+                    </a>
+                </div>
             </p>
-
         </div>
     </div>
 ++++

@@ -11,96 +11,126 @@
 #               source: <actual_property_name_on_original_data>      //what we want to map it to when storing it in neo4j
 
 ChemicalAnnotator:
-  node_type: "chemical_substance"
-  prefixes: 
-    - "PUBCHEM"
-    - "KEGG"
-    - "CHEBI"
-    - "CHEMBL"
-  PUBCHEM:
-    url: "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/"
-    keys:
-      - molecular_formula:
-          source: "Molecular Formula"
-          data_type: string
-      - inchi:
-          source: "InChI"
-          data_type: "string"
-      - inchikey:
-          source: "InChIKey"
-          data_type: string
-      - iupac_name:
-          source: "IUPAC Name"
-          data_type: string
-      - molecular_weight:
-          source: "Molecular Weight"
-          data_type: float
-      - smiles:
-          source: "SMILES"
-          data_type: string
-  KEGG:
-    url: "http://rest.kegg.jp/get/"
-    keys:
-      - molecular_formula:
-          source: "FORMULA"
-          data_type: string
-      - molecular_weight:
-          source: "MOL_WEIGHT"
-          data_type: float
-  CHEMBL:
-    url: "https://www.ebi.ac.uk/chembl/api/data/molecule/"
-    keys:
-      - molecule_properties:
-          source: "molecule_properties"
-          data_type: string
-      - molecule_type:
-          source: "molecule_type"
-          data_type: string
-      - natural_product:
-          source: "natural_product"
-          data_type: integer
-      - oral:
-          source: "oral"
-          data_type: boolean
-      - parenteral:
-          source: "parenteral"
-          data_type: boolean
-      - topical:
-          source: "topical"
-          data_type: boolean
-      - prodrug:
-          source: "prodrug"
-          data_type: integer
-      - therapeutic_flag:
-          source: "therapeutic_flag"
-          data_type: boolean
-      - withdrawn_flag:
-          source: "withdrawn_flag"
-          data_type: boolean
-  CHEBI:
-    url: "https://onto.renci.org/all_properties/"
-    keys:
-      - monoisotopic_mass:
-          source: "monoisotopicmass"
-          data_type: float
-      - charge:
-          source: "charge"
-          data_type: integer
-      - molecular_formula:
-          source: "formula"
-          data_type: string
-      - mass:  
-          source: "mass" # ambigious molecular / exact 
-          data_type: float
-      - inchi:
-          source: "inchi"
-          data_type: string
-      - inchikey:
-          source: "inchikey"
-          data_type: string
-      - smiles:
-          source: "smiles"
-          data_type: string
+    node_type: "chemical_substance"
+    prefixes: 
+        - "PUBCHEM"
+        - "KEGG"
+        - "CHEBI"
+        - "CHEMBL"
+    PUBCHEM:
+        url: "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/"
+        keys:
+        - molecular_formula:
+            source: "Molecular Formula"
+            data_type: string
+        - inchi:
+            source: "InChI"
+            data_type: "string"
+        - inchikey:
+            source: "InChIKey"
+            data_type: string
+        - iupac_name:
+            source: "IUPAC Name"
+            data_type: string
+        - molecular_weight:
+            source: "Molecular Weight"
+            data_type: float
+        - smiles:
+            source: "SMILES"
+            data_type: string
+    KEGG:
+        url: "http://rest.kegg.jp/get/"
+        keys:
+        - molecular_formula:
+            source: "FORMULA"
+            data_type: string
+        - molecular_weight:
+            source: "MOL_WEIGHT"
+            data_type: float
+    CHEMBL:
+        url: "https://www.ebi.ac.uk/chembl/api/data/molecule/"
+        keys:
+        - molecule_properties:
+            source: "molecule_properties"
+            data_type: string
+        - molecule_type:
+            source: "molecule_type"
+            data_type: string
+        - natural_product:
+            source: "natural_product"
+            data_type: integer
+        - oral:
+            source: "oral"
+            data_type: boolean
+        - parenteral:
+            source: "parenteral"
+            data_type: boolean
+        - topical:
+            source: "topical"
+            data_type: boolean
+        - prodrug:
+            source: "prodrug"
+            data_type: integer
+        - therapeutic_flag:
+            source: "therapeutic_flag"
+            data_type: boolean
+        - withdrawn_flag:
+            source: "withdrawn_flag"
+            data_type: boolean
+    CHEBI:
+        url: "https://onto.renci.org/all_properties/"
+        keys:
+        - monoisotopic_mass:
+            source: "monoisotopicmass"
+            data_type: float
+        - charge:
+            source: "charge"
+            data_type: integer
+        - molecular_formula:
+            source: "formula"
+            data_type: string
+        - mass:  
+            source: "mass" # ambigious molecular / exact 
+            data_type: float
+        - inchi:
+            source: "inchi"
+            data_type: string
+        - inchikey:
+            source: "inchikey"
+            data_type: string
+        - smiles:
+            source: "smiles"
+            data_type: string
+    MYCHEM:
+        url: "https://mychem.info/v1/chem/"
+        keys:
+            - drugbank.categories:
+                source: 'drugbank.categories'
+                data_type: string_array
+            - drugbank.accession_number:
+                source: 'drugbank.accession_number'
+                data_type: uri
+            -  drugbank.vet_approved:
+                source: 'drugbank.groups'      
+                data_type: boolean
+            -  drugbank.approved:
+                source: 'drugbank.groups'      
+                data_type: boolean
+            -  drugbank.nutraceutical:
+                source: 'drugbank.groups'      
+                data_type: boolean
+            -  drugbank.illicit:
+                source: 'drugbank.groups'      
+                data_type: boolean
+            -  drugbank.withdrawn:
+                source: 'drugbank.groups'      
+                data_type: boolean
+            -  drugbank.investigational:
+                source: 'drugbank.groups'      
+                data_type: boolean
+            -  drugbank.exprimental:
+                source: 'drugbank.groups'      
+                data_type: boolean
 GeneAnnotator:
     prefixes:
       - HGNC

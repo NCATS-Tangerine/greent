@@ -115,6 +115,19 @@ def get_identifiers(input_type,rosetta):
             elif line.startswith('name:'):
                 label = line[5:].strip()
                 chebi_labels[tid] = label
+        # go for KEGG
+        print('pull KEGG')
+        content = requests.get('http://rest.kegg.jp/list/compound').content.decode('utf-8')
+    
+        for line in content.split('\n'):
+            if line :
+                identifier, label = line.split('\t')
+                identifier = identifier.replace('cpd', 'KEGG.COMPOUND')
+                identifier= identifier.replace('CPD', 'KEGG.COMPOUND')
+                # maybe pick the first one for kegg,
+                label = label.split(';')[0].strip(' ')
+                lids.append(LabeledID(identifier, label))
+        
         for ident in identifiers:
             try:
                 lids.append(LabeledID(ident,chebi_labels[ident]))
@@ -132,6 +145,19 @@ def get_identifiers(input_type,rosetta):
             if ident not in bad_idents:
                 p = get_label(ident) #requests.get(f'https://uberonto.renci.org/label/{ident}/')
                 lids.append(LabeledID(ident, p['label']))
+
+    elif input_type == node_types.SEQUENCE_VARIANT:
+        # due to sparse array nature of sequence variants - these services need to be precached
+        if not rosetta.core.gwascatalog.is_precached():
+            gwas_variants = rosetta.core.gwascatalog.prepopulate_cache()
+        else:
+            gwas_variants = rosetta.core.gwascatalog.get_all_sequence_variants()
+        for gwas_variant in gwas_variants:
+            gwas_variant_name = gwas_variant.split(':', 1)[1]
+            lids.append(LabeledID(gwas_variant, gwas_variant_name))
+
+        # grab GTEX variants we want in the graph and add them to labled IDs list as well
+
     else:
         print(f'Not configured for input type: {input_type}')
     return lids

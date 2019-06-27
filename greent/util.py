@@ -9,12 +9,13 @@ import os
 import yaml
 from collections import namedtuple
 import copy
+from logging.handlers import RotatingFileHandler
 
 #loggers = {}
 class LoggingUtil(object):
     """ Logging utility controlling format and setting initial logging level """
     @staticmethod
-    def init_logging (name, level=logging.INFO, format='short'):
+    def init_logging (name, level=logging.INFO, format='short', logFilePath=None, logFileLevel=None):
         logger = logging.getLogger(__name__)
         if not logger.parent.name == 'root':
             return logger
@@ -24,12 +25,44 @@ class LoggingUtil(object):
             "medium" : '%(funcName)s: %(asctime)-15s %(message)s',
             "long"  : '%(asctime)-15s %(filename)s %(funcName)s %(levelname)s: %(message)s'
         }[format]
-        handler = logging.StreamHandler()
+
+        # create a stream handler (default to console)
+        stream_handler = logging.StreamHandler()
+
+        # create a formatter
         formatter = logging.Formatter(FORMAT)
-        handler.setFormatter(formatter)
-        logger = logging.getLogger (name)
-        logger.addHandler(handler)
+
+        # set the formatter on the console stream
+        stream_handler.setFormatter(formatter)
+
+        # get the name of this logger
+        logger = logging.getLogger(name)
+
+        # set the logging level
         logger.setLevel(level)
+
+        # if there was a file path passed in use it
+        if logFilePath is not None:
+            # create a rotating file handler, 100mb max per file with a max number of 10 files
+            file_handler = RotatingFileHandler(filename=logFilePath + name + '.log', maxBytes=1000000, backupCount=10)
+
+            # set the formatter
+            file_handler.setFormatter(formatter)
+
+            # if a log level for the file was passed in use it
+            if logFileLevel is not None:
+                level = logFileLevel
+
+            # set the log level
+            file_handler.setLevel(level)
+
+            # add the handler to the logger
+            logger.addHandler(file_handler)
+
+        # add the console handler to the logger
+        logger.addHandler(stream_handler)
+
+        # return to the caller
         return logger
 
 class Munge(object):

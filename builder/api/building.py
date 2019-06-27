@@ -428,7 +428,7 @@ class Predicates(Resource):
         driver = GraphDatabase.driver(f"bolt://{os.environ['NEO4J_HOST']}:{os.environ['NEO4J_BOLT_PORT']}",
             auth=basic_auth("neo4j", os.environ['NEO4J_PASSWORD']))
         with driver.session() as session:
-            result = session.run('match (a)-[x]-(b) return distinct type(x), labels(a), labels(b)')
+            result = session.run('match (a)-[x]->(b) return distinct type(x), labels(a), labels(b)')
             records = [list(r) for r in result]
 
         # Reformat predicate list into a dict of dicts with first key as

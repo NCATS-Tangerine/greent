@@ -115,7 +115,7 @@ def test_sequence_variant_to_gene(myvariant):
     assert 'GAMMA:0000103' in pids
     assert 'SO:0001629' in pids
 
-def a_test_batch_sequence_variant_to_gene(myvariant):
+def test_batch_sequence_variant_to_gene(myvariant):
     variant_node = KNode('MYVARIANT_HG38:chr11:g.68032291C>G', type=node_types.SEQUENCE_VARIANT)
     variant_node2 = KNode('MYVARIANT_HG38:chrX:g.32389644G>A', type=node_types.SEQUENCE_VARIANT)
     variant_node3 = KNode('MYVARIANT_HG38:chr17:g.7674894G>A', type=node_types.SEQUENCE_VARIANT)
@@ -190,10 +190,16 @@ def a_test_gwascatalog_variant_to_phenotype(gwascatalog, rosetta):
     results = gwascatalog.sequence_variant_to_disease_or_phenotypic_feature(variant_node)
     assert len(results) == 0
   
-def this_is_real_test_batch_gwascatalog_var_to_phenotype(rosetta, gwascatalog):
+def a_test_batch_gwascatalog_var_to_phenotype(rosetta, gwascatalog):
 
     gwascatalog.prepopulate_cache()
-    
+
+    assert gwascatalog.is_precached()
+
+    all_variants = gwascatalog.get_all_sequence_variants()
+
+    assert len(all_variants) > 50000
+
     relations = rosetta.cache.get('gwascatalog.sequence_variant_to_disease_or_phenotypic_feature(CAID:CA16058750)')
     identifiers = [node.id for r,node in relations]
     assert 'EFO:0003898' in identifiers
@@ -201,7 +207,6 @@ def this_is_real_test_batch_gwascatalog_var_to_phenotype(rosetta, gwascatalog):
     assert 'ORPHANET:1572' in identifiers
     names = [node.name for r,node in relations]
     assert 'ankylosing spondylitis' in names
-    assert 'chronic childhood arthritis' in names
     publications = [r.publications for r,node in relations]
     assert ['PMID:26301688'] in publications
 
@@ -210,6 +215,7 @@ def this_is_real_test_batch_gwascatalog_var_to_phenotype(rosetta, gwascatalog):
     assert 'EFO:0004340' in identifiers
     assert 'EFO:0003917' in identifiers
     assert 'EFO:0005939' in identifiers
+
 
 def this_is_slow_test_gwascatalog_phenotype_to_variant(gwascatalog):
     #phenotype_node = KNode('EFO:0003898', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
@@ -240,11 +246,12 @@ def future_test_get_variants_by_region(clingen):
     assert 'CAID:CA19707988' in identifiers
     assert 'CAID:CA19752509' in identifiers
 
-def test_sequence_variant_to_gene_ensembl(ensembl):
+def test_sequence_variant_to_gene_ensembl(rosetta, ensembl, clingen):
     # using hg38
     node = KNode('CAID:CA279509', type=node_types.GENE)
-    sequence_location = ['HG38', str(17), str(58206172)]
-    node.properties['sequence_location'] = sequence_location
+    robokop_variant_id = f'ROBO_VARIANT:HG38|17|58206171|58206172|A'
+    node.synonyms.add(LabeledID(identifier=f'{robokop_variant_id}', label=''))
+
     relations = ensembl.sequence_variant_to_gene(node)
     identifiers = [node.id for r,node in relations]
     assert 'ENSEMBL:ENSG00000011143' in identifiers
@@ -253,23 +260,62 @@ def test_sequence_variant_to_gene_ensembl(ensembl):
     assert len(identifiers) > 20
 
     # same variant with hg19
-    node = KNode('CAID:CA279509', type=node_types.GENE)
-    sequence_location = ['HG19', str(17), str(56283533)]
-    node.properties['sequence_location'] = sequence_location
+    #node = KNode('CAID:CA279509', type=node_types.GENE)
+    #robokop_variant_id = f'ROBO_VARIANT:HG19|17|56283532|56283533|A'
+    #node.synonyms.add(LabeledID(identifier=f'{robokop_variant_id}', label=''))
+
+    #relations = ensembl.sequence_variant_to_gene(node)
+    #identifiers = [node.id for r,node in relations]
+    #assert 'ENSEMBL:ENSG00000011143' in identifiers
+    #assert 'ENSEMBL:ENSG00000121053' in identifiers
+    #assert 'ENSEMBL:ENSG00000167419' in identifiers
+    #assert len(identifiers) > 20
+
+    # using the synonymizer
+    node = KNode('CAID:CA16728208', type=node_types.GENE)
+    node.synonyms.update(clingen.get_synonyms_by_caid('CA16728208'))
+
     relations = ensembl.sequence_variant_to_gene(node)
     identifiers = [node.id for r,node in relations]
-    assert 'ENSEMBL:ENSG00000011143' in identifiers
-    assert 'ENSEMBL:ENSG00000121053' in identifiers
-    assert 'ENSEMBL:ENSG00000167419' in identifiers
-    assert len(identifiers) > 20
+    assert 'ENSEMBL:ENSG00000186092' in identifiers
+    assert 'ENSEMBL:ENSG00000240361' in identifiers
+
+    node = KNode('CAID:CA170990', type=node_types.GENE)
+    node.synonyms.update(clingen.get_synonyms_by_caid('CA170990'))
+
+    relations = ensembl.sequence_variant_to_gene(node)
+    identifiers = [node.id for r,node in relations]
+    assert 'ENSEMBL:ENSG00000177000' in identifiers
+    assert 'ENSEMBL:ENSG00000011021' in identifiers
 
 def test_sequence_variant_ld(ensembl):
-
     node = KNode('DBSNP:rs1042779', type=node_types.SEQUENCE_VARIANT)
     relations = ensembl.sequence_variant_to_sequence_variant(node)
     identifiers = [node.id for r,node in relations]
-    assert 'DBSNP:rs6792369' in identifiers
-    assert 'DBSNP:rs2240920' in identifiers
+    assert 'CAID:CA11500281' in identifiers
+    assert 'CAID:CA11500270' in identifiers
 
+def test_rsid_with_allele_synonymization(rosetta, clingen):
+    rsid = 'rs7035767'
+    snp_allele = 'A'
+    synonyms = clingen.get_synonyms_by_rsid_with_sequence(rsid, snp_allele)
+    identifiers = [identifier for identifier,name in synonyms]
+    assert 'CAID:CA188678660' in identifiers
+    assert 'CAID:CA13024337' not in identifiers
+    snp_allele = 'G'
+    synonyms = clingen.get_synonyms_by_rsid_with_sequence(rsid, snp_allele)
+    identifiers = [identifier for identifier,name in synonyms]
+    assert 'CAID:CA13024337' in identifiers
+    assert 'CAID:CA188678660' not in identifiers
 
-
+    rsid = 'rs369602258'
+    snp_allele = 'G'
+    synonyms = clingen.get_synonyms_by_rsid_with_sequence(rsid, snp_allele)
+    identifiers = [identifier for identifier,name in synonyms]
+    assert 'CAID:CA6146346' in identifiers
+    assert 'CAID:CA321211' not in identifiers
+    snp_allele = 'T'
+    synonyms = clingen.get_synonyms_by_rsid_with_sequence(rsid, snp_allele)
+    identifiers = [identifier for identifier,name in synonyms]
+    assert 'CAID:CA321211' in identifiers
+    assert 'CAID:CA6146346' not in identifiers

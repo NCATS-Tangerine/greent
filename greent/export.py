@@ -10,7 +10,7 @@ from sys import stdout
 
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
-class BufferedWriter:
+class BufferedWriter():
     """Buffered writer accepts individual nodes and edges to write to neo4j.
     It doesn't write the node/edge if it has already been written in its lifetime (it maintains a record)
     It then accumulates nodes/edges by label/type until a buffersize has been reached, at which point it does
@@ -33,6 +33,8 @@ class BufferedWriter:
         self.node_buffer_size = 100
         self.edge_buffer_size = 100
         self.driver = self.rosetta.type_graph.driver
+        self.maxWrittenNodes = 100000
+        self.maxWrittenEdges = 100000
 
     def __enter__(self):
         return self
@@ -48,8 +50,8 @@ class BufferedWriter:
         if len(typednodes) >= self.node_buffer_size:
             self.flush()
 
-    def write_edge(self,edge):
-        if edge in self.written_edges[edge.source_id][edge.target_id]:
+    def write_edge(self,edge,force_create=False):
+        if edge in self.written_edges[edge.source_id][edge.target_id] and not force_create:
             return
         self.written_edges[edge.source_id][edge.target_id].add(edge)
         label = Text.snakify(edge.standard_predicate.label)
@@ -63,9 +65,18 @@ class BufferedWriter:
             for node_type in self.node_queues:
                 session.write_transaction(export_node_chunk,self.node_queues[node_type],node_type)
                 self.node_queues[node_type] = []
+
             for edge_label in self.edge_queues:
                 session.write_transaction(export_edge_chunk,self.edge_queues[edge_label],edge_label)
                 self.edge_queues[edge_label] = []
+
+            # clear the memory on a threshold boundary to avoid using up all memory when
+            # processing large data sets
+            if len(self.written_nodes) > self.maxWrittenNodes:
+                self.written_nodes.clear()
+
+            if len(self.written_edges) > self.maxWrittenEdges:
+                self.written_edges.clear()
 
     def __exit__(self,*args):
         self.flush()
@@ -89,6 +100,7 @@ def export_edge_chunk(tx,edgelist,edgelabel):
             ON CREATE SET r.relation_label = [row.original_predicate_label]
             ON CREATE SET r.source_database=[row.database]
             ON CREATE SET r.ctime=[row.ctime]
+            ON CREATE SET r.hyper_edge_id=CASE WHEN row.hyper_edge_id <> null THEN [row.hyper_edge_id] ELSE null END
             ON CREATE SET r.publications=row.publications
             ON CREATE SET r.relation = [row.original_predicate_id]
             // FOREACH mocks if condition 
@@ -102,12 +114,17 @@ def export_edge_chunk(tx,edgelist,edgelabel):
             SET r.publications = [pub in row.publications where not pub in r.publications ] + r.publications
             )
             SET r += row.properties
+            FOREACH (_ IN CASE WHEN row.hyper_edge_id in r.hyper_edge_id THEN [] ELSE [1] END |
+            SET r.hyper_edge_id = CASE WHEN EXISTS(r.hyper_edge_id) AND r.hyper_edge_id <> null THEN r.hyper_edge_id  + [row.hyper_edge_id] END
+            )
             """
+
     batch = [ {'source_id': edge.source_id,
                'target_id': edge.target_id,
                'provided_by': edge.provided_by,
                'database': edge.provided_by.split('.')[0],
                'ctime': edge.ctime,
+               'hyper_edge_id': edge.hyper_edge_id if hasattr(edge,'hyper_edge_id') else None,
                'standard_id': edge.standard_predicate.identifier,
                'original_predicate_id': edge.original_predicate.identifier,
                'original_predicate_label': edge.original_predicate.label,

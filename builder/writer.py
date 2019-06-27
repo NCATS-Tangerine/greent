@@ -47,9 +47,7 @@ def callback(ch, method, properties, body):
         # logger.debug(f'Writing edge {edge.source_id}->{edge.target_id}')
         writer.write_edge(edge)
 
-channel.basic_consume(callback,
-                      queue='neo4j',
-                      no_ack=True)
+channel.basic_consume('neo4j',callback, auto_ack= True)
 
 logger.info(' [*] Waiting for messages.')
 print('To exit press CTRL+C')

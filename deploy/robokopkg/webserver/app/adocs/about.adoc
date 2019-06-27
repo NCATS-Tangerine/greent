@@ -17,7 +17,7 @@ In addition to the data itself, which will be discussed later, the KG contains i
         This figure shows a small portion of the Concept Map, and shows the two types of relationships. The <span style="background: rgb(104,189,246)">Blue</span> relationships denote hierachical "is-a" relations between concepts as defined in the BioLink Model.  Here we can see that "biological_entity" node has "biological_process_or_activity", "chemical_entity" and "organismal_entity" as sub-concepts. As we go down the hierarchy, we find that concepts are more specific. 
         </p>
         <p>
-        The <span style="background: #6DCE9E">Green</span> relations are used to express the services invoked in ROBOKOP KGB to create relations between instances of the connected types.  For example, the edge connecting "biological_process_or_activity" and "anatomical_entity" contains details about what service can be invoked to produce edges between entities of those types.
+        The <span style="background: #6DCE9E">Gree<n/span> relations are used to express the services invoked in ROBOKOP KGB to create relations between instances of the connected types.  For example, the edge connecting "biological_process_or_activity" and "anatomical_entity" contains details about what service can be invoked to produce edges between entities of those types.
         </p>
         <p>
         To view the full concept graph, you can run:
@@ -76,7 +76,7 @@ MATCH (a:chemical_substance {id:"CHEBI:5118"}) RETURN a
 ++++
 </p>
 <p>
-Note that all of these entities shared some properties. Each contains an id property in the form of a CURIE.  Each contains a "name" property with a human-readable name (which is not guaranteed to be unique).  Each also contains an "equivalent_identifiers" property.  The array value contains a number of other CURIEs that should be considered equivalent to the primary identifier.  To find the primary identifier given any other identifier, you can use the synonymizer tool <a href="http://ROBOKOP.renci.org/simple/synonymize" target="blank">here</a>.
+Note that all of these entities shared some properties. Each contains an id property in the form of a CURIE.  Each contains a "name" property with a human-readable name (which is not guaranteed to be unique).  Each also contains an "equivalent_identifiers" property.  The array value contains a number of other CURIEs that should be considered equivalent to the primary identifier.  To find the primary identifier given any other identifier, you can use the synonymizer tool <a href="ROBOKOP.renci.org/simple/synonymize target="blank">here</a>.
 </p>
 ----
 
@@ -88,7 +88,7 @@ Note that all of these entities shared some properties. Each contains an id prop
 
 ++++
 <p>
-Edges between nodes in ROBOKOP KG define a relationship between two entities.  The predicate of the edge tells the user what that relationship is. The set of predicates that are used in one knowledge source can be different from another, although they semantically mean the same thing. In our edges we maintain the original knowledge source's predicate and a normalized predicate value. The normalized value is used as the neo4j edge type, while the original predicate is retained as the "relation" property of the edge.  A full JSON map of the predicates in our database is available <a href="http://ROBOKOP.renci.org:6010/api/predicates" target="blank">here</a>.  To explore the counts of different edge types, you can use this cypher query:
+Edges between nodes in ROBOKOP KG define a relationship between two entities.  The predicate of the edge tells the user what that relationship is. The set of predicates that are used in one knowledge source can be different from another, although they semantically mean the same thing. In our edges we maintain the original knowledge source's predicate and a normalized predicate value. The normalized value is used as the neo4j edge type, while the original predicate is retained as the "relation" property of the edge.  A full JSON map of the predicates in our database is available <a href="ROBOKOP.renci.org:6010/api/predicates" target="blank">here</a>.  To explore the counts of different edge types, you can use this cypher query:
 ++++
 [source,cypher]
 ----
@@ -112,6 +112,20 @@ Match (x:disease{id:'MONDO:0002367'})-[e:disease_to_gene_association]-(g:gene{id
 ----
 
 
+== Edges
+
+++++
+<p>
+Edges between nodes in ROBOKOP KG define a relationship between two entities.  The predicate of the edge tells the user what that relationship is. The set of predicates that are used in one knowledge source can be different from another, although they semantically mean the same thing. In our edges we maintain the original knowledge source's predicate and a normalized predicate value. The normalized value is used as the neo4j edge type, while the original predicate is retained as the "relation" property of the edge.  A full JSON map of the predicates in our database is available <a href="ROBOKOP.renci.org:6010/api/predicates" target="blank">here</a>.  To explore the counts of different edge types, you can use this cypher query:
+++++
+[source,cypher]
+----
+MATCH (a:chemical_substance)-[x]-(b:disease) RETURN DISTINCT TYPE(x), COUNT(*) AS ct ORDER BY ct DESC
+----
+++++
+</p>
+
+++++
 
 == Sources
 
@@ -131,7 +145,7 @@ The following summarizes the main data sources, as of April 2019:
 </p>
 
 <ul>
-<li><a href="https://api.monarchinitiative.org/api/">Monarch Biolink</a>: A source of edges on diseases, phenotypes, processes, and genes integrated from multiple sources.
+<li><a href="https://api.monarchinitiative.org/api/>Monarch Biolink</a>: A source of edges on diseases, phenotypes, processes, and genes integrated from multiple sources.
 <li><a href="http://ctdbase.org">Comparative Toxicogenomics Database</a>: A collection of curated information relating chemicals, diseases, and genes.
 <li><a href="http://hmdb.ca">The Human Metabolome Database</a>: Relations between metabolites, genes, and diseases.
 <li><a href="https://het.io">Het.io</a>: A data integration relating genes, anatomical features, and diseases.
@@ -139,7 +153,7 @@ The following summarizes the main data sources, as of April 2019:
 <li><a href="http://mychem.info">Mychem.info</a>: An aggregation service that includes data from DrugCentral and Aeolus.
 <li><a href="http://pharos.nih.gov">Pharos</a>: Relationships between genes, chemicals, and diseases, with an emphasis on drug targets.
 <li><a href="https://www.ebi.ac.uk/quickgo">QuickGo</a>: Relationships between genes and GO terms (processes and cellular components)
-<li><a href="https://stars-app.renci.org/uberongraph/sparql">UberonGraph</a>: A combination of GO, UBERON, MONDO, and other bio-ontologies.
+<li><a href=""https://stars-app.renci.org/uberongraph/sparql">UberonGraph</a>: A combination of GO, UBERON, MONDO, and other bio-ontologies.
 </ul>
 
 ++++

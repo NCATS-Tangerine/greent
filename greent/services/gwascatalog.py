@@ -4,24 +4,22 @@ from greent import node_types
 from greent.graph_components import KNode, LabeledID
 from greent.service import Service
 from greent.util import Text, LoggingUtil
-import logging,json
+import logging,json,pickle,re
 from collections import defaultdict
 
 logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
 
 class GWASCatalog(Service):
-    def __init__(self, context, rosetta):
+    def __init__(self, context):
         super(GWASCatalog, self).__init__("gwascatalog", context)
-        self.synonymizer = rosetta.synonymizer
+        self.all_variants_list = []
 
     def prepopulate_cache(self):
-        if self.context.cache.get('sparse(gwascatalog.sequence_variant_to_disease_or_phenotypic_feature)'):
-            return 0
+
         query_url = 'ftp.ebi.ac.uk/pub/databases/gwas/releases/latest/gwas-catalog-associations_ontology-annotated.tsv'
         ftpsite = 'ftp.ebi.ac.uk'
         ftpdir = '/pub/databases/gwas/releases/latest'
         ftpfile = 'gwas-catalog-associations_ontology-annotated.tsv'
-        temp_gwas_file = 'temp_gwas_catalog.tsv'
         ftp = FTP(ftpsite)
         ftp.login()
         ftp.cwd(ftpdir)
@@ -29,119 +27,201 @@ class GWASCatalog(Service):
         ftp.retrlines(f'RETR {ftpfile}', gwas_catalog.append)
         ftp.quit()
 
-        if gwas_catalog:
+        try:
             file_headers = gwas_catalog[0].split('\t')
+            pub_med_index = file_headers.index('PUBMEDID')
+            p_value_index = file_headers.index('P-VALUE')
+            snps_index = file_headers.index('SNPS')
+            #snp_allele_index = file_headers.index('STRONGEST SNP-RISK ALLELE')
+            trait_ids_index = file_headers.index('MAPPED_TRAIT_URI')
+            trait_names_index = file_headers.index('MAPPED_TRAIT')
+        except (IndexError, ValueError) as e:
+            logger.error(f'GWAS Catalog failed to prepopulate_cache ({e})')
+            return []
+
+        corrupted_lines = 0
+        missing_variant_ids = 0
+        missing_phenotype_ids = 0
+        rsids_without_caids = 0
+        variant_to_pheno_cache = defaultdict(set)
+        rsid_to_nodes_lookup = {}
+
+        trait_uri_pattern = re.compile(r'[^,\s]+')
+        trait_name_pattern = re.compile(r'[^,]+')
+        snp_pattern = re.compile(r'[^,;x*\s]+')
+        for line in gwas_catalog[1:]:
+            line = line.split('\t')
             try:
-                pub_med_index = file_headers.index('PUBMEDID')
-                p_value_index = file_headers.index('P-VALUE')
-                snps_index = file_headers.index('SNPS')
-                trait_ids_index = file_headers.index('MAPPED_TRAIT_URI')
-                trait_names_index = file_headers.index('MAPPED_TRAIT')
-            except:
-                logger.error('GWAS Catalog failed to prepopulate_cache (bad headers in the file)')
-                return None
+                pubmed_id = line[pub_med_index]
+                p_value = float(line[p_value_index])
+               
+                trait_uris = trait_uri_pattern.findall(line[trait_ids_index])
+                trait_names = [trait_name.strip() for trait_name in trait_name_pattern.findall(line[trait_names_index])]
+                snps = snp_pattern.findall(line[snps_index])
+                #snp_allele_pairs = re.findall(r'[^,;x\s]+', line[snp_allele_index])
 
-            corrupted_lines = 0
-            missing_variant_ids = 0
-            missing_phenotype_ids = 0
-            variant_to_pheno_cache = defaultdict(set)
-            rsid_to_node_lookup = {}
-            #for line in iterator:
-            for line in gwas_catalog[1:]:
-                line = line.split('\t')
-                try:
-                    pubmed_id = line[pub_med_index]
-                    p_value = float(line[p_value_index])
-                    trait_uris = [trait.strip() for trait in line[trait_ids_index].split(',')]
-                    trait_names = [trait_name.strip() for trait_name in line[trait_names_index].split(',')]
-                    snps = [snp.strip() for snp in line[snps_index].replace(';',' ').replace(',',' ').replace(' x ',' ').split()]
+                #trait_uris = [trait.strip() for trait in line[trait_ids_index].split(',')]
+                #trait_names = [trait_name.strip() for trait_name in line[trait_names_index].split(',')]
+                #snps = [snp.strip() for snp in line[snps_index].replace(';',' ').replace(',',' ').replace(' x ',' ').replace('*',' ').split()]
 
-                except (IndexError, ValueError) as e:
-                    corrupted_lines += 1
-                    logger.debug(f'GWASCatalog corrupted line: {line}')
-                    continue
+                #snp_alleles = [rsid_allele.split('-', 1)[1] for rsid_allele in line[snp_allele_index].replace(',',';').replace(' x ',';').split(';')]
 
-                # this should check to make sure we have everything we need for it to be worth adding
-                if not (trait_uris and snps and (len(trait_uris) == len(trait_names))):
-                    corrupted_lines += 1
-                    logger.debug(f'GWASCatalog corrupted line: {line}')
-                    continue
-                else:
-                    traits = []
-                    for n, trait_uri in enumerate(trait_uris):
-                        try:
-                            trait_id = trait_uri.rsplit('/', 1)[1]
-                            # ids show up like EFO_123, Orphanet_123, HP_123 
-                            if trait_id.startswith('EFO'):
-                                curie_trait_id = f'EFO:{trait_id[4:]}'
-                            elif trait_id.startswith('Orp'):
-                                curie_trait_id = f'ORPHANET:{trait_id[9:]}'
-                            elif trait_id.startswith('HP'):
-                                curie_trait_id = f'HP:{trait_id[3:]}'
-                            elif trait_id.startswith('NCIT'):
-                                curie_trait_id = f'NCIT:{trait_id[5:]}'
-                            elif trait_id.startswith('GO'):
-                                # Biological process or activity
-                                # 5k+ of these 
-                                missing_phenotype_ids += 1
-                                continue
-                            else:
-                                missing_phenotype_ids += 1
-                                logger.warning(f'{trait_uri} not a recognized trait format')
-                                continue
+            except (IndexError, ValueError) as e:
+                corrupted_lines += 1
+                logger.debug(f'GWASCatalog corrupted line: {e} ')
+                continue
 
-                            traits.append((curie_trait_id, trait_names[n]))
-                        except IndexError as e:
-                            logger.warning(f'{trait_uri} not splittable for ID, from {line}')
+            has_trait_names = False
+            if len(trait_uris) == len(trait_names):
+                has_trait_names = True
+            #else:
+                #logger.debug(f'GWASCatalog had # of trait uris that did not match # of trait names: {trait_uris} {trait_names}')
 
-                    variants = set()
-                    for snp in snps:
-                        if snp.startswith('rs'):
-                            if snp in rsid_to_node_lookup:
-                                temp_node = rsid_to_node_lookup[snp]
-                            else:
-                                temp_node = KNode(f'DBSNP:{snp}', type=node_types.SEQUENCE_VARIANT)
-                                self.synonymizer.synonymize(temp_node)
-                                rsid_to_node_lookup[snp] = temp_node
-                            
-                            caids = temp_node.get_synonyms_by_prefix('CAID')
-                            if caids:
-                                for caid in caids:
-                                    variants.add(caid)
-                            else:
-                                variants.add(temp_node.id)
+            #has_snp_alleles = False
+            #snp_alleles = []
+            #if len(snps) == len(snp_allele_pairs):
+            #    for pair in snp_allele_pairs:
+            #        try:
+            #            allele = pair.split('-',1)[1]
+            #            has_snp_alleles = True
+            #        except IndexError as e:
+            #            logger.debug(f'GWASCatalog could not split snp-allele: {pair}')
+            #            allele = '?'
+            #        snp_alleles.append(allele)
+            #else:
+            #    logger.debug(f'GWASCatalog had # of snps that did not match # of snp alleles: {line}')
+            #    pass
+
+            if not (trait_uris and snps):
+                corrupted_lines += 1
+                logger.debug(f'GWASCatalog corrupted line: {line}')
+                continue
+            else:
+                traits = []
+                for n, trait_uri in enumerate(trait_uris):
+                    try:
+                        trait_id = trait_uri.rsplit('/', 1)[1]
+                        # ids show up like EFO_123, Orphanet_123, HP_123 
+                        if trait_id.startswith('EFO'):
+                            curie_trait_id = f'EFO:{trait_id[4:]}'
+                        elif trait_id.startswith('Orp'):
+                            curie_trait_id = f'ORPHANET:{trait_id[9:]}'
+                        elif trait_id.startswith('HP'):
+                            curie_trait_id = f'HP:{trait_id[3:]}'
+                        elif trait_id.startswith('NCIT'):
+                            curie_trait_id = f'NCIT:{trait_id[5:]}'
+                        elif trait_id.startswith('MONDO'):
+                            curie_trait_id = f'MONDO:{trait_id[6:]}'
+                        elif trait_id.startswith('GO'):
+                            # Biological process or activity
+                            # 5k+ of these 
+                            missing_phenotype_ids += 1
+                            continue
                         else:
-                            # these are variants that don't have an rsid, should we try to create HGVS?
-                            missing_variant_ids += 1
-                            pass
+                            missing_phenotype_ids += 1
+                            logger.warning(f'{trait_uri} not a recognized trait format')
+                            continue
 
-                    if traits and variants:
-                        props = {'pvalue' : p_value}
-                        for variant_id in variants:
-                            temp_variant_node = KNode(variant_id, name=variant_id, type=node_types.SEQUENCE_VARIANT)
-                            var_to_phen_key = f'gwascatalog.sequence_variant_to_disease_or_phenotypic_feature({variant_id})'
-                            for trait_id, trait_name in traits:
-                                variant_to_pheno_cache[var_to_phen_key].add(self.create_variant_to_phenotype_components(
-                                                                                query_url, 
-                                                                                temp_variant_node, 
-                                                                                trait_id, 
-                                                                                trait_name, 
-                                                                                pubmed_id=pubmed_id, 
-                                                                                properties=props))
+                        if has_trait_names:
+                            traits.append((curie_trait_id, trait_names[n]))
+                        else:
+                            traits.append((curie_trait_id, ''))
 
-            if corrupted_lines:
-                logger.debug(f'GWASCatalog batch file had {corrupted_lines} corrupted lines!')
-            if missing_variant_ids:
-                logger.debug(f'GWASCatalog batch could not ID {missing_variant_ids} variant ids')
-            if missing_phenotype_ids:
-                logger.debug(f'GWASCatalog batch could not ID {missing_phenotype_ids} phenotype ids')
+                    except IndexError as e:
+                        logger.warning(f'trait uri index error:({trait_uri}) not splittable')
 
-            if variant_to_pheno_cache:
-                for new_key, new_value in variant_to_pheno_cache.items():
-                    self.context.cache.set(new_key, new_value)
-                self.context.cache.set('sparse(gwascatalog.sequence_variant_to_disease_or_phenotypic_feature)', True)
+                variant_nodes = set()
+                for n, snp in enumerate(snps):
+                    if snp.startswith('rs'):
+                        dbsnp_curie = f'DBSNP:{snp}'
+                        #if has_snp_alleles:
+                        #    snp_allele = snp_alleles[n]
+                        if snp in rsid_to_nodes_lookup:
+                            temp_variant_nodes = rsid_to_nodes_lookup[snp]
+                        else:
+                            #if has_snp_alleles and (snp_allele != '?'):
+                            #    synonyms = self.context.cache.get(f'synonymize({dbsnp_curie}({snp_allele}))') 
+                            #    if synonyms is None:
+                            #        synonyms = self.context.core.clingen.get_synonyms_by_rsid_with_sequence(snp, snp_allele)
+                            #        self.context.cache.set(f'synonymize({dbsnp_curie}({snp_allele}))', synonyms)
+                            #else:
+                            synonyms = self.context.cache.get(f'synonymize({dbsnp_curie})') 
+                            if synonyms is None:
+                                dbsnp_node = KNode(dbsnp_curie, type=node_types.SEQUENCE_VARIANT)
+                                synonyms = self.context.core.clingen.get_synonyms_by_other_ids(dbsnp_node)
+                                self.context.cache.set(f'synonymize({dbsnp_curie})', synonyms)
 
-            return True
+                            if len(synonyms) == 0:
+                                #logger.debug(f'GWASCatalog could not find synonyms for {dbsnp_curie} with allele {snp_allele}')
+                                #logger.debug(f'GWASCatalog could not find synonyms for {dbsnp_curie}')
+                                rsids_without_caids += 1
+                            
+                            temp_variant_nodes = []
+                            for synonym in synonyms:
+                                if Text.get_curie(synonym.identifier) == 'CAID':
+                                    #self.context.cache.redis.delete(f'synonymize({synonym.identifier})')
+                                    #synonyms = self.context.core.clingen.get_synonyms_by_caid(Text.un_curie(synonym.identifier))
+                                    #self.context.cache.set(f'synonymize({synonym.identifier})', synonyms)
+                                    temp_variant_nodes.append(KNode(synonym.identifier, name=synonym.identifier, type=node_types.SEQUENCE_VARIANT))
+
+                            if not temp_variant_nodes:
+                                temp_variant_nodes.append(KNode(dbsnp_curie, name=dbsnp_curie, type=node_types.SEQUENCE_VARIANT))
+
+                            rsid_to_nodes_lookup[snp] = temp_variant_nodes
+
+                        for node in temp_variant_nodes:
+                            variant_nodes.add(node)
+                    else:
+                        # these are variants that don't have an rsid, should we try to create HGVS?
+                        #logger.info(f'gwascatalog variant {snp} not recognized')
+                        missing_variant_ids += 1
+                        pass
+
+                if traits and variant_nodes:
+                    props = {'pvalue' : p_value}
+                    for variant_node in variant_nodes:
+                        for trait_id, trait_name in traits:
+                            variant_to_pheno_cache[variant_node.id].add(self.create_variant_to_phenotype_components(
+                                                                            query_url, 
+                                                                            variant_node, 
+                                                                            trait_id, 
+                                                                            trait_name, 
+                                                                            pubmed_id=pubmed_id, 
+                                                                            properties=props))
+
+        if corrupted_lines:
+            logger.debug(f'GWASCatalog file had {corrupted_lines} corrupted lines!')
+        if missing_variant_ids:
+            logger.debug(f'GWASCatalog precaching could not ID {missing_variant_ids} variant ids')
+        if missing_phenotype_ids:
+            logger.debug(f'GWASCatalog precaching could not ID {missing_phenotype_ids} phenotype ids')
+        if rsids_without_caids:
+            logger.debug(f'GWASCatalog precaching had {rsids_without_caids} rsids without caids')
+
+        # add every sequence variant -> disease or phenotype edge and node to the cache
+        with self.context.cache.redis.pipeline() as redis_pipe:
+            for variant_curie, phenotypes in variant_to_pheno_cache.items():
+                gwascatalog_key = f'gwascatalog.sequence_variant_to_disease_or_phenotypic_feature({variant_curie})'
+                redis_pipe.set(gwascatalog_key, pickle.dumps(phenotypes))
+            redis_pipe.execute()
+
+            self.context.cache.set('sparse(gwascatalog.sequence_variant_to_disease_or_phenotypic_feature)', True)
+
+        # add the entire list of sequence variants to the cache
+        self.all_variants_list = list(variant_to_pheno_cache.keys())
+        self.context.cache.set('sparse_list(gwascatalog.variants)', self.all_variants_list)
+
+        return self.all_variants_list
+
+    def is_precached(self):
+        return self.context.cache.get('sparse(gwascatalog.sequence_variant_to_disease_or_phenotypic_feature)')
+
+    def get_all_sequence_variants(self):
+        if self.all_variants_list:
+            return self.all_variants_list
+        else:
+            # this could be None which would indicate it wasn't precached properly
+            return self.context.cache.get('sparse_list(gwascatalog.variants)')
 
     def create_variant_to_phenotype_components(self, query_url, variant_node, phenotype_id, phenotype_label, pubmed_id=None, properties={}):
         
@@ -187,7 +267,7 @@ class GWASCatalog(Service):
         
         # TODO - reconsider this approach - we could return None instead of [] for empty results
         # so that program could handle this sparse array more intelligently (ie not write all the empty results)
-        if self.context.cache.get('sparse(gwascatalog.sequence_variant_to_disease_or_phenotypic_feature)'):
+        if self.is_precached():
             cached_response = self.context.cache.get(f'gwascatalog.sequence_variant_to_disease_or_phenotypic_feature({variant_node.id})')
             if cached_response is not None:
                 return cached_response

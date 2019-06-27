@@ -45,7 +45,7 @@ class KNode(FromDictMixin):
         """Accepts a collection of either String CURIES or LabeledIDs"""
         #Once I am sure that we're only sending in strings, we can dunk this and go back to just using update
         #self.synonyms.update(new_synonym_set)
-        for newsyn in new_synonym_set:
+        for newsyn in filter(lambda x : x != None, new_synonym_set):
             if isinstance(newsyn,str):
                 self.synonyms.add(LabeledID(identifier=newsyn, label=""))
             else:
@@ -115,6 +115,7 @@ class KEdge(FromDictMixin):
         self.target_id = None
         self.provided_by = None
         self.ctime = None
+        self.hyper_edge_id = None
         self.original_predicate = None
         self.standard_predicate = None
         self.input_id = None
