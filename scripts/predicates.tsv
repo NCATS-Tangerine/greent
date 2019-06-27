@@ -1,0 +1,173 @@
+affects	describes an entity that has a direct affect on the state or quality of another existing entity. Use of the 'affects' predicate implies that the affected entity already exists, unlike predicates such as 'affects risk for' and 'prevents, where the outcome is something that may or may not come to be.
+decreases expression of	holds between two molecular entities where the action or effect of one decreases the level of expression of the other within a system of interest
+in cell population with	holds between two genes or gene products that are expressed in the same cell type or population 
+positively regulates, entity to entity	Indicates that the source entity increases a process that the target entity is capable of
+has molecular consequence	connects a sequence variant to a class describing the molecular consequence. E.g.  SO:0001583
+affects transport of	holds between two molecular entities where the action or effect of one impacts the rate of transport of the other across some boundary in a system of interest
+increases molecular interaction	indicates that the source increases the molecular interaction between the target and some other molecular entity
+treats	holds between a therapeutic procedure or chemical substance and a disease or phenotypic feature that it is used to treat 
+derives into	holds between two distinct material entities, the old entity and the new entity, in which the new entity begins to exist when the old entity ceases to exist, and the new entity inherits the significant portion of the matter of the old entity
+increases degradation of	holds between two molecular entities where the action or effect of one increases the rate of degradation of the other within a system of interest
+sequence variant qualifier	a qualifier used in an association where the variant
+affects mutation rate of	holds between a molecular entity and a genomic entity where the action or effect of the molecular entity impacts the rate of mutation of the genomic entity within a system of interest
+category	Name of the high level ontology class in which this entity is categorized. Corresponds to the label for the biolink entity type class. In a neo4j database this MAY correspond to the neo4j label tag
+causes	holds between two entities where the occurrence, existence, or activity of one causes the occurrence or  generation of the other
+decreases synthesis of	holds between two molecular entities where the action or effect of one decreases the rate of chemical synthesis of the other
+decreases secretion of	holds between two molecular entities where the action or effect of one decreases the rate of secretion of the other out of a cell, gland, or organ
+affects response to	holds between two molecular entities where the action or effect of one impacts the susceptibility of a biological entity or system (e.g. an organism, cell, cellular component, macromolecular machine, biological or pathological process) to the other
+manifestation of	used in SemMedDB for linking things like dysfunctions and processes to some disease or syndrome
+has output	holds between a process and an entity created by the process
+causes adverse event	holds between a drug and a disease or phenotype that can be caused by the drug
+decreases localization of	holds between two molecular entities where the action or effect of one decreases the proper localization of the other within a system of interest
+id	A unique identifier for a thing. Must be either a CURIE shorthand for a URI or a complete URI
+decreases response to	holds between two molecular entities where the action or effect of one decreases the susceptibility of a biological entity or system (e.g. an organism, cell, cellular component, macromolecular machine, biological or pathological process) to the other
+increases folding of	holds between two molecular entities where the action or effect of one increases the rate or quality of folding of the other 
+has total	total number of things in a particular reference set
+regulates	Indicates that the source changes the abundance or frequency of the target
+filler	The value in a property-value tuple
+occurs in	holds between a process and a material entity or site within which the process occurs
+stage qualifier	stage at which expression takes place
+subject	connects an association to the subject of the association. For example, in a gene-to-phenotype association, the gene is subject and phenotype is object.
+association type	connects an association to the type of association (e.g. gene to phenotype)
+has biomarker	holds between a disease or phenotypic feature and a measurable molecular entity that is used as an indicator of the presence or state of the disease or feature.
+has completed	holds between an entity and a process that the entity is capable of and has completed
+has biological sequence	connects a genomic feature to its sequence
+increases stability of	holds between two molecular entities where the action or effect of one increases the stability of the other within a system of interest
+association slot	any slot that relates an association to another entity
+full name	a long-form human readable name for a thing
+regulates, entity to entity	Indicates that the source entity modifies a process that the target entity is capable of
+is nearby variant of	holds between a sequence variant and a gene sequence that the variant is genomically close to.
+decreases splicing of	holds between a molecular entity and an mRNA where the action or effect of the molecular entity decreases the proper splicing of the mRNA
+affects secretion of	holds between two molecular entities where the action or effect of one impacts the rate of secretion of the other out of a cell, gland, or organ
+affects uptake of	holds between two molecular entities where the action or effect of one impacts the rate of uptake of the other into of a cell, gland, or organ
+relation	the relationship type by which a subject is connected to an object in an association
+increases localization of	holds between two molecular entities where the action or effect of one increases the proper localization of the other within a system of interest
+clinical modifier qualifier	Used to characterize and specify the phenotypic abnormalities defined in the Phenotypic abnormality subontology, with respect to severity, laterality, age of onset, and other aspects
+physically interacts with	holds between two entities that make physical contact as part of some interaction
+decreases molecular modification of	holds between two molecular entities where the action or effect of one leads to decreased molecular modification(s) of the other (e.g. via post-translational modifications of proteins such as the addition of phosphoryl group, or via redox reaction that adds or subtracts electrons)
+has confidence level	connects an association to a qualitative term denoting the level of confidence
+increases molecular modification of	holds between two molecular entities where the action or effect of one leads to increased molecular modification(s) of the other (e.g. via post-translational modifications of proteins such as the addition of phosphoryl group, or via redox reaction that adds or subtracts electrons)
+results in motion of	holds between a process and an entity that moves as a result of the process
+affects risk for	holds between two entities where exposure to one entity alters the chance of developing the other 
+predisposes	holds between two entities where exposure to one entity increases the chance of developing the other 
+decreases activity of	holds between two molecular entities where the action or effect of one decreases the activity of the other within a system of interest
+actively involved in	holds between a continuant and a process or function, where the continuant actively contributes to part or all of the process or function it realizes
+in complex with	holds between two genes or gene products that are part of (or code for products that are part of) in the same macromolecular complex
+systematic synonym	more commonly used for gene symbols in yeast
+has percentage	equivalent to has quotient multiplied by 100
+provided by	connects an association to the agent (person, organization or group) that provided it
+subclass of	holds between two classes where the domain class is a specialization of the range class
+decreases folding of	holds between two molecular entities where the action or effect of one decreases the rate or quality of folding of the other 
+located in	holds between a material entity and a material entity or site within which it is located (but of which it is not considered a part)
+negatively regulates, entity to entity	Indicates that the source entity decreases a process that the target entity is capable of
+derives from	holds between two distinct material entities, the new entity and the old entity, in which the new entity begins to exist when the old entity ceases to exist, and the new entity inherits the significant portion of the matter of the old entity
+affects molecular modification of	holds between two molecular entities where the action or effect of one leads changes in the molecular modification(s) of the other (e.g. via post-translational modifications of proteins such as the addition of phosphoryl group, or via redox reaction that adds or subtracts electrons)
+decreases stability of	holds between two molecular entities where the action or effect of one decreases the stability of the other within a system of interest
+co-localizes with	holds between two entities that are observed to be located in the same place.
+increases expression of	holds between two molecular entities where the action or effect of one increases the level of expression of the other within a system of interest
+increases metabolic processing of	holds between two molecular entities where the action or effect of one increases the rate of metabolic processing of the other within a system of interest
+increases synthesis of	holds between two molecular entities where the action or effect of one increases the rate of chemical synthesis of the other
+longitude	longitude
+is synonymous variant of	holds between a sequence variant and a gene, such the sequence variant is in the coding sequence of the gene, but results in the same amino acid sequence
+has participant	holds between a process and a continuant, where the continuant is somehow involved in the process 
+affects localization of	holds between two molecular entities where the action or effect of one changes the localization of the other within a system of interest
+decreases mutation rate of	holds between a molecular entity and a genomic entity where the action or effect of the molecular entity decreases the rate of mutation of the genomic entity within a system of interest
+object	connects an association to the object of the association. For example, in a gene-to-phenotype association, the gene is subject and phenotype is object.
+increases mutation rate of	holds between a molecular entity and a genomic entity where the action or effect of the molecular entity increases the rate of mutation of the genomic entity within a system of interest
+affects folding of	holds between two molecular entities where the action or effect of one changes the rate or quality of folding of the other 
+has evidence	connects an association to an instance of supporting evidence
+negated	if set to true, then the association is negated i.e. is not true
+phase	TODO
+negatively regulates	Indicates that the source terminates or decreases the abundance or frequency of the target
+interbase coordinate	TODO
+increases activity of	holds between two molecular entities where the action or effect of one increases the activity of the other within a system of interest
+has phenotype	holds between a biological entity and a phenotype, where a phenotype is construed broadly as any kind of quality of an organism part, a collection of these qualities, or a change in quality or qualities (e.g. abnormally increased temperature). 
+has input	holds between a process and a continuant, where the continuant is an input into the process
+disease to gene association	holds between a disease and a related gene
+is nonsense variant of	holds between a sequence variant and a gene, such the sequence variant results in a premature stop codon
+affects stability of	holds between two molecular entities where the action or effect of one impacts the stability of the other within a system of interest
+gene associated with condition	holds between a gene and a disease or phenotypic feature that the gene or its alleles/products may influence, contribute to, or correlate with
+edge label	A high-level grouping for the relationship type. AKA minimal predicate. This is analogous to category for nodes. 
+contraindicated for	Holds between a drug and a disease or phenotype, such that a person with that disease should not be treated with the drug.
+affects activity of	holds between two molecular entities where the action or effect of one changes the activity of the other within a system of interest
+treated by	holds between a disease or phenotypic feature and a therapeutic process or chemical substance that is used to treat the condition 
+location of	holds between material entity or site and a material entity that is located within it (but not considered a part of it) 
+is non coding variant of	holds between a sequence variant and a gene, where the variant does not affect the coding sequence
+regulates, process to process	The source process modifies the frequency or magnitude of the target process.
+model of	holds between an entity and some other entity it approximates for purposes of scientific study, in virtue of its exibiting similar features of the studied entity.    
+increases secretion of	holds between two molecular entities where the action or effect of one increases the rate of secretion of the other out of a cell, gland, or organ
+disease has basis in	A relation that holds between a disease and an entity where the state of the entity has contribution to the disease.
+interacts with	holds between any two entities that directly or indirectly interact with each other
+has gene product	holds between a gene and a transcribed and/or translated product generated from it
+decreases degradation of	holds between two molecular entities where the action or effect of one decreases the rate of degradation of the other within a system of interest
+in linkage disequilibrium with	holds between two sequence variants, the presence of which are correlated in a population
+correlated with	holds between a disease or phenotypic feature and a measurable molecular entity that is used as an indicator of the presence or state of the disease or feature.
+negatively regulates, process to process	The source process terminates or reduces the frequency or magnitude of the target process.
+has not completed	holds between an entity and a process that the entity is capable of, but has not completed
+mereotopologically related to	A mereological relationship or a topological relationship
+paralogous to	a homology relationship that holds between entities (typically genes) that diverged after a duplication event.
+affects synthesis of	holds between two molecular entities where the action or effect of one impacts the rate of chemical synthesis of the other
+node property	A grouping for any property that holds between a node and a value
+affects degradation of	holds between two molecular entities where the action or effect of one impacts the rate of degradation of the other within a system of interest
+prevents	holds between an entity whose application or use reduces the likelihood of a potential outcome.  Typically used to associate a chemical substance, exposure, activity, or medical intervention that can prevent the onset a disease or phenotypic feature.
+participates in	holds between a continuant and a process, where the continuant is somehow involved in the process
+molecularly interacts with	holds between molecular entities that directly interact
+decreases metabolic processing of	holds between two molecular entities where the action or effect of one decreases the rate of metabolic processing of the other within a system of interest
+produces	holds between a material entity and a product that is generated through the intentional actions or functioning of the material entity
+affects splicing of	holds between a molecular entity and an mRNA where the action or effect of the molecular entity impacts the splicing of the mRNA
+expresses	holds between an anatomical entity and gene or gene product that is expressed there
+same as	holds between two entities that are considered equivalent to each other
+sex qualifier	a qualifier used in a phenotypic association to state whether the association is specific to a particular sex.
+publications	connects an association to publications supporting the association
+severity qualifier	a qualifier used in a phenotypic association to state how severe the phenotype is in the subject
+spatially disjoint from	holds between two entities that have no spatial overlap
+quantifier qualifier	A measurable quantity for the object of the association
+part of	holds between parts and wholes (material entities or processes)
+is missense variant of	holds between a sequence variant and a gene, such the sequence variant results in a different amino acid sequence but where the length is preserved.
+decreases molecular interaction	indicates that the source decreases the molecular interaction between the target and some other molecular entity
+increases splicing of	holds between a molecular entity and an mRNA where the action or effect of the molecular entity increases the proper splicing of the mRNA
+name	A human-readable name for a thing
+expressed in	holds between a gene or gene product and an anatomical entity in which it is expressed
+has chemical formula	description of chemical compound based on element symbols
+increases uptake of	holds between two molecular entities where the action or effect of one increases the rate of uptake of the other into of a cell, gland, or organ
+frequency qualifier	a qualifier used in a phenotypic association to state how frequent the phenotype is observed in the subject
+increases transport of	holds between two molecular entities where the action or effect of one increases the rate of transport of the other across some boundary in a system of interest
+has gene	connects and entity to a single gene
+decreases transport of	holds between two molecular entities where the action or effect of one decreases the rate of transport of the other across some boundary in a system of interest
+affects expression of	holds between two molecular entities where the action or effect of one changes the level of expression of the other within a system of interest
+increases response to	holds between two molecular entities where the action or effect of one increases the susceptibility of a biological entity or system (e.g. an organism, cell, cellular component, macromolecular machine, biological or pathological process) to the other
+iri	An IRI for the node. This is determined by the id using expansion rules.
+xenologous to	a homology relationship characterized by an interspecies (horizontal) transfer since the common ancestor.
+decreases abundance of	holds between two molecular entities where the action or effect of one decreases the amount of the other within a system of interest
+related to	A grouping for any relationship type that holds between any two things
+has part	holds between wholes and their parts (material entities or processes)
+genetically interacts with	holds between two genes whose phenotypic effects are dependent on each other in some way - such that their combined phenotypic effects are the result of some interaction between the activity of their gene products. Examples include epistasis and synthetic lethality.
+update date	date on which thing was updated. This can be applied to nodes or edges
+in taxon	connects a thing to a class representing a taxon
+contributes to	holds between two entities where the occurrence, existence, or activity of one causes or contributes to the occurrence or generation of the other
+coexists with	holds between two entities that are co-located in the same aggregate object, process, or spatio-temporal region
+orthologous to	a homology relationship between entities (typically genes) that diverged after a speciation event.
+affects metabolic processing of	holds between two molecular entities where the action or effect of one impacts the metabolic processing of the other within a system of interest
+disrupts	describes a relationship where one entity degrades or interferes with the structure, function, or occurrence of another.
+is splice site variant of	holds between a sequence variant and a gene, such the sequence variant is in the canonical splice site of one of the gene's exons.
+affects abundance of	holds between two molecular entities where the action or effect of one changes the amount of the other within a system of interest
+genome build	TODO
+positively regulates, process to process	The source process initiates or increases the frequency or magnitude of the target process.
+homologous to	holds between two biological entities that have common evolutionary origin
+in pathway with	holds between two genes or gene products that are part of in the same biological pathway
+timepoint	a point in time
+results in developmental progression of	holds between a developmental process and the anatomical output of that process
+biomarker for	holds between a measurable molecular entity and a disease or phenotypic feature, where the entity is used as an indicator of the presence or state of the disease or feature.
+overlaps	holds between entties that overlap in their extents (materials or processes)
+description	a human-readable description of a thing
+capable of	holds between a continuant and process or function, where the continuant alone has the ability to carry out the process or function. 
+has count	number of things with a particular property
+creation date	date on which thing was created. This can be applied to nodes or edges
+qualifiers	connects an association to qualifiers that modify or qualify the meaning of that association
+decreases uptake of	holds between two molecular entities where the action or effect of one decreases the rate of uptake of the other into of a cell, gland, or organ
+latitude	latitude
+precedes	holds between two processes, where one completes before the other begins
+increases abundance of	holds between two molecular entities where the action or effect of one increases the amount of the other within a system of interest
+directly interacts with	Holds between molecular entities that phyically and directly interact with each other
+onset qualifier	a qualifier used in a phenotypic association to state when the phenotype appears is in the subject
+positively regulates	Indicates that the source initiates or increases the abundance or frequency of the target
