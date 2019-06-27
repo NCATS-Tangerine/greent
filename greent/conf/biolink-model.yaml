@@ -1509,7 +1509,6 @@ slots:
     description: >-
       TODO
 
-  start interbase coordinate:
     is_a: interbase coordinate
 
   end interbase coordinate:

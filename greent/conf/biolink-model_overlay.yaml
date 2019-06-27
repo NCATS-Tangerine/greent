@@ -116,7 +116,6 @@ slots:
       - biolink:gene_get_process             # biolink returns no relation_id or an identifier that is not a curie
       - biolink:gene_get_process_or_function # biolink returns no relation_id or an identifier that is not a curie
 
-
   affects:
     mappings:
       - GO:acts_on_population_of
@@ -126,8 +125,27 @@ slots:
       - UPHENO:0000001
       - RO:0002573
 
-    #In the model, here for the hetio mappings
+  #In the model, here to get description
+  regulates, process to process:
+    description: >-
+      The source process modifies the frequency or magnitude of the target process.
+
+  negatively regulates, process to process:
+    description: >-
+      The source process terminates or reduces the frequency or magnitude of the target process.
+
+  positively regulates, process to process:
+    description: >-
+      The source process initiates or increases the frequency or magnitude of the target process.
+
+  regulates, entity to entity:
+    description: >-
+      Indicates that the source entity modifies a process that the target entity is capable of
+
+  #In the model, here for the hetio mappings
   positively regulates, entity to entity:
+    description: >-
+      Indicates that the source entity increases a process that the target entity is capable of
     mappings:
       - RO:0002450
       - hetio:UPREGULATES_AuG
@@ -136,12 +154,16 @@ slots:
 
     #In the model, here for the hetio mappings
   negatively regulates, entity to entity:
+    description: >-
+      Indicates that the source entity decreases a process that the target entity is capable of
     mappings:
       - RO:0002449
       - hetio:DOWNREGULATES_AdG
       - hetio:DOWNREGULATES_DdG
 
   directly interacts with:
+    description: >-
+      Holds between molecular entities that phyically and directly interact with each other
     mappings:
       - SIO:000203                # Connected to (is that really a good mapping?)
       - chembio:interacts
@@ -593,6 +615,8 @@ slots:
 
   #the following are not in the original biolink model
   is missense variant of:
+    description: >-
+      holds between a sequence variant and a gene, such the sequence variant results in a different amino acid sequence but where the length is preserved.
     mappings:
       - SO:0001583
       - SNPEFF:missense_variant
@@ -600,6 +624,8 @@ slots:
       - SNPEFF:structural_interaction_variant
 
   is synonymous variant of:
+    description: >-
+      holds between a sequence variant and a gene, such the sequence variant is in the coding sequence of the gene, but results in the same amino acid sequence
     mappings:
       - SO:0001819
       - SNPEFF:synonymous_variant
@@ -607,6 +633,8 @@ slots:
       - SNPEFF:stop_retained_variant
 
   is nonsense variant of:
+    description: >-
+      holds between a sequence variant and a gene, such the sequence variant results in a premature stop codon
     mappings:
       - SO:0002054
       - SNPEFF:stop_gained
@@ -615,6 +643,8 @@ slots:
       - SNPEFF:frameshift_variant
 
   is splice site variant of:
+    description: >-
+      holds between a sequence variant and a gene, such the sequence variant is in the canonical splice site of one of the gene's exons.
     mappings:
       - SO:0001629
       - SNPEFF:splice_region_variant
@@ -622,12 +652,16 @@ slots:
       - SNPEFF:splice_donor_variant
 
   is nearby variant of:
+    description: >-
+      holds between a sequence variant and a gene sequence that the variant is genomically close to.
     mappings:
       - GAMMA:0000102
       - SNPEFF:downstream_gene_variant
       - SNPEFF:upstream_gene_variant
 
   is non coding variant of:
+    description: >-
+      holds between a sequence variant and a gene, where the variant does not affect the coding sequence
     mappings:
       - GAMMA:0000103
       - SNPEFF:3_prime_UTR_variant
@@ -637,6 +671,8 @@ slots:
       - SNPEFF:intron_variant
 
   disease to gene association:
+    description: >-
+      holds between a disease and a related gene
     is_a: association
     mappings:
       - NCIT:R176 #disease_mapped_to_gene/gene_mapped_to_disease
@@ -644,12 +680,16 @@ slots:
       - hetio:ASSOCIATES_DaG
 
   results in motion of:
+    description: >-
+      holds between a process and an entity that moves as a result of the process
     domain: process
     range: entity #?
     mappings:
       - RO:0002565
 
   results in developmental progression of:
+    description: >-
+      holds between a developmental process and the anatomical output of that process
     mappings:
       - RO:0002295
       - RO:0002296   # Probably should handle this some other way...
@@ -671,6 +711,8 @@ slots:
       - RO:0002585
 
   has output:
+    description: >-
+      holds between a process and an entity created by the process
     mappings:
       - RO:0002234
 
@@ -688,19 +730,27 @@ slots:
       - mondo#disease:has:basis:in:development:of
       
   causes adverse event:
+    description: >-
+      holds between a drug and a disease or phenotype that can be caused by the drug
     mappings:
      - RO:0003302 #Causes or contributes to
      - Aeolus:0000001
 
   contraindicated for:
+    description: >-
+      Holds between a drug and a disease or phenotype, such that a person with that disease should not be treated with the drug.
     mappings:
       - DrugCentral:0000001  
  
   has not completed:
+    description: >-
+      holds between an entity and a process that the entity is capable of, but has not completed
     mappings:
       - cl#has:not:completed
 
   has completed:
+    description: >-
+      holds between an entity and a process that the entity is capable of and has completed
     mappings:
       - cl#has:completed
   
@@ -712,30 +762,44 @@ slots:
       - RO:0002232
 
   regulates:
+    description: >-
+      Indicates that the source changes the abundance or frequency of the target
     mappings:
       - RO:0002596
   
   negatively regulates:
+    description: >-
+      Indicates that the source terminates or decreases the abundance or frequency of the target
     mappings:
       - RO:0002597
   
-  posetively regulates:
+  positively regulates:
+    description: >-
+      Indicates that the source initiates or increases the abundance or frequency of the target
     mappings:
       - RO:0002598
 
   mereotopologically related to:
+    description: >-
+      A mereological relationship or a topological relationship
     mappings:
       - RO:0002323
   
-  moleculary interacts with:
+  molecularly interacts with:
+    description: >-
+      holds between molecular entities that directly interact
     mappings:
       - CTD:molecularly_interacts_with
   
   decreases molecular interaction:
+    description: >-
+      indicates that the source decreases the molecular interaction between the target and some other molecular entity
     mappings:
       - CTD:decreases_molecular_interaction_with
   
   increases molecular interaction:
+    description: >-
+      indicates that the source increases the molecular interaction between the target and some other molecular entity
     mappings:
       - CTD:increases_molecular_interaction_with
   
@@ -748,9 +812,13 @@ slots:
       - RO:0002220
 
   spatially disjoint from:
+    description: >-
+      holds between two entities that have no spatial overlap
     mappings:
       - RO:0002163
 
   in linkage disequilibrium with:
+    description: >-
+      holds between two sequence variants, the presence of which are correlated in a population
     mappings:
       - NCIT:C16798
