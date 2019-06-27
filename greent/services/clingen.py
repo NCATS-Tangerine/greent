@@ -118,6 +118,8 @@ class ClinGen(Service):
         if 'genomicAlleles' in allele_json:
             try:
                 for genomic_allele in allele_json['genomicAlleles']:
+                    for hgvs_id in genomic_allele['hgvs']:
+                        synonyms.add(LabeledID(identifier=f'HGVS:{hgvs_id}', label=f'{hgvs_id}'))
                     if 'referenceGenome' in genomic_allele and genomic_allele['referenceGenome'] == 'GRCh38':
                         # TODO find out why coordinates is a list - could be there other coordinates here?
                         sequence = genomic_allele['coordinates'][0]['allele']
@@ -133,20 +135,16 @@ class ClinGen(Service):
                         robokop_variant_id = f'HG38|{chromosome}|{start_position}|{end_position}|{sequence}'
                         synonyms.add(LabeledID(identifier=f'ROBO_VARIANT:{robokop_variant_id}', label=robokop_variant_id))
 
-                        # TODO do we want all of the other hgvs? or just grch38?
-                        for hgvs_id in genomic_allele['hgvs']:
-                            synonyms.add(LabeledID(identifier=f'HGVS:{hgvs_id}', label=f'{hgvs_id}'))
-
             except KeyError as e:
                 logger.info(f'parsing sequence variant synonym and genomicAlleles had an issue: {e}')
                             
         if 'externalRecords' in allele_json:
-            #try:
-                #for myvar_json in allele_json['externalRecords']['MyVariantInfo_hg19']:
-                #    myvariant_id = myvar_json['id']
-                #    synonyms.add(LabeledID(identifier=f'MYVARIANT_HG19:{myvariant_id}', label=f'{myvariant_id}'))
-            #except KeyError as e:
-                #pass
+            try:
+                for myvar_json in allele_json['externalRecords']['MyVariantInfo_hg19']:
+                    myvariant_id = myvar_json['id']
+                    synonyms.add(LabeledID(identifier=f'MYVARIANT_HG19:{myvariant_id}', label=f'{myvariant_id}'))
+            except KeyError as e:
+                pass
             try:
                 for myvar_json in allele_json['externalRecords']['MyVariantInfo_hg38']:
                     myvariant_id = myvar_json['id']
