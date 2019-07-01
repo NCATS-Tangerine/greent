@@ -72,8 +72,8 @@ class GWASCatalog(Service):
                 has_trait_names = False
                 if len(trait_uris) == len(trait_names):
                     has_trait_names = True
-                #else:
-                    #logger.debug(f'GWASCatalog had # of trait uris that did not match # of trait names: {trait_uris} {trait_names}')
+                else:
+                    logger.debug(f'GWASCatalog had # of trait uris that did not match # of trait names: {trait_uris} {trait_names}')
 
                 #has_snp_alleles = False
                 #snp_alleles = []
@@ -123,7 +123,7 @@ class GWASCatalog(Service):
                             if has_trait_names:
                                 traits.append((curie_trait_id, trait_names[n]))
                             else:
-                                traits.append((curie_trait_id, ''))
+                                traits.append((curie_trait_id, curie_trait_id))
 
                         except IndexError as e:
                             logger.warning(f'trait uri index error:({trait_uri}) not splittable')

@@ -121,42 +121,37 @@ class ClinGen(Service):
                     for hgvs_id in genomic_allele['hgvs']:
                         synonyms.add(LabeledID(identifier=f'HGVS:{hgvs_id}', label=f'{hgvs_id}'))
                     if 'referenceGenome' in genomic_allele and genomic_allele['referenceGenome'] == 'GRCh38':
-                        # TODO find out why coordinates is a list - could be there other coordinates here?
-                        sequence = genomic_allele['coordinates'][0]['allele']
-                        # TODO should we worry about upper / lowercase here .. right now everything should be upper
-                        if match_sequence and match_sequence != sequence:
-                            # this CAID doesn't match the sequence, bail
-                            #logger.info(f'clingen had a mismatched sequence - wanted {match_sequence} but found {sequence}')
-                            return set()
-
-                        chromosome = genomic_allele['chromosome']
-                        start_position = genomic_allele['coordinates'][0]['start']
-                        end_position = genomic_allele['coordinates'][0]['end']
-                        robokop_variant_id = f'HG38|{chromosome}|{start_position}|{end_position}|{sequence}'
-                        synonyms.add(LabeledID(identifier=f'ROBO_VARIANT:{robokop_variant_id}', label=robokop_variant_id))
+                        # this is put on hold 
+                        # this doesn't match the sequence, bail
+                        #if match_sequence and match_sequence != sequence:
+                        #    return set()
+                        
+                        if 'chromosome' in genomic_allele:
+                            sequence = genomic_allele['coordinates'][0]['allele']
+                            chromosome = genomic_allele['chromosome']
+                            start_position = genomic_allele['coordinates'][0]['start']
+                            end_position = genomic_allele['coordinates'][0]['end']
+                            robokop_variant_id = f'HG38|{chromosome}|{start_position}|{end_position}|{sequence}'
+                            synonyms.add(LabeledID(identifier=f'ROBO_VARIANT:{robokop_variant_id}', label=robokop_variant_id))
 
             except KeyError as e:
-                logger.info(f'parsing sequence variant synonym and genomicAlleles had an issue: {e}')
+                logger.info(f'parsing sequence variant synonym - genomicAlleles KeyError for {variant_caid}: {e}')
                             
         if 'externalRecords' in allele_json:
-            try:
+            if 'MyVariantInfo_hg19' in allele_json['externalRecords']:
                 for myvar_json in allele_json['externalRecords']['MyVariantInfo_hg19']:
                     myvariant_id = myvar_json['id']
                     synonyms.add(LabeledID(identifier=f'MYVARIANT_HG19:{myvariant_id}', label=f'{myvariant_id}'))
-            except KeyError as e:
-                pass
-            try:
+
+            if 'MyVariantInfo_hg38' in allele_json['externalRecords']:
                 for myvar_json in allele_json['externalRecords']['MyVariantInfo_hg38']:
                     myvariant_id = myvar_json['id']
                     synonyms.add(LabeledID(identifier=f'MYVARIANT_HG38:{myvariant_id}', label=f'{myvariant_id}'))
-            except KeyError as e:
-                pass
-            try:
+    
+            if 'dbSNP' in allele_json['externalRecords']:
                 for dbsnp_json in allele_json['externalRecords']['dbSNP']:
                     variant_rsid = dbsnp_json['rs']
                     synonyms.add(LabeledID(identifier=f'DBSNP:rs{variant_rsid}', label=f'rs{variant_rsid}'))
-            except KeyError as e:
-                pass
 
             if 'ClinVarVariations' in allele_json['externalRecords']:
                 for clinvar_json in allele_json['externalRecords']['ClinVarVariations']:

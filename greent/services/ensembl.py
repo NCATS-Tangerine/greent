@@ -13,6 +13,7 @@ class Ensembl(Service):
         super(Ensembl, self).__init__("ensembl", context)
         self.clingen = context.core.clingen
         self.cache = context.cache
+        self.redis = context.cache.redis
         self.var_to_gene_predicate = LabeledID(identifier=f'GAMMA:0000102', label=f'nearby_variant_of')
         self.var_to_var_predicate = LabeledID(identifier=f'NCIT:C16798', label=f'linked_to')
 
@@ -187,11 +188,11 @@ class Ensembl(Service):
 
     def sequence_variant_to_sequence_variant(self, variant_node):
         ld_url = '/ld/human/'
-        options_url = '?r2=0.7'
+        options_url = '?r2=0.9'
         population = '1000GENOMES:phase_3:MXL'
 
         return_results = []
-        with self.context.cache.redis.pipeline() as redis_pipe:
+        with self.redis.pipeline() as redis_pipe:
             dbsnp_curie_ids = variant_node.get_synonyms_by_prefix('DBSNP')
             for dbsnp_curie in dbsnp_curie_ids:
                 variant_id = Text.un_curie(dbsnp_curie)
@@ -206,11 +207,13 @@ class Ensembl(Service):
                         props = {'r2' : r_squared}
                         new_variant_curie = f'DBSNP:{new_variant_id}'
                         new_rsid_node = None
+                        is_new_dbsnp = False
                         synonyms = self.cache.get(f'synonymize({new_variant_curie})') 
                         if synonyms is None:
                             new_rsid_node = KNode(new_variant_curie, name=f'{new_variant_id}', type=node_types.SEQUENCE_VARIANT)
                             synonyms = self.clingen.get_synonyms_by_other_ids(new_rsid_node)
                             redis_pipe.set(f'synonymize({new_variant_curie})', pickle.dumps(synonyms))
+                            is_new_dbsnp = True
                         caid_count = 0
                         caid_node = None
                         for synonym in synonyms:
@@ -220,9 +223,11 @@ class Ensembl(Service):
                                 edge = self.create_edge(variant_node, caid_node, 'ensembl.sequence_variant_to_sequence_variant', dbsnp_curie, self.var_to_var_predicate, url=query_url, properties=props)
                                 return_results.append((edge, caid_node))
                                 found_caid = True
-                        if caid_count == 1:
-                            # go ahead and precache this 
-                            redis_pipe.set(f'synonymize({caid_node.id})',  pickle.dumps(synonyms))
+                        # if caid_count > 2 we can't cache it easily right now so we skip it and let synonymizer do it later
+                        if caid_count == 1 and is_new_dbsnp:
+                            # assume we didn't cache the CAID yet if the dbsnp is new and do it if needed
+                            if self.cache.get(f'synonymize({caid_node.id})') is None:
+                                redis_pipe.set(f'synonymize({caid_node.id})',  pickle.dumps(synonyms))
                         elif caid_count == 0:
                             if not new_rsid_node:
                                 new_rsid_node = KNode(new_variant_curie, name=f'{new_variant_id}', type=node_types.SEQUENCE_VARIANT)
