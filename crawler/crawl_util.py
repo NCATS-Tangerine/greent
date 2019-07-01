@@ -2,8 +2,6 @@ from ftplib import FTP
 from greent.util import Text
 from builder.question import LabeledID
 from io import BytesIO
-from greent.cache import Cache
-from greent.services.myvariant import MyVariant
 from greent.rosetta import Rosetta
 
 import pickle
@@ -103,33 +101,3 @@ def get_variant_list(rosetta: Rosetta, limit: int = None) -> list:
     # return the simple array to the caller
     return var_list
 
-
-#######
-# process_variant_annotation_cache - processes an array of un-cached variant nodes.
-#######
-def prepopulate_variant_annotation_cache(cache: Cache, myvariant: MyVariant, batch_of_nodes: list) -> bool:
-    # init the return value, presume failure
-    ret_val = False
-    
-    # get a batch of variants
-    batch_annotations = myvariant.batch_sequence_variant_to_gene(batch_of_nodes)
-
-    # do we have anything to process
-    if len(batch_annotations) > 0:
-        # open a connection to the redis cache DB
-        with cache.redis.pipeline() as redis_pipe:
-            # for each variant
-            for seq_var_curie, annotations in batch_annotations.items():
-                # assemble the redis key
-                key = f'myvariant.sequence_variant_to_gene({seq_var_curie})'
-    
-                # add the key and data to the list to execute
-                redis_pipe.set(key, pickle.dumps(annotations))
-    
-            # write the records out to the cache DB
-            redis_pipe.execute()
-            
-            ret_val = True
-            
-    # return to the caller
-    return ret_val
