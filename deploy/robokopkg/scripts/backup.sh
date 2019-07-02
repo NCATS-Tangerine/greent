@@ -1,6 +1,7 @@
 #!/bin/bash
 
 compose_file="scripts/docker-compose-backup.yml"
+prod_compose_file="../../graph/docker-compose.yml"
 
 function printHelp(){
     echo "
@@ -9,7 +10,8 @@ function printHelp(){
             ./backup.sh -c ./docker-compose-backup.yml 
         Arguments:
             -c   backup-compose-file       docker compose file.
-            
+            -p   prod-compose-file         production docker compose file.
+
             -h    help          display this message.
 
     "
@@ -24,6 +26,8 @@ while getopts :hc: opt; do
         ;;
         c) 
         compose_file=$OPTARG
+        p)
+        prod_compose_file=$OPTARG
         ;;
         \?) 
         echo "Invalid option -$OPTARG" 
@@ -56,5 +60,5 @@ docker exec $(docker ps -f name=neo4j -q)  ln -sf /data/graph.db.$backup_time.du
 docker kill $(docker ps -f name=neo4j -q)
 # ------------------ back up complete
 # compose main file
-docker-compose up -d 
+docker-compose -f $prod_compose_file up  -d
 
