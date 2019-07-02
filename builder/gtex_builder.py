@@ -141,10 +141,10 @@ class GTExBuilder:
                                 self.rosetta.synonymizer.synonymize(gtex_node)
 
                                 # get the SequenceVariant object filled in with the sequence location data
-                                seq_var_data = self.gtu.get_sequence_variant_obj(variant_id)
+                                #seq_var_data = self.gtu.get_sequence_variant_obj(variant_id)
 
                                 # add properties to the variant node
-                                variant_node.properties['sequence_location'] = [seq_var_data.build, str(seq_var_data.chrom), str(seq_var_data.pos)]
+                                #variant_node.properties['sequence_location'] = [seq_var_data.build, str(seq_var_data.chrom), str(seq_var_data.pos)]
 
                                 # for now insure that the gene node has a name after synonymization
                                 # this can happen if gene is not currently in the graph DB

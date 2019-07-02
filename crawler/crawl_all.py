@@ -1,5 +1,5 @@
 from crawler.genes import load_genes, load_annotations_genes
-from crawler.sequence_variants import load_sequence_variants 
+from crawler.sequence_variants import load_sequence_variants, precache_variant_batch_data
 from greent.rosetta import Rosetta
 from greent import node_types
 from crawler.chemicals import load_chemicals, load_annotations_chemicals
@@ -26,7 +26,16 @@ def load_synonyms(rosetta=None,refresh_chemicals=False):
 def load_genetic_variants(rosetta=None):
     if rosetta is None:
         rosetta = Rosetta()
+    # load starting set of variants into the graph 
     load_sequence_variants(rosetta)
+    # the order is important here, variant-to-variant first
+    poolrun(node_types.SEQUENCE_VARIANT, node_types.SEQUENCE_VARIANT, rosetta)
+
+    print('batch cache preloading for genetic variants...')
+    precache_variant_batch_data(rosetta)
+    print('finished batch cache preloading for genetic variants...')
+
+    poolrun(node_types.SEQUENCE_VARIANT, node_types.GENE, rosetta)
 
 crawls = [
     (node_types.DISEASE, node_types.PHENOTYPIC_FEATURE),
@@ -52,14 +61,10 @@ crawls = [
     (node_types.CELLULAR_COMPONENT, node_types.ANATOMICAL_ENTITY),
     (node_types.CELLULAR_COMPONENT, node_types.DISEASE),
     (node_types.CELLULAR_COMPONENT, node_types.CELL)
-    #,
-    #(node_types.SEQUENCE_VARIANT, node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
 ]
 
 def crawl_all(rosetta):
     load_synonyms(rosetta)
-    # turned this off for now while we test this
-    #load_genetic_variants(rosetta)
     create_omnicache(rosetta)
     for (source,target) in crawls:
         poolrun(source,target,rosetta)
@@ -77,7 +82,7 @@ def run(args):
         print('synonyms')
         load_synonyms(rosetta)
     elif args.genetic_variants:
-        print('genetic variants')
+        print('genetic variation')
         load_genetic_variants(rosetta)
     elif args.omnicache:
         print('omnicache')

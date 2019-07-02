@@ -1,10 +1,8 @@
-import requests
 from greent import node_types
 from greent.graph_components import KNode, LabeledID
 from greent.service import Service
 from greent.util import Text, LoggingUtil
-import logging,json
-import os
+import requests,logging,json,os
 
 logger = LoggingUtil.init_logging(__name__, logging.INFO, logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
 
@@ -15,8 +13,8 @@ class MyVariant(Service):
         self.synonymizer = rosetta.synonymizer
         self.effects_ignore_list = ['intergenic_region', 'sequence_feature']
         # we'll switch to this when they do
-        #self.url_fields = 'snpeff.ann.effect,snpeff.ann.feature_type,snpeff.ann.gene_id,dbnsfp.gtex'
-        self.url_fields = 'snpeff.ann.effect,snpeff.ann.feature_type,snpeff.ann.genename,dbnsfp.gtex'
+        #self.url_fields = 'snpeff.ann.effect,snpeff.ann.feature_type,snpeff.ann.gene_id'
+        self.url_fields = 'snpeff.ann.effect,snpeff.ann.feature_type,snpeff.ann.genename'
 
     def batch_sequence_variant_to_gene(self, variant_nodes):
         if len(variant_nodes) <= 1000:
@@ -26,10 +24,10 @@ class MyVariant(Service):
             for node in variant_nodes:
                 # we could support hg19 as well, but calls need to be all one or the other
                 # for now we only do hg38
-                myvariant_ids = node.get_synonyms_by_prefix('MYVARIANT_HG38')
-                if myvariant_ids:
-                    myvar_id = myvariant_ids.pop()
-                    post_params['ids'] += f'{Text.un_curie(myvar_id)},'
+                myvariant_curies = node.get_synonyms_by_prefix('MYVARIANT_HG38')
+                for myvar_curie in myvariant_curies:
+                    myvar_id = Text.un_curie(myvar_curie)
+                    post_params['ids'] += f'{myvar_id},'
                     node_lookup[myvar_id] = node
                 else:
                     logger.info(f'No MYVARIANT_HG38 synonym found for: {node.id}')
@@ -46,18 +44,19 @@ class MyVariant(Service):
                 query_json = query_response.json()
                 for annotation_json in query_json:
                     try:
-                        annotation_id = annotation_json['_id']
-                        myvar_id = f'MYVARIANT_HG38:{annotation_id}'
+                        myvar_id = annotation_json['_id']
+                        myvar_curie = f'MYVARIANT_HG38:{myvar_id}'
                         variant_node = node_lookup[myvar_id]
-                        annotation_dictionary[variant_node.id] = self.process_annotation(variant_node, annotation_json, myvar_id, query_url)
+                        results = self.process_annotation(variant_node, annotation_json, myvar_curie, query_url)
+                        if results and variant_node.id not in annotation_dictionary:
+                            annotation_dictionary[variant_node.id] = results
                     except KeyError as e:
                         logger.warning(f'MyVariant batch call failed for annotation: {annotation_json["query"]}')
-                        pass 
             else:
                 logger.error(f'MyVariant non-200 response on batch: {query_response.status_code})')
             return annotation_dictionary
         else:
-            return self.batch_sequence_variant_to_gene(variant_nodes[0:1000]).update(self.batch_sequence_variant_to_gene(variant_nodes[1000:]))
+            raise Exception('More than 1000 nodes attemped for MyVariant batch call - not supported.')
 
     def sequence_variant_to_gene(self, variant_node):
         return_results = []

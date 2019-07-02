@@ -517,10 +517,10 @@ class ObesityHubBuilder(object):
             redis_pipe.execute()
 
     def process_gwas_variants(self, new_variants, all_variants):
-        uncached_variant_annotation_nodes = []
         new_variant_labled_ids = []
         redis_counter = 0
         variants_processed_counter = 0
+        uncached_variant_annotation_nodes = []
         with BufferedWriter(self.rosetta) as writer, self.cache.redis.pipeline() as redis_pipe:
             for chromosome, position_dict in new_variants.items():
                 for position, variants in position_dict.items():
@@ -544,6 +544,9 @@ class ObesityHubBuilder(object):
                         # check if myvariant key exists in cache, otherwise add it to buffer for batch precaching calls
                         if self.cache.get(f'myvariant.sequence_variant_to_gene({variant_node.id})') is None:
                             uncached_variant_annotation_nodes.append(variant_node)
+                            if len(uncached_variant_annotation_nodes) == 1000:
+                                self.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
+                                uncached_variant_annotation_nodes = []
 
                         # ensembl cant handle batches, and for now NEEDS to be precached individually here
                         # (the properties on the nodes needed by ensembl wont be available to the runner)
@@ -572,10 +575,6 @@ class ObesityHubBuilder(object):
 
                         variants_processed_counter += 1
                         
-                    if len(uncached_variant_annotation_nodes) >= 1000:
-                        self.prepopulate_variant_annotation_cache(uncached_variant_annotation_nodes)
-                        uncached_variant_annotation_nodes = []
-            
             if redis_counter > 0:
                 redis_pipe.execute()
 
