@@ -148,6 +148,19 @@ def test_chem_to_enzyme_nb(kegg,rosetta):
         print(gene)
     print(len(gene))
 
+def test_chem_to_gene_Glucosylceramide(kegg,rosetta):
+    Glucosylceramide = KNode('KEGG.COMPOUND:C01190',name='Glucosylceramide',type=node_types.CHEMICAL_SUBSTANCE)
+    rosetta.synonymizer.synonymize(Glucosylceramide)
+    GBA = 'HGNC:4177'
+    results = kegg.chemical_get_enzyme(Glucosylceramide)
+    ids = []
+    for edge,node in results:
+        rosetta.synonymizer.synonymize(node)
+        ids.append(node.id)
+    assert len(results) > 0
+    assert GBA in ids
+
+
 def test_get_reaction(kegg):
     rn = 'rn:R09338'
     out = kegg.get_reaction(rn)
