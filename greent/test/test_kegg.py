@@ -45,26 +45,36 @@ def test_chem_to_chem(kegg,rosetta):
     assert codeine6glucoronide in ids
     assert norcodeine in ids
 
-def test_chem_to_chem_morphine(kegg,rosetta):
-    morphine = KNode('CHEBI:17303',name='Morphine',type=node_types.CHEMICAL_SUBSTANCE)
-    rosetta.synonymizer.synonymize(morphine)
-    normorphine = 'KEGG.COMPOUND:C11785'
-    codeine  = 'KEGG.COMPOUND:C06174'
-    morp3g = 'KEGG.COMPOUND:C16643'
-    results = kegg.chemical_get_chemical(morphine)
+def test_chem_to_chem(kegg,rosetta):
+    codeine = KNode('CHEBI:16714',name='Codeine',type=node_types.CHEMICAL_SUBSTANCE)
+    rosetta.synonymizer.synonymize(codeine)
+    results = kegg.chemical_get_chemical(codeine)
+    morphine = 'CHEBI:17303'
+    codeine6glucoronide = 'CHEBI:80580'
+    norcodeine = 'CHEBI:80579'
     ids = []
     for edge,node in results:
-        if edge.source_id == 'CHEBI:17303':
-            ids.append(node.id)
-        else:
-            ids.append(edge.source_id)
+        assert edge.source_id == 'CHEBI:16714'
+        rosetta.synonymizer.synonymize(node)
+        ids.append(node.id)
     assert len(results) > 0
-    #There is a morphine->normorphine rxn in kegg, but it lacks an 'orthology' element, so we are going to not pull it.
-    #  We may need to rethink?  It's a little hard to tell how many rxns have an enzyme (like this one) and not an orthology section.  I think it's some, but not too many (30%?)
-    assert normorphine not in ids
-    #Pick up the reverse rxn, codeine->morphine
-    assert codeine in ids
-    assert morp3g in ids
+    for myid in ids:
+        print(myid)
+    assert morphine in ids
+    assert codeine6glucoronide in ids
+    assert norcodeine in ids
+
+
+def test_chem_to_chem_Glucosylceramide(kegg,rosetta):
+    Glucosylceramide = KNode('KEGG.COMPOUND:C01190',name='Glucosylceramide',type=node_types.CHEMICAL_SUBSTANCE)
+    rosetta.synonymizer.synonymize(Glucosylceramide)
+    Acylsphingosine = 'KEGG.COMPOUND:C00195'
+    results = kegg.chemical_get_chemical(Glucosylceramide)
+    ids = []
+    for edge,node in results:
+        ids.append(node.id)
+    assert len(results) > 0
+    assert Acylsphingosine in ids
 
 def test_chem_to_chem_caffiene(kegg,rosetta):
     caffiene = KNode('CHEBI:27732',name='Caffiene',type=node_types.CHEMICAL_SUBSTANCE)
