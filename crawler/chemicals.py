@@ -67,7 +67,7 @@ def load_chemicals(rosetta, refresh=False):
     with open('chemconc.txt','w') as outf:
         for key in concord:
             outf.write(f'{key}\t{concord[key]}\n')
-    dump_cache(concord,rosetta)
+    #dump_cache(concord,rosetta)
 
 def get_chebi_label(ident):
     res = requests.get(f'https://uberonto.renci.org/label/{ident}/').json()
@@ -216,7 +216,7 @@ def uni_glom(unichem_data,prefix1,prefix2,chemdict):
 
 def load_unichem():
     chemcord = {}
-    prefixes={1:'CHEMBL', 2:'DRUGBANK', 6:'KEGG.COMPOUND', 7:'CHEBI', 14:'UNII',  18:'HMDB', 22:'PUBCHEM'}
+    prefixes={1:'CHEMBL', 2:'DRUGBANK', 4:'GTOPDB', 6:'KEGG.COMPOUND', 7:'CHEBI', 14:'UNII',  18:'HMDB', 22:'PUBCHEM'}
     #
     keys=list(prefixes.keys())
     keys.sort()
