@@ -21,8 +21,7 @@ def test_vasopressin_precursor(gtopdb):
 def test_vasopressin_genes(gtopdb):
     input_node = KNode("GTOPDB:2168", type=node_types.CHEMICAL_SUBSTANCE, name="Vasopressin")
     results = gtopdb.ligand_to_gene(input_node)
-    assert len(results) == 1
+    assert len(results) == 4
     for edge,node in results:
         assert node.type == node_types.GENE
-        assert node.id == 'HGNC:894'
 
