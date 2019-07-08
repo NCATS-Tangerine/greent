@@ -41,6 +41,10 @@ def json_2_identifiers(gene_dict):
         idset.update([LabeledID(identifier=f"UniProtKB:{uniprotkbid}", label=symbol) for uniprotkbid in gene_dict['uniprot_ids']])
     if 'ensembl_gene_id' in gene_dict:
         idset.add( LabeledID(identifier=f"ENSEMBL:{gene_dict['ensembl_gene_id']}", label=symbol))
+    if 'iuphar' in gene_dict:
+        if gene_dict['iuphar'].startswith('objectId'):
+            gid = gene_dict['iuphar'].split(':')[1]
+            idset.add( LabeledID(identifier=f'IUPHAR:{gid}', label=symbol) )
     #1. Enzymes aren't really genes
     #2. Even if they were, the mapping in this file is kind of crappy
     #if 'enzyme_id' in gene_dict:

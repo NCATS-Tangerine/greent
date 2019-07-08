@@ -103,7 +103,7 @@ def lookup_by_mesh(meshes,apikey):
     term_to_pubs = {}
     if apikey is None:
         print('Warning: not using API KEY for eutils, resulting in 3x slowdown')
-    chunksize=200
+    chunksize=10
     backandforth={'C': '67', '67': 'C', 'D': '68', '68': 'D'}
     for terms in chunked(meshes,chunksize):
         url='https://eutils.ncbi.nlm.nih.gov/entrez/eutils/elink.fcgi?&dbfrom=mesh&db=pccompound&retmode=json'
@@ -118,10 +118,13 @@ def lookup_by_mesh(meshes,apikey):
             url+=f'&id={newterm}'
         try:
             result = requests.get(url).json()
-        except:
+        except Exception as e:
             print(url)
             print(result)
+            print(e)
             exit()
+        if 'linksets' not in result:
+            continue
         linksets = result['linksets']
         for ls in linksets:
             cids = None
@@ -222,7 +225,10 @@ def refresh_mesh_pubchem(rosetta):
     dump(term_to_unii,muni_name)
     dump(term_to_EC,mec_name)
     context = rosetta.service_context
-    api_key = context.config['EUTILS_API_KEY']
+    try:
+        api_key = context.config['EUTILS_API_KEY']
+    except:
+        api_key = None
 
     term_to_pubchem_by_mesh = lookup_by_mesh(unmapped_mesh,api_key)
     term_to_pubchem_by_cas = lookup_by_cas(term_to_cas,api_key)

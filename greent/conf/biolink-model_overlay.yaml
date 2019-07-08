@@ -50,6 +50,7 @@ classes:
       - UNII
       - PUBCHEM.COMPOUND
       - KEGG.COMPOUND
+      - GTOPDB
       - KEGG.DRUG
       - PHAROS.DRUG
       - DRUG.INTERACTION
@@ -77,6 +78,7 @@ classes:
       - MGI
       - ZFIN
       - HGNC.SYMBOL
+      - IUPHAR
 
   sequence variant:
     id_prefixes:
