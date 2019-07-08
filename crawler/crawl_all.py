@@ -80,7 +80,7 @@ def run(args):
         crawl_all(rosetta)
     elif args.synonyms:
         print('synonyms')
-        load_synonyms(rosetta,refresh_chemicals=True)
+        load_synonyms(rosetta)
     elif args.genetic_variants:
         print('genetic variation')
         load_genetic_variants(rosetta)
