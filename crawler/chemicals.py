@@ -44,9 +44,6 @@ def load_chemicals(rosetta, refresh=False):
     #Get all the simple stuff
     print('UNICHEM')
     concord = load_unichem()
-    with open('chemconc_uni.txt','w') as outf:
-        for key in concord:
-            outf.write(f'{key}\t{concord[key]}\n')
     #DO MESH/UNII
     print('MESH/UNII')
     mesh_unii_file = os.path.join(os.path.dirname(__file__),'mesh_to_unii.txt')
