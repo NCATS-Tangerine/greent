@@ -146,6 +146,17 @@ def get_identifiers(input_type,rosetta):
             if ident not in bad_idents:
                 p = get_label(ident) #requests.get(f'https://uberonto.renci.org/label/{ident}/')
                 lids.append(LabeledID(ident, p['label']))
+    elif input_type == node_types.GENE_FAMILY:
+        gene_fam_data = rosetta.core.panther.gene_family_data
+        for key in gene_fam_data:
+            name = gene_fam_data[key]['family_name']
+            name = f'{name} ({key})' if 'NOT NAMED' in name else name
+            lids.append(LabeledID(f'PANTHER.FAMILY:{key}', name))
+            sub_keys = [k for k in gene_fam_data[key].keys() if k !='family_name']
+            for k in sub_keys:
+                name = gene_fam_data[key][k]['sub_family_name']
+                name = f'{name} ({key})' if 'NOT NAMED' in name else name
+                lids.append(LabeledID(f'PANTHER.FAMILY:{key}:{k}',gene_fam_data[key][k]['sub_family_name'] ))        
 
     elif input_type == node_types.SEQUENCE_VARIANT:
         # grab every variant already in the graph

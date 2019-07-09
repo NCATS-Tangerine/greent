@@ -60,7 +60,12 @@ crawls = [
     (node_types.CELLULAR_COMPONENT, node_types.CHEMICAL_SUBSTANCE),
     (node_types.CELLULAR_COMPONENT, node_types.ANATOMICAL_ENTITY),
     (node_types.CELLULAR_COMPONENT, node_types.DISEASE),
-    (node_types.CELLULAR_COMPONENT, node_types.CELL)
+    (node_types.CELLULAR_COMPONENT, node_types.CELL),
+    (node_types.GENE_FAMILY, node_types.CELLULAR_COMPONENT),
+    (node_types.GENE_FAMILY, node_types.GENE),
+    (node_types.GENE_FAMILY, node_types.PATHWAY),
+    (node_types.GENE_FAMILY, node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY),
+    (node_types.GENE_FAMILY, node_types.GENE_FAMILY)
 ]
 
 def crawl_all(rosetta):

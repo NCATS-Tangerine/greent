@@ -79,7 +79,7 @@ class Text:
         
     @staticmethod
     def un_curie (text):
-        return text.split (':', 1)[1] if ':' in text else text
+        return ':'.join(text.split (':', 1)[1:]) if ':' in text else text
         
     @staticmethod
     def short (obj, limit=80):
