@@ -85,4 +85,10 @@ def test_go_to_gene(quickgo):
     assert len(r) > 25
 
 
+def test_go_to_cellular_component(quickgo):
+    r = quickgo.gene_to_cellular_component(KNode('UniProtKB:P30518', type = node_types.GENE))
+    for e,k in r:
+        assert k.type == node_types.CELLULAR_COMPONENT
+    assert len(r) >  2
+
 
