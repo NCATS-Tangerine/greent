@@ -554,6 +554,7 @@ slots:
       - RO:0004026
       - RO:0004027
       - RO:0001018
+      - quick_go:is_active_in
 
   contributes to:
     mappings:

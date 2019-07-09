@@ -151,6 +151,9 @@
     gene_family:
       - link  : gene_to_gene_family
         op    : hgnc.gene_get_gene_family
+    cellular_component:
+      - link  : gene_to_cellular_component
+        op    : quickgo.gene_to_cellular_component
     chemical_substance:
 #      - link  : gene_to_drug
 #        op    : ctd.gene_to_drug #Going away eventually, but not yet

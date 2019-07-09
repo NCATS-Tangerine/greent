@@ -46,6 +46,9 @@ class QuickGo(Service):
                 'results_in_disappearance_of':'RO:0002300',
                 'results_in_developmental_regression_of':'RO:0002301',
                 'results_in_closure_of':'RO:0002585',
+                'part_of': 'BFO:0000050',
+                'colocalizes_with': 'RO:0002325',
+                'is_active_in': 'quick_go:is_active_in'
                 }
         try:
             return LabeledID(identifier=labels2identifiers[p_label], label=p_label)
@@ -193,4 +196,19 @@ class QuickGo(Service):
                 gene_node = KNode( uniprotid, type=node_types.GENE ) 
                 edge = self.create_edge(gene_node, node, 'quickgo.go_term_to_gene_annotation',node.id,predicate,url = url)
                 results.append( (edge,gene_node ) )
+        return results
+
+    def gene_to_cellular_component(self, node):
+        uni_prot_ids = node.get_synonyms_by_prefix('UniProtKB')
+        results = []
+        for ids in uni_prot_ids:
+            url = f'{self.url}/QuickGO/services/annotation/search?geneProductId={Text.un_curie(ids)}&taxonId=9606'
+            response = list(filter(lambda x:x['goAspect'] == 'cellular_component',self.page_calls(url)))
+            for r in response:
+                predicate = self.get_predicate(r['qualifier'])
+                if predicate is None:
+                    continue
+                cc_node = KNode(r['goId'], type=node_types.CELLULAR_COMPONENT)
+                edge = self.create_edge(node, cc_node, 'quickgo.gene_to_cellular_component', node.id, predicate)
+                results.append((edge, cc_node))
         return results
