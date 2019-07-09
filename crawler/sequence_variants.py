@@ -101,9 +101,7 @@ def precache_variant_batch_data(rosetta: object, limit: int=None) -> object:
                 # check if myvariant key exists in cache, otherwise add it to buffer for batch processing
                 cache_results = cache.get(f'myvariant.sequence_variant_to_gene({variant_node.id})')
 
-                # TODO this will reprocess every legitimate empty result as well, change it to None
-                #if cache_results == None:
-                if not cache_results:
+                if cache_results == None:
                     uncached_variant_annotation_nodes.append(variant_node)
 
                     # if there is enough in the variant annotation batch process them and empty the array
