@@ -66,6 +66,13 @@ def test_go_to_cell(uberon):
             foundobj = True
     assert foundsub, foundobj
 
+def test_go_to_cell_direction(uberon):
+    go='GO:0007278'
+    gonode = KNode(go,type=node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY,name="pole cell fate determination")
+    r = uberon.get_cell_by_process_or_activity(gonode)
+    for ri in r:
+        print(ri[0].source_id,ri[0].original_predicate,ri[0].target_id)
+
 
 def test_cell_to_anatomy_super(uberon):
     k = KNode('CL:0002251', type=node_types.CELL, name='epithelial cell of the alimentary canal')

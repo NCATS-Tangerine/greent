@@ -628,7 +628,7 @@ class UberonGraphKS(Service):
                         continue
                     predicate = LabeledID(Text.obo_to_curie(r['p']),r['pLabel'])
                     cell_node = KNode(r['cellID'],type=node_types.CELL,name=r['cellLabel'])
-                    if direction == 'subject':
+                    if direction == 'object':
                         edge = self.create_edge(go_node, cell_node, 'uberongraph.get_cell_by_process_or_activity', curie, predicate)
                     else:
                         edge = self.create_edge(cell_node, go_node, 'uberongraph.get_cell_by_process_or_activity', curie, predicate)
