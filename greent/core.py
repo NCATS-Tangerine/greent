@@ -28,8 +28,10 @@ from greent.services.typecheck import TypeCheck
 from greent.services.uberongraph import UberonGraphKS
 from greent.services.unichem import UniChem
 from greent.services.uniprot import UniProt
+from greent.services.panther import Panther
 #from greent.service import ServiceContext
 from greent.util import LoggingUtil
+
 
 logger = LoggingUtil.init_logging(__name__)
 
@@ -73,7 +75,8 @@ class GreenT:
             "typecheck"        : lambda :  TypeCheck(self.service_context, self, rosetta),
             "uberongraph"      : lambda :  UberonGraphKS(self.service_context),
             "unichem"          : lambda :  UniChem(self.service_context),
-            "uniprot"          : lambda :  UniProt(self.service_context)
+            "uniprot"          : lambda :  UniProt(self.service_context),
+            "panther"          : lambda :  Panther(self.service_context)
         }
         
     def get_config_val(self, key):

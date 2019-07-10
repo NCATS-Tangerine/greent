@@ -142,7 +142,6 @@ class Program:
             elif isinstance(n.curie, list):
                 bionames_name = [get_name_for_curie(c) for c in n.curie]
             n.name = bionames_name if bionames_name else n.name
-
             start_node = KNode(n.curie, type=n.type, name=n.name)
             self.process_node(start_node, [n.id])
         return

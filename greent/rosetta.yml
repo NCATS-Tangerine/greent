@@ -230,7 +230,22 @@
     cell:
       - link  : cellular_component_to_cell
         op    : uberongraph.get_cell_by_cellular_component
-      
+  gene_family:
+    gene:
+      - link  : gene_family_to_gene
+        op    : panther.get_gene_by_gene_family
+    biological_process_or_activity:
+      - link  : gene_family_to_biological_process_or_activity
+        op    : panther.get_biological_process_or_activity_by_gene_family
+    cellular_component:
+      - link  : gene_family_to_cellular_component
+        op    : panther.get_cellular_component_by_gene_family
+    gene_family:
+      - link  : gene_family_to_gene_family
+        op    : panther.get_gene_family_by_gene_family
+    pathway:
+      - link  : gene_family_to_pathway
+        op    : panther.get_pathway_by_gene_family
 
 '@type_checks':
   genetic_condition: mondo.is_genetic_disease
