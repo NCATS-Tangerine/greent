@@ -1,0 +1,177 @@
+- name: Drugbank
+  url: https://www.drugbank.ca/
+  license: CC-BY-NC-4.0
+  license_url: https://www.drugbank.ca/releases/latest
+  citation_url: https://www.drugbank.ca/about
+- name: DrugCentral
+  url: http://drugcentral.org/
+  license: CC-BY-SA-4.0
+  license_url: http://drugcentral/privacy
+- name: Aeolus 
+  url: https://datadryad.org/resource/doi:10.5061/dryad.8q0s4
+  license: CC-BY-4.0
+  license_url: https://www.nature.com/articles/sdata201626#rightslink
+  citation_url: https://datadryad.org/resource/doi:10.5061/dryad.8q0s4
+- name: Mychem.info 
+  url: https://mychem.info
+  license: Terms of Use
+  license_url: https://mychem.info/terms/
+  citation_url: http://mychem.info/citation/
+- name: QuickGO 
+  url: https://www.ebi.ac.uk/QuickGO
+  license: Terms of Use
+  license_url: https://www.ebi.ac.uk/about/terms-of-use
+  citation_url: https://www.ebi.ac.uk/GOA/publications
+- name: bio2rdf.org 
+  url: https://bio2rdf.org
+  license: MIT
+  license_url: https://github.com/bio2rdf/bio2rdf-scripts/wiki/MIT-License
+  citation_url: https://github.com/bio2rdf/bio2rdf-scripts/wiki/Cite-Bio2RDF
+- name: Mesh 
+  url: https://www.nlm.nih.gov/mesh/meshhome.html
+  license: Copyright
+  license_url: https://www.nlm.nih.gov/copyright.html
+- name: Chem2bio2rdf
+  url: http://cheminfov.informatics.indiana.edu:8080/c2b2r/
+- name: Comparative Toxicogenomics Database (CTD)
+  url: http://ctdbase.org
+  license: Terms of Service
+  license_url: http://ctdbase.org/about/legal.jsp
+  citation_url: http://ctdbase.org/about/publications/#citing
+- name: GWAS Catalog
+  url: https://www.ebi.ac.uk/gwas/
+  license: Terms of Use
+  license_url: https://www.ebi.ac.uk/about/terms-of-use
+  citation_url: https://www.ebi.ac.uk/gwas/docs/about
+- name: Pharos (TCRD)
+  url: https://pharos.nih.gov/index
+  license: CC-BY-SA-4.0
+  license_url: https://pharos.nih.gov/about
+  citation_url: https://pharos.nih.gov/about
+- name: Human Metabolome Database (HMDB)
+  url: http://www.hmdb.ca
+  license: Terms of Use
+  license_url: http://www.hmdb.ca/about#cite
+  citation_url: http://www.hmdb.ca/about#cite
+- name: KEGG
+  url: https://www.kegg.jp
+  license: Terms of Use
+  license_url: http://www.kegg.jp/kegg/legal.html
+  citation_url: https://www.kegg.jp/kegg/kegg1.html
+- name: HGNC
+  url: https://www.genenames.org/
+  license: Unrestricted
+  license_url: https://www.genenames.org/about/
+  citation_url: https://www.genenames.org/about/
+- name: mygene.info 
+  url: https://mygene.info
+  license: Terms of Use
+  license_url: https://mygene.info/terms/
+  citation_url: http://mygene.info/citation/
+- name: myvariant.info 
+  url: https://myvariant.info
+  license: Terms of Use
+  license_url: https://myvariant.info/terms/
+  citation_url: http://myvariant.info/citation/
+- name: ensembl
+  url: https://www.ensembl.org
+  license: No Restriction
+  license_url: https://www.ensembl.org/info/about/legal/disclaimer.html
+  citation_url: https://www.ensembl.org/info/about/publications.html
+- name: UniProtKB
+  url: https://www.uniprot.org
+  license: CC-BY-4.0
+  license_url: https://www.uniprot.org/help/license">CC-BY-4.0
+  citation_url: https://www.uniprot.org/help/publications
+- name: PharmGKB
+  url: https://www.pharmgkb.org
+  license: CC-BY-SA-4.0
+  license_url: https://www.pharmgkb.org/page/dataUsagePolicy
+  citation_url: https://www.pharmgkb.org/page/citingPharmgkb
+- name: Pubchem
+  url: https://pubchem.ncbi.nlm.nih.gov/
+  license: Policies
+  license_url: https://www.ncbi.nlm.nih.gov/home/about/policies/
+- name: Pubmed
+  url: https://www.ncbi.nlm.nih.gov/pubmed/
+  license: Copyright
+  license_url: https://www.ncbi.nlm.nih.gov/pmc/about/copyright
+- name: Monarch API (Biolink)
+  url: https://monarchinitiative.org
+  license: CC-BY-3.0
+  license_url: https://monarchinitiative.org
+- name: Mouse Genome Informatics (MGI)
+  url: http://www.informatics.jax.org/
+  license: Copyright
+  license_url: http://www.informatics.jax.org/mgihome/other
+  citation_url: http://www.informatics.jax.org/mgihome/other/citation.shtml
+- name: ClinVar
+  url: https://www.ncbi.nlm.nih.gov/clinvar
+  license: Terms of Use
+  license_url: https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/
+  citation_url: https://www.ncbi.nlm.nih.gov/clinvar/docs/faq/
+- name: OMIM
+  url: https://www.omim.org
+  license: Custom License
+  license_url: https://www.omim.org/help/agreement
+- name: Orphanet
+  url: https://www.orphadata.org/
+  license: CC-BY-4.0
+  license_url: https://www.orphadata.org/cgi-bin/index.php
+  citation_url: https://www.orphadata.org/cgi-bin/index.php
+- name: Panther
+  url: http://pantherdb.org
+  license: GPL and Copyright
+  license_url: http://pantherdb.org/tou.jsp
+  citation_url: http://pantherdb.org/publications.jsp#HowToCitePANTHER
+- name: Human Phenotype Ontology (HPO)
+  url: https://hpo.jax.org/
+  license: Custom
+  license_url: https://hpo.jax.org/app/license
+  citation_url: https://hpo.jax.org/app/citation
+- name: NCBI Gene
+  url: https://www.ncbi.nlm.nih.gov/gene
+  license: Terms of Use
+  license_url: https://www.ncbi.nlm.nih.gov/home/about/policies/
+- name: BioGRID
+  url: https://thebiogrid.org
+  license: MIT
+  license_url: https://downloads.thebiogrid.org/BioGRID
+  citation_url: https://wiki.thebiogrid.org/doku.php/aboutus#biogrid_publications
+- name: AmiGO
+  url: http://geneontology.org/
+  license: CC-BY-4.0
+  license_url: http://geneontology.org/docs/go-citation-policy
+  citation_url: http://geneontology.org/docs/go-citation-policy
+- name: UniChem
+  url: https://www.ebi.ac.uk/unichem/
+  license: Terms of Use
+  license_url: https://www.ebi.ac.uk/about/terms-of-use
+  citation_url: https://www.ebi.ac.uk/unichem/info/citation
+- name: Chembl
+  url: https://www.ebi.ac.uk/chembl/
+  license: Terms of Use
+  license_url: https://www.ebi.ac.uk/about/terms-of-use
+  citation_url: https://www.ebi.ac.uk/chembl/
+- name: ClinGen Allele Registry
+  url: http://reg.clinicalgenome.org/redmine/projects/registry/genboree_registry/landing
+  citation_url: http://reg.clinicalgenome.org/redmine/projects/registry/genboree_registry/landing
+- name: GTEx
+  url: https://www.gtexportal.org/home/
+  license: No Restrictions
+  license_url: https://www.gtexportal.org/home/documentationPage
+  citation_url: https://gtexportal.org/home/faq#citePortal
+- name: MONDO
+  url: http://www.obofoundry.org/ontology/mondo.html
+  license: CC-BY-3.0
+  license_url: http://www.obofoundry.org/ontology/mondo.html
+- name: CHEBI
+  url: https://www.ebi.ac.uk/chebi/
+  license: CC-BY 4.0
+  license_url: http://www.obofoundry.org/ontology/chebi.html
+  citation_url: https://www.ebi.ac.uk/chebi/aboutChebiForward.do
+- name: Gene Ontology (GO)
+  url: http://geneontology.org/
+  license: CC-BY 4.0
+  license_url: http://geneontology.org/docs/go-citation-policy/
+  citation_url: http://geneontology.org/docs/go-citation-policy/
