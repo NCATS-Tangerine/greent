@@ -1,0 +1,265 @@
+<style type="text/css" media="screen">
+/*
+.nodes-image {
+	margin:-100;
+}
+*/	
+@import url("//maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css");
+
+.imageblock .content img, .image img {max-width: 900px;max-height: 300px;}
+.deck h3, .deck h4 {display: block !important;margin-bottom:8px;margin-top:5px;}
+.listingblock {margin:8px;}
+.pull-bottom {position:relative;bottom:1em;}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note:before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip:before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning:before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution:before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important:before{content:"\f06a";color:#bf0000}
+.admonitionblock.note.speaker { display:none; }
+</style>
+<style type="text/css" media="screen">
+/* #editor.maximize-editor .CodeMirror-code { font-size:24px; line-height:26px; } */
+</style>
+<article class="guide" ng-controller="AdLibDataController">
+  <carousel class="deck container-fluid">
+    <!--slide class="row-fluid">
+      <div class="col-sm-3">
+        <h3>Data Sources, Licenses, and Attributions</h3>
+        <p class="lead">Information</p>
+			<!dl>
+				
+				
+				
+				
+				
+			</dl>
+		</div>
+      <div class="col-sm-9">
+        <figure>
+          <img style="width:300px" src=""/>
+        </figure>
+      </div>
+    </slide-->
+    
+
+
+<slide class="row-fluid">
+  <div class="col-sm-12">
+    <h3>Data Sources, Licenses, and Attributions</h3>
+    <br/>
+    <div>
+      <div class="paragraph">
+<p>Robokop KG is assembled from many data sources, some of which are also integrations of still other sources. This is a list of all data sources and sub-data sources, along with a link to their licensing information, and instructions for how each should be cited.</p>
+</div>
+<table class="table tableblock frame-all grid-all" style="width: 100%;">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Data Source</th>
+<th class="tableblock halign-left valign-top">License</th>
+<th class="tableblock halign-left valign-top">Attribution</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.drugbank.ca/">Drugbank</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.drugbank.ca/releases/latest">CC-BY-NC-4.0</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.drugbank.ca/about">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://drugcentral.org/">DrugCentral</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://drugcentral/privacy">CC-BY-SA-4.0</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://datadryad.org/resource/doi:10.5061/dryad.8q0s4">Aeolus</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.nature.com/articles/sdata201626#rightslink">CC-BY-4.0</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://datadryad.org/resource/doi:10.5061/dryad.8q0s4">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://mychem.info">Mychem.info</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://mychem.info/terms/">Terms of Use</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://mychem.info/citation/">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ebi.ac.uk/QuickGO">QuickGO</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ebi.ac.uk/about/terms-of-use">Terms of Use</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ebi.ac.uk/GOA/publications">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://bio2rdf.org">bio2rdf.org</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://github.com/bio2rdf/bio2rdf-scripts/wiki/MIT-License">MIT</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://github.com/bio2rdf/bio2rdf-scripts/wiki/Cite-Bio2RDF">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.nlm.nih.gov/mesh/meshhome.html">Mesh</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.nlm.nih.gov/copyright.html">Copyright</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://cheminfov.informatics.indiana.edu:8080/c2b2r/">Chem2bio2rdf</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://ctdbase.org">Comparative Toxicogenomics Database (CTD)</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://ctdbase.org/about/legal.jsp">Terms of Service</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://ctdbase.org/about/publications/#citing">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ebi.ac.uk/gwas/">GWAS Catalog</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ebi.ac.uk/about/terms-of-use">Terms of Use</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ebi.ac.uk/gwas/docs/about">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://pharos.nih.gov/index">Pharos (TCRD)</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://pharos.nih.gov/about">CC-BY-SA-4.0</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://pharos.nih.gov/about">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.hmdb.ca">Human Metabolome Database (HMDB)</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.hmdb.ca/about#cite">Terms of Use</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.hmdb.ca/about#cite">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.kegg.jp">KEGG</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.kegg.jp/kegg/legal.html">Terms of Use</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.kegg.jp/kegg/kegg1.html">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.genenames.org/">HGNC</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.genenames.org/about/">Unrestricted</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.genenames.org/about/">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://mygene.info">mygene.info</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://mygene.info/terms/">Terms of Use</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://mygene.info/citation/">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://myvariant.info">myvariant.info</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://myvariant.info/terms/">Terms of Use</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://myvariant.info/citation/">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ensembl.org">ensembl</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ensembl.org/info/about/legal/disclaimer.html">No Restriction</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ensembl.org/info/about/publications.html">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.uniprot.org">UniProtKB</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.uniprot.org/help/license"&gt;CC-BY-4.0">CC-BY-4.0</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.uniprot.org/help/publications">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.pharmgkb.org">PharmGKB</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.pharmgkb.org/page/dataUsagePolicy">CC-BY-SA-4.0</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.pharmgkb.org/page/citingPharmgkb">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://pubchem.ncbi.nlm.nih.gov/">Pubchem</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ncbi.nlm.nih.gov/home/about/policies/">Policies</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ncbi.nlm.nih.gov/pubmed/">Pubmed</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ncbi.nlm.nih.gov/pmc/about/copyright">Copyright</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://monarchinitiative.org">Monarch API (Biolink)</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://monarchinitiative.org">CC-BY-3.0</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.informatics.jax.org/">Mouse Genome Informatics (MGI)</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.informatics.jax.org/mgihome/other">Copyright</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.informatics.jax.org/mgihome/other/citation.shtml">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ncbi.nlm.nih.gov/clinvar">ClinVar</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/">Terms of Use</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ncbi.nlm.nih.gov/clinvar/docs/faq/">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.omim.org">OMIM</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.omim.org/help/agreement">Custom License</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.orphadata.org/">Orphanet</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.orphadata.org/cgi-bin/index.php">CC-BY-4.0</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.orphadata.org/cgi-bin/index.php">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://pantherdb.org">Panther</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://pantherdb.org/tou.jsp">GPL and Copyright</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://pantherdb.org/publications.jsp#HowToCitePANTHER">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://hpo.jax.org/">Human Phenotype Ontology (HPO)</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://hpo.jax.org/app/license">Custom</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://hpo.jax.org/app/citation">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ncbi.nlm.nih.gov/gene">NCBI Gene</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ncbi.nlm.nih.gov/home/about/policies/">Terms of Use</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://thebiogrid.org">BioGRID</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://downloads.thebiogrid.org/BioGRID">MIT</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://wiki.thebiogrid.org/doku.php/aboutus#biogrid_publications">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://geneontology.org/">AmiGO</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://geneontology.org/docs/go-citation-policy">CC-BY-4.0</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://geneontology.org/docs/go-citation-policy">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ebi.ac.uk/unichem/">UniChem</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ebi.ac.uk/about/terms-of-use">Terms of Use</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ebi.ac.uk/unichem/info/citation">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ebi.ac.uk/chembl/">Chembl</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ebi.ac.uk/about/terms-of-use">Terms of Use</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ebi.ac.uk/chembl/">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://reg.clinicalgenome.org/redmine/projects/registry/genboree_registry/landing">ClinGen Allele Registry</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://reg.clinicalgenome.org/redmine/projects/registry/genboree_registry/landing">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.gtexportal.org/home/">GTEx</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.gtexportal.org/home/documentationPage">No Restrictions</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://gtexportal.org/home/faq#citePortal">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.obofoundry.org/ontology/mondo.html">MONDO</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.obofoundry.org/ontology/mondo.html">CC-BY-3.0</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ebi.ac.uk/chebi/">CHEBI</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://www.obofoundry.org/ontology/chebi.html">CC-BY 4.0</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="https://www.ebi.ac.uk/chebi/aboutChebiForward.do">Citation</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://geneontology.org/">Gene Ontology (GO)</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://geneontology.org/docs/go-citation-policy/">CC-BY 4.0</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="http://geneontology.org/docs/go-citation-policy/">Citation</a></p></td>
+</tr>
+</tbody>
+</table>
+	</div>
+  </div>
+</slide>
+  </carousel>
+</article>

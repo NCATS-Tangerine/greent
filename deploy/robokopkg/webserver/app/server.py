@@ -57,3 +57,7 @@ def methods():
 @app.route('/guide/queries')
 def queries():
     return render_template('guide/queries.html',**{'host': get_domain_name_from_env()})
+
+@app.route('/guide/licenses')
+def licenses():
+    return render_template('guide/licenses.html',**{'host': get_domain_name_from_env()})
