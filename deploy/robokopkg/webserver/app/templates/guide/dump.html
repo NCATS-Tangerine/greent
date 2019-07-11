@@ -66,12 +66,13 @@
     <div>
           <div class="col col-sm-3 text-center">
         <h3 class="">
-            <a href="{{host + url_for('static', filename='dumps/'+ file.filename)}}" target="blank">
+            <a href="{{host + '/'+ file.filename}}" target="blank">
                 <i class="fa fa-download" aria-hidden="true" style="font-size:42px"></i>
             </a>
         </h3>
     </div>
     {% if file.changelog|length > 0 %}
+
         <div class="col col-sm-9">
 
 
@@ -79,7 +80,7 @@
    <h4>Change logs</h4>
                <ul>
                 {% for change in file.changelog %}
-                    <li>{{change}}</li>
+                    <li>{{change |safe }}</li>
                 {% endfor %}
             </ul>
         </div>
