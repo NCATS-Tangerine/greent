@@ -2,9 +2,9 @@
 Set up Flask server
 '''
 
-from flask import Flask, Blueprint
+from flask import Flask, Blueprint, request
 from flask_restful import Api
-from flasgger import Swagger
+from flasgger import Swagger, LazyString, LazyJSONEncoder
 
 app = Flask(__name__, static_folder='../pack', template_folder='../templates')
 
@@ -29,8 +29,11 @@ template = {
     "schemes": [
         "http",
         "https"
-    ]
+    ],
+    'swaggerUiPrefix': LazyString (lambda : request.environ.get('X-Swagger-Prefix', ''))
 }
+app.json_encoder = LazyJSONEncoder
+
 app.config['SWAGGER'] = {
     'title': 'ROBOKOP Builder API',
     'uiversion': 3
