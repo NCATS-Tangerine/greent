@@ -33,6 +33,8 @@
   license_url: https://www.nlm.nih.gov/copyright.html
 - name: Chem2bio2rdf
   url: http://cheminfov.informatics.indiana.edu:8080/c2b2r/
+  license: 
+  license_url:  
 - name: Comparative Toxicogenomics Database (CTD)
   url: http://ctdbase.org
   license: Terms of Service
@@ -155,6 +157,8 @@
   citation_url: https://www.ebi.ac.uk/chembl/
 - name: ClinGen Allele Registry
   url: http://reg.clinicalgenome.org/redmine/projects/registry/genboree_registry/landing
+  license: 
+  license_url: 
   citation_url: http://reg.clinicalgenome.org/redmine/projects/registry/genboree_registry/landing
 - name: GTEx
   url: https://www.gtexportal.org/home/

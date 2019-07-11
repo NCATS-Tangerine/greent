@@ -1,0 +1,160 @@
+== Data Sources, Licenses, and Attributions
+++++
+.Sources
+|===
+|Data Source |License| Attribution
+
+|<a href="https://www.drugbank.ca/">Drugbank</a> 
+|<a href="https://www.drugbank.ca/releases/latest">CC-BY-NC-4.0</a> 
+|<a href="https://www.drugbank.ca/about">Citation</a> 
+
+|<a href="http://drugcentral.org/">DrugCentral</a> 
+|<a href="http://drugcentral/privacy">CC-BY-SA-4.0</a> 
+|
+
+|<a href="https://datadryad.org/resource/doi:10.5061/dryad.8q0s4">Aeolus</a> 
+|<a href="https://www.nature.com/articles/sdata201626#rightslink">CC-BY-4.0</a> 
+|<a href="https://datadryad.org/resource/doi:10.5061/dryad.8q0s4">Citation</a> 
+
+|<a href="https://mychem.info">Mychem.info</a> 
+|<a href="https://mychem.info/terms/">Terms of Use</a> 
+|<a href="http://mychem.info/citation/">Citation</a> 
+
+|<a href="https://www.ebi.ac.uk/QuickGO">QuickGO</a> 
+|<a href="https://www.ebi.ac.uk/about/terms-of-use">Terms of Use</a> 
+|<a href="https://www.ebi.ac.uk/GOA/publications">Citation</a> 
+
+|<a href="https://bio2rdf.org">bio2rdf.org</a> 
+|<a href="https://github.com/bio2rdf/bio2rdf-scripts/wiki/MIT-License">MIT</a> 
+|<a href="https://github.com/bio2rdf/bio2rdf-scripts/wiki/Cite-Bio2RDF">Citation</a> 
+
+|<a href="https://www.nlm.nih.gov/mesh/meshhome.html">Mesh</a> 
+|<a href="https://www.nlm.nih.gov/copyright.html">Copyright</a> 
+|
+
+|<a href="http://cheminfov.informatics.indiana.edu:8080/c2b2r/">Chem2bio2rdf</a> 
+|<a href="None">None</a> 
+|
+
+|<a href="http://ctdbase.org">Comparative Toxicogenomics Database (CTD)</a> 
+|<a href="http://ctdbase.org/about/legal.jsp">Terms of Service</a> 
+|<a href="http://ctdbase.org/about/publications/#citing">Citation</a> 
+
+|<a href="https://www.ebi.ac.uk/gwas/">GWAS Catalog</a> 
+|<a href="https://www.ebi.ac.uk/about/terms-of-use">Terms of Use</a> 
+|<a href="https://www.ebi.ac.uk/gwas/docs/about">Citation</a> 
+
+|<a href="https://pharos.nih.gov/index">Pharos (TCRD)</a> 
+|<a href="https://pharos.nih.gov/about">CC-BY-SA-4.0</a> 
+|<a href="https://pharos.nih.gov/about">Citation</a> 
+
+|<a href="http://www.hmdb.ca">Human Metabolome Database (HMDB)</a> 
+|<a href="http://www.hmdb.ca/about#cite">Terms of Use</a> 
+|<a href="http://www.hmdb.ca/about#cite">Citation</a> 
+
+|<a href="https://www.kegg.jp">KEGG</a> 
+|<a href="http://www.kegg.jp/kegg/legal.html">Terms of Use</a> 
+|<a href="https://www.kegg.jp/kegg/kegg1.html">Citation</a> 
+
+|<a href="https://www.genenames.org/">HGNC</a> 
+|<a href="https://www.genenames.org/about/">Unrestricted</a> 
+|<a href="https://www.genenames.org/about/">Citation</a> 
+
+|<a href="https://mygene.info">mygene.info</a> 
+|<a href="https://mygene.info/terms/">Terms of Use</a> 
+|<a href="http://mygene.info/citation/">Citation</a> 
+
+|<a href="https://myvariant.info">myvariant.info</a> 
+|<a href="https://myvariant.info/terms/">Terms of Use</a> 
+|<a href="http://myvariant.info/citation/">Citation</a> 
+
+|<a href="https://www.ensembl.org">ensembl</a> 
+|<a href="https://www.ensembl.org/info/about/legal/disclaimer.html">No Restriction</a> 
+|<a href="https://www.ensembl.org/info/about/publications.html">Citation</a> 
+
+|<a href="https://www.uniprot.org">UniProtKB</a> 
+|<a href="https://www.uniprot.org/help/license">CC-BY-4.0">CC-BY-4.0</a> 
+|<a href="https://www.uniprot.org/help/publications">Citation</a> 
+
+|<a href="https://www.pharmgkb.org">PharmGKB</a> 
+|<a href="https://www.pharmgkb.org/page/dataUsagePolicy">CC-BY-SA-4.0</a> 
+|<a href="https://www.pharmgkb.org/page/citingPharmgkb">Citation</a> 
+
+|<a href="https://pubchem.ncbi.nlm.nih.gov/">Pubchem</a> 
+|<a href="https://www.ncbi.nlm.nih.gov/home/about/policies/">Policies</a> 
+|
+
+|<a href="https://www.ncbi.nlm.nih.gov/pubmed/">Pubmed</a> 
+|<a href="https://www.ncbi.nlm.nih.gov/pmc/about/copyright">Copyright</a> 
+|
+
+|<a href="https://monarchinitiative.org">Monarch API (Biolink)</a> 
+|<a href="https://monarchinitiative.org">CC-BY-3.0</a> 
+|
+
+|<a href="http://www.informatics.jax.org/">Mouse Genome Informatics (MGI)</a> 
+|<a href="http://www.informatics.jax.org/mgihome/other">Copyright</a> 
+|<a href="http://www.informatics.jax.org/mgihome/other/citation.shtml">Citation</a> 
+
+|<a href="https://www.ncbi.nlm.nih.gov/clinvar">ClinVar</a> 
+|<a href="https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/">Terms of Use</a> 
+|<a href="https://www.ncbi.nlm.nih.gov/clinvar/docs/faq/">Citation</a> 
+
+|<a href="https://www.omim.org">OMIM</a> 
+|<a href="https://www.omim.org/help/agreement">Custom License</a> 
+|
+
+|<a href="https://www.orphadata.org/">Orphanet</a> 
+|<a href="https://www.orphadata.org/cgi-bin/index.php">CC-BY-4.0</a> 
+|<a href="https://www.orphadata.org/cgi-bin/index.php">Citation</a> 
+
+|<a href="http://pantherdb.org">Panther</a> 
+|<a href="http://pantherdb.org/tou.jsp">GPL and Copyright</a> 
+|<a href="http://pantherdb.org/publications.jsp#HowToCitePANTHER">Citation</a> 
+
+|<a href="https://hpo.jax.org/">Human Phenotype Ontology (HPO)</a> 
+|<a href="https://hpo.jax.org/app/license">Custom</a> 
+|<a href="https://hpo.jax.org/app/citation">Citation</a> 
+
+|<a href="https://www.ncbi.nlm.nih.gov/gene">NCBI Gene</a> 
+|<a href="https://www.ncbi.nlm.nih.gov/home/about/policies/">Terms of Use</a> 
+|
+
+|<a href="https://thebiogrid.org">BioGRID</a> 
+|<a href="https://downloads.thebiogrid.org/BioGRID">MIT</a> 
+|<a href="https://wiki.thebiogrid.org/doku.php/aboutus#biogrid_publications">Citation</a> 
+
+|<a href="http://geneontology.org/">AmiGO</a> 
+|<a href="http://geneontology.org/docs/go-citation-policy">CC-BY-4.0</a> 
+|<a href="http://geneontology.org/docs/go-citation-policy">Citation</a> 
+
+|<a href="https://www.ebi.ac.uk/unichem/">UniChem</a> 
+|<a href="https://www.ebi.ac.uk/about/terms-of-use">Terms of Use</a> 
+|<a href="https://www.ebi.ac.uk/unichem/info/citation">Citation</a> 
+
+|<a href="https://www.ebi.ac.uk/chembl/">Chembl</a> 
+|<a href="https://www.ebi.ac.uk/about/terms-of-use">Terms of Use</a> 
+|<a href="https://www.ebi.ac.uk/chembl/">Citation</a> 
+
+|<a href="http://reg.clinicalgenome.org/redmine/projects/registry/genboree_registry/landing">ClinGen Allele Registry</a> 
+|<a href="None">None</a> 
+|<a href="http://reg.clinicalgenome.org/redmine/projects/registry/genboree_registry/landing">Citation</a> 
+
+|<a href="https://www.gtexportal.org/home/">GTEx</a> 
+|<a href="https://www.gtexportal.org/home/documentationPage">No Restrictions</a> 
+|<a href="https://gtexportal.org/home/faq#citePortal">Citation</a> 
+
+|<a href="http://www.obofoundry.org/ontology/mondo.html">MONDO</a> 
+|<a href="http://www.obofoundry.org/ontology/mondo.html">CC-BY-3.0</a> 
+|
+
+|<a href="https://www.ebi.ac.uk/chebi/">CHEBI</a> 
+|<a href="http://www.obofoundry.org/ontology/chebi.html">CC-BY 4.0</a> 
+|<a href="https://www.ebi.ac.uk/chebi/aboutChebiForward.do">Citation</a> 
+
+|<a href="http://geneontology.org/">Gene Ontology (GO)</a> 
+|<a href="http://geneontology.org/docs/go-citation-policy/">CC-BY 4.0</a> 
+|<a href="http://geneontology.org/docs/go-citation-policy/">Citation</a> 
+
+|===
+++++
