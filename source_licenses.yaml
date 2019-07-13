@@ -91,10 +91,11 @@
   license: CC-BY-SA-4.0
   license_url: https://www.pharmgkb.org/page/dataUsagePolicy
   citation_url: https://www.pharmgkb.org/page/citingPharmgkb
-- name: Pubchem
+- name: PubChem
   url: https://pubchem.ncbi.nlm.nih.gov/
   license: Policies
   license_url: https://www.ncbi.nlm.nih.gov/home/about/policies/
+  citation_url: https://pubchemdocs.ncbi.nlm.nih.gov/citation-guidelines
 - name: Pubmed
   url: https://www.ncbi.nlm.nih.gov/pubmed/
   license: Copyright
