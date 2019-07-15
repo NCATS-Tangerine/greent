@@ -106,7 +106,6 @@ def test_chem_to_chem_carnitine(kegg,rosetta):
     ids = []
     for edge,node in results:
         ids.append(node.id)
-    #Really, it should be, but this reaction doesn't appear in KEGG (for humans)
     assert other in ids
 
 def test_chem_to_reaction(kegg):
