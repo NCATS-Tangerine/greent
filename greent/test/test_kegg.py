@@ -45,7 +45,7 @@ def test_chem_to_chem(kegg,rosetta):
     assert codeine6glucoronide in ids
     assert norcodeine in ids
 
-def test_chem_to_chem(kegg,rosetta):
+def test_chem_to_chem_codein_chebe(kegg,rosetta):
     codeine = KNode('CHEBI:16714',name='Codeine',type=node_types.CHEMICAL_SUBSTANCE)
     rosetta.synonymizer.synonymize(codeine)
     results = kegg.chemical_get_chemical(codeine)
@@ -64,6 +64,16 @@ def test_chem_to_chem(kegg,rosetta):
     assert codeine6glucoronide in ids
     assert norcodeine in ids
 
+def test_chem_to_chem_LGlutamine(kegg,rosetta):
+    Glutamine = KNode('KEGG.COMPOUND:C00064',name='L-Glutamine',type=node_types.CHEMICAL_SUBSTANCE)
+    rosetta.synonymizer.synonymize(Glutamine)
+    Phenylalanine = 'KEGG.COMPOUND:C00079'
+    results = kegg.chemical_get_chemical(Glutamine)
+    ids = []
+    for edge,node in results:
+        ids.append(node.id)
+    assert len(results) > 0
+    assert Phenylalanine in ids
 
 def test_chem_to_chem_Glucosylceramide(kegg,rosetta):
     Glucosylceramide = KNode('KEGG.COMPOUND:C01190',name='Glucosylceramide',type=node_types.CHEMICAL_SUBSTANCE)
@@ -88,6 +98,17 @@ def test_chem_to_chem_caffiene(kegg,rosetta):
     #Really, it should be, but this reaction doesn't appear in KEGG (for humans)
     assert theobromine not in ids
 
+def test_chem_to_chem_carnitine(kegg,rosetta):
+    carn = KNode('CHEBI:16347',name='L-Carnitine',type=node_types.CHEMICAL_SUBSTANCE)
+    rosetta.synonymizer.synonymize(carn)
+    results = kegg.chemical_get_chemical(carn)
+    other = 'KEGG.COMPOUND:C02990'
+    ids = []
+    for edge,node in results:
+        ids.append(node.id)
+    #Really, it should be, but this reaction doesn't appear in KEGG (for humans)
+    assert other in ids
+
 def test_chem_to_reaction(kegg):
     hete = KNode('KEGG.COMPOUND:C04805', name="5-HETE", type=node_types.CHEMICAL_SUBSTANCE)
     results = kegg.chemical_get_reaction(hete)
@@ -97,6 +118,23 @@ def test_chem_to_reaction(kegg):
 def test_rxn_to_chem(kegg):
     results = kegg.reaction_get_chemicals('rn:R07034')
     assert len(results) == 5
+
+def test_get_reaction_1923(kegg):
+    reactions = kegg.get_reaction('rn:R01923')
+    for reaction in reactions:
+        assert len(reaction['enzyme']) == 1
+        assert len(reaction['reactants']) == 2
+        assert len(reaction['products']) == 2
+
+def test_get_reaction_1375(kegg):
+    reaction = kegg.get_reaction('rn:R01375')
+    assert len(reaction['enzyme']) == 1
+    assert len(reaction['reactants']) == 2
+    assert 'C00064' in reaction['reactants']
+    assert 'C00166' in reaction['reactants']
+    assert len(reaction['products']) == 2
+    assert 'C00940' in reaction['products']
+    assert 'C00079' in reaction['products']
 
 def test_get_reaction(kegg):
     reaction = kegg.get_reaction('rn:R07034')
