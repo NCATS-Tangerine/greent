@@ -14,7 +14,7 @@ Robokop KG is assembled from many data sources, some of which are also integrati
 
 |http://drugcentral.org/[DrugCentral] 
 |http://drugcentral/privacy[CC-BY-SA-4.0] 
-|
+|http://www.drugcentral.org[Citation] 
 
 |https://datadryad.org/resource/doi:10.5061/dryad.8q0s4[Aeolus] 
 |https://www.nature.com/articles/sdata201626#rightslink[CC-BY-4.0] 
@@ -84,9 +84,9 @@ Robokop KG is assembled from many data sources, some of which are also integrati
 |https://www.pharmgkb.org/page/dataUsagePolicy[CC-BY-SA-4.0] 
 |https://www.pharmgkb.org/page/citingPharmgkb[Citation] 
 
-|https://pubchem.ncbi.nlm.nih.gov/[Pubchem] 
+|https://pubchem.ncbi.nlm.nih.gov/[PubChem] 
 |https://www.ncbi.nlm.nih.gov/home/about/policies/[Policies] 
-|
+|https://pubchemdocs.ncbi.nlm.nih.gov/citation-guidelines[Citation] 
 
 |https://www.ncbi.nlm.nih.gov/pubmed/[Pubmed] 
 |https://www.ncbi.nlm.nih.gov/pmc/about/copyright[Copyright] 

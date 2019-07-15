@@ -153,3 +153,38 @@ RETURN result, jaccard ORDER BY jaccard DESC
 ++++
 </p>
 ++++
+
+== Drug Repurposing Queries
+
+++++
+<p>
+These queries can be used as the starting point for investigations of drug repurposing.
+</p>
+<p>
+Find drugs based on a mechanistic understanding of a gene's role:   If a chemical is known to contribute to a condition, and if that chemical increases the activity of a gene that is also known to be involved with the condition, then find other chemicals that decrease activity of that gene and perhaps they will treat the condition.   Here, we limit the new chemicals to those that are already drugs, and we also add a biological process node connecting the intial toxic chemical and the gene:
+++++
+[source,cypher]
+----
+MATCH (d:disease {id:"MONDO:0005052"})<-[:contributes_to]-(c:chemical_substance)-[:increases_activity_of]->(g:gene)--(d),
+(c)--(b:biological_process_or_activity)--(g)<-[:decreases_activity_of]-(c2:chemical_substance {drug:true}) 
+RETURN *
+----
+++++
+</p>
+<p>
+Given a rare disease, find a related common disease that share a gene and biological process with the rare disease.  Find drugs that treat the common disease and are related to the gene.
+++++
+[source,cypher]
+----
+MATCH (d:disease {id:"MONDO:0018305"})--(g:gene)--(d2:disease)<-[:treats]-(c:chemical_substance)--(g),
+(d)--(b:biological_process_or_activity)--(d2),
+(g)--(b) 
+WHERE d.rare_disease=true 
+AND NOT EXISTS(d2.rare_disease) 
+AND c.drug=true 
+RETURN *
+----
+++++
+</p>
+++++
+
