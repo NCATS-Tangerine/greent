@@ -7,6 +7,7 @@
   url: http://drugcentral.org/
   license: CC-BY-SA-4.0
   license_url: http://drugcentral/privacy
+  citation_url: http://www.drugcentral.org
 - name: Aeolus 
   url: https://datadryad.org/resource/doi:10.5061/dryad.8q0s4
   license: CC-BY-4.0
@@ -90,10 +91,11 @@
   license: CC-BY-SA-4.0
   license_url: https://www.pharmgkb.org/page/dataUsagePolicy
   citation_url: https://www.pharmgkb.org/page/citingPharmgkb
-- name: Pubchem
+- name: PubChem
   url: https://pubchem.ncbi.nlm.nih.gov/
   license: Policies
   license_url: https://www.ncbi.nlm.nih.gov/home/about/policies/
+  citation_url: https://pubchemdocs.ncbi.nlm.nih.gov/citation-guidelines
 - name: Pubmed
   url: https://www.ncbi.nlm.nih.gov/pubmed/
   license: Copyright

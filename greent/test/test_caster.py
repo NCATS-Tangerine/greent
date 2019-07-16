@@ -32,6 +32,20 @@ def test_kegg(rosetta):
     assert len(results) > 0
 
 
+def test_kegg_chem_to_chem_carnitine(rosetta):
+    fname='caster.upcast(input_filter(kegg~chemical_get_chemical,metabolite),chemical_substance)'
+    carn = KNode('CHEBI:16347',name='L-Carnitine',type=node_types.CHEMICAL_SUBSTANCE)
+    rosetta.synonymizer.synonymize(carn)
+    func = rosetta.get_ops(fname)
+    assert func is not None
+    results = func(carn)
+    other = 'KEGG.COMPOUND:C02990'
+    ids = []
+    for edge,node in results:
+        ids.append(node.id)
+    #Really, it should be, but this reaction doesn't appear in KEGG (for humans)
+    assert other in ids
+
 def test_drugcentral(rosetta):
     fname='caster.output_filter(mychem~get_drugcentral,disease,typecheck~is_disease)'
     func = rosetta.get_ops(fname)

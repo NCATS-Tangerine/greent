@@ -209,3 +209,7 @@ $ PYTHONPATH=$PWD/.. rosetta.py --delete-type-graph --initialize-type-graph --de
 ```
 
 You should now be able to write cypher queries for Rosetta that use the biolink-model names specified in the rosetta.yml config file that are connected by your new service.
+
+## Contributing
+
+Please note that this project is released with a [Contributor Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
