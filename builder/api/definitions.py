@@ -4,6 +4,50 @@ API definitions
 
 from builder.api.setup import swagger
 from builder.util import FromDictMixin
+
+
+@swagger.definition('Options')
+class Options():
+    """
+    file: schemas/options.yml
+    """
+
+
+@swagger.definition('QGraph')
+class QGraph():
+    """
+    file: schemas/qgraph.yml
+    """
+
+
+@swagger.definition('RemoteKGraph')
+class RemoteKGraph():
+    """
+    file: schemas/remote_kgraph.yml
+    """
+
+
+@swagger.definition('KGraph')
+class KGraph():
+    """
+    file: schemas/kgraph.yml
+    """
+
+
+@swagger.definition('Message')
+class Message():
+    """
+    file: schemas/message.yml
+    """
+
+
+@swagger.definition('Result')
+class Result():
+    """
+    file: schemas/result.yml
+    """
+
+
 @swagger.definition('QNode')
 class QNode(FromDictMixin):
     """

@@ -214,12 +214,17 @@ class NormalizeAnswerSet(Resource):
         ---
         tags: [util]
         requestBody:
-            name: Answer
-            description: The answer graph.
+            name: Message
+            description: A message.
             content:
                 application/json:
                     schema:
-                        $ref: '#/definitions/Answer'
+                        $ref: '#/definitions/Message'
+                    example:
+                        knowledge_graph:
+                            nodes:
+                              - id: MONDO:0005737
+                            edges: []
             required: true
         responses:
             200:
@@ -242,19 +247,34 @@ class Annotator(Resource):
         ---
         tags: [util]
         parameters:
-            - in: path
-              name: node_id
-              description: "curie of the node"
-              schema:
+          - in: path
+            name: node_id
+            description: "curie of the node"
+            schema:
                 type: string
-              required: true
-            - in: path
-              name: node_type
-              description: " Biolink type name for the curie, eg. providing chemical_substance here will make sure the
-               annotation is done as a chemical substance."
-              schema:
+            default: MONDO:0005737
+            required: true
+          - in: path
+            name: node_type
+            description: "Biolink type name for the curie, eg. providing chemical_substance here will make sure the annotation is done as a chemical substance."
+            schema:
                 type: string
-              required: true
+            default: disease
+            required: true
+        responses:
+            200:
+                description: Node annotations
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                id:
+                                    type: string
+                                equivalent_identifiers:
+                                    type: array
+                                    items:
+                                        type: string
         """
         node = KNode(id= node_id, type= node_type)
         greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')

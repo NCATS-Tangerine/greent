@@ -1,0 +1,47 @@
+QGraph
+---
+id: QGraph
+description: Graph representing the minimal question specification
+properties:
+  edges:
+    items:
+      description: Minimal edge specification
+      properties:
+        id:
+          description: Internal ID of this edge
+          type: string
+        source_id:
+          description: Internal ID of source node of this edge
+          type: string
+        target_id:
+          description: Internal ID of target node of this edge
+          type: string
+        type:
+          description: Optional relationship type of this edge
+          type: string
+      required:
+        - id
+        - source_id
+        - target_id
+      type: object
+    type: array
+  nodes:
+    items:
+      description: Minimal node specification
+      properties:
+        curie:
+          description: Optional curie of this node
+          type: string
+        id:
+          description: Internal ID of this node
+          type: string
+        set:
+          description: Flag indicating whether node should be collapsed in answers
+          type: boolean
+        type:
+          description: Optional biolink-model type of this node
+          type: string
+      required:
+        - id
+    type: array
+type: object
