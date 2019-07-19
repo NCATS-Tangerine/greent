@@ -1,0 +1,50 @@
+Message Object
+---
+id: Message
+description: Message passed from one module to the next
+example:
+  answers:
+    - edge_bindings:
+        e00: '636'
+      node_bindings:
+        n00: 'MONDO:0005737'
+  knowledge_graph:
+    edges: []
+    nodes:
+      - id: 'MONDO:0005737'
+        name: Ebola hemorrhagic fever
+        type: disease
+  question_graph:
+    edges:
+      - id: e00
+        source_id: n00
+        target_id: n01
+      - id: e01
+        source_id: n01
+        target_id: n02
+    nodes:
+      - curie: 'MONDO:0005737'
+        id: n00
+        type: disease
+      - id: n01
+        type: gene
+      - id: n02
+        type: genetic_condition
+properties:
+  answers:
+    items:
+      $ref: '#/definitions/Result'
+    type: array
+  knowledge_graph:
+    oneOf:
+      - $ref: '#/definitions/KGraph'
+      - $ref: '#/definitions/RemoteKGraph'
+  options:
+    $ref: '#/definitions/Options'
+  question_graph:
+    $ref: '#/definitions/QGraph'
+required:
+  - question_graph
+  - knowledge_graph
+  - answers
+type: object

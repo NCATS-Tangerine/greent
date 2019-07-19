@@ -215,12 +215,17 @@ class NormalizeAnswerSet(Resource):
         ---
         tags: [util]
         requestBody:
-            name: Answer
-            description: The answer graph.
+            name: Message
+            description: A message.
             content:
                 application/json:
                     schema:
-                        $ref: '#/definitions/Answer'
+                        $ref: '#/definitions/Message'
+                    example:
+                        knowledge_graph:
+                            nodes:
+                              - id: MONDO:0005737
+                            edges: []
             required: true
         responses:
             200:
@@ -234,7 +239,7 @@ class NormalizeAnswerSet(Resource):
             json_blob = synonymize_binding_nodes(json_blob, id_mappings)
             return json_blob, 200
         return [], 400
-api.add_resource(NormalizeAnswerSet, '/normalize')
+api.add_resource(NormalizeAnswerSet, '/normalize/')
 
 class Annotator(Resource):
     def get(self, node_id, node_type):
@@ -243,19 +248,34 @@ class Annotator(Resource):
         ---
         tags: [util]
         parameters:
-            - in: path
-              name: node_id
-              description: "curie of the node"
-              schema:
+          - in: path
+            name: node_id
+            description: "curie of the node"
+            schema:
                 type: string
-              required: true
-            - in: path
-              name: node_type
-              description: " Biolink type name for the curie, eg. providing chemical_substance here will make sure the
-               annotation is done as a chemical substance."
-              schema:
+            default: MONDO:0005737
+            required: true
+          - in: path
+            name: node_type
+            description: "Biolink type name for the curie, eg. providing chemical_substance here will make sure the annotation is done as a chemical substance."
+            schema:
                 type: string
-              required: true
+            default: disease
+            required: true
+        responses:
+            200:
+                description: Node annotations
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                id:
+                                    type: string
+                                equivalent_identifiers:
+                                    type: array
+                                    items:
+                                        type: string
         """
         node = KNode(id= node_id, type= node_type)
         greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
@@ -331,7 +351,7 @@ class TaskStatus(Resource):
         result = json.loads(value)
         return result, 200
 
-api.add_resource(TaskStatus, '/task/<task_id>')
+api.add_resource(TaskStatus, '/task/<task_id>/')
 
 class TaskLog(Resource):
     def get(self, task_id):
@@ -359,7 +379,7 @@ class TaskLog(Resource):
         else:
             return 'Task ID not found', 404
 
-api.add_resource(TaskLog, '/task/<task_id>/log')
+api.add_resource(TaskLog, '/task/<task_id>/log/')
 
 class Operations(Resource):
     def get(self):
@@ -384,7 +404,7 @@ class Operations(Resource):
 
         return operators
 
-api.add_resource(Operations, '/operations')
+api.add_resource(Operations, '/operations/')
 
 class Predicates(Resource):
     def get(self):
@@ -455,7 +475,7 @@ class Predicates(Resource):
 
         return pred_dict, 201
 
-api.add_resource(Predicates, '/predicates')
+api.add_resource(Predicates, '/predicates/')
 
 class NodeProperties(Resource):
     def get(self):
@@ -526,7 +546,7 @@ class NodeProperties(Resource):
 
         return prop_dict, 201
 
-api.add_resource(NodeProperties, '/node_properties')
+api.add_resource(NodeProperties, '/node_properties/')
 
 
 class Connections(Resource):
@@ -558,7 +578,7 @@ class Connections(Resource):
 
         return s
 
-api.add_resource(Connections, '/connections')
+api.add_resource(Connections, '/connections/')
 
 class Properties(Resource):
     def get(self):
@@ -577,7 +597,7 @@ class Properties(Resource):
 
         return properties
 
-api.add_resource(Properties, '/properties')
+api.add_resource(Properties, '/properties/')
 
 class SourceLicenses(Resource):
     def get(self):
@@ -618,7 +638,7 @@ class Concepts(Resource):
         concepts = list(node_types.node_types - {'unspecified'})
         return concepts
 
-api.add_resource(Concepts, '/concepts')
+api.add_resource(Concepts, '/concepts/')
 
 
 class OperationPath(Resource):
@@ -656,7 +676,7 @@ class OperationPath(Resource):
         return q.get_edge_op_paths(r.type_graph)
 
 
-api.add_resource(OperationPath, '/operationpath')
+api.add_resource(OperationPath, '/operationpath/')
 
 
 if __name__ == '__main__':
