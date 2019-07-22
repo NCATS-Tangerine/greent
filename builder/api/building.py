@@ -30,6 +30,7 @@ from builder.question import Question
 
 rosetta_config_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "rosetta.yml")
 properties_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "conf", "annotation_map.yaml")
+source_licenses = os.path.join(os.path.dirname(__file__), "..", "..", "source_licenses.yaml")
 predicates_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "conf", "predicates.json")
 node_props_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", "conf", "properties.json")
 
@@ -597,6 +598,25 @@ class Properties(Resource):
         return properties
 
 api.add_resource(Properties, '/properties/')
+
+class SourceLicenses(Resource):
+    def get(self):
+        """
+        Get a list of all source licences from knowledge sources
+        ---
+        tags: [util]
+        responses:
+            200:
+                description: Source Licenses
+                content:
+                    application/json:
+        """
+        with open(source_licenses, 'r') as stream:
+            sources = yaml.load(stream)
+
+        return sources
+
+api.add_resource(SourceLicenses, '/sourceLicenses')
 
 
 class Concepts(Resource):
