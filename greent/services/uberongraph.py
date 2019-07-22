@@ -128,6 +128,7 @@ class UberonGraphKS(Service):
         prefix UBERON: <http://purl.obolibrary.org/obo/UBERON_>
         prefix CL: <http://purl.obolibrary.org/obo/CL_>
         prefix BFO: <http://purl.obolibrary.org/obo/BFO_>
+        prefix GO: <http://purl.obolibrary.org/obo/GO_>
         select distinct ?cellID ?cellLabel
         from <http://reasoner.renci.org/nonredundant>
         from <http://reasoner.renci.org/ontology>
