@@ -591,6 +591,31 @@ class Properties(Resource):
                 description: Properties
                 content:
                     application/json:
+                        schema:
+                            type: object
+                            additionalProperties:
+                                type: object
+                                properties:
+                                    node_type:
+                                        type: string
+                                    prefixes:
+                                        type: array
+                                        items:
+                                            type: string
+                                additionalProperties:
+                                    type: object
+                                    properties:
+                                        url:
+                                            type: string
+                                        keys:
+                                            type: object
+                                            additionalProperties:
+                                                type: object
+                                                properties:
+                                                    source:
+                                                        type: string
+                                                    data_type:
+                                                        type: string
         """
         with open(properties_file, 'r') as stream:
             properties = yaml.load(stream)
@@ -598,6 +623,7 @@ class Properties(Resource):
         return properties
 
 api.add_resource(Properties, '/properties/')
+
 
 class SourceLicenses(Resource):
     def get(self):
@@ -610,13 +636,33 @@ class SourceLicenses(Resource):
                 description: Source Licenses
                 content:
                     application/json:
+                        schema:
+                            type: array
+                            items:
+                                type: object
+                                properties:
+                                    name:
+                                        type: string
+                                        example: Drugbank
+                                    url:
+                                        type: string
+                                        example: https://www.drugbank.ca/
+                                    license:
+                                        type: string
+                                        example: CC-BY-NC-4.0
+                                    license_url:
+                                        type: string
+                                        example: https://www.drugbank.ca/releases/latest
+                                    citation_url:
+                                        type: string
+                                        example: https://www.drugbank.ca/about
         """
         with open(source_licenses, 'r') as stream:
             sources = yaml.load(stream)
 
         return sources
 
-api.add_resource(SourceLicenses, '/sourceLicenses')
+api.add_resource(SourceLicenses, '/sourceLicenses/')
 
 
 class Concepts(Resource):
