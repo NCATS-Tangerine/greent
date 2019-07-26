@@ -51,6 +51,7 @@ services:
       - internal
     volumes:
       - ./data_dump:/dumps
+      - ../../../certs:/etc/ssl/certs
     depends_on:
       - guides_server
       - neo4j
