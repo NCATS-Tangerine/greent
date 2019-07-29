@@ -25,7 +25,7 @@ bad_idents = conf.get('bad_identifiers')
 # 'UBERON:0000468', # Multicellular Organism)
 #               )
 
-def get_label(curie, url='https://uberonto.renci.org/label/'):
+def get_label(curie, url='https://onto.renci.org/label/'):
     y = {'label': ''}
     try:        
         y.update(requests.get(f'{url}/{curie}').json())
@@ -61,16 +61,16 @@ def get_identifiers(input_type,rosetta):
                         print(ident,label,len(lids))
                         lids.append(LabeledID(ident,label))
     elif input_type == node_types.ANATOMICAL_ENTITY:
-        identifiers = requests.get("https://uberonto.renci.org/descendants/UBERON:0001062").json()
+        identifiers = requests.get("https://onto.renci.org/descendants/UBERON:0001062").json()
         for ident in identifiers:
             if ident not in bad_idents:
-                res = get_label(ident) #requests.get(f'https://uberonto.renci.org/label/{ident}').json()
+                res = get_label(ident) #requests.get(f'https://onto.renci.org/label/{ident}').json()
                 lids.append(LabeledID(ident,res['label']))
     elif input_type == node_types.CELL:
-        identifiers = requests.get("https://uberonto.renci.org/descendants/CL:0000000").json()
+        identifiers = requests.get("https://onto.renci.org/descendants/CL:0000000").json()
         for ident in identifiers:
             if ident not in bad_idents:
-                res = get_label(ident) #requests.get(f'https://uberonto.renci.org/label/{ident}/').json()
+                res = get_label(ident) #requests.get(f'https://onto.renci.org/label/{ident}/').json()
                 lids.append(LabeledID(ident,res['label']))
     elif input_type == node_types.GENE:
         print("Pull genes")
@@ -83,16 +83,16 @@ def get_identifiers(input_type,rosetta):
         print("OK")
     elif input_type == node_types.CELLULAR_COMPONENT:
         print('Pulling cellular compnent descendants')
-        identifiers = requests.get("https://uberonto.renci.org/descendants/GO:0005575").json()
+        identifiers = requests.get("https://onto.renci.org/descendants/GO:0005575").json()
         # for now trying with exclusive descendants of cellular component 
         for ident in identifiers:
             if ident not in bad_idents:
-                res = get_label(ident) #requests.get(f'https://uberonto.renci.org/label/{ident}/').json()
+                res = get_label(ident) #requests.get(f'https://onto.renci.org/label/{ident}/').json()
                 lids.append(LabeledID(ident,res['label']))
 
     elif input_type == node_types.CHEMICAL_SUBSTANCE:
         print('pull chem ids')
-        identifiers = requests.get("https://uberonto.renci.org/descendants/CHEBI:23367").json()
+        identifiers = requests.get("https://onto.renci.org/descendants/CHEBI:23367").json()
         identifiers = [x for x in identifiers if 'CHEBI' in x]
         print('pull labels...')
         #This is the good way to do this, but it's soooooo slow
@@ -133,18 +133,17 @@ def get_identifiers(input_type,rosetta):
             try:
                 lids.append(LabeledID(ident,chebi_labels[ident]))
             except KeyError:
-                res = get_label(ident) #requests.get(f'https://uberonto.renci.org/label/{ident}/').json()
+                res = get_label(ident) #requests.get(f'https://onto.renci.org/label/{ident}/').json()
                 lids.append(LabeledID(ident,res['label']))
 
     elif input_type == node_types.BIOLOGICAL_PROCESS_OR_ACTIVITY:
         # pull Biological process decendants
-        identifiers = requests.get('https://uberonto.renci.org/descendants/GO:0008150').json()
+        identifiers = requests.get('https://onto.renci.org/descendants/GO:0008150').json()
         # merge with molucular activity decendants
-        identifiers = identifiers + requests.get('https://uberonto.renci.org/descendants/GO:0003674').json()
-
+        identifiers = identifiers + requests.get('https://onto.renci.org/descendants/GO:0003674').json()        
         for ident in identifiers:
             if ident not in bad_idents:
-                p = get_label(ident) #requests.get(f'https://uberonto.renci.org/label/{ident}/')
+                p = get_label(ident) #requests.get(f'https://onto.renci.org/label/{ident}/')
                 lids.append(LabeledID(ident, p['label']))
     elif input_type == node_types.GENE_FAMILY:
         gene_fam_data = rosetta.core.panther.gene_family_data
