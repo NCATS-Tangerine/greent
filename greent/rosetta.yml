@@ -25,7 +25,7 @@
   pathway            : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY', 'KEGG.PATHWAY', 'REACT', 'KEGG-path' ]
   phenotypic_feature : [ 'HP' , 'NCIT', 'EFO']
   sequence_variant   : [ 'CAID', 'HGVS', 'ROBO_VARIANT', 'DBSNP', 'CLINVARVARIANT', 'MYVARIANT_HG19', 'MYVARIANT_HG38']
-  chemical_substance : [ 'DRUGBANK', 'PUBCHEM', 'CHEBI', 'CHEMBL','DRUG.INTERACTION', 'INCHI', 'INCHIKEY',  'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG', 'KEGG', 'PHAROS.DRUG', 'CTD']
+  chemical_substance : [ 'DRUGBANK', 'PUBCHEM', 'CHEBI', 'CHEMBL','DRUG.INTERACTION', 'INCHI', 'INCHIKEY',  'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG', 'KEGG', 'PHAROS.DRUG', 'CTD', 'FOOD']
   gene_family        : ['PANTHER.FAMILY', 'HGNC.FAMILY']
 
 '@translator-registry' :
@@ -90,6 +90,9 @@
     chemical_substance:
       - link  : chemical_to_chemical_class
         op    : uberongraph.get_chemical_to_chemical
+    food:
+      - link  : food_to_chemical
+        op    : food.food_to_chemical
   disease_or_phenotypic_feature:
     chemical_substance:
       - link  : exposures
