@@ -93,6 +93,8 @@
     food:
       - link  : food_to_chemical
         op    : food.food_to_chemical
+      - link  : chemical_to_food
+        op    : food.chemical_to_food
   disease_or_phenotypic_feature:
     chemical_substance:
       - link  : exposures
