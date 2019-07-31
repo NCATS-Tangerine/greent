@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from flask import render_template
 import os
 from flask_cors import CORS
@@ -13,7 +13,8 @@ CORS(app)
 
 def get_domain_name_from_env():
     domain_name = os.environ.get('SERVER_DOMAIN')
-    return domain_name
+    proto = request.environ.get('HTTP_X_FORWARDED_PROTO','https')
+    return f'{proto}://{domain_name}'
 
 def get_list_of_files():
     files = []

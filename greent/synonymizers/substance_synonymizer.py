@@ -39,8 +39,17 @@ def synonymize(node,gt):
         logger.debug("Trying UniChem")
         synonyms.update(synonymize_with_UniChem(node,gt))
         #synonymize_with_CTD(node,gt)
+    kegg_id_normalize(node)
     return synonyms
 
+def kegg_id_normalize(node):
+    # sometimes OXO returns KEGG_COMPOUND instead of KEGG.COMPOUND and subsequent services are having trouble 
+    filtered = filter(lambda x : 'KEGG_COMPOUND' in x.identifier, node.synonyms)    
+    mapped = list(map(lambda x : LabeledID(identifier = x.identifier.replace('G_C','G.C'), label= x.label ),filtered))    
+    for synonym in mapped:
+        node.synonyms.add(synonym)
+    for synonym in filtered:
+        node.synonyms.remove(filtered)
 
 def synonymize_with_OXO(node,gt):
     return oxo_synonymizer.synonymize(node,gt)

@@ -583,7 +583,7 @@ slots:
       - GOREL:0001007
       - RO:0040036
       - GOREL:0002008
-      - has primary input or output
+      - RO:0004007 #has primary input or output
       
   capable of:
     mappings:
@@ -627,12 +627,12 @@ slots:
 
   precedes:
     mappings:
-      - acts_upstream_of
-      - acts_upstream_of_or_within
+      - GO:acts_upstream_of
+      - GO:acts_upstream_of_or_within
  
   has input:
     mappings:
-      - has primary input
+      - RO:0004009 #has primary input
   
   
 
@@ -743,7 +743,7 @@ slots:
       holds between a process and an entity created by the process
     mappings:
       - RO:0002234
-      - has primary output
+      - RO:0004008 #has primary output
 
   disease has basis in:
     is_a: related to 
@@ -801,17 +801,16 @@ slots:
       Indicates that the source terminates or decreases the abundance or frequency of the target
     mappings:
       - RO:0002597
-      - acts_upstream_of_or_within_negative_effect
-      - acts_upstream_of_negative_effect
+      - GO:acts_upstream_of_or_within_negative_effect
+      - GO:acts_upstream_of_negative_effect
   
   positively regulates:
     description: >-
       Indicates that the source initiates or increases the abundance or frequency of the target
     mappings:
       - RO:0002598
-      - acts_upstream_of_positive_effect
-      - acts_upstream_of_or_within_positive_effect
-
+      - GO:acts_upstream_of_positive_effect
+  
   mereotopologically related to:
     description: >-
       A mereological relationship or a topological relationship

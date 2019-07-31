@@ -1,0 +1,6 @@
+Options
+---
+id: Options
+additionalProperties: true
+description: Operation-/module-specific options
+type: object

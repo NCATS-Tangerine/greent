@@ -1,0 +1,20 @@
+Result
+---
+id: Result
+description: Map from question node and edge IDs to knowledge-graph entity identifiers and relationship references
+properties:
+edge_bindings:
+  additionalProperties: True
+  oneOf:
+    - type: string
+    - items:
+        type: string
+      type: array
+node_bindings:
+  additionalProperties: True
+  oneOf:
+    - type: string
+    - items:
+        type: string
+      type: array
+type: object

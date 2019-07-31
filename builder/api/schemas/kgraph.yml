@@ -1,0 +1,42 @@
+KGraph
+---
+id: KGraph
+description: Graph representing knowledge relevant to a specific question
+properties:
+  edges:
+    items:
+      description: Edge in the knowledge graph
+      properties:
+        id:
+          description: Unique ID for this edge
+          type: string
+        source_id:
+          description: Corresponds to the @id of source node of this edge
+          type: string
+        target_id:
+          description: Corresponds to the @id of target node of this edge
+          type: string
+        type:
+          description: Higher-level relationship type of this edge
+          type: string
+      required:
+        - id
+        - source_id
+        - target_id
+      type: object
+    type: array
+  nodes:
+    items:
+      description: Node in the knowledge graph
+      properties:
+        id:
+          description: CURIE identifier for this node
+          type: string
+        type:
+          description: 'Entity type of this node (e.g., protein, disease, etc.)'
+          type: string
+      required:
+        - id
+      type: object
+    type: array
+type: object
