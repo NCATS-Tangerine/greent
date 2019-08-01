@@ -82,6 +82,16 @@ match (b:anatomical_entity {name:"liver"})--(c:cell)--(d:biological_process_or_a
 ++++
 </p>
 <p>
+Find all cells that are part of the brain, and are capable of thyroid stimulating hormone secretion.  Note in this case that we are specifying both ends of the path as input.
+++++
+[source,cypher]
+----
+match (a:anatomical_entity {name:"brain"})--(c:cell)--(b:biological_process_or_activity {id:"GO:0070460"}) return *
+----
+++++
+</p>
+
+<p>
 Find any concpets that connect brain to diabetes.  In this case, the connection are brain-affecting phenotypes that occur in diabetes.
 ++++
 [source,cypher]
