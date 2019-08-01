@@ -26,7 +26,7 @@ def synonymize(node,gt):
     synonyms = set()  
     if 'KEGG.COMPOUND' in node.id:
         kegg_un_namespaced = f'KEGG:{Text.un_curie(node.id)}'
-        node.add_synonyms(LabeledID(identifier=kegg_un_namespaced, label=node.name))
+        node.add_synonyms([LabeledID(identifier=kegg_un_namespaced, label=node.name)])
     if curie == 'CHEMBL':
         synonyms.update(synonymize_with_UniChem(node,gt))
         #OXO is going to troll the node's synonyms, so we want to add them now
