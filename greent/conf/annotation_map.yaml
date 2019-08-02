@@ -134,20 +134,42 @@ ChemicalAnnotator:
 GeneAnnotator:
     prefixes:
       - HGNC
+      - ENSEMBL
     HGNC:
       url: "http://rest.genenames.org/fetch"
       keys:
         - gene_family:
-            source: "gene_family"
+            source: "gene_group"
             data_type: string_array
         - gene_family_id:
-            source: "gene_family_id"
+            source: "gene_group_id"
             data_type: integer_array
         - location:
             source: "location"
             data_type: string
         - locus_group:
             source: "locus_group"
+            data_type: string
+    ENSEMBL:
+      url: "http://www.ensembl.org/biomart/martservice"
+      keys:
+        - ensembl_name:
+            source: "ensembl_name"
+            data_type: string
+        - chromosome:
+            source: "chromosome"
+            data_type: string
+        - start_position:
+            source: "start_position"
+            data_type: integer
+        - end_position:
+            source: "end_position"
+            data_type: integer
+        - gene_biotype:
+            source: "gene_biotype"
+            data_type: string
+        - description:
+            source: "description"
             data_type: string
 
 DiseaseAnnotator:
