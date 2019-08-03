@@ -133,7 +133,7 @@ class HGNC(Service):
 
             docs = self.get_hgnc_docs(gene_node.id)
             for doc in docs:
-                results += self.create_gene_family_relations(gene_node, doc)
+                results += self.create_gene_family_relations(gene_node, doc, 'gene_group')
         return results
 
     def create_gene_family_edge(self, gene_node, gene_family_node):
@@ -145,11 +145,11 @@ class HGNC(Service):
                                 predicate= predicate)
         return edge 
 
-    def create_gene_family_relations(self, gene_node, hgnc_data):
+    def create_gene_family_relations(self, gene_node, hgnc_data,group_key='gene_family'):
         results = []
-        if 'gene_group' in hgnc_data and 'gene_group_id' in hgnc_data:
-            gene_families = hgnc_data['gene_group']
-            gene_family_ids = hgnc_data['gene_group_id']
+        if group_key in hgnc_data and f'{group_key}_id' in hgnc_data:
+            gene_families = hgnc_data[group_key]
+            gene_family_ids = hgnc_data[f'{group_key}_id']
             for gene_family, gene_family_id in zip(gene_families, gene_family_ids):
                 gene_family_node = KNode(f'HGNC.FAMILY:{str(gene_family_id)}', type= node_types.GENE_FAMILY, name= gene_family)
                 edge = self.create_gene_family_edge(gene_node, gene_family_node)
