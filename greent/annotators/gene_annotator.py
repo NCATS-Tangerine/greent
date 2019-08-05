@@ -5,6 +5,7 @@ import logging
 from greent.annotators.annotator import Annotator
 import re
 from greent.annotators.util.ftp_helper import pull_hgnc_json
+from greent.util import Text, LoggingUtil
 
 logger = logging.getLogger(__name__)
 class GeneAnnotator(Annotator):
@@ -17,7 +18,7 @@ class GeneAnnotator(Annotator):
         if not self.instance:
             self.instance = GeneAnnotator.__GeneAnnotator(rosetta)
         else:
-            logger.debug('found annotator already created... going to  use that one.')
+            logger.debug('found annotator already created... going to use that one.')
             self.instance.rosetta = rosetta
     
     def __getattr__(self, name):
@@ -28,10 +29,12 @@ class GeneAnnotator(Annotator):
         def __init__(self, rosetta):
             super().__init__(rosetta)
             self.prefix_source_mapping = {
-                'HGNC': self.get_hgnc_annotations
+                'HGNC': self.get_hgnc_annotations,
+                'ENSEMBL': self.get_ensembl_gene_annotations
             }
             self.hgnc_data = None
-        
+            self.ensembl = rosetta.core.ensembl
+
         def get_hgnc_full(self,hgnc_id = None):
             """
             Downloads and reformats hgnc so it can be access with hgnc_id.
@@ -77,3 +80,26 @@ class GeneAnnotator(Annotator):
                 new['chromosome'] = match
             new['taxon'] = 9606
             return new
+
+        def get_all_ensembl_gene_annotations(self):
+            """
+            Returns a dictionary of annotation dictionaries with ensembl IDs as the key
+            """
+            filtered_annotations = {}
+            conf = self.get_prefix_config('ENSEMBL')
+            keys_of_interest = conf['keys']
+            all_ensembl_annotations = self.ensembl.get_all_ensembl_gene_annotations()
+            for ensembl_id, annotations in all_ensembl_annotations.items():
+                filtered_annotations[ensembl_id] = { keys_of_interest[key] : self.convert_data_to_primitives(annotations[key]) for key in keys_of_interest if key in annotations }
+            return filtered_annotations
+
+        def get_ensembl_gene_annotations(self, node_curie):
+            """
+            Returns a dictionary of annotations
+            """
+            conf = self.get_prefix_config('ENSEMBL')
+            keys_of_interest = conf['keys']
+            annotations = self.ensembl.get_ensembl_gene_annotations(Text.un_curie(node_curie))
+            filtered_annotations  = { keys_of_interest[key] : self.convert_data_to_primitives(annotations[key]) for key in keys_of_interest if key in annotations }
+            return filtered_annotations
+

@@ -148,3 +148,11 @@ def load_annotations_genes(rosetta):
         logger.debug(f'Caching {key} {extract}')
         rosetta.cache.set(key, extract)
     logger.debug(f"There were {len(hgnc_genes)} HGNC Annotations")
+
+    ensembl_annotations = gene_annotator.get_all_ensembl_gene_annotations()
+    for ensembl_id, annotations in ensembl_annotations.items():
+        key = f"annotation(ENSEMBL:{ensembl_id})"
+        logger.debug(f'Caching {key} {annotations}')
+        rosetta.cache.set(key, annotations)
+    logger.debug(f"There were {len(ensembl_annotations)} Ensembl Annotations")
+    

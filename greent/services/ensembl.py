@@ -3,9 +3,12 @@ from greent import node_types
 from greent.graph_components import KNode, LabeledID
 from greent.service import Service
 from greent.util import Text, LoggingUtil
+from collections import namedtuple
 import logging,json,sqlite3,os,requests,pickle
 
-logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)#
+logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
+
+EnsemblGene = namedtuple('EnsemblGene', ['ensembl_id', 'ensembl_name', 'chromosome', 'start_position', 'end_position', 'gene_biotype', 'description'])
 
 class Ensembl(Service):
     
@@ -20,13 +23,15 @@ class Ensembl(Service):
         self.gene_db_successfully_created = False
         self.gene_db_path = os.path.join(os.path.dirname(__file__), 'genes.sqlite3')
 
+        self.persistent_conn = None
+        self.all_gene_annotations = None
+
         # we assume the order of attributes from this url -
         # if we change this we need to change the indexing in create_genes_db below
         self.ensembl_genes_url = """http://www.ensembl.org/biomart/martservice?query=<?xml version="1.0" encoding="UTF-8"?>
                                     <!DOCTYPE Query>
                                     <Query  virtualSchemaName = "default" formatter = "TSV" header = "0" uniqueRows = "0" count = "" datasetConfigVersion = "0.6" >
                                         <Dataset name = "hsapiens_gene_ensembl" interface = "default" >
-                                            <Filter name = "chromosome_name" value = "1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,X,Y"/>
                                             <Attribute name = "ensembl_gene_id" />
                                             <Attribute name = "gene_biotype" />
                                             <Attribute name = "external_gene_name" />
@@ -40,13 +45,6 @@ class Ensembl(Service):
         
         self.check_if_already_done_sql = "SELECT name FROM sqlite_master WHERE type='table' AND name='genes';"
         
-        self.gene_entry_sql = "INSERT INTO genes (ensembl_id, gene_name, chromosome, start_pos, end_pos, gene_type, description) VALUES (?,?,?,?,?,?,?);"
-        
-        self.gene_range_select_sql = """SELECT ensembl_id, start_pos, end_pos 
-        FROM genes WHERE chromosome = ? AND ((? >= start_pos AND ? <= end_pos)
-        OR (? >= start_pos AND ? <= end_pos) OR (? <= start_pos AND ? >= end_pos));"""
-
-        self.genes_table_index_sql = "CREATE INDEX gene_composite on genes(chromosome, start_pos, end_pos, ensembl_id);"
         self.genes_table_sql = """CREATE TABLE IF NOT EXISTS genes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         ensembl_id text, 
@@ -57,71 +55,94 @@ class Ensembl(Service):
         gene_type text,
         description text);"""
 
+        self.genes_table_ensembl_id_index_sql = "CREATE UNIQUE INDEX ensembl_ids on genes(ensembl_id);"
+        self.genes_table_composite_index_sql = "CREATE INDEX gene_composite on genes(chromosome, start_pos, end_pos, ensembl_id);"
+
+        self.gene_entry_sql = """INSERT INTO genes 
+        (ensembl_id, gene_name, chromosome, start_pos, end_pos, gene_type, description) 
+        VALUES (?,?,?,?,?,?,?);"""
+        
+        self.gene_range_select_sql = """SELECT ensembl_id, start_pos, end_pos
+        FROM genes WHERE chromosome = ? AND ((? >= start_pos AND ? <= end_pos)
+        OR (? >= start_pos AND ? <= end_pos) OR (? <= start_pos AND ? >= end_pos));"""
+
+        self.gene_ensembl_id_select_sql = "SELECT * FROM genes WHERE ensembl_id = ?"
+
     def create_or_connect_to_genes_db(self):
         
         if not self.gene_db_successfully_created:
             self.create_genes_db()
         
-        db_conn = sqlite3.connect(self.gene_db_path, detect_types=sqlite3.PARSE_DECLTYPES)
-        return db_conn
+        if not self.persistent_conn:
+            self.persistent_conn = sqlite3.connect(self.gene_db_path, detect_types=sqlite3.PARSE_DECLTYPES)
+            self.persistent_conn.row_factory = sqlite3.Row
+
+        return self.persistent_conn
 
     def create_genes_db(self):
-       
-        db_conn = sqlite3.connect(self.gene_db_path)
-        db_cursor = db_conn.cursor()
+        try:
+            db_conn = sqlite3.connect(self.gene_db_path)
+            db_cursor = db_conn.cursor()
 
-        db_cursor.execute(self.check_if_already_done_sql)
-        if db_cursor.fetchone() is not None:
-            # TODO we assume this means it's complete - it could have been created but not filled out
-            # we could check the number of genes or something, but it will likely be changing
+            db_cursor.execute(self.check_if_already_done_sql)
+            if db_cursor.fetchone() is not None:
+                # TODO we assume this means it's complete - it could have been created but not filled out
+                self.gene_db_successfully_created = True
+                return True
+
+            # ensembl_genes are of type EnsemblGene namedtuple - that has to match the SQL parameters in gene_entry_sql
+            ensembl_genes = self.retrieve_all_genes()
+           
+            with db_conn:
+                db_conn.execute(self.genes_table_sql)
+                db_conn.executemany(self.gene_entry_sql, ensembl_genes)
+                db_conn.execute(self.genes_table_ensembl_id_index_sql)
+                db_conn.execute(self.genes_table_composite_index_sql)
+
+            db_conn.close()
+            logger.info(f'Ensembl created a gene database with {len(ensembl_genes)} entries!')
             self.gene_db_successfully_created = True
             return True
 
-        gene_counter = 0
+        except sqlite3.Error as e:
+            logger.error(f'Ensembl had a database error: {e}')
+
+    def retrieve_all_genes(self):
         genes_response = requests.get(self.ensembl_genes_url)
         if genes_response.status_code == 200:
             genes_data = genes_response.text.splitlines()
             if len(genes_data) > 1:
-                
-                db_cursor.execute(self.genes_table_sql)
-
+                ensembl_genes = []
                 for gene_line in genes_data[1:]:
-                    gene_data = gene_line.split('\t')
-                    try:
-                        # we assume the index order is predictable from url above - if we change that we need to change this
-                        ensembl_id = gene_data[0]
-                        gene_type = gene_data[1]
-                        gene_name = gene_data[2]
-                        start_pos = gene_data[3]
-                        end_pos = gene_data[4]
-                        description = gene_data[5]
-                        chromosome = gene_data[6]
-                        if chromosome == 'X':
-                            chromosome = 23
-                        elif chromosome == 'Y':
-                            chromosome = 24
-                        #elif chromosome == 'MT':
-                        #    chromosome = 25
-
-                        db_cursor.execute(self.gene_entry_sql, (ensembl_id, gene_name, chromosome, start_pos, end_pos, gene_type, description))
-                        gene_counter += 1
-
-                    except IndexError as e:
-                        logger.error(f'Ensembl biomart genes call had an issue with one line: {e})')
-
-                db_cursor.execute(self.genes_table_index_sql)
-                db_conn.commit()
-                db_conn.close()
-                logger.info(f'Ensembl created a gene database with {gene_counter} entries!')
-                self.gene_db_successfully_created = True
-                return True
-
+                    # gene_info is a EnsemblGene 
+                    gene_info = self.parse_biomart_gene_data(gene_line)
+                    if gene_info:
+                        ensembl_genes.append(gene_info)
+                return ensembl_genes
             else:
                 logger.error(f'Ensembl biomart genes call didnt find any matches! Thats not right!')
                 return False
         else:
             logger.error(f'Ensembl non-200 response from biomart genes call: {genes_response.status_code})')
-            return False
+            return None
+
+    def parse_biomart_gene_data(self, gene_line):
+        gene_data = gene_line.split('\t')
+        try:
+            # we assume the index order is predictable from ensembl_genes_url above - if we change that we need to change this
+            ensembl_id = gene_data[0]
+            gene_type = gene_data[1]
+            ensembl_name = gene_data[2]
+            start_position = int(gene_data[3])
+            end_position = int(gene_data[4])
+            description = gene_data[5]
+            chromosome = gene_data[6]
+            return EnsemblGene(ensembl_id, ensembl_name, chromosome, start_position, end_position, gene_type, description)
+
+        except (IndexError, ValueError) as e:
+            logger.error(f'Ensembl biomart genes call had an issue with one line: {e})')
+
+        return None
 
     def sequence_variant_to_gene(self, variant_node):
         
@@ -183,7 +204,6 @@ class Ensembl(Service):
 
         logger.info(f'ensembl sequence_variant_to_gene found {len(results)} results for {variant_node.id}')
 
-        db_conn.close()
         return results
 
     def sequence_variant_to_sequence_variant(self, variant_node):
@@ -253,3 +273,30 @@ class Ensembl(Service):
             except KeyError:
                 logger.debug(f'variation2 or r2 not found in ensembl result: {variant}')
         return variants
+
+    def get_all_ensembl_gene_annotations(self):
+        if self.all_gene_annotations:
+            return self.all_gene_annotations
+        else:
+            ensembl_genes = self.retrieve_all_genes()
+            all_gene_annotations = {}
+            for gene in ensembl_genes:
+                all_gene_annotations[gene.ensembl_id] = {
+                    'ensembl_name' : gene.ensembl_name,
+                    'chromosome' : gene.chromosome,
+                    'start_position' : gene.start_position,
+                    'end_position' : gene.end_position,
+                    'gene_biotype' : gene.gene_biotype,
+                    'description' : gene.description
+                }
+            self.all_gene_annotations = all_gene_annotations
+            return all_gene_annotations
+
+    def get_ensembl_gene_annotations(self, ensembl_id):
+        if not self.all_gene_annotations:
+            self.get_all_ensembl_gene_annotations()
+
+        if ensembl_id in self.all_gene_annotations:
+            return self.all_gene_annotations[ensembl_id]
+        else:
+            return {}
