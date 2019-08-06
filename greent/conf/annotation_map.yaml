@@ -171,6 +171,9 @@ GeneAnnotator:
         - description:
             source: "description"
             data_type: string
+        - ensembl_error:
+            source: "ensembl_error"
+            data_type: string
 
 DiseaseAnnotator:
     prefixes:

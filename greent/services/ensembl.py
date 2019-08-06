@@ -299,4 +299,4 @@ class Ensembl(Service):
         if ensembl_id in self.all_gene_annotations:
             return self.all_gene_annotations[ensembl_id]
         else:
-            return {}
+            return {'ensembl_error' : f'{ensembl_id} not found.'}
