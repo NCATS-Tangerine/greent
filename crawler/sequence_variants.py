@@ -13,40 +13,39 @@ import os
 
 logger = LoggingUtil.init_logging("robokop-interfaces.crawler.sequence_variants", level=logging.INFO, logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
 
-def load_sequence_variants(rosetta):
-    
-    print('loading the GWAS Catalog...')
-    load_gwas_catalog(rosetta)
-    print('finished loading the GWAS Catalog...')
+default_gtex_file = 'signif_variant_gene_pairs.csv'
 
-    print('loading GTEx Data...')
-    load_gtex(rosetta)
-    print('finished loading GTEx Data...')
-
-def load_gwas_catalog(rosetta: object):
+def load_gwas_knowledge(rosetta: object, testing_mode=False):
     synonymizer = rosetta.synonymizer
     gwas_catalog_dict = rosetta.core.gwascatalog.prepopulate_cache()
-    print('writing the GWAS Catalog to the graph...')
+    counter = 0
     with BufferedWriter(rosetta) as writer:
         for variant_node, relationships in gwas_catalog_dict.items():
-            # almost all of these will be precached but some rare cases such as two CAID per rsid still need to be synonymized
-            synonymizer.synonymize(variant_node)
-            writer.write_node(variant_node)
-            for (gwas_edge, phenotype_node) in relationships:
-                synonymizer.synonymize(phenotype_node)
-                writer.write_node(phenotype_node)
-                writer.write_edge(gwas_edge)
+            if relationships:
+                # almost all of these will be precached but some rare cases such as two CAID per rsid still need to be synonymized
+                synonymizer.synonymize(variant_node)
+                writer.write_node(variant_node)
+                for (gwas_edge, phenotype_node) in relationships:
+                    # these phenotypes are probably already in the DB, but not necessarily
+                    synonymizer.synonymize(phenotype_node)
+                    writer.write_node(phenotype_node)
+                    writer.write_edge(gwas_edge)
+            else:
+                logger.error(f'GWASCatalog node {variant_node.id} had no phenotypes associated with it.')
 
-def load_gtex(rosetta: object):
+            counter += 1
+            if testing_mode and counter > 500:
+                break
 
+def load_gtex_knowledge(rosetta: object, gtex_filenames=[]):
     # create a new builder object
     gtb = GTExBuilder(rosetta)
 
     # directory with GTEx data to process
-    gtex_data_directory = '/gtex_data/'
+    gtex_data_directory = f'{os.environ["ROBOKOP_HOME"]}/gtex_knowledge/'
 
     # assign the name of the GTEx data file
-    associated_file_names = ['signif_variant_gene_pairs.csv']
+    associated_file_names = gtex_filenames if gtex_filenames else [default_gtex_file]
 
     # load up all the GTEx data
     rv = gtb.load(gtex_data_directory, associated_file_names)
