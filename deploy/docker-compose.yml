@@ -20,7 +20,7 @@ services:
     volumes:
       - ../../logs:/home/murphy/logs
       - ../../shared:/home/murphy/shared
-      - ../../gtex_knowledge:/home/murphy/gtex_knowledge"
-      - ../../gwas_data:/home/murphy/gwas_data"
+      - ../../gtex_knowledge:/home/murphy/gtex_knowledge
+      - ../../gwas_data:/home/murphy/gwas_data
       - ../:/home/murphy/robokop-interfaces
 
