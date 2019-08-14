@@ -1,5 +1,5 @@
 from crawler.genes import load_genes, load_annotations_genes
-from crawler.sequence_variants import load_sequence_variants, precache_variant_batch_data
+from crawler.sequence_variants import load_gtex_knowledge, load_gwas_knowledge, precache_variant_batch_data
 from greent.rosetta import Rosetta
 from greent import node_types
 from crawler.chemicals import load_chemicals, load_annotations_chemicals
@@ -26,15 +26,27 @@ def load_synonyms(rosetta=None,refresh_chemicals=False):
 def load_genetic_variants(rosetta=None):
     if rosetta is None:
         rosetta = Rosetta()
-    # load starting set of variants into the graph 
-    load_sequence_variants(rosetta)
-    # the order is important here, variant-to-variant first
+
+    # load starting set of variants into the graph
+    print('loading the GWAS Catalog...')
+    load_gwas_knowledge(rosetta)
+    print('GWAS Catalog loading complete...')
+
+    # the order is important here, variant->variant on gwas knowledge variants only for now
     poolrun(node_types.SEQUENCE_VARIANT, node_types.SEQUENCE_VARIANT, rosetta)
+
+    # load default gtex knowledge
+    print('loading GTEx Data...')
+    load_gtex_knowledge(rosetta)
+    # or from a specific list of files
+    #load_gtex_knowledge(rosetta, ['test_signif_Adipose_Subcutaneous_100.csv'])
+    print('finished loading GTEx Data...')
 
     print('batch cache preloading for genetic variants...')
     precache_variant_batch_data(rosetta)
     print('finished batch cache preloading for genetic variants...')
 
+    # run variant->gene on every variant in the graph
     poolrun(node_types.SEQUENCE_VARIANT, node_types.GENE, rosetta)
 
 crawls = [
