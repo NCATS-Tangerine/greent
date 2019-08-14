@@ -17,7 +17,7 @@ function printHelp(){
 }
 
 
-while getopts :hc: opt; do
+while getopts :hc:f: opt; do
     case $opt in 
         h) 
         printHelp
@@ -54,7 +54,7 @@ docker exec $(docker ps -f name=neo4j -q) bash -c "bin/neo4j start; bin/neo4j st
 # 
 docker exec $(docker ps -f name=neo4j -q) bash bin/neo4j-admin dump --to data/graph.db.$backup_time.dump
 
-docker exec $(docker ps -f name=neo4j -q)  ln -sf /data/graph.db.$backup_time.dump data/graph.db.latest.dump
+docker exec $(docker ps -f name=neo4j -q) bash  cd /data/ && ln -sf ./graph.db.$backup_time.dump ./graph.db.latest.dump
 
 # kill back-upper container
 docker kill $(docker ps -f name=neo4j -q)
