@@ -10,16 +10,25 @@ logger = LoggingUtil.init_logging(__name__, level=logging.INFO)
 
 class FooDB(Service):
     def __init__(self, context):
+        self.foodList = None
         super(FooDB, self).__init__("foodb", context)
 
-    def get_foods(self):
+    # gets a list of fooDB food records
+    def loadAllFoods(self):
+        self.foodList = list
+        return None
+
+    def getContentsRecord(self, foodId):
+        return None
+
+    def getCompoundsRecord(self, foodId):
         return None
 
     # food to chemical data crawling interface
-    def food_to_chemical(self, food):
+    def food_to_chemical_compound(self, food):
         return None
 
     # chemical to food data crawling interface
-    def chemical_to_food(self, chemcal):
+    def chemical_compound_to_food(self, chemical):
         return None
 

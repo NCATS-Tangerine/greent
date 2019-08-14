@@ -50,7 +50,9 @@
       "drug_to_gene",
       "gene_get_drug",
       "gene_to_drug",
-      "chemical_targets_gene"
+      "chemical_targets_gene",
+      "food_to_chemical",
+      "chemical_to_food"
     ],
     "biological_process_or_activity": [
       "actively_involved_in",

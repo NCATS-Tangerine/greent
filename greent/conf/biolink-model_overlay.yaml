@@ -56,6 +56,7 @@ classes:
       - DRUG.INTERACTION
       - CTD
       - METABOLON
+      - FOOD
 
   anatomical entity:
     id_prefixes:
