@@ -43,7 +43,6 @@ docker-compose -f $compose_file up -d
 
 # ------------- back up process start 
 
-export backup_time=$(date +"%m%d%y-%I-%M-%S")
 
 # when killing containers New neo4j complains 'Active Logical log detected', 
 # and needs a clean shutdown :/
@@ -52,9 +51,8 @@ docker exec $(docker ps -f name=neo4j -q) bash -c "bin/neo4j start; bin/neo4j st
 
 
 # 
-docker exec $(docker ps -f name=neo4j -q) bash bin/neo4j-admin dump --to data/graph.db.$backup_time.dump
+docker exec $(docker ps -f name=neo4j -q) bash bin/neo4j-admin dump --to data/graph.db.dump
 
-docker exec $(docker ps -f name=neo4j -q) bash  cd /data/ && ln -sf ./graph.db.$backup_time.dump ./graph.db.latest.dump
 
 # kill back-upper container
 docker kill $(docker ps -f name=neo4j -q)
