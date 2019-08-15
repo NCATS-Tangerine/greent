@@ -2,6 +2,7 @@
 
 """Flask REST API server for builder"""
 
+from collections import defaultdict
 import sys
 import os
 import json
@@ -449,26 +450,26 @@ class Predicates(Resource):
         driver = GraphDatabase.driver(f"bolt://{os.environ['NEO4J_HOST']}:{os.environ['NEO4J_BOLT_PORT']}",
             auth=basic_auth("neo4j", os.environ['NEO4J_PASSWORD']))
         with driver.session() as session:
-            result = session.run('match (a)-[x]->(b) return distinct type(x), labels(a), labels(b)')
+            result = session.run("""
+                match (a)-[x]->(b) with
+                filter(la in labels(a) where not la in ['named_thing', 'Concept']) as las,
+                filter(lb in labels(b) where not lb in ['named_thing', 'Concept']) as lbs,
+                type(x) as predicate
+                unwind las as la unwind lbs as lb
+                return distinct predicate, la, lb
+            """)
             records = [list(r) for r in result]
 
         # Reformat predicate list into a dict of dicts with first key as
         # source_type, 2nd key as target_type, and value as a list of all 
         # supported predicates for the source-target pairing
-        type_black_list = ['Concept', 'named_thing']
-        pred_dict = dict()
+        pred_dict = defaultdict(lambda: defaultdict(list))
         for row in records:
             predicate = row[0]
-            sourceTypes = [r for r in row[1] if r not in type_black_list]
-            targetTypes = [r for r in row[2] if r not in type_black_list]
-
-            for s in sourceTypes:
-                for t in targetTypes:
-                    if s not in pred_dict:
-                        pred_dict[s] = dict()
-                    if t not in pred_dict[s]:
-                        pred_dict[s][t] = []
-                    pred_dict[s][t].append(predicate)
+            source_type = row[1]
+            target_type = row[2]
+            logger.debug(predicate, source_type, target_type)
+            pred_dict[source_type][target_type].append(predicate)
 
         with open(predicates_file, 'w') as f:
             json.dump(pred_dict, f, indent=2)
