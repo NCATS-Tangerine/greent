@@ -34,7 +34,8 @@ def pull_uniprot_kb():
 def json_2_identifiers(gene_dict):
     symbol = gene_dict['symbol']
     hgnc_id = LabeledID(identifier=gene_dict['hgnc_id'], label=symbol)
-    idset = set([hgnc_id])
+    hgnc_symbol = LabeledID(identifier=f"HGNC.SYMBOL:{symbol}", label=symbol)
+    idset = set([hgnc_id, hgnc_symbol])
     if 'entrez_id' in gene_dict:
         idset.add( LabeledID(identifier=f"NCBIGENE:{gene_dict['entrez_id']}", label=symbol))
     if 'uniprot_ids' in gene_dict:
