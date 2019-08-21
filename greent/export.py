@@ -100,7 +100,7 @@ def export_edge_chunk(tx,edgelist,edgelabel):
             ON CREATE SET r.relation_label = [row.original_predicate_label]
             ON CREATE SET r.source_database=[row.database]
             ON CREATE SET r.ctime=[row.ctime]
-            ON CREATE SET r.hyper_edge_id=CASE WHEN row.hyper_edge_id <> null THEN [row.hyper_edge_id] ELSE null END
+            ON CREATE SET r.hyper_edge_id=CASE WHEN exists(row.hyper_edge_id)  THEN [row.hyper_edge_id] END
             ON CREATE SET r.publications=row.publications
             ON CREATE SET r.relation = [row.original_predicate_id]
             // FOREACH mocks if condition 
@@ -114,8 +114,10 @@ def export_edge_chunk(tx,edgelist,edgelabel):
             SET r.publications = [pub in row.publications where not pub in r.publications ] + r.publications
             )
             SET r += row.properties
+            FOREACH (__ IN CASE WHEN EXISTS(row.hyper_edge_id) THEN [1] ELSE [] END  | 
             FOREACH (_ IN CASE WHEN row.hyper_edge_id in r.hyper_edge_id THEN [] ELSE [1] END |
-            SET r.hyper_edge_id = CASE WHEN EXISTS(r.hyper_edge_id) AND r.hyper_edge_id <> null THEN r.hyper_edge_id  + [row.hyper_edge_id] END
+            SET r.hyper_edge_id = CASE WHEN EXISTS(r.hyper_edge_id) THEN r.hyper_edge_id + [row.hyper_edge_id] ELSE [row.hyper_edge_id] END
+            )
             )
             """
 
