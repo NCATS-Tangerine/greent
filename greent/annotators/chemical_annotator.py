@@ -55,7 +55,7 @@ class ChemicalAnnotator(Annotator):
         chebi_raw = await self.async_get_json(url)
         chebi_roles = await self.get_chemical_roles(chebi_id)
         chebi_extract = self.extract_chebi_data(chebi_raw, conf['keys'])
-        chebi_extract.update({Text.snakify(x['role_label']): True for x in chebi_roles[chebi_id]})
+        chebi_extract.update({x['role_label']: True for x in chebi_roles[chebi_id]})
         return chebi_extract
 
     def extract_chebi_data(self, chebi_raw, keys_of_interest):
@@ -130,7 +130,9 @@ class ChemicalAnnotator(Annotator):
             inputs = {'chebi_id': chebi_id},
             outputs = [ 'role_label' ],
             template_text = text
-        )
+        )        
+        for r in query_result:
+            r['role_label'] = Text.snakify(r['role_label'])
         return {chebi_id: query_result}
 
 
