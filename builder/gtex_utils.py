@@ -25,7 +25,7 @@ logger = LoggingUtil.init_logging("robokop-interfaces.builder.GTExUtils", loggin
 class GTExUtils:
     ########
     # Constructor
-    # param rosetta : Rosetta - project obcject for shared objects
+    # param rosetta : Rosetta - project object for shared objects
     ########
     def __init__(self, rosetta: Rosetta):
         # load DB connections, etc. from the rosetta object

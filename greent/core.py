@@ -8,6 +8,7 @@ from greent.services.chemotext import Chemotext
 from greent.services.clingen import ClinGen
 from greent.services.ctd import CTD
 from greent.services.ensembl import Ensembl
+from greent.services.foodb import FooDB
 from greent.services.gtopdb import gtopdb
 from greent.services.gwascatalog import GWASCatalog
 from greent.services.hetio import HetIO
@@ -53,6 +54,7 @@ class GreenT:
             "chemotext"        : lambda :  Chemotext (self.service_context),
             "clingen"          : lambda :  ClinGen(self.service_context),
             "ctd"              : lambda :  CTD(self.service_context),
+            "foodb"            : lambda :  FooDB(self.service_context),
             "ensembl"          : lambda :  Ensembl(self.service_context),
             "go"               : lambda :  GO2(self.service_context),
             "gtopdb"           : lambda :  gtopdb(self.service_context),

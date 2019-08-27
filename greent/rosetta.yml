@@ -91,10 +91,8 @@
       - link  : chemical_to_chemical_class
         op    : uberongraph.get_chemical_to_chemical
     food:
-      - link  : food_to_chemical_compound
-        op    : food.food_to_chemical_compound
-      - link  : chemical_compound_to_food
-        op    : food.food_to_chemical_compound
+      - link  : chemical_substance_to_food
+        op    : foodb.food_to_chemical_substance
   disease_or_phenotypic_feature:
     chemical_substance:
       - link  : exposures
@@ -251,6 +249,10 @@
     pathway:
       - link  : gene_family_to_pathway
         op    : panther.get_pathway_by_gene_family
+  food:
+    chemical_substance:
+      - link: food_to_chemical_substance
+        op: foodb.food_to_chemical_substance
 
 '@type_checks':
   genetic_condition: mondo.is_genetic_disease
