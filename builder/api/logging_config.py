@@ -1,8 +1,6 @@
 import logging
 import logging.handlers
 import os
-from celery._state import get_current_task
-from celery.utils.log import task_logger
 
 def set_up_main_logger():
     """ Sets up logging default logging."""
