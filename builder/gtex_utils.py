@@ -1,7 +1,7 @@
 from greent.rosetta import Rosetta
 from greent.graph_components import KNode
 from greent.graph_components import LabeledID
-from greent.export import BufferedWriter
+from greent.export_delegator import WriterDelegator
 from greent.util import LoggingUtil
 from greent.graph_components import KEdge
 from collections import namedtuple
@@ -147,7 +147,7 @@ class GTExUtils:
     # param force_create : bool = False) - forces the creation of the node edge even if exists
     # return KEdge - node to node edge created
     #######
-    def write_new_association(self, writer: BufferedWriter, source_node: KNode, associated_node: KNode, predicate: LabeledID, hyper_edge_id: int, properties: list = None, force_create: bool = False) -> KEdge:
+    def write_new_association(self, writer: WriterDelegator, source_node: KNode, associated_node: KNode, predicate: LabeledID, hyper_edge_id: int, properties: list = None, force_create: bool = False) -> KEdge:
         # if the concept model is loaded standardize the predicate label
         if self.concept_model:
             standard_predicate = self.concept_model.standardize_relationship(predicate)

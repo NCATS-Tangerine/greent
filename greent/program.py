@@ -11,10 +11,10 @@ import hashlib
 
 import requests
 from collections import defaultdict
+from greent.export_delegator import WriterDelegator
 from greent.graph_components import KNode
 from greent.util import LoggingUtil, Text
 from greent import node_types
-from greent.export import BufferedWriter
 from greent.cache import Cache
 from greent.graph_components import KEdge
 from greent.annotators.annotator_factory import annotate_shortcut
@@ -95,25 +95,7 @@ class Program:
         self.excluded_identifiers = self.rosetta.service_context.config.get('bad_identifiers')
         # {'UBERON:0000064','UBERON:0000475','UBERON:0011216','UBERON:0000062','UBERON:0000465','UBERON:0010000','UBERON:0000061', 'UBERON:0000467','UBERON:0001062','UBERON:0000468', 'UBERON:0000479', 'GO:0044267', 'GO:0005515', 'CL:0000548', 'CL:0000003', 'CL:0000255'}
 
-        response = requests.get(f"{os.environ['BROKER_API']}queues/")
-        queues = response.json()
-        num_consumers = [q['consumers'] for q in queues if q['name'] == 'neo4j']
-        if num_consumers and num_consumers[0]:
-        #if False:
-            self.connection = pika.BlockingConnection(pika.ConnectionParameters(
-                heartbeat=0,
-                host=os.environ['BROKER_HOST'],
-                virtual_host='builder',
-                credentials=pika.credentials.PlainCredentials(os.environ['BROKER_USER'], os.environ['BROKER_PASSWORD'])))
-            self.channel = self.connection.channel()
-            self.channel.queue_declare(queue='neo4j')
-        else:
-            self.connection = None
-            self.channel = None
-
-    def __del__(self):
-        if self.connection is not None:
-            self.connection.close()
+        self.writer_delegator = WriterDelegator(rosetta)
 
     def log_program(self):
         logstring = f'Program {self.program_number}\n'
@@ -194,13 +176,6 @@ class Program:
         if edge is not None:
             is_source = node.id == edge.source_id
         self.rosetta.synonymizer.synonymize(node)
-        try:
-            result = annotate_shortcut(node, self.rosetta)
-            if type(result) == type(None):
-                logger.debug(f'No annotator found for {node}')
-        except Exception as e:
-            logger.error(e)
-            logger.error(traceback.format_exc())
         if edge is not None:
             if is_source:
                 edge.source_id = node.id
@@ -223,26 +198,12 @@ class Program:
             completed = set()
             self.cache.set(key, completed)
 
-        if self.channel is None:
-            with BufferedWriter(self.rosetta) as writer:
-                writer.write_node(node)
-        else:
-            self.channel.basic_publish(
-                exchange='',
-                routing_key='neo4j',
-                body=pickle.dumps({'nodes': [node], 'edges': []}))
+        self.writer_delegator.write_node(node)
         #logger.debug(f"Sent node {node.id}")
 
         # make sure the edge is queued for creation AFTER the node
         if edge:
-            if self.channel is None:
-                with BufferedWriter(self.rosetta) as writer:
-                    writer.write_edge(edge)
-            else:
-                self.channel.basic_publish(
-                    exchange='',
-                    routing_key='neo4j',
-                    body=pickle.dumps({'nodes': [], 'edges': [edge]}))
+            self.writer_delegator.write_edge(edge)
             #logger.debug(f"Sent edge {edge.source_id}->{edge.target_id}")
 
         # quit if we've closed a loop
@@ -282,11 +243,7 @@ class Program:
         Keep going until there's no nodes left to process."""
         logger.debug(f"Running program {self.program_number}")
         self.initialize_instance_nodes()
-        if self.channel is not None:
-            self.channel.basic_publish(
-                exchange='',
-                routing_key='neo4j',
-                body=pickle.dumps('flush'))
+        self.writer_delegator.flush()
         return
 
     def get_path_descriptor(self):
