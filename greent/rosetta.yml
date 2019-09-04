@@ -96,9 +96,6 @@
         op    : ctd.disease_to_exposure
       - link  : disease_to_chemical
         op    : ctd.disease_to_chemical
-    sequence_variant:
-      - link  : disease_or_phenotypic_feature_to_sequence_variant
-        op    : gwascatalog.disease_or_phenotypic_feature_to_sequence_variant
   disease:
     phenotypic_feature:
       - link  : disease_to_phenotype
@@ -176,10 +173,6 @@
         op    : biolink.gene_get_pathways
       - link  : gene_to_pathway
         op    : chembio.graph_get_pathways_by_gene
-    # most users probably won't want this many variants in the graph
-    #sequence_variant:
-    #  - link  : gene_to_sequence_variant
-    #    op    : clingen.gene_to_sequence_variant
     biological_process_or_activity:
       - link  : biological_process_or_activity
         op    : biolink.gene_get_process_or_function
@@ -209,11 +202,11 @@
         op    : myvariant.sequence_variant_to_gene
       - link  : sequence_variant_to_gene
         op    : ensembl.sequence_variant_to_gene
-    #disease_or_phenotypic_feature:
+    disease_or_phenotypic_feature:
       #- link  : sequence_variant_to_disease_or_phenotypic_feature
       #  op    : biolink.sequence_variant_get_phenotype
-      #- link  : sequence_variant_to_disease_or_phenotypic_feature
-      #  op    : gwascatalog.sequence_variant_to_disease_or_phenotypic_feature
+      - link  : sequence_variant_to_disease_or_phenotypic_feature
+        op    : gwascatalog.sequence_variant_to_disease_or_phenotypic_feature
     sequence_variant:
       - link  : sequence_variant_to_sequence_variant
         op    : ensembl.sequence_variant_to_sequence_variant

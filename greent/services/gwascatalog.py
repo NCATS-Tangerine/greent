@@ -4,18 +4,18 @@ from greent import node_types
 from greent.graph_components import KNode, LabeledID
 from greent.service import Service
 from greent.util import Text, LoggingUtil
-import logging,json,pickle,re
+import logging,json,pickle,re, os
 from collections import defaultdict
 
-logger = LoggingUtil.init_logging(__name__, logging.DEBUG)
+logger = LoggingUtil.init_logging("robokop-interfaces.services.gwascatalog", logging.DEBUG, format='medium', logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
 
 class GWASCatalog(Service):
-    def __init__(self, context):
+    def __init__(self, context, rosetta):
         super(GWASCatalog, self).__init__("gwascatalog", context)
         self.is_cached_already = False
+        self.synonymizer = rosetta.synonymizer
 
     def prepopulate_cache(self):
-
         query_url = 'ftp.ebi.ac.uk/pub/databases/gwas/releases/latest/gwas-catalog-associations_ontology-annotated.tsv'
         ftpsite = 'ftp.ebi.ac.uk'
         ftpdir = '/pub/databases/gwas/releases/latest'
@@ -51,29 +51,21 @@ class GWASCatalog(Service):
 
         with self.context.cache.redis.pipeline() as redis_pipe:
             trait_uri_pattern = re.compile(r'[^,\s]+')
-            trait_name_pattern = re.compile(r'[^,]+')
             snp_pattern = re.compile(r'[^,;x*\s]+')
-            for line in gwas_catalog[1:]:
+            for line in gwas_catalog[1]:
                 line = line.split('\t')
                 try:
                     pubmed_id = line[pub_med_index]
                     p_value = float(line[p_value_index])
                    
                     trait_uris = trait_uri_pattern.findall(line[trait_ids_index])
-                    trait_names = [trait_name.strip() for trait_name in trait_name_pattern.findall(line[trait_names_index])]
                     snps = snp_pattern.findall(line[snps_index])
                     #snp_allele_pairs = re.findall(r'[^,;x\s]+', line[snp_allele_index])
 
                 except (IndexError, ValueError) as e:
                     corrupted_lines += 1
-                    logger.debug(f'GWASCatalog corrupted line: {e} ')
+                    logger.warning(f'GWASCatalog corrupted line: {e}')
                     continue
-
-                has_trait_names = False
-                if len(trait_uris) == len(trait_names):
-                    has_trait_names = True
-                else:
-                    logger.debug(f'GWASCatalog had # of trait uris that did not match # of trait names: {trait_uris} {trait_names}')
 
                 #has_snp_alleles = False
                 #snp_alleles = []
@@ -92,11 +84,11 @@ class GWASCatalog(Service):
 
                 if not (trait_uris and snps):
                     corrupted_lines += 1
-                    logger.debug(f'GWASCatalog corrupted line: {line}')
+                    logger.warning(f'GWASCatalog corrupted line: {line}')
                     continue
                 else:
                     traits = []
-                    for n, trait_uri in enumerate(trait_uris):
+                    for trait_uri in trait_uris:
                         try:
                             trait_id = trait_uri.rsplit('/', 1)[1]
                             # ids show up like EFO_123, Orphanet_123, HP_123 
@@ -120,10 +112,7 @@ class GWASCatalog(Service):
                                 logger.warning(f'{trait_uri} not a recognized trait format')
                                 continue
 
-                            if has_trait_names:
-                                traits.append((curie_trait_id, trait_names[n]))
-                            else:
-                                traits.append((curie_trait_id, curie_trait_id))
+                            traits.append(curie_trait_id)
 
                         except IndexError as e:
                             logger.warning(f'trait uri index error:({trait_uri}) not splittable')
@@ -151,7 +140,7 @@ class GWASCatalog(Service):
 
                                 if len(synonyms) == 0:
                                     #logger.debug(f'GWASCatalog could not find synonyms for {dbsnp_curie} with allele {snp_allele}')
-                                    logger.debug(f'GWASCatalog could not find synonyms for {dbsnp_curie}')
+                                    logger.info(f'GWASCatalog could not find synonyms for {dbsnp_curie}')
                                     pass
                                 
                                 temp_variant_nodes = []
@@ -186,12 +175,12 @@ class GWASCatalog(Service):
                     if traits and variant_nodes:
                         props = {'pvalue' : p_value}
                         for variant_node in variant_nodes:
-                            for trait_id, trait_name in traits:
+                            for trait_id in traits:
                                 variant_to_pheno_cache[variant_node].add(self.create_variant_to_phenotype_components(
                                                                                 query_url, 
                                                                                 variant_node, 
                                                                                 trait_id, 
-                                                                                trait_name, 
+                                                                                None, 
                                                                                 pubmed_id=pubmed_id, 
                                                                                 properties=props))
                 progress_counter += 1
@@ -203,24 +192,25 @@ class GWASCatalog(Service):
             redis_pipe.execute()
 
         if corrupted_lines:
-            logger.debug(f'GWASCatalog file had {corrupted_lines} corrupted lines!')
+            logger.info(f'GWASCatalog file had {corrupted_lines} corrupted lines!')
         if missing_variant_ids:
-            logger.debug(f'GWASCatalog precaching could not ID {missing_variant_ids} variant ids')
+            logger.info(f'GWASCatalog precaching could not ID {missing_variant_ids} variant ids')
         if missing_phenotype_ids:
-            logger.debug(f'GWASCatalog precaching could not ID {missing_phenotype_ids} phenotype ids')
+            logger.info(f'GWASCatalog precaching could not ID {missing_phenotype_ids} phenotype ids')
         if rsids_without_caids:
-            logger.debug(f'GWASCatalog precaching had {rsids_without_caids} rsids without caids')
+            logger.info(f'GWASCatalog precaching had {rsids_without_caids} rsids without caids')
 
         # add every sequence variant -> disease or phenotype edge and node to the cache
-        with self.context.cache.redis.pipeline() as redis_pipe:
-            for variant_node, phenotypes in variant_to_pheno_cache.items():
-                gwascatalog_key = f'gwascatalog.sequence_variant_to_disease_or_phenotypic_feature({variant_node.id})'
-                redis_pipe.set(gwascatalog_key, pickle.dumps(phenotypes))
-            redis_pipe.execute()
+        if variant_to_pheno_cache:
+            with self.context.cache.redis.pipeline() as redis_pipe:
+                for variant_node, phenotypes in variant_to_pheno_cache.items():
+                    gwascatalog_key = f'gwascatalog.sequence_variant_to_disease_or_phenotypic_feature({variant_node.id})'
+                    redis_pipe.set(gwascatalog_key, pickle.dumps(phenotypes))
+                redis_pipe.execute()
 
-            self.context.cache.set('sparse(gwascatalog.sequence_variant_to_disease_or_phenotypic_feature)', True)
+                self.context.cache.set('sparse(gwascatalog.sequence_variant_to_disease_or_phenotypic_feature)', True)
 
-        self.is_cached_already = True
+            self.is_cached_already = True
 
         return variant_to_pheno_cache
 
@@ -230,7 +220,8 @@ class GWASCatalog(Service):
     def create_variant_to_phenotype_components(self, query_url, variant_node, phenotype_id, phenotype_label, pubmed_id=None, properties={}):
         
         phenotype_node = KNode(phenotype_id, name=phenotype_label, type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE)
-        
+        self.synonymizer.synonymize(phenotype_node)
+
         pubs = []
         if pubmed_id:
             pubs.append(f'PMID:{pubmed_id}')
@@ -282,60 +273,6 @@ class GWASCatalog(Service):
             return cached_response
         else:
             return []
-
-        """
-        return_results = []
-        dbsnp_curie_ids = variant_node.get_synonyms_by_prefix('DBSNP')
-        for dbsnp_curie_id in dbsnp_curie_ids:
-            query_url = f'{self.url}singleNucleotidePolymorphisms/{Text.un_curie(dbsnp_curie_id)}/associations?projection=associationBySnp'
-            query_json = self.query_service(query_url)
-            if query_json:
-                try:
-                    for association in query_json['_embedded']['associations']:
-                        phenotype_nodes = []
-                        for trait in association['efoTraits']:
-                            trait_id = trait['shortForm']
-                            trait_name = trait['trait']
-                            # For now only take EFO terms, these could also be Orphanet IDs here
-                            if trait_id.startswith('EFO_'):
-                                efo_id = trait_id[4:]
-                                phenotype_nodes.append(KNode(f'EFO:{efo_id}', name=f'{trait_name}', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE))
-                            elif trait_id.startswith('Orp'):
-                                orphanet_id = trait_id[9:]
-                                phenotype_nodes.append(KNode(f'ORPHANET:{orphanet_id}', name=f'{trait_name}', type=node_types.DISEASE_OR_PHENOTYPIC_FEATURE))
-                            else:
-                                logger.info(f'gwascatalog returned an unknown id type: {trait_id}')
-
-                        if phenotype_nodes:
-                            props = {}
-                            try:
-                                props['pvalue'] = float(association['pvalue'])
-                            except ValueError:
-                                pass
-
-                            pubs = []
-                            association_id = association['_links']['self']['href'].rsplit('/', 1)[1]
-                            pubmed_id = self.get_pubmed_id_by_association(association_id)
-                            if pubmed_id:
-                                pubs.append(f'PMID:{pubmed_id}')
-
-                            predicate = LabeledID(identifier=f'gwascatalog:has_phenotype',label=f'has_phenotype')
-                            for new_node in phenotype_nodes:
-                                edge = self.create_edge(
-                                    variant_node,
-                                    new_node,
-                                    'gwascatalog.sequence_variant_to_disease_or_phenotypic_feature', 
-                                    variant_node.id,
-                                    predicate,
-                                    url=query_url,
-                                    properties=props,
-                                    publications=pubs)
-                                return_results.append((edge, new_node))
-
-                except (KeyError, IndexError) as e:
-                    logger.warning(f'problem parsing results from GWASCatalog: {e}')"""
-
-        return return_results
 
     def get_pubmed_id_by_association(self, association_id):
         pubmed_id = None

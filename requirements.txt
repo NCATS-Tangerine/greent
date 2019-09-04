@@ -11,7 +11,6 @@ neo4j-driver
 pyld
 networkx==1.11
 ply
-celery
 ndex2
 ontobio
 pronto

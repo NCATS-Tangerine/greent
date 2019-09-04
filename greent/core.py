@@ -56,7 +56,7 @@ class GreenT:
             "ensembl"          : lambda :  Ensembl(self.service_context),
             "go"               : lambda :  GO2(self.service_context),
             "gtopdb"           : lambda :  gtopdb(self.service_context),
-            "gwascatalog"      : lambda :  GWASCatalog(self.service_context),
+            "gwascatalog"      : lambda :  GWASCatalog(self.service_context, rosetta),
             "hetio"            : lambda :  HetIO (self.service_context),
             "hgnc"             : lambda :  HGNC(self.service_context),
             "hmdb"             : lambda :  HMDB(self.service_context),
