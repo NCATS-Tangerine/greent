@@ -577,7 +577,9 @@ class UberonGraphKS(Service):
             anatomies = self.phenotype_to_anatomy (curie)
             for r in anatomies:
                 node = KNode(r['anatomy_id'], type=node_types.ANATOMICAL_ENTITY, name= r['anatomy_label'])
-                predicate = LabeledID(Text.obo_to_curie(r['predicate']), r['predicate_label'])
+                # try to derive the label from the relation for the new ubergraph axioms 
+                predicate_label = r['predicate_label'] or '_'.join(r['predicate'].split('#')[-1].split('.'))
+                predicate = LabeledID(Text.obo_to_curie(r['predicate']), predicate_label)
                 edge = self.create_edge(
                     phenotype_node,
                     node,
@@ -595,7 +597,6 @@ class UberonGraphKS(Service):
                 #it highlights the uneasy relationship between the high level world of
                 #smartapi and the low-level sparql-vision.
                 part_results = self.get_anatomy_parts( r['anatomy_id'] )
-                logger.error(part_results)
                 for pr in part_results:
                     # pedge, pnode = self.create_phenotype_anatomy_edge(pr['part'],pr['partlabel'],curie,phenotype_node)
                     pnode = KNode(pr['part'], type= node_types.ANATOMICAL_ENTITY, name= pr['partlabel'])
@@ -672,8 +673,9 @@ class UberonGraphKS(Service):
         for curie in curies:
             phenotypes = self.anatomy_to_phenotype(curie)
             for r in phenotypes:
-                node = KNode(Text.obo_to_curie(r['pheno_id']), type= node_types.PHENOTYPIC_FEATURE, name= r['pheno_label'])
-                predicate = LabeledID(Text.obo_to_curie(r['predicate']), r['predicate_label'])                
+                node = KNode(Text.obo_to_curie(r['pheno_id']), type= node_types.PHENOTYPIC_FEATURE, name= r['pheno_label'])                
+                predicate_label = r['predicate_label'] or '_'.join(r['predicate'].split('#')[-1].split('.'))
+                predicate = LabeledID(Text.obo_to_curie(r['predicate']), predicate_label)                
                 edge = self.create_edge(
                     node, 
                     anatomy_node, 

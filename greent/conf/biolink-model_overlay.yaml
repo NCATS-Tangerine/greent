@@ -185,11 +185,13 @@ slots:
     mappings:
       - CTD:increases_abundance_of
       - CTD:increases^abundance
+      - ubergraph-axioms.ofn#is:increase:of
 
   decreases abundance of:
     mappings:
       - CTD:decreases_abundance_of
       - CTD:decreases^abundance
+      - ubergraph-axioms.ofn#is:decrease:of
 
   affects activity of:
     mappings:
