@@ -44,7 +44,7 @@ def get_identifiers(input_type,rosetta):
                 if label is not None and not label.startswith('obsolete'):
                     lids.append(LabeledID(ident,label))
     if input_type == node_types.PHENOTYPIC_FEATURE:
-        identifiers = rosetta.core.hpo.get_ids()
+        identifiers = requests.get('https://onto.renci.org/descendants/HP:0000118')
         for ident in identifiers:
             if ident not in bad_idents:
                 label = rosetta.core.hpo.get_label(ident)
