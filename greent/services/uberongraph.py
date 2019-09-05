@@ -294,7 +294,7 @@ class UberonGraphKS(Service):
             SELECT DISTINCT ?anatomy_id ?anatomy_label ?predicate ?predicate_label             
             FROM <http://reasoner.renci.org/ontology>
             WHERE {
-                graph <http://reasoner.renci.org/nonredundant>{
+                graph <http://reasoner.renci.org/redundant>{
                     $HPID ?predicate ?anatomy_id.
                 }                
                 ?anatomy_id rdfs:label ?label .
@@ -328,7 +328,7 @@ class UberonGraphKS(Service):
             SELECT DISTINCT ?pheno_id ?pheno_label ?predicate ?predicate_label ?anatomy_label
             FROM <http://reasoner.renci.org/ontology>
             WHERE {
-                graph <http://reasoner.renci.org/nonredundant> {
+                graph <http://reasoner.renci.org/redundant> {
                     ?pheno_id ?predicate $UBERONID.
                 }                
                 ?pheno_id rdfs:label ?pheno_label.
