@@ -1,25 +1,25 @@
-from logging import Logger
-
 from greent.service import Service
 from greent.graph_components import KNode
 from greent.util import LoggingUtil
 from greent.graph_components import LabeledID
 from greent import node_types
+from greent.graph_components import KEdge
 
+import logging
 import requests
 import traceback
 import os
 import csv
+import time
 
 # declare a logger and initialize it
-import logging
-logger: Logger = LoggingUtil.init_logging("robokop-interfaces.greent.services.FooDB", logging.INFO, format='medium', logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
+logger: logging.Logger = LoggingUtil.init_logging("robokop-interfaces.greent.services.FooDB", logging.INFO, format='medium', logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
 
 #############
 # Class: FooDB
 # By: Phil Owen
 # Date: 8/26/2019
-# Desc: A class that implements a robokop serve that interfaces with the FooDB data
+# Desc: A class that implements a robokop crawler service that interfaces with the FooDB data.
 #############
 
 
@@ -33,16 +33,17 @@ class FooDB(Service):
         super(FooDB, self).__init__("foodb", context)
 
     #############
-    # food to chemical data crawling interface operation.
-    # this will require a step operation:
-    #  1.) use the id in the food node to look up the contents record
-    #  2.) use the contents record.source_id to look up the compound
-    #  3.) lookup the compound record
-    #  4.) create a chemical substance node and edge
-    # param food_node: KNode - a chemical substance node
+    # food_to_chemical_substance() - food to chemical data crawling interface operation.
+    # multi-step operation:
+    #  1.) use the id in the foodb node input param to look up a contents record (1 to 1)
+    #  2.) use the contents' record source_id element to look up the compounds in the food (1 to many)
+    #  3.) create and return a chemical substance node and edge
+    #
+    # param: food_node: KNode - a foodb node
+    # return: array of chemical substance nodes/edges
     #############
     def food_to_chemical_substance(self, food_node: KNode) -> object:
-        logger.debug("Starting chemical_substance_to_food operation")
+        logger.debug("Starting food_to_chemical_substance operation")
 
         try:
             # init the return
@@ -53,29 +54,53 @@ class FooDB(Service):
 
             # loop through the contents returned
             for content in contents:
-                # inspect the content row
-                good_row, props = self.check_content_row(content)
+                # inspect and retreive info of the contents record
+                good_row, content_type = self.check_content_row(content)
 
                 # shall we continue
                 if not good_row:
                     continue
 
-                # use the source id in the content reord to ge the chemical substance record
-                compound: list = requests.get(f"{self.url}compounds_id/{content['source_id']}").json()
+                # re init the good_row flag
+                good_row = False
 
-                # inspect the compound row
-                good_row, predicate_label, props = self.check_compound_row(compound)
+                # init the edge properties variable
+                props = []
+
+                # what type of chemical substance are we working
+                if content_type == 'Compound':
+                    # use the source id in the contents record to get the compounds record
+                    compound: list = requests.get(f"{self.url}compounds_id/{content['source_id']}").json()
+
+                    # inspect the compound row
+                    good_row, predicate_label, props = self.check_compound_row(compound)
+                elif content_type == 'Nutrient':
+                    # use the source id in the contents record to get the nutrient record
+                    nutrient: list = requests.get(f"{self.url}nutrients_id/{content['source_id']}").json()
+
+                    # inspect the compound row
+                    good_row, predicate_label, props = self.check_nutrient_row(nutrient)
 
                 # shall we continue
                 if not good_row:
                     continue
 
-                predicate = LabeledID(identifier=f'FOODB:{predicate_label}', label=predicate_label)
-                chemical_substance_node = KNode(f"", type=node_types.CHEMICAL_SUBSTANCE)
+                # create the edge label
+                preds = LabeledID(identifier=f'FOODB:{predicate_label}', label=predicate_label)
 
-                edge = self.create_edge('subject', object, 'foodb.food_to_compound', 'identifier', predicate, properties=props)
+                # create the new chemical substance node
+                chemical_substance_node = KNode(f"FOODB:{predicate_label}", name=food_node.name, type=node_types.CHEMICAL_SUBSTANCE)
 
-                rv.append((edge, chemical_substance_node))
+                # create the edge
+                edge = self.create_edge(source_node=food_node,
+                                        target_node=chemical_substance_node,
+                                        provided_by='food_to_chemical_substance',
+                                        input_id='identifier',
+                                        predicate=preds,
+                                        properties=props)
+
+                # append the edge/node pair to the returned data array
+                rv.append((chemical_substance_node, edge))
         except Exception as e:
             logger.error(f'Exception caught. Exception: {e}')
             return e
@@ -84,24 +109,65 @@ class FooDB(Service):
         return rv
 
     #############
-    # inspects a contents record and returns pertinent info
-    # param path_to_file: str - the contents record
+    # check_content_row() - inspects a contents record and returns pertinent info
+    #
+    # param: content: list - a contents record
+    # return: good_row:bool, predicate_label:str, content_type:str
     #############
     @staticmethod
-    def check_content_row(content: list):
-        return True, None
+    def check_content_row(content: list) -> (bool, str, str):
+        # init the return
+        good_row = False
+        content_type = content["source_type"]
+
+        # insure we have a good record
+        if content_type == 'Compound' or content_type == "Nutrient":
+            good_row = True
+
+        # return to the caller
+        return good_row, content_type
 
     #############
-    # inspects a compounds record and returns pertinent info
-    # param compound: list - the compounds records
+    # check_compound_row() - inspects a compounds record and returns pertinent info
+    #
+    # param: compound: list - the compounds records
+    # return: good_row:bool, properties:list
     #############
     @staticmethod
-    def check_compound_row(compound: list):
-        return True, None, None
+    def check_compound_row(compound: list) -> (bool, list):
+        # init the return
+        good_row = True
+
+        properties = {'content_type': 'Compound'}
+
+        predicate_label = compound['public_id']
+
+        #{'ENSEMBL': properties[0], 'p-value': float(properties[1]), 'slope': float(properties[2]), 'namespace': properties[3]}
+
+        return good_row, predicate_label, properties
 
     #############
-    # gets a list of FooDB food records
+    # check_nutrient_row() - inspects a nutrient record and returns pertinent info
+    #
+    # param: nutrient: list - the nutrients records
+    # return: good_row:bool, properties:list
+    #############
+    @staticmethod
+    def check_nutrient_row(nutrient: list) -> (bool, list):
+        # init the return
+        good_row = True
+
+        predicate_label = nutrient['public_id']
+
+        properties = {'content_type': 'Nutrient'}
+
+        return good_row, predicate_label, properties
+
+    #############
+    # load_all_foods() - gets a list of FooDB food records
+    #
     # param path_to_file: str - the path to the foods CSV file
+    # return: foods:list - the list of foods
     #############
     @staticmethod
     def load_all_foods(path_to_file: str) -> list:
@@ -111,7 +177,6 @@ class FooDB(Service):
         food_list = []
 
         try:
-
             # get the input file handle, skip the header line and parse the rest
             with open(path_to_file, 'r', encoding='latin_1') as inFH:
                 # read in the lines
