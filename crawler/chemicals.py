@@ -364,7 +364,7 @@ def load_unichem(xref_file=None, struct_file=None) -> dict:
                     counter += 1
 
                     # output some feedback for the user
-                    if (counter % 10000) == 0:
+                    if (counter % 1000000) == 0:
                         logger.info(f'Processed {counter} unichem synonymizations...')
 
     except Exception as e:
