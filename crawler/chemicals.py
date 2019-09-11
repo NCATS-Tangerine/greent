@@ -306,8 +306,8 @@ def load_unichem() -> dict:
         # TODO: get the XREF and STRUCTURE archive files and unzip them onto the file system
         #xref_file = 'C:\\Users\\powen\\Desktop\\xref_100k_subset.txt'
         #struct_file = 'C:\\Users\\powen\\Desktop\\struct_100k_subset.txt'
-        xref_file = 'xref_100k_subset.txt'
-        struct_file = 'struct_100k_subset.txt'
+        xref_file = './crawler/xref_100k_subset.txt'
+        struct_file = './crawler/struct_100k_subset.txt'
 
         # get an iterator to loop through the xref data
         xref_iter = pandas.read_csv(xref_file, dtype={"uci": int, "src_id": int, "src_compound_id": str},
@@ -522,7 +522,7 @@ if __name__ == '__main__':
 
     the_list = load_unichem()
 
-    with open('output.txt', 'w') as f:
+    with open('./output.txt', 'w') as f:
         for k, v in the_list.items():
             f.write(str(k) + ' >>> ' + str(v) + '\n')
 
