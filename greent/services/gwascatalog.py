@@ -52,7 +52,7 @@ class GWASCatalog(Service):
         with self.context.cache.redis.pipeline() as redis_pipe:
             trait_uri_pattern = re.compile(r'[^,\s]+')
             snp_pattern = re.compile(r'[^,;x*\s]+')
-            for line in gwas_catalog[1]:
+            for line in gwas_catalog[1:]:
                 line = line.split('\t')
                 try:
                     pubmed_id = line[pub_med_index]
