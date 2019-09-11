@@ -13,7 +13,7 @@ import csv
 import time
 
 # declare a logger and initialize it
-logger: logging.Logger = LoggingUtil.init_logging("robokop-interfaces.greent.services.FooDB", logging.INFO, format='medium', logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
+logger = LoggingUtil.init_logging("robokop-interfaces.greent.services.FooDB", logging.INFO, format='medium', logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
 
 #############
 # Class: FooDB
