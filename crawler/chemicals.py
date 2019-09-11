@@ -306,7 +306,7 @@ def load_unichem() -> dict:
         # TODO: get the XREF and STRUCTURE archive files and unzip them onto the file system
 
         # get an iterator to loop through the xref data
-        xref_iter = pandas.read_csv('C:\\Users\\powen\\Desktop\\xref_1g_subset.txt', dtype={"uci": int, "src_id": int, "src_compound_id": str},
+        xref_iter = pandas.read_csv('C:\\Users\\powen\\Desktop\\xref_100k_subset.txt', dtype={"uci": int, "src_id": int, "src_compound_id": str},
                                     sep='\t', header=None, usecols=[0, 1, 2], names=['uci', 'src_id', 'src_compound_id'], iterator=True, chunksize=100000)
         logger.debug(f'Xref iterator created. Loading/filtering xrefs by source type...')
 
@@ -322,7 +322,7 @@ def load_unichem() -> dict:
         logger.debug(f'Xref data frame filtered by non-singletons created. {len(df_filtered_xrefs)} records found. Creating structure iterator...')
 
         # get an iterator to loop through the xref data
-        structure_iter = pandas.read_csv('C:\\Users\\powen\\Desktop\\struct_1g_subset.txt', dtype={"uci": int, "standardinchikey": str},
+        structure_iter = pandas.read_csv('C:\\Users\\powen\\Desktop\\struct_100k_subset.txt', dtype={"uci": int, "standardinchikey": str},
                                          sep='\t', header=None, usecols=[0, 2], names=['uci', 'standardinchikey'], iterator=True, chunksize=100000)
         logger.debug(f'Structure iterator created. Loading/filtering data frame by filtered xref unichem ids...')
 
@@ -517,4 +517,9 @@ if __name__ == '__main__':
     # load_unichem_deprecated()
 
     the_list = load_unichem()
+
+    with open('output.txt', 'w') as f:
+        for k, v in the_list.items():
+            f.write(str(k) + ' >>> ' + str(v) + '\n')
+
     logger.info('Done.')
