@@ -303,6 +303,8 @@ def load_unichem() -> dict:
         ftp.cwd(f'UDRI{target_dir_index}')
         logger.info(f'Target unichem sub-directory: UDRI{target_dir_index}. Creating xref iterator...')
 
+        # TODO: get the XREF and STRUCTURE archive files and unzip them onto the file system
+
         # get an iterator to loop through the xref data
         xref_iter = pandas.read_csv('C:\\Users\\powen\\Desktop\\xref_1g_subset.txt', dtype={"uci": int, "src_id": int, "src_compound_id": str},
                                     sep='\t', header=None, usecols=[0, 1, 2], names=['uci', 'src_id', 'src_compound_id'], iterator=True, chunksize=100000)
