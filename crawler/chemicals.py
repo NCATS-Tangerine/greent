@@ -262,7 +262,7 @@ def load_unichem_deprecated():
 # cols: uci   standardinchi   standardinchikey   created   username   fikhb
 
 
-def load_unichem() -> dict:
+def load_unichem(xref_file=None, struct_file=None) -> dict:
     logger.info(f'Start of Unichem loading...')
 
     # init the returned list
@@ -304,10 +304,13 @@ def load_unichem() -> dict:
         logger.info(f'Target unichem sub-directory: UDRI{target_dir_index}. Creating xref iterator...')
 
         # TODO: get the XREF and STRUCTURE archive files and unzip them onto the file system
-        #xref_file = 'C:\\Users\\powen\\Desktop\\xref_100k_subset.txt'
-        #struct_file = 'C:\\Users\\powen\\Desktop\\struct_100k_subset.txt'
-        xref_file = './crawler/xref_100k_subset.txt'
-        struct_file = './crawler/struct_100k_subset.txt'
+        if xref_file is None:
+            #xref_file = 'C:\\Users\\powen\\Desktop\\xref_100k_subset.txt'
+            xref_file = './crawler/xref_1000k_subset.txt'
+
+        if struct_file is None:
+            #struct_file = 'C:\\Users\\powen\\Desktop\\struct_100k_subset.txt'
+            struct_file = './crawler/struct_1000k_subset.txt'
 
         # get an iterator to loop through the xref data
         xref_iter = pandas.read_csv(xref_file, dtype={"uci": int, "src_id": int, "src_compound_id": str},
@@ -519,8 +522,9 @@ def load_annotations_chemicals(rosetta):
 #######
 if __name__ == '__main__':
     # load_unichem_deprecated()
+    import sys
 
-    the_list = load_unichem()
+    the_list = load_unichem(sys.argv[1], sys.argv[2])
 
     with open('./output.txt', 'w') as f:
         for k, v in the_list.items():
