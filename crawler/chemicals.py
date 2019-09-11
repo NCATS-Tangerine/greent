@@ -315,7 +315,7 @@ def load_unichem(xref_file=None, struct_file=None) -> dict:
         # get an iterator to loop through the xref data
         xref_iter = pandas.read_csv(xref_file, dtype={"uci": int, "src_id": int, "src_compound_id": str},
                                     sep='\t', header=None, usecols=[0, 1, 2], names=['uci', 'src_id', 'src_compound_id'], iterator=True, chunksize=100000)
-        logger.debug(f'Xref iterator created. Loading/filtering xrefs by source type...')
+        logger.debug(f'Xref iterator created using file {xref_file}. Loading/filtering xrefs by source type...')
 
         # parse the records, creating a data frame with only the wanted source types
         df_source_xrefs = pandas.concat(xref_element[xref_element['src_id'].isin(list(data_sources.keys()))] for xref_element in xref_iter)
@@ -331,7 +331,7 @@ def load_unichem(xref_file=None, struct_file=None) -> dict:
         # get an iterator to loop through the xref data
         structure_iter = pandas.read_csv(struct_file, dtype={"uci": int, "standardinchikey": str},
                                          sep='\t', header=None, usecols=[0, 2], names=['uci', 'standardinchikey'], iterator=True, chunksize=100000)
-        logger.debug(f'Structure iterator created. Loading/filtering data frame by filtered xref unichem ids...')
+        logger.debug(f'Structure iterator created using file {struct_file}. Loading/filtering data frame by filtered xref unichem ids...')
 
         # load it into a data frame
         df_structures = pandas.concat(struct_element[struct_element['uci'].isin(df_filtered_xrefs.uci)] for struct_element in structure_iter)
