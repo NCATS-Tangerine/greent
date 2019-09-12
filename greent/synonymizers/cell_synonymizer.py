@@ -7,8 +7,6 @@ def synonymize(node,gt):
     """The main thing to worry about for cells is that we get a label."""
     #It's incorrect to only check for CELL.  It may be that we're calling here with something
     # marked as an anatomical entity
-    if node.type not in (node_types.CELL,node_types.ANATOMICAL_ENTITY):
-        raise Exception(f"Incorrect node type {node.id}")
     currentsynonyms = node.get_labeled_ids_by_prefix('CL')
     new_syns = set()
     for csim in currentsynonyms:

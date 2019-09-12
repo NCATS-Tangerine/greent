@@ -4,8 +4,7 @@ from greent.util import Text
 from builder.question import LabeledID
 
 def synonymize(node,gt):
-    if not node.type == node_types.GENE:
-        raise Exception(f"Incorrect node type: {node.id}")
+
     if Text.get_curie(node.id).upper() == 'UNIPROTKB':
         new_ids = gt.uniprot.get_synonyms(node.id)
         if len(new_ids) > 0:
