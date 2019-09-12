@@ -45,8 +45,8 @@ def callback(ch, method, properties, body):
         writer.write_node(node)
     for edge in graph['edges']:
         # logger.debug(f'Writing edge {edge.source_id}->{edge.target_id}')
-        if 'force' in graph
-            writer.write_edge(edge, force_create)
+        if 'force' in graph:
+            writer.write_edge(edge, force_create= True)
         else:
             writer.write_edge(edge)
 
