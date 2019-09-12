@@ -301,72 +301,69 @@ def load_unichem(xref_file=None, struct_file=None) -> dict:
 
         # move the the target directory
         ftp.cwd(f'UDRI{target_dir_index}')
-        logger.info(f'Target unichem sub-directory: UDRI{target_dir_index}. Creating xref iterator...')
+        logger.info(f'Target unichem sub-directory: UDRI{target_dir_index}.')
 
         # TODO: get the XREF and STRUCTURE archive files and unzip them onto the file system
         if xref_file is None:
-            #xref_file = 'C:\\Users\\powen\\Desktop\\xref_100k_subset.txt'
-            xref_file = './crawler/xref_1000k_subset.txt'
+            xref_file = 'C:\\Users\\powen\\Desktop\\chem_files\\xref_1g_subset.txt'
+            #xref_file = './crawler/xref_1000k_subset.txt'
 
         if struct_file is None:
-            #struct_file = 'C:\\Users\\powen\\Desktop\\struct_100k_subset.txt'
-            struct_file = './crawler/struct_1000k_subset.txt'
+            struct_file = 'C:\\Users\\powen\\Desktop\\chem_files\\struct_1g_subset.txt'
+            #struct_file = './crawler/struct_1000k_subset.txt'
 
         # get an iterator to loop through the xref data
         xref_iter = pandas.read_csv(xref_file, dtype={"uci": int, "src_id": int, "src_compound_id": str},
                                     sep='\t', header=None, usecols=[0, 1, 2], names=['uci', 'src_id', 'src_compound_id'], iterator=True, chunksize=100000)
-        logger.debug(f'Xref iterator created using file {xref_file}. Loading/filtering xrefs by source type...')
+        logger.debug(f'Xref iterator created on file {xref_file}. Loading xrefs data frame, filtering by source type...')
 
         # parse the records, creating a data frame with only the wanted source types
         df_source_xrefs = pandas.concat(xref_element[xref_element['src_id'].isin(list(data_sources.keys()))] for xref_element in xref_iter)
-        logger.debug(f'Xref data frame filtered by source type created. {len(df_source_xrefs)} records found. Grouping xrefs...')
+        logger.debug(f'Xref data frame filtered by source type created. {len(df_source_xrefs)} records found. Filtering out singleton xrefs...')
 
-        # group the data by unichem id and filter out singletons
-        df_grouped_xrefs = df_source_xrefs.groupby(['uci'])
-        logger.debug(f'Xref data frame grouped by unichem id created. Filtering out xref singletons...')
-
-        df_filtered_xrefs = df_grouped_xrefs.filter(lambda x: len(x) > 1)
-        logger.debug(f'Xref data frame filtered by non-singletons created. {len(df_filtered_xrefs)} records found. Creating structure iterator...')
+        # filter out the singleton records
+        df_filtered_xrefs = df_source_xrefs[df_source_xrefs.groupby(by=['uci'])['uci'].transform('count').gt(1)]
+        logger.debug(f'Xref data frame filtered by non-singletons created. {len(df_filtered_xrefs)} records found.')
 
         # get an iterator to loop through the xref data
         structure_iter = pandas.read_csv(struct_file, dtype={"uci": int, "standardinchikey": str},
                                          sep='\t', header=None, usecols=[0, 2], names=['uci', 'standardinchikey'], iterator=True, chunksize=100000)
-        logger.debug(f'Structure iterator created using file {struct_file}. Loading/filtering data frame by filtered xref unichem ids...')
+        logger.debug(f'Structure iterator created using file {struct_file}. Loading structure data frame, filtering by xref unichem ids...')
 
         # load it into a data frame
         df_structures = pandas.concat(struct_element[struct_element['uci'].isin(df_filtered_xrefs.uci)] for struct_element in structure_iter)
         logger.debug(f'Structure data frame filtered by xref unichem ids created. {len(df_structures)} records loaded. Processing data...')
 
+        xref_grouped = df_filtered_xrefs.set_index('uci').groupby(by=['uci'])
+
         # for each of the structured records use the uci to get the xref records
-        for struct_index, structure_element in df_structures.iterrows():
+        #for struct_index, structure_element in df_structures.iterrows():
+        for name, group in xref_grouped:
             # get the xref records for this uci
-            df_structure_xrefs = pandas.DataFrame(df_filtered_xrefs[df_filtered_xrefs.uci == structure_element.uci])
+            # this is probably taking a good deal of time because it is parsing the entire list every time.
+            #df_structure_xrefs = df_filtered_xrefs[df_filtered_xrefs.uci == structure_element.uci]['src_compound_id'].values.tolist()
 
-            # did we get anything
-            if len(df_structure_xrefs) > 0:
-                # init a set for the curie elements
-                new_synonym: set = {'INCHIKEY:' + structure_element.standardinchikey}
+            # tack on the inchikey
+            #df_structure_xrefs.append('INCHIKEY:' + structure_element.standardinchikey)
 
-                # for each xref returned create a record with curie identifiers
-                for xref_index, xref_element in df_structure_xrefs.iterrows():
-                    # get the curie name by the src_id
-                    curie: str = data_sources[xref_element.src_id] + ':' + xref_element.src_compound_id
+            syn_list = group.src_compound_id.tolist()
 
-                    # append this element to the array of curies
-                    new_synonym.add(curie)
+            syn_list.append('INCHIKEY:' + df_structures[df_structures.uci == name]['standardinchikey'].values[0])
 
-                # now loop through the array that was just created and pull out each value for the key
-                for element in new_synonym:
-                    # save the new synonymized unichem entry
-                    synonyms[element] = new_synonym
+            # create a dict of the synonyms
+            #new_synonyms = dict.fromkeys(df_structure_xrefs, set(df_structure_xrefs))
 
-                    # increment the counter
-                    counter += 1
+            syn_dict = dict.fromkeys(syn_list, set(syn_list))
 
-                    # output some feedback for the user
-                    if (counter % 1000000) == 0:
-                        logger.info(f'Processed {counter} unichem synonymizations...')
+            # add it to the returned list
+            synonyms.update(syn_dict)
 
+            # increment the counter
+            counter += 1
+
+            # output some feedback for the user
+            if (counter % 10000) == 0:
+                logger.info(f'Processed {counter} unichem synonymizations...')
     except Exception as e:
         logger.error(f'Exception caught. Exception: {e}')
 
@@ -524,7 +521,8 @@ if __name__ == '__main__':
     # load_unichem_deprecated()
     import sys
 
-    the_list = load_unichem(sys.argv[1], sys.argv[2])
+    #the_list = load_unichem(sys.argv[1], sys.argv[2])
+    the_list = load_unichem()
 
     with open('./output.txt', 'w') as f:
         for k, v in the_list.items():
