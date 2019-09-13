@@ -13,15 +13,15 @@ import asyncio
 from greent.annotators.chemical_annotator import ChemicalAnnotator
 import ftplib
 import pandas
+import urllib
+import gzip
 
 logger = LoggingUtil.init_logging("robokop-interfaces.crawler.chemicals", logging.DEBUG, format='medium', logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
-
 
 def pull(location, directory, filename):
     data = pull_via_ftp(location, directory, filename)
     rdf = decompress(data).decode()
     return rdf
-
 
 def make_mesh_id(mesh_uri):
     return f"mesh:{mesh_uri.split('/')[-1][:-1]}"
@@ -260,8 +260,7 @@ def load_unichem_deprecated():
 # The structure file from unichem
 # ftp.ebi.ac.uk/pub/databases/chembl/UniChem/data/oracleDumps/UDRI<the latest>/UC_STRUCTURE.txt.gz
 # cols: uci   standardinchi   standardinchikey   created   username   fikhb
-
-
+#########################
 def load_unichem(xref_file=None, struct_file=None) -> dict:
     logger.info(f'Start of Unichem loading...')
 
@@ -271,68 +270,46 @@ def load_unichem(xref_file=None, struct_file=None) -> dict:
     # init a counter
     counter: int = 0
 
-    # declare the unichem ids tfor the target data
-    data_sources: dict = {1: 'CHEMBL', 2: 'DRUGBANK', 4: 'GTOPDB', 6: 'KEGG.COMPOUND', 7: 'CHEBI', 14: 'UNII', 18: 'HMDB', 22: 'PUBCHEM'}
-
     try:
-        # get a handle to the ftp directory
-        ftp = ftplib.FTP("ftp.ebi.ac.uk")
+        # init the target UniChem directory name
+        target_dir_index: str = ''
 
-        # login
-        ftp.login()
+        # declare the unichem ids tfor the target data
+        data_sources: dict = {1: 'CHEMBL', 2: 'DRUGBANK', 4: 'GTOPDB', 6: 'KEGG.COMPOUND', 7: 'CHEBI', 14: 'UNII', 18: 'HMDB', 22: 'PUBCHEM'}
 
-        # move to the target directory
-        ftp.cwd('/pub/databases/chembl/UniChem/data/oracleDumps')
+        # get the newest UniChem data directory name
+        if xref_file is None or struct_file is None:
+            # get the latest UC direcory name
+            target_dir_index = get_latest_unichem_dir_name()
+            logger.info(f'Target unichem sub-directory: {target_dir_index}.')
 
-        # get the directory listing
-        files: list = ftp.nlst()
-
-        # init the starting point
-        target_dir_index = 0
-
-        # parse the list to determine the most recently updated dir
-        for f in files:
-            # is this file greater that the previous
-            if "UDRI" in f:
-                # convert the suffix into an int and compare it to the previous one
-                if int(f[4:]) > target_dir_index:
-                    # save this as our new highest value
-                    target_dir_index = int(f[4:])
-
-        # move the the target directory
-        ftp.cwd(f'UDRI{target_dir_index}')
-        logger.info(f'Target unichem sub-directory: UDRI{target_dir_index}.')
-
-        # TODO: get the XREF and STRUCTURE archive files and unzip them onto the file system
-        if xref_file is None:
-            xref_file = 'C:\\Users\\powen\\Desktop\\chem_files\\xref_1g_subset.txt'
-            #xref_file = './crawler/xref_1000k_subset.txt'
-
-        if struct_file is None:
-            struct_file = 'C:\\Users\\powen\\Desktop\\chem_files\\struct_1g_subset.txt'
-            #struct_file = './crawler/struct_1000k_subset.txt'
+            # get the files
+            xref_file = download_uc_file(target_dir_index, 'UC_XREF.txt.gz')
+            struct_file = download_uc_file(target_dir_index, 'UC_STRUCTURE.txt.gz')
+        else:
+            logger.info(f'Using incoming UniChem XREF file: {xref_file}, STRUCTURE file: {struct_file}')
 
         # get an iterator to loop through the xref data
         xref_iter = pandas.read_csv(xref_file, dtype={"uci": int, "src_id": int, "src_compound_id": str},
                                     sep='\t', header=None, usecols=[0, 1, 2], names=['uci', 'src_id', 'src_compound_id'], iterator=True, chunksize=100000)
-        logger.debug(f'Xref iterator created on file {xref_file}. Loading xrefs data frame, filtering by source type...')
+        logger.debug(f'Xref iterator created. Loading xrefs data frame, filtering by source type...')
 
         # parse the records, creating a data frame with only the wanted source types
-        df_source_xrefs = pandas.concat(xref_element[xref_element['src_id'].isin(list(data_sources.keys()))] for xref_element in xref_iter)
+        df_source_xrefs: pandas.DataFrame = pandas.concat(xref_element[xref_element['src_id'].isin(list(data_sources.keys()))] for xref_element in xref_iter)
         logger.debug(f'Xref data frame filtered by source type created. {len(df_source_xrefs)} records found, filtering out singleton xrefs...')
 
         # filter out the singleton records
-        df_filtered_xrefs = df_source_xrefs[df_source_xrefs.groupby(by=['uci'])['uci'].transform('count').gt(1)]
-        logger.debug(f'Xref data frame filtered by non-singletons created. {len(df_filtered_xrefs)} records found, Creating structure iterator...')
+        df_filtered_xrefs: pandas.DataFrame = df_source_xrefs[df_source_xrefs.groupby(by=['uci'])['uci'].transform('count').gt(1)]
+        logger.debug(f'Xref data frame filtered by non-singletons created. {len(df_filtered_xrefs)} records found, adding curie column...')
 
         # note: this is an alternate way to add a curie column to each record in one shot. takes about 10 minutes.
-        #df_filtered_xrefs = df_filtered_xrefs.assign(curie = df_filtered_xrefs[['src_id', 'src_compound_id']].apply(lambda x: f'{data_sources[x[0]]}:{x[1]}', axis=1))
-        #logger.debug(f'Curie column addition complete. Creating structure iterator...')
+        df_filtered_xrefs = df_filtered_xrefs.assign(curie=df_filtered_xrefs[['src_id', 'src_compound_id']].apply(lambda x: f'{data_sources[x[0]]}:{x[1]}', axis=1))
+        logger.debug(f'Curie column addition complete. Creating structure iterator...')
 
         # get an iterator to loop through the xref data
         structure_iter = pandas.read_csv(struct_file, dtype={"uci": int, "standardinchikey": str},
                                          sep='\t', header=None, usecols=[0, 2], names=['uci', 'standardinchikey'], iterator=True, chunksize=100000)
-        logger.debug(f'Structure iterator created using file {struct_file}. Loading structure data frame, filtering by xref unichem ids...')
+        logger.debug(f'Structure iterator created. Loading structure data frame, filtering by xref unichem ids...')
 
         # load it into a data frame
         df_structures = pandas.concat(struct_element[struct_element['uci'].isin(df_filtered_xrefs.uci)] for struct_element in structure_iter)
@@ -344,7 +321,7 @@ def load_unichem(xref_file=None, struct_file=None) -> dict:
         # for each of the structured records use the uci to get the xref records
         for name, group in xref_grouped:
             # combine the data source name and compound id and get the list of "curied" items
-            syn_list = group.src_id.transform(lambda x: data_sources[x]).astype(str).str.cat(group.src_compound_id.astype(str), sep=':').tolist()
+            syn_list = group.curie.tolist()
 
             # add the inchikey to the list
             syn_list.append('INCHIKEY:' + df_structures[df_structures.uci == name]['standardinchikey'].values[0])
@@ -359,7 +336,7 @@ def load_unichem(xref_file=None, struct_file=None) -> dict:
             counter += 1
 
             # output some feedback for the user
-            if (counter % 10000) == 0:
+            if (counter % 100000) == 0:
                 logger.info(f'Processed {counter} unichem synonymizations...')
     except Exception as e:
         logger.error(f'Exception caught. Exception: {e}')
@@ -369,6 +346,80 @@ def load_unichem(xref_file=None, struct_file=None) -> dict:
     # return the resultant list set to the caller
     return synonyms
 
+
+#########################
+# download_file - gets the latest UniChem file and decompresses it
+#########################
+def download_uc_file(url, in_file_name):
+    # get the output file name, derived from the input file name
+    out_file_name = in_file_name[:-3]
+
+    logger.debug(f'Downloading: {url}{in_file_name}, decompressing into: {out_file_name}')
+
+    # get a handle to the ftp file
+    handle = urllib.request.urlopen(url + in_file_name)
+
+    # open the compressed file
+    with open(in_file_name, 'wb') as out:
+        # while there is data
+        while True:
+            # read a block of data
+            data = handle.read(1024)
+
+            # fif nothing read about
+            if len(data) == 0:
+                break
+
+            # write out the data to the output file
+            out.write(data)
+
+    logger.debug(f'Compressed file downloaded, decompressing into {out_file_name}.')
+
+    # open the output file
+    with open(out_file_name, 'w') as outfile:
+        with gzip.open(in_file_name, 'rt') as f:
+            for line in f:
+                # write the data to the output file
+                outfile.write(line)
+
+    logger.debug(f'Decompressing: {out_file_name} complete.')
+
+    # return the filename to the caller
+    return out_file_name
+
+#########################
+# get_latest_unichem_dir_name() - gets the newest UniChem data directory name
+#########################
+def get_latest_unichem_dir_name() -> str:
+    # get a handle to the ftp directory
+    ftp = ftplib.FTP("ftp.ebi.ac.uk")
+
+    # login
+    ftp.login()
+
+    # move to the target directory
+    ftp.cwd('/pub/databases/chembl/UniChem/data/oracleDumps')
+
+    # get the directory listing
+    files: list = ftp.nlst()
+
+    # close the ftp connection
+    ftp.quit()
+
+    # init the starting point
+    target_dir_index = 0
+
+    # parse the list to determine the latest version of the files
+    for f in files:
+        # is this file greater that the previous
+        if "UDRI" in f:
+            # convert the suffix into an int and compare it to the previous one
+            if int(f[4:]) > target_dir_index:
+                # save this as our new highest value
+                target_dir_index = int(f[4:])
+
+    # return the full url
+    return f'ftp://ftp.ebi.ac.uk/pub/databases/chembl/UniChem/data/oracleDumps/UDRI{target_dir_index}/'
 
 async def make_uberon_role_queries(chebi_ids, chemical_annotator):
     tasks = []
@@ -518,11 +569,11 @@ if __name__ == '__main__':
     # load_unichem_deprecated()
     import sys
 
-    the_list = load_unichem(sys.argv[1], sys.argv[2])
-    #the_list = load_unichem()
+    the_list = load_unichem()
+    #the_list = load_unichem(sys.argv[1], sys.argv[2])
 
-    #with open('./output.txt', 'w') as f:
-    #    for k, v in the_list.items():
-    #        f.write(str(k) + ' >>> ' + str(v) + '\n')
+    with open('./output.txt', 'w') as f:
+        for k, v in the_list.items():
+            f.write(str(k) + ' >>> ' + str(v) + '\n')
 
     logger.info('Done.')
