@@ -518,8 +518,8 @@ if __name__ == '__main__':
     # load_unichem_deprecated()
     import sys
 
-    #the_list = load_unichem(sys.argv[1], sys.argv[2])
-    the_list = load_unichem()
+    the_list = load_unichem(sys.argv[1], sys.argv[2])
+    #the_list = load_unichem()
 
     #with open('./output.txt', 'w') as f:
     #    for k, v in the_list.items():
