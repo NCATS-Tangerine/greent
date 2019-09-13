@@ -319,11 +319,15 @@ def load_unichem(xref_file=None, struct_file=None) -> dict:
 
         # parse the records, creating a data frame with only the wanted source types
         df_source_xrefs = pandas.concat(xref_element[xref_element['src_id'].isin(list(data_sources.keys()))] for xref_element in xref_iter)
-        logger.debug(f'Xref data frame filtered by source type created. {len(df_source_xrefs)} records found. Filtering out singleton xrefs...')
+        logger.debug(f'Xref data frame filtered by source type created. {len(df_source_xrefs)} records found, filtering out singleton xrefs...')
 
         # filter out the singleton records
         df_filtered_xrefs = df_source_xrefs[df_source_xrefs.groupby(by=['uci'])['uci'].transform('count').gt(1)]
-        logger.debug(f'Xref data frame filtered by non-singletons created. {len(df_filtered_xrefs)} records found.')
+        logger.debug(f'Xref data frame filtered by non-singletons created. {len(df_filtered_xrefs)} records found, Creating structure iterator...')
+
+        # note: this is an alternate way to add a curie column to each record in one shot. takes about 10 minutes.
+        #df_filtered_xrefs = df_filtered_xrefs.assign(curie = df_filtered_xrefs[['src_id', 'src_compound_id']].apply(lambda x: f'{data_sources[x[0]]}:{x[1]}', axis=1))
+        #logger.debug(f'Curie column addition complete. Creating structure iterator...')
 
         # get an iterator to loop through the xref data
         structure_iter = pandas.read_csv(struct_file, dtype={"uci": int, "standardinchikey": str},
@@ -334,25 +338,18 @@ def load_unichem(xref_file=None, struct_file=None) -> dict:
         df_structures = pandas.concat(struct_element[struct_element['uci'].isin(df_filtered_xrefs.uci)] for struct_element in structure_iter)
         logger.debug(f'Structure data frame filtered by xref unichem ids created. {len(df_structures)} records loaded. Processing data...')
 
-        xref_grouped = df_filtered_xrefs.set_index('uci').groupby(by=['uci'])
+        # group the records by the unichem identifier
+        xref_grouped = df_filtered_xrefs.groupby(by=['uci'])
 
         # for each of the structured records use the uci to get the xref records
-        #for struct_index, structure_element in df_structures.iterrows():
         for name, group in xref_grouped:
-            # get the xref records for this uci
-            # this is probably taking a good deal of time because it is parsing the entire list every time.
-            #df_structure_xrefs = df_filtered_xrefs[df_filtered_xrefs.uci == structure_element.uci]['src_compound_id'].values.tolist()
+            # combine the data source name and compound id and get the list of "curied" items
+            syn_list = group.src_id.transform(lambda x: data_sources[x]).astype(str).str.cat(group.src_compound_id.astype(str), sep=':').tolist()
 
-            # tack on the inchikey
-            #df_structure_xrefs.append('INCHIKEY:' + structure_element.standardinchikey)
-
-            syn_list = group.src_compound_id.tolist()
-
+            # add the inchikey to the list
             syn_list.append('INCHIKEY:' + df_structures[df_structures.uci == name]['standardinchikey'].values[0])
 
-            # create a dict of the synonyms
-            #new_synonyms = dict.fromkeys(df_structure_xrefs, set(df_structure_xrefs))
-
+            # create a dict of all the curies. each element gets equated with the whole list
             syn_dict = dict.fromkeys(syn_list, set(syn_list))
 
             # add it to the returned list
@@ -524,8 +521,8 @@ if __name__ == '__main__':
     #the_list = load_unichem(sys.argv[1], sys.argv[2])
     the_list = load_unichem()
 
-    with open('./output.txt', 'w') as f:
-        for k, v in the_list.items():
-            f.write(str(k) + ' >>> ' + str(v) + '\n')
+    #with open('./output.txt', 'w') as f:
+    #    for k, v in the_list.items():
+    #        f.write(str(k) + ' >>> ' + str(v) + '\n')
 
     logger.info('Done.')
