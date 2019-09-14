@@ -37,6 +37,22 @@ node_props_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
 
+def synonymize(node_id, node_type=node_types.NAMED_THING):
+    """Return synonymized node."""
+    greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
+    sys.path.insert(0, greent_path)
+    rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
+    node = KNode(id=node_id, type=node_type, name='')
+    rosetta.synonymizer.synonymize(node)
+    result = {
+        'id': node.id,
+        'name': node.name,
+        'type': node.type,
+        'synonyms': list(node.synonyms)
+    }
+    return result
+
+
 class Synonymize(Resource):
     def post(self, node_id):
         """
@@ -70,23 +86,11 @@ class Synonymize(Resource):
                                     items:
                                         type: string
         """
-        greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
-        sys.path.insert(0, greent_path)
-        rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
-        node = KNode(id=node_id, type=node_types.NAMED_THING, name='')
         try:
-            #synonymizer = Synonymizer(rosetta.type_graph.concept_model, rosetta)
-            rosetta.synonymizer.synonymize(node)
+            result = synonymize(node_id)
         except Exception as e:
             logger.error(e)
             return e.message, 500
-
-        result = {
-            'id': node.id,
-            'name': node.name,
-            'type': node.type,
-            'synonyms': list(node.synonyms)
-        }
         return result, 200
 api.add_resource(Synonymize, '/synonymize/<node_id>/')
 
@@ -132,7 +136,12 @@ class SynonymizeDeprecated(Resource):
                                         type: string
         """
         #TODO: remove this 
-        return Synonymize().post(node_id)
+        try:
+            result = synonymize(node_id, node_type)
+        except Exception as e:
+            logger.error(e)
+            return e.message, 500
+        return result, 200
 api.add_resource(SynonymizeDeprecated, '/synonymize/<node_id>/<node_type>/')
 
 def rossetta_setup_default():
