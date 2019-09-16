@@ -1,22 +1,23 @@
-from gzip import decompress, GzipFile
 from greent.util import LoggingUtil, Text
 from greent.graph_components import LabeledID
-import logging
-import os
 from crawler.mesh_unii import refresh_mesh_pubchem
 from crawler.crawl_util import glom, dump_cache, pull_via_ftp
+import greent.annotators.util.async_client as async_client
+from greent.annotators.chemical_annotator import ChemicalAnnotator
+
+from gzip import decompress, GzipFile
 from functools import partial
+import logging
+import os
 import pickle
 import requests
-import greent.annotators.util.async_client as async_client
 import asyncio
-from greent.annotators.chemical_annotator import ChemicalAnnotator
 import ftplib
 import pandas
 import urllib
 import gzip
 
-logger = LoggingUtil.init_logging("robokop-interfaces.crawler.chemicals", logging.DEBUG, format='medium', logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
+logger = LoggingUtil.init_logging("robokop-interfaces.crawler.chemicals", logging.INFO, format='medium', logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
 
 def pull(location, directory, filename):
     data = pull_via_ftp(location, directory, filename)
@@ -251,43 +252,43 @@ def load_unichem_deprecated():
 #########################
 # load_unichem() - Loads a dict object with targeted chemical substance cureies for synonymization
 #
-# return: dict - The cross referenced curies ready for inserting into the the redis cache
-#
-# The xref file from unichem
+# The XREF file format from unichem
 # ftp.ebi.ac.uk/pub/databases/chembl/UniChem/data/oracleDumps/UDRI<the latest>/UC_XREF.txt.gz
 # cols: uci   src_id    src_compound_id   assignment   last_release_u_when_current   created   lastupdated   userstamp   aux_src
 #
-# The structure file from unichem
+# The STRUCTURE file format from unichem
 # ftp.ebi.ac.uk/pub/databases/chembl/UniChem/data/oracleDumps/UDRI<the latest>/UC_STRUCTURE.txt.gz
 # cols: uci   standardinchi   standardinchikey   created   username   fikhb
+#
+# working_dir: str - the working directory for the downloaded files
+# xref_file: str - optional location of already downloaded and decomressed unichem XREF file
+# struct_file: str - optional location of already downloaded and decomressed unichem STRUCTURE file
+# return: dict - The cross referenced curies ready for inserting into the the redis cache
 #########################
-def load_unichem(xref_file=None, struct_file=None) -> dict:
-    logger.info(f'Start of Unichem loading...')
+def load_unichem(working_dir: str = '', xref_file: str = None, struct_file: str = None) -> dict:
+    logger.info(f'Start of Unichem loading. Working directory: {working_dir}')
 
     # init the returned list
     synonyms: dict = {}
 
-    # init a counter
-    counter: int = 0
+    # init a chemicals counter
+    chem_counter: int = 0
 
     try:
-        # init the target UniChem directory name
-        target_dir_index: str = ''
-
         # declare the unichem ids tfor the target data
         data_sources: dict = {1: 'CHEMBL', 2: 'DRUGBANK', 4: 'GTOPDB', 6: 'KEGG.COMPOUND', 7: 'CHEBI', 14: 'UNII', 18: 'HMDB', 22: 'PUBCHEM'}
 
         # get the newest UniChem data directory name
         if xref_file is None or struct_file is None:
             # get the latest UC direcory name
-            target_dir_index = get_latest_unichem_dir_name()
-            logger.info(f'Target unichem sub-directory: {target_dir_index}.')
+            target_uc_url: str = get_latest_unichem_url()
+            logger.info(f'Target unichem FTP URL: {target_uc_url}')
 
             # get the files
-            xref_file = download_uc_file(target_dir_index, 'UC_XREF.txt.gz')
-            struct_file = download_uc_file(target_dir_index, 'UC_STRUCTURE.txt.gz')
-        else:
-            logger.info(f'Using incoming UniChem XREF file: {xref_file}, STRUCTURE file: {struct_file}')
+            xref_file = download_uc_file(target_uc_url, 'UC_XREF.txt.gz', working_dir)
+            struct_file = download_uc_file(target_uc_url, 'UC_STRUCTURE.txt.gz', working_dir)
+
+        logger.info(f'Using decompressed UniChem XREF file: {xref_file}, STRUCTURE file: {struct_file}')
 
         # get an iterator to loop through the xref data
         xref_iter = pandas.read_csv(xref_file, dtype={"uci": int, "src_id": int, "src_compound_id": str},
@@ -313,10 +314,13 @@ def load_unichem(xref_file=None, struct_file=None) -> dict:
 
         # load it into a data frame
         df_structures = pandas.concat(struct_element[struct_element['uci'].isin(df_filtered_xrefs.uci)] for struct_element in structure_iter)
-        logger.debug(f'Structure data frame filtered by xref unichem ids created. {len(df_structures)} records loaded. Processing data...')
+        logger.debug(f'Structure data frame created with filtered with xref unichem ids. {len(df_structures)} records loaded.')
 
         # group the records by the unichem identifier
         xref_grouped = df_filtered_xrefs.groupby(by=['uci'])
+        logger.debug(f'Structure data frame grouped by xref unichem ids.')
+
+        logger.info('Start of data processing...')
 
         # for each of the structured records use the uci to get the xref records
         for name, group in xref_grouped:
@@ -333,15 +337,15 @@ def load_unichem(xref_file=None, struct_file=None) -> dict:
             synonyms.update(syn_dict)
 
             # increment the counter
-            counter += 1
+            chem_counter += 1
 
             # output some feedback for the user
-            if (counter % 100000) == 0:
-                logger.info(f'Processed {counter} unichem synonymizations...')
+            if (chem_counter % 100000) == 0:
+                logger.info(f'Processed {chem_counter} unichem chemicals...')
     except Exception as e:
         logger.error(f'Exception caught. Exception: {e}')
 
-    logger.info(f'Load complete. Processed {counter} unichem synonymizations.')
+    logger.info(f'Load complete. Processed a total of {chem_counter} unichem chemicals.')
 
     # return the resultant list set to the caller
     return synonyms
@@ -349,18 +353,23 @@ def load_unichem(xref_file=None, struct_file=None) -> dict:
 
 #########################
 # download_file - gets the latest UniChem file and decompresses it
-#########################
-def download_uc_file(url, in_file_name):
-    # get the output file name, derived from the input file name
-    out_file_name = in_file_name[:-3]
 
-    logger.debug(f'Downloading: {url}{in_file_name}, decompressing into: {out_file_name}')
+# url: str - the unichem url with the correct version attatched
+# in_file_name: str - the name of the target file to work
+# working_dir: str - the place where files are going to be stored
+# returns: str - the output file name
+#########################
+def download_uc_file(url: str, in_file_name: str, working_dir: str) -> str:
+    # get the output file name, derived from the input file name
+    out_file_name = working_dir + in_file_name[:-3]
+
+    logger.debug(f'Downloading: {url}{in_file_name}, compressed file: {in_file_name}, decompressing into: {out_file_name}')
 
     # get a handle to the ftp file
     handle = urllib.request.urlopen(url + in_file_name)
 
-    # open the compressed file
-    with open(in_file_name, 'wb') as out:
+    # create the compressed file
+    with open(working_dir + in_file_name, 'wb') as compressed_file:
         # while there is data
         while True:
             # read a block of data
@@ -371,26 +380,29 @@ def download_uc_file(url, in_file_name):
                 break
 
             # write out the data to the output file
-            out.write(data)
+            compressed_file.write(data)
 
     logger.debug(f'Compressed file downloaded, decompressing into {out_file_name}.')
 
-    # open the output file
-    with open(out_file_name, 'w') as outfile:
-        with gzip.open(in_file_name, 'rt') as f:
-            for line in f:
+    # create the output text file
+    with open(out_file_name, 'w') as output_file:
+        # open the compressed file
+        with gzip.open(working_dir + in_file_name, 'rt') as compressed_file:
+            for line in compressed_file:
                 # write the data to the output file
-                outfile.write(line)
+                output_file.write(line)
 
-    logger.debug(f'Decompressing: {out_file_name} complete.')
+    logger.debug(f'Decompressing complete.')
 
     # return the filename to the caller
     return out_file_name
 
 #########################
-# get_latest_unichem_dir_name() - gets the newest UniChem data directory name
+# get_latest_unichem_url() - gets the lasest UniChem data directory url
+#
+# return: str - the unichem FTP URL
 #########################
-def get_latest_unichem_dir_name() -> str:
+def get_latest_unichem_url() -> str:
     # get a handle to the ftp directory
     ftp = ftplib.FTP("ftp.ebi.ac.uk")
 
@@ -569,8 +581,8 @@ if __name__ == '__main__':
     # load_unichem_deprecated()
     import sys
 
-    the_list = load_unichem()
-    #the_list = load_unichem(sys.argv[1], sys.argv[2])
+    the_list = load_unichem('c:\\temp\\')
+    #the_list = load_unichem('', sys.argv[1], sys.argv[2])
 
     with open('./output.txt', 'w') as f:
         for k, v in the_list.items():
