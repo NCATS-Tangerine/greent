@@ -18,7 +18,6 @@ from neo4j.v1 import GraphDatabase, basic_auth
 
 from greent.annotators import annotator_factory
 from builder.api.setup import app, api
-from builder.api.tasks import update_kg
 import builder.api.logging_config
 import greent.node_types as node_types
 from greent.synonymization import Synonymizer
@@ -37,41 +36,65 @@ node_props_file = os.path.join(os.path.dirname(__file__), "..", "..", "greent", 
 
 logger = LoggingUtil.init_logging(__name__, level=logging.DEBUG)
 
-class UpdateKG(Resource):
-    def post(self):
+
+def synonymize(node_id, node_type=node_types.NAMED_THING):
+    """Return synonymized node."""
+    greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
+    sys.path.insert(0, greent_path)
+    rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
+    node = KNode(id=node_id, type=node_type, name='')
+    rosetta.synonymizer.synonymize(node)
+    result = {
+        'id': node.id,
+        'name': node.name,
+        'type': node.type,
+        'synonyms': list(node.synonyms)
+    }
+    return result
+
+
+class Synonymize(Resource):
+    def post(self, node_id):
         """
-        Update the cached knowledge graph 
+        Return the best identifier for a concept, and its known synonyms
         ---
-        tags: [build]
-        requestBody:
-            name: question
-            description: The machine-readable question graph.
-            content:
-                application/json:
-                    schema:
-                        $ref: '#/definitions/Question'
+        tags: [util]
+        parameters:
+          - in: path
+            name: node_id
+            description: curie of the node
+            schema:
+                type: string
             required: true
+            default: MONDO:0005737
         responses:
-            202:
-                description: Update started...
+            200:
+                description: Synonymized node
                 content:
                     application/json:
                         schema:
                             type: object
-                            required:
-                            - task id
                             properties:
-                                task id:
+                                id:
                                     type: string
-                                    description: task ID to poll for KG update status
+                                name:
+                                    type: string
+                                type:
+                                    type: string
+                                synonyms:
+                                    type: array
+                                    items:
+                                        type: string
         """
-        task = update_kg.apply_async(args=[request.json])
-        logger.info(f"KG update task start with id {task.id}")
-        return {'task_id': task.id}, 202
+        try:
+            result = synonymize(node_id)
+        except Exception as e:
+            logger.error(e)
+            return e.message, 500
+        return result, 200
+api.add_resource(Synonymize, '/synonymize/<node_id>/')
 
-api.add_resource(UpdateKG, '/')
-
-class Synonymize(Resource):
+class SynonymizeDeprecated(Resource):
     def post(self, node_id, node_type):
         """
         Return the best identifier for a concept, and its known synonyms
@@ -92,6 +115,7 @@ class Synonymize(Resource):
                 type: string
             required: true
             default: disease
+        deprecated: true
         responses:
             200:
                 description: Synonymized node
@@ -111,28 +135,14 @@ class Synonymize(Resource):
                                     items:
                                         type: string
         """
-        greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
-        sys.path.insert(0, greent_path)
-        rosetta = setup(os.path.join(greent_path, 'greent', 'greent.conf'))
-
-        node = KNode(id=node_id, type=node_type, name='')
-
+        #TODO: remove this 
         try:
-            #synonymizer = Synonymizer(rosetta.type_graph.concept_model, rosetta)
-            rosetta.synonymizer.synonymize(node)
+            result = synonymize(node_id, node_type)
         except Exception as e:
             logger.error(e)
             return e.message, 500
-
-        result = {
-            'id': node.id,
-            'name': node.name,
-            'type': node.type,
-            'synonyms': list(node.synonyms)
-        }
         return result, 200
-
-api.add_resource(Synonymize, '/synonymize/<node_id>/<node_type>/')
+api.add_resource(SynonymizeDeprecated, '/synonymize/<node_id>/<node_type>/')
 
 def rossetta_setup_default():
     greent_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..')
@@ -301,86 +311,6 @@ class Annotator(Resource):
         return response, 200
 api.add_resource(Annotator, '/annotate/<node_id>/<node_type>/')
 
-
-class TaskStatus(Resource):
-    def get(self, task_id):
-        """
-        Get the status of a task
-        ---
-        tags: [tasks]
-        parameters:
-          - in: path
-            name: task_id
-            description: "ID of the task"
-            schema:
-                type: string
-            required: true
-        responses:
-            200:
-                description: Task status
-                content:
-                    application/json:
-                        schema:
-                            type: object
-                            required:
-                            - task-id
-                            - state
-                            - result
-                            properties:
-                                task_id:
-                                    type: string
-                                status:
-                                    type: string
-                                    description: Short task status
-                                result:
-                                    type: ???
-                                    description: Result of completed task OR intermediate status message
-                                traceback:
-                                    type: string
-                                    description: Traceback, in case of task failure
-        """
-
-        r = redis.Redis(
-            host=os.environ['RESULTS_HOST'],
-            port=os.environ['RESULTS_PORT'],
-            db=os.environ['BUILDER_RESULTS_DB'],
-            password=os.environ['RESULTS_PASSWORD']
-        )
-        value = r.get(f'celery-task-meta-{task_id}')
-        if value is None:
-            return 'Task not found', 404
-        result = json.loads(value)
-        return result, 200
-
-api.add_resource(TaskStatus, '/task/<task_id>/')
-
-class TaskLog(Resource):
-    def get(self, task_id):
-        """
-        Get activity log for a task
-        ---
-        tags: [util]
-        parameters:
-          - in: path
-            name: task_id
-            description: ID of task
-            schema:
-                type: string
-            required: true
-        responses:
-            200:
-                description: text
-        """
-
-        task_log_file = os.path.join(os.environ['ROBOKOP_HOME'], 'logs','builder_task_logs', f'{task_id}.log')
-        if os.path.isfile(task_log_file):
-            with open(task_log_file, 'r') as log_file:
-                log_contents = log_file.read()
-            return log_contents, 200
-        else:
-            return 'Task ID not found', 404
-
-api.add_resource(TaskLog, '/task/<task_id>/log/')
 
 class Operations(Resource):
     def get(self):
@@ -686,44 +616,6 @@ class Concepts(Resource):
         return concepts
 
 api.add_resource(Concepts, '/concepts/')
-
-
-class OperationPath(Resource):
-
-    def post(self):
-        """
-        Transpiles question graph to cypher and returns query operations path.
-        ---
-        tags: [build]
-        requestBody:
-            name: question
-            description: The machine-readable question graph.
-            content:
-                application/json:
-                    schema:
-                        $ref: '#/definitions/Question'
-            required: true
-        responses:
-            200:
-                description: Concept based path graph
-                content:
-                    application/json:
-                        schema:
-                            type: object
-                            required:
-                            - task id
-                            properties:
-                                task id:
-                                    type: string
-                                    description: task ID to poll for KG update status
-        """
-        q = Question(request.json)
-        r = rossetta_setup_default()
-
-        return q.get_edge_op_paths(r.type_graph)
-
-
-api.add_resource(OperationPath, '/operationpath/')
 
 
 if __name__ == '__main__':

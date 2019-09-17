@@ -243,3 +243,26 @@ def test_cell_component_to_cell(uberon):
     for edge_tar_id, predicate, node_id , node_name in attributes:
         assert edge_tar_id == node_id
     assert 'CL:0000540' in identifiers
+
+def test_neturophil_to_phenotype(uberon):
+    neutrophil = KNode('CL:0000775',  type=node_types.ANATOMICAL_ENTITY, name = 'neutrophils')
+    results = uberon.get_phenotype_by_anatomy_graph(neutrophil)
+    neutropenia = 'HP:0001875'
+    node_ids = [node.id for edge, node in results]
+    source_ids = [edge.source_id for edge, node in results]
+    assert len(source_ids) == len(node_ids)
+    for x in node_ids:
+        assert x in source_ids
+    assert neutropenia in source_ids
+
+
+def test_neutropenia_to_anatomy(uberon):
+    neutropenia = KNode('HP:0001875', type= node_types.PHENOTYPIC_FEATURE, name = 'neutropenia')
+    results = uberon.get_anatomy_by_phenotype_graph(neutropenia)
+    neutrophil = 'CL:0000775'
+    node_ids = [node.id for edge, node in results]
+    target_ids = [edge.target_id for edge, node in results]
+    assert len(target_ids) == len(node_ids)
+    for x in node_ids:
+        assert x in target_ids
+    assert neutrophil in target_ids

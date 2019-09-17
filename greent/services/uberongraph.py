@@ -92,8 +92,7 @@ class UberonGraphKS(Service):
 
     def get_anatomy_parts(self, anatomy_identifier):
         """Given an UBERON id, find other UBERONS that are parts of the query"""
-        if anatomy_identifier.startswith('http'):
-            anatomy_identifier = Text.obo_to_curie(anatomy_identifier)
+        anatomy_identifier = f"<{anatomy_identifier}>"
         text="""
         prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
         prefix UBERON: <http://purl.obolibrary.org/obo/UBERON_>
@@ -288,65 +287,60 @@ class UberonGraphKS(Service):
         #The subclassof uberon:0001062 ensures that the result
         #is an anatomical entity.
         text = """
-        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        prefix UBERON: <http://purl.obolibrary.org/obo/UBERON_>
-        prefix HP: <http://purl.obolibrary.org/obo/HP_>
-        prefix part_of: <http://purl.obolibrary.org/obo/BFO_0000050>
-        prefix has_part: <http://purl.obolibrary.org/obo/BFO_0000051>
-        prefix depends_on: <http://purl.obolibrary.org/obo/RO_0002502>
-        prefix phenotype_of: <http://purl.obolibrary.org/obo/UPHENO_0000001>
-        select distinct ?anatomy_id ?anatomy_label ?input_label
-        from <http://reasoner.renci.org/nonredundant>
-        from <http://reasoner.renci.org/ontology>
-        where {
-                  graph <http://reasoner.renci.org/ontology/closure> {
-                    ?anatomy_id rdfs:subClassOf UBERON:0001062 .
-                  }
-                  ?anatomy_id rdfs:label ?anatomy_label .
-                  graph <http://reasoner.renci.org/nonredundant> {
-                       ?phenotype phenotype_of: ?anatomy_id .
-                  }
-                  graph <http://reasoner.renci.org/ontology/closure> {
-                    $HPID rdfs:subClassOf ?phenotype .
-                  }
-                  $HPID rdfs:label ?input_label .
-              }
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            PREFIX CL: <http://purl.obolibrary.org/obo/CL_>
+            Prefix UBERON: <http://purl.obolibrary.org/obo/UBERON_>
+            PREFIX HP:<http://purl.obolibrary.org/obo/HP_>
+            SELECT DISTINCT ?anatomy_id ?anatomy_label ?predicate ?predicate_label             
+            FROM <http://reasoner.renci.org/ontology>
+            WHERE {
+                graph <http://reasoner.renci.org/redundant>{
+                    $HPID ?predicate ?anatomy_id.
+                }                
+                ?anatomy_id rdfs:label ?label .
+                graph <http://reasoner.renci.org/ontology/closure>{
+                    ?anatomy_id rdfs:subClassOf UBERON:0001062.
+                }
+            OPTIONAL {?predicate rdfs:label ?predicate_label.}
+            }
         """
         results = self.triplestore.query_template( 
             inputs = { 'HPID': hp_identifier }, \
-            outputs = [ 'anatomy_id', 'anatomy_label', 'input_label'],\
+            outputs = [ 'anatomy_id', 'anatomy_label', 'predicate', 'predicate_label'],\
             template_text = text \
         )
         return results
 
     def anatomy_to_phenotype(self, uberon_id):
+        #sparql very identical to phenotype_to_anatomy. could not find any anatomical 
+        # entity that is a subject of subclass of HP:0000118, in ubergraph at this point. 
+        # treating this as another version of pheno -> anatomical_entity but when 
+        # anatomical_entity is known an
+        # we want to go back to  a phenotype. 
+        # @TODO if anatomical -> pheno update this to query that instead maybe? this will also influence the 
+        # method that uses it. 
         text="""
-        prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        prefix UBERON: <http://purl.obolibrary.org/obo/UBERON_>
-        prefix HP: <http://purl.obolibrary.org/obo/HP_>
-        prefix part_of: <http://purl.obolibrary.org/obo/BFO_0000050>
-        prefix has_part: <http://purl.obolibrary.org/obo/BFO_0000051>
-        prefix depends_on: <http://purl.obolibrary.org/obo/RO_0002502>
-        prefix phenotype_of: <http://purl.obolibrary.org/obo/UPHENO_0000001>
-        select distinct ?pheno_id ?anatomy_label ?pheno_label
-        from <http://reasoner.renci.org/nonredundant>
-        from <http://reasoner.renci.org/ontology>
-        where {
-                  $UBERONID rdfs:label ?anatomy_label .
-                  graph <http://reasoner.renci.org/nonredundant> {
-                       ?phenotype phenotype_of: $UBERONID .
-                  }
-                  graph <http://reasoner.renci.org/ontology/closure> {
-                    ?pheno_id rdfs:subClassOf ?phenotype .
-                  }
-                  ?pheno_id rdfs:label ?pheno_label .
-              }
-        """
-        #The subclassof uberon:0001062 ensures that the result
-        #is an anatomical entity.
+            PREFIX dis: <http://stanbol.apache.org/ontology/disambiguation/disambiguation#>
+            PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+            Prefix UBERON: <http://purl.obolibrary.org/obo/UBERON_>
+            PREFIX HP:<http://purl.obolibrary.org/obo/HP_>
+            PREFIX CL:<http://purl.obolibrary.org/obo/CL_>
+            SELECT DISTINCT ?pheno_id ?pheno_label ?predicate ?predicate_label ?anatomy_label
+            FROM <http://reasoner.renci.org/ontology>
+            WHERE {
+                graph <http://reasoner.renci.org/redundant> {
+                    ?pheno_id ?predicate $UBERONID.
+                }                
+                ?pheno_id rdfs:label ?pheno_label.
+                $UBERONID rdfs:label ?anatomy_label.
+                graph <http://reasoner.renci.org/ontology/closure>{
+                    ?pheno_id rdfs:subClassOf HP:0000118.
+                }
+                OPTIONAL {?predicate rdfs:label ?predicate_label.}
+            }"""  
         results = self.triplestore.query_template(
             inputs = { 'UBERONID': uberon_id }, \
-            outputs = [ 'pheno_id', 'anatomy_label', 'pheno_label'],\
+            outputs = [ 'pheno_id', 'pheno_label', 'predicate', 'predicate_label', '?anatomy_label'],\
             template_text = text \
         )
         return results
@@ -582,7 +576,18 @@ class UberonGraphKS(Service):
         for curie in phenotype_node.get_synonyms_by_prefix('HP'):
             anatomies = self.phenotype_to_anatomy (curie)
             for r in anatomies:
-                edge, node = self.create_phenotype_anatomy_edge(r['anatomy_id'],r['anatomy_label'],curie,phenotype_node)
+                node = KNode(r['anatomy_id'], type=node_types.ANATOMICAL_ENTITY, name= r['anatomy_label'])
+                # try to derive the label from the relation for the new ubergraph axioms 
+                predicate_label = r['predicate_label'] or '_'.join(r['predicate'].split('#')[-1].split('.'))
+                predicate = LabeledID(Text.obo_to_curie(r['predicate']), predicate_label)
+                edge = self.create_edge(
+                    phenotype_node,
+                    node,
+                    'uberongraph.get_anatomy_by_phenotype_graph',
+                    phenotype_node.id,
+                    predicate
+                )
+                # edge, node = self.create_phenotype_anatomy_edge(r['anatomy_id'],r['anatomy_label'],curie,phenotype_node)
                 if phenotype_node.name is None:
                     phenotype_node.name = r['input_label']
                 results.append ( (edge, node) )
@@ -593,7 +598,15 @@ class UberonGraphKS(Service):
                 #smartapi and the low-level sparql-vision.
                 part_results = self.get_anatomy_parts( r['anatomy_id'] )
                 for pr in part_results:
-                    pedge, pnode = self.create_phenotype_anatomy_edge(pr['part'],pr['partlabel'],curie,phenotype_node)
+                    # pedge, pnode = self.create_phenotype_anatomy_edge(pr['part'],pr['partlabel'],curie,phenotype_node)
+                    pnode = KNode(pr['part'], type= node_types.ANATOMICAL_ENTITY, name= pr['partlabel'])
+                    pedge = self.create_edge(
+                        phenotype_node,
+                        pnode,
+                        'uberongraph.get_anatomy_by_phenotype_graph',
+                        phenotype_node.id,
+                        predicate
+                    )
                     results.append ( (pedge, pnode) )
         return results
 
@@ -655,14 +668,24 @@ class UberonGraphKS(Service):
 
     def get_phenotype_by_anatomy_graph (self, anatomy_node):
         results = []
-        for curie in anatomy_node.get_synonyms_by_prefix('UBERON'):
-            logger.info(f"Looking up by {curie}")
-            phenotypes = self.anatomy_to_phenotype (curie)
+        curies = list(anatomy_node.get_synonyms_by_prefix('UBERON'))
+        curies += list(anatomy_node.get_synonyms_by_prefix('CL'))
+        for curie in curies:
+            phenotypes = self.anatomy_to_phenotype(curie)
             for r in phenotypes:
-                edge, node = self.create_anatomy_phenotype_edge(r['pheno_id'],r['pheno_label'],curie,anatomy_node)
-                logger.info(f" got {node.id}")
-                if anatomy_node.name is None:
-                    anatomy_node.name = r['anatomy_label']
+                node = KNode(Text.obo_to_curie(r['pheno_id']), type= node_types.PHENOTYPIC_FEATURE, name= r['pheno_label'])                
+                predicate_label = r['predicate_label'] or '_'.join(r['predicate'].split('#')[-1].split('.'))
+                predicate = LabeledID(Text.obo_to_curie(r['predicate']), predicate_label)                
+                edge = self.create_edge(
+                    node, 
+                    anatomy_node, 
+                    'uberongraph.get_phenotype_by_anatomy_graph',
+                    node.id, 
+                    predicate
+                    )
+                #going to see if we need  this 
+                # if anatomy_node.name is None:
+                #     anatomy_node.name = r['anatomy_label']
                 results.append ( (edge, node) )
         return results
 

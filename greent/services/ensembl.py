@@ -208,7 +208,7 @@ class Ensembl(Service):
 
     def sequence_variant_to_sequence_variant(self, variant_node):
         ld_url = '/ld/human/'
-        options_url = '?r2=0.9'
+        options_url = '?r2=0.8'
         population = '1000GENOMES:phase_3:MXL'
 
         return_results = []

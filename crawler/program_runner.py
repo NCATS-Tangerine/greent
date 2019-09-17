@@ -44,12 +44,17 @@ def get_identifiers(input_type,rosetta):
                 if label is not None and not label.startswith('obsolete'):
                     lids.append(LabeledID(ident,label))
     if input_type == node_types.PHENOTYPIC_FEATURE:
-        identifiers = rosetta.core.hpo.get_ids()
+        # filtering to avoid things like 
+        # "C0341110" http://www.orpha.net/ORDO/Orphanet:73247
+        identifiers = filter ( 
+            lambda x : x.startswith('HP:'),
+            requests.get('https://onto.renci.org/descendants/HP:0000118').json()
+        )
         for ident in identifiers:
             if ident not in bad_idents:
-                label = rosetta.core.hpo.get_label(ident)
-                if label is not None and not label.startswith('obsolete'):
-                    lids.append(LabeledID(ident,label))
+                label = get_label(ident)
+                if label is not None and not label['label'].startswith('obsolete'):
+                    lids.append(LabeledID(ident,label['label']))
     elif input_type == node_types.GENETIC_CONDITION:
         identifiers_disease = rosetta.core.mondo.get_ids()
         for ident in identifiers_disease:

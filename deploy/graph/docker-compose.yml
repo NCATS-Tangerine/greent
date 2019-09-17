@@ -1,6 +1,6 @@
 version: "3"
 services:
-  neo4j:
+  knowledge_graph:
     build:
       context: ./neo4j/
     container_name: neo4j
@@ -15,6 +15,7 @@ services:
       - NEO4J_dbms_memory_heap_max__size=${NEO4J_HEAP_MEMORY}
       - NEO4J_dbms_memory_heap_initial__size=${NEO4J_HEAP_MEMORY_INIT}
       - NEO4J_dbms_memory_pagecache_size=${NEO4J_CACHE_MEMORY}
+      - NEO4J_dbms_read__only=${NEO4J_READONLY}
     ports:
       - "${NEO4J_HTTP_PORT}:${NEO4J_HTTP_PORT}"
       - "${NEO4J_BOLT_PORT}:${NEO4J_BOLT_PORT}"

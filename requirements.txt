@@ -1,3 +1,4 @@
+biopython
 aiosparql
 aiohttp
 redis
@@ -11,13 +12,12 @@ neo4j-driver
 pyld
 networkx==1.11
 ply
-celery
 ndex2
 ontobio
 pronto
 pika
 mysql-connector
--e git+https://github.com/Supervisor/supervisor@master#egg=supervisor
+-e git+https://github.com/Supervisor/supervisor@dbff619f79c48da0776178e627221da6e40a3261#egg=supervisor
 aiosparql
 aiohttp
 pytabix
