@@ -250,7 +250,7 @@ def load_unichem_deprecated():
 
 
 #########################
-# load_unichem() - Loads a dict object with targeted chemical substance cureies for synonymization
+# load_unichem() - Loads a dict object with targeted chemical substance curies for synonymization
 #
 # The XREF file format from unichem
 # ftp.ebi.ac.uk/pub/databases/chembl/UniChem/data/oracleDumps/UDRI<the latest>/UC_XREF.txt.gz
@@ -261,8 +261,8 @@ def load_unichem_deprecated():
 # cols: uci   standardinchi   standardinchikey   created   username   fikhb
 #
 # working_dir: str - the working directory for the downloaded files
-# xref_file: str - optional location of already downloaded and decomressed unichem XREF file
-# struct_file: str - optional location of already downloaded and decomressed unichem STRUCTURE file
+# xref_file: str - optional location of already downloaded and decompressed unichem XREF file
+# struct_file: str - optional location of already downloaded and decompressed unichem STRUCTURE file
 # return: dict - The cross referenced curies ready for inserting into the the redis cache
 #########################
 def load_unichem(working_dir: str = '', xref_file: str = None, struct_file: str = None) -> dict:
@@ -288,43 +288,44 @@ def load_unichem(working_dir: str = '', xref_file: str = None, struct_file: str 
             xref_file = download_uc_file(target_uc_url, 'UC_XREF.txt.gz', working_dir)
             struct_file = download_uc_file(target_uc_url, 'UC_STRUCTURE.txt.gz', working_dir)
 
-        logger.info(f'Using decompressed UniChem XREF file: {xref_file}, STRUCTURE file: {struct_file}')
+        logger.info(f'Using decompressed UniChem XREF file: {xref_file} and STRUCTURE file: {struct_file}')
+        logger.info(f'Start of data pre-processing.')
 
         # get an iterator to loop through the xref data
         xref_iter = pandas.read_csv(xref_file, dtype={"uci": int, "src_id": int, "src_compound_id": str},
                                     sep='\t', header=None, usecols=[0, 1, 2], names=['uci', 'src_id', 'src_compound_id'], iterator=True, chunksize=100000)
-        logger.debug(f'Xref iterator created. Loading xrefs data frame, filtering by source type...')
+        logger.debug(f'XREF iterator created. Loading xrefs data frame, filtering by source type...')
 
         # parse the records, creating a data frame with only the wanted source types
         df_source_xrefs: pandas.DataFrame = pandas.concat(xref_element[xref_element['src_id'].isin(list(data_sources.keys()))] for xref_element in xref_iter)
-        logger.debug(f'Xref data frame filtered by source type created. {len(df_source_xrefs)} records found, filtering out singleton xrefs...')
+        logger.debug(f'XREF data frame filtered by source type created. {len(df_source_xrefs)} records found, filtering out singleton XREFs...')
 
         # filter out the singleton records
         df_filtered_xrefs: pandas.DataFrame = df_source_xrefs[df_source_xrefs.groupby(by=['uci'])['uci'].transform('count').gt(1)]
-        logger.debug(f'Xref data frame filtered by non-singletons created. {len(df_filtered_xrefs)} records found, adding curie column...')
+        logger.debug(f'XREF data frame filtered by non-singletons created. {len(df_filtered_xrefs)} records found, adding curie column...')
 
         # note: this is an alternate way to add a curie column to each record in one shot. takes about 10 minutes.
         df_filtered_xrefs = df_filtered_xrefs.assign(curie=df_filtered_xrefs[['src_id', 'src_compound_id']].apply(lambda x: f'{data_sources[x[0]]}:{x[1]}', axis=1))
-        logger.debug(f'Curie column addition complete. Creating structure iterator...')
+        logger.debug(f'Curie column addition complete. Creating STRUCTURE iterator...')
 
         # get an iterator to loop through the xref data
         structure_iter = pandas.read_csv(struct_file, dtype={"uci": int, "standardinchikey": str},
                                          sep='\t', header=None, usecols=[0, 2], names=['uci', 'standardinchikey'], iterator=True, chunksize=100000)
-        logger.debug(f'Structure iterator created. Loading structure data frame, filtering by xref unichem ids...')
+        logger.debug(f'STRUCTURE iterator created. Loading structure data frame, filtering by targeted XREF unichem ids...')
 
         # load it into a data frame
         df_structures = pandas.concat(struct_element[struct_element['uci'].isin(df_filtered_xrefs.uci)] for struct_element in structure_iter)
-        logger.debug(f'Structure data frame created with filtered with xref unichem ids. {len(df_structures)} records loaded.')
+        logger.debug(f'STRUCTURE data frame created with filtered with XREF unichem ids. {len(df_structures)} records loaded.')
 
         # group the records by the unichem identifier
         xref_grouped = df_filtered_xrefs.groupby(by=['uci'])
-        logger.debug(f'Structure data frame grouped by xref unichem ids.')
+        logger.debug(f'STRUCTURE data frame grouped by XREF unichem ids.')
 
-        logger.info('Start of data processing...')
+        logger.info('Data pre-processing complete. Start of final data processing...')
 
         # for each of the structured records use the uci to get the xref records
         for name, group in xref_grouped:
-            # combine the data source name and compound id and get the list of "curied" items
+            # get the synonym group into a list
             syn_list = group.curie.tolist()
 
             # add the inchikey to the list
@@ -340,7 +341,7 @@ def load_unichem(working_dir: str = '', xref_file: str = None, struct_file: str 
             chem_counter += 1
 
             # output some feedback for the user
-            if (chem_counter % 100000) == 0:
+            if (chem_counter % 250000) == 0:
                 logger.info(f'Processed {chem_counter} unichem chemicals...')
     except Exception as e:
         logger.error(f'Exception caught. Exception: {e}')
@@ -354,7 +355,7 @@ def load_unichem(working_dir: str = '', xref_file: str = None, struct_file: str 
 #########################
 # download_file - gets the latest UniChem file and decompresses it
 
-# url: str - the unichem url with the correct version attatched
+# url: str - the unichem url with the correct version attached
 # in_file_name: str - the name of the target file to work
 # working_dir: str - the place where files are going to be stored
 # returns: str - the output file name
@@ -392,13 +393,13 @@ def download_uc_file(url: str, in_file_name: str, working_dir: str) -> str:
                 # write the data to the output file
                 output_file.write(line)
 
-    logger.debug(f'Decompressing complete.')
+    logger.debug(f'Decompression complete.')
 
     # return the filename to the caller
     return out_file_name
 
 #########################
-# get_latest_unichem_url() - gets the lasest UniChem data directory url
+# get_latest_unichem_url() - gets the latest UniChem data directory url
 #
 # return: str - the unichem FTP URL
 #########################
@@ -577,15 +578,15 @@ def load_annotations_chemicals(rosetta):
 #######
 # Main - Stand alone entry point for testing
 #######
-if __name__ == '__main__':
-    # load_unichem_deprecated()
-    import sys
-
-    the_list = load_unichem('c:\\temp\\')
-    #the_list = load_unichem('', sys.argv[1], sys.argv[2])
-
-    with open('./output.txt', 'w') as f:
-        for k, v in the_list.items():
-            f.write(str(k) + ' >>> ' + str(v) + '\n')
-
-    logger.info('Done.')
+# if __name__ == '__main__':
+#     # load_unichem_deprecated()
+#     import sys
+#
+#     the_list = load_unichem('c:\\temp\\')
+#     #the_list = load_unichem('', sys.argv[1], sys.argv[2])
+#
+#     with open('./output.txt', 'w') as f:
+#         for k, v in the_list.items():
+#             f.write(str(k) + ' >>> ' + str(v) + '\n')
+#
+#     logger.info('Done.')
