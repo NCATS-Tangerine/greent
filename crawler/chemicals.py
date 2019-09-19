@@ -275,12 +275,12 @@ def load_unichem(working_dir: str = '', xref_file: str = None, struct_file: str 
     chem_counter: int = 0
 
     try:
-        # declare the unichem ids tfor the target data
+        # declare the unichem ids for the target data
         data_sources: dict = {1: 'CHEMBL', 2: 'DRUGBANK', 4: 'GTOPDB', 6: 'KEGG.COMPOUND', 7: 'CHEBI', 14: 'UNII', 18: 'HMDB', 22: 'PUBCHEM'}
 
         # get the newest UniChem data directory name
         if xref_file is None or struct_file is None:
-            # get the latest UC direcory name
+            # get the latest UC directory name
             target_uc_url: str = get_latest_unichem_url()
             logger.info(f'Target unichem FTP URL: {target_uc_url}')
 
@@ -326,13 +326,13 @@ def load_unichem(working_dir: str = '', xref_file: str = None, struct_file: str 
         # for each of the structured records use the uci to get the xref records
         for name, group in xref_grouped:
             # get the synonym group into a list
-            syn_list = group.curie.tolist()
+            syn_list: list = group.curie.tolist()
 
             # add the inchikey to the list
             syn_list.append('INCHIKEY:' + df_structures[df_structures.uci == name]['standardinchikey'].values[0])
 
             # create a dict of all the curies. each element gets equated with the whole list
-            syn_dict = dict.fromkeys(syn_list, set(syn_list))
+            syn_dict: dict = dict.fromkeys(syn_list, set(syn_list))
 
             # add it to the returned list
             synonyms.update(syn_dict)
