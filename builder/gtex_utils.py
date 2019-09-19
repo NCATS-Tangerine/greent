@@ -4,6 +4,7 @@ from greent.graph_components import LabeledID
 from greent.export import BufferedWriter
 from greent.util import LoggingUtil
 from greent.graph_components import KEdge
+
 from collections import namedtuple
 import hashlib
 import time
@@ -50,7 +51,7 @@ class GTExUtils:
     #################
     # get_expression_direction() - get the polarity of slope to get the direction of expression.
     #                              positive value increases expression, negative decreases
-    # param slope: str - the float value to determine dirstion of expression
+    # param slope: str - the float value to determine direction of expression
     # return (str, str) - a label ID name
     #################
     @staticmethod
@@ -77,23 +78,23 @@ class GTExUtils:
     # param uberon: str - the uberon ID
     # param ensembl: str - the ensembl ID
     # param variant: str - the variant ID
-    # return hyper_egde_id : int - the hyper edge ID composite
+    # return hyper_edge_id : int - the hyper edge ID composite
     #################
     @staticmethod
     def get_hyper_edge_id(uberon: str, ensembl: str, variant: str) -> int:
         # check the input parameters
         if uberon is None or ensembl is None or variant is None:
-            hyper_egde_id = 0
+            hyper_edge_id = 0
         else:
             # create a composite hyper edge id. the components of the composite are: (in this order):
             # <uberon tissue id>_<ensemble gene id>_<variant CAID id>
             composite_id = str.encode(f'{uberon}_{ensembl}_{variant}')
 
             # now MD5 hash the encoded string and turn it into an int
-            hyper_egde_id = int(hashlib.md5(composite_id).hexdigest()[:8], 16)
+            hyper_edge_id = int(hashlib.md5(composite_id).hexdigest()[:8], 16)
 
         # return to the caller
-        return hyper_egde_id
+        return hyper_edge_id
 
     #######
     # get_sequence_variant_obj - Creates a SequenceVariant object out of the variant id data field.
@@ -194,12 +195,12 @@ class GTExUtils:
     # returns : object, pass if it is none, otherwise an exception object
     #######
     def prepopulate_variant_synonymization_cache(self, data_directory: str, file_names: list) -> object:
-        logger.info("Starting variant synonymization cache prepopulation")
+        logger.info("Starting variant synonymization cache pre-population")
 
         # init the return value
         ret_val = None
 
-        # create an array to bucket the unchached variants
+        # create an array to bucket the uncached variants
         uncached_variants = []
 
         # init a line counter
@@ -233,7 +234,7 @@ class GTExUtils:
                             # get the HGVS data element
                             hgvs = line[hgvs_index]
 
-                            # look up the variant by the HGVS expresson
+                            # look up the variant by the HGVS expression
                             if self.cache.get(f'synonymize(HGVS:{hgvs})') is None:
                                 uncached_variants.append(hgvs)
 
@@ -259,7 +260,7 @@ class GTExUtils:
             logger.error(f'Exception caught. Exception: {e}')
             ret_val = e
 
-        logger.info(f'Variant synonymization cache prepopulation complete. Processed: {line_counter} variants.')
+        logger.info(f'Variant synonymization cache pre-population complete. Processed: {line_counter} variants.')
 
         # return to the caller
         return ret_val
@@ -295,16 +296,16 @@ class GTExUtils:
                     # is this our id
                     if syn.identifier.startswith('CAID'):
                         # save the id
-                        caid_labled_id = syn
+                        caid_labeled_id = syn
 
                         # remove the synonym from the list
-                        synonyms.remove(caid_labled_id)
+                        synonyms.remove(caid_labeled_id)
 
                         # set the new synonymization id
-                        redis_pipe.set(f'synonymize({caid_labled_id.identifier})', pickle.dumps(synonyms))
+                        redis_pipe.set(f'synonymize({caid_labeled_id.identifier})', pickle.dumps(synonyms))
 
                         # add it back to the list with the new info
-                        synonyms.add(caid_labled_id)
+                        synonyms.add(caid_labeled_id)
 
                         # increase the counter again
                         count += 1
