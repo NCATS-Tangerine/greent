@@ -30,7 +30,7 @@ logger = LoggingUtil.init_logging("robokop-interfaces.builder.GTExBuilder", logg
 class GTExBuilder:
     #######
     # Constructor
-    # param rosetta : Rosetta - project obcject for shared objects
+    # param rosetta : Rosetta - project object for shared objects
     #######
     def __init__(self, rosetta: Rosetta):
         self.rosetta = rosetta
@@ -58,7 +58,7 @@ class GTExBuilder:
             ret_val: object = self.create_gtex_graph(data_directory, file_names, 'GTEx')
         else:
             # add context to the exception for the return
-            ret_val = Exception("Error detected in preprocessing variant synonymization. Aborting...", ret_val)
+            ret_val = Exception("Error detected in pre-processing variant synonymization. Aborting...", ret_val)
 
         # return to the caller
         return ret_val
@@ -105,7 +105,7 @@ class GTExBuilder:
                         tissue_name_index = header_line.index('tissue_name')
                         tissue_uberon_index = header_line.index('tissue_uberon')
                         hgvs_index = header_line.index('HGVS')
-                        variant_id_index = header_line.index('variant_id')
+                        # variant_id_index = header_line.index('variant_id')
                         ensembl_id_index = header_line.index('gene_id')
                         pval_nominal_index = header_line.index('pval_nominal')
                         pval_slope_index = header_line.index('slope')
@@ -120,7 +120,7 @@ class GTExBuilder:
                                 tissue_name = line[tissue_name_index]
                                 uberon = line[tissue_uberon_index]
                                 hgvs = line[hgvs_index]
-                                variant_id = line[variant_id_index]
+                                # variant_id = line[variant_id_index]
                                 ensembl = line[ensembl_id_index].split(".", 1)[0]
                                 pval_nominal = line[pval_nominal_index]
                                 slope = line[pval_slope_index]
@@ -141,10 +141,10 @@ class GTExBuilder:
                                 self.rosetta.synonymizer.synonymize(gtex_node)
 
                                 # get the SequenceVariant object filled in with the sequence location data
-                                #seq_var_data = self.gtu.get_sequence_variant_obj(variant_id)
+                                # seq_var_data = self.gtu.get_sequence_variant_obj(variant_id)
 
                                 # add properties to the variant node
-                                #variant_node.properties['sequence_location'] = [seq_var_data.build, str(seq_var_data.chrom), str(seq_var_data.pos)]
+                                # variant_node.properties['sequence_location'] = [seq_var_data.build, str(seq_var_data.chrom), str(seq_var_data.pos)]
 
                                 # for now insure that the gene node has a name after synonymization
                                 # this can happen if gene is not currently in the graph DB
@@ -159,7 +159,7 @@ class GTExBuilder:
                                 predicate = LabeledID(identifier=label_id, label=label_name)
 
                                 # get a MD5 hash int of the composite hyper edge ID
-                                hyper_egde_id = self.gtu.get_hyper_edge_id(uberon, ensembl, Text.un_curie(variant_node.id))
+                                hyper_edge_id = self.gtu.get_hyper_edge_id(uberon, ensembl, Text.un_curie(variant_node.id))
 
                                 # set the properties for the edge
                                 edge_properties = [ensembl, pval_nominal, slope, analysis_id]
@@ -178,13 +178,13 @@ class GTExBuilder:
                                 graph_writer.write_node(gtex_node)
 
                                 # associate the sequence variant node with an edge to the gtex anatomy node
-                                self.gtu.write_new_association(graph_writer, variant_node, gtex_node, self.variant_gtex_label, hyper_egde_id, None, True)
+                                self.gtu.write_new_association(graph_writer, variant_node, gtex_node, self.variant_gtex_label, hyper_edge_id, None, True)
 
                                 # associate the gene node with an edge to the gtex anatomy node
-                                self.gtu.write_new_association(graph_writer, gene_node, gtex_node, self.gene_gtex_label, hyper_egde_id, None)
+                                self.gtu.write_new_association(graph_writer, gene_node, gtex_node, self.gene_gtex_label, hyper_edge_id, None)
 
                                 # associate the sequence variant node with an edge to the gene node. also include the GTEx properties
-                                self.gtu.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_egde_id, edge_properties, True)
+                                self.gtu.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_edge_id, edge_properties, True)
 
                                 # output some feedback for the user
                                 if (line_counter % 250000) == 0:
