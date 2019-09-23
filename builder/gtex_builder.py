@@ -50,15 +50,15 @@ class GTExBuilder:
     #####################
     def load(self, data_directory: str, file_names: list) -> object:
         # load up the synonymization cache of all the variant
-        ret_val: object = self.gtu.prepopulate_variant_synonymization_cache(data_directory, file_names)
+        #ret_val: object = self.gtu.prepopulate_variant_synonymization_cache(data_directory, file_names)
 
         # is it ok to continue
-        if ret_val is None:
+ #       if ret_val is None:
             # call the GTEx builder to load the cache and graph database
-            ret_val: object = self.create_gtex_graph(data_directory, file_names, 'GTEx')
-        else:
+        ret_val: object = self.create_gtex_graph(data_directory, file_names, 'GTEx')
+#        else:
             # add context to the exception for the return
-            ret_val = Exception("Error detected in pre-processing variant synonymization. Aborting...", ret_val)
+            #ret_val = Exception("Error detected in pre-processing variant synonymization. Aborting...", ret_val)
 
         # return to the caller
         return ret_val
@@ -169,13 +169,13 @@ class GTExBuilder:
                                 ##########################
 
                                 # write out the sequence variant node
-                                graph_writer.write_node(variant_node)
+                                #graph_writer.write_node(variant_node)
 
                                 # write out the gene node
-                                graph_writer.write_node(gene_node)
+                                #graph_writer.write_node(gene_node)
 
                                 # write out the anatomical gtex node
-                                graph_writer.write_node(gtex_node)
+                                #graph_writer.write_node(gtex_node)
 
                                 # associate the sequence variant node with an edge to the gtex anatomy node
                                 self.gtu.write_new_association(graph_writer, variant_node, gtex_node, self.variant_gtex_label, hyper_edge_id, None, True)
@@ -205,25 +205,25 @@ class GTExBuilder:
 #######
 # Main - Stand alone entry point for testing
 #######
-# if __name__ == '__main__':
-#     # create a new builder object
-#     gtb = GTExBuilder(Rosetta())
-#
-#     # directory with GTEx data to process
-#     gtex_data_directory = 'C:/Phil/Work/Informatics/GTEx/GTEx_data/'
-#     # gtex_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/bag/data/'
-#
-#     # assign the name of the GTEx data file
-#     # available test files:
-#     # 'signif_variant_gene_pairs',
-#     # 'test_signif_Adipose_Subcutaneous_all', 'test_signif_Adipose_Subcutaneous_100k', 'test_signif_Adipose_Subcutaneous_10k', 'test_signif_Adipose_Subcutaneous_100', 'test_signif_Adipose_Subcutaneous_6'
-#     # 'test_signif_Stomach_all', 'test_signif_Stomach_100k', 'test_signif_Stomach_10k', 'test_signif_Stomach_100', 'test_signif_Stomach_6'
-#     # 'hypertest_1-var_2-genes_1-tissue', 'hypertest_1-var_2-tissues_1-gene', 'myvar_test'
-#     associated_file_names = ['test_signif_Stomach_10k.csv']
-#
-#     # load up all the GTEx data
-#     rv = gtb.load(gtex_data_directory, associated_file_names)
-#
-#     # check the return, output error if found
-#     if rv is not None:
-#         logger.error(rv)
+if __name__ == '__main__':
+    # create a new builder object
+    gtb = GTExBuilder(Rosetta())
+
+    # directory with GTEx data to process
+    gtex_data_directory = 'C:/Phil/Work/Informatics/Robokop/GTEx/GTEx_data/'
+    # gtex_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/bag/data/'
+
+    # assign the name of the GTEx data file
+    # available test files:
+    # 'signif_variant_gene_pairs',
+    # 'test_signif_Adipose_Subcutaneous_all', 'test_signif_Adipose_Subcutaneous_100k', 'test_signif_Adipose_Subcutaneous_10k', 'test_signif_Adipose_Subcutaneous_100', 'test_signif_Adipose_Subcutaneous_6'
+    # 'test_signif_Stomach_all', 'test_signif_Stomach_100k', 'test_signif_Stomach_10k', 'test_signif_Stomach_100', 'test_signif_Stomach_6'
+    # 'hypertest_1-var_2-genes_1-tissue', 'hypertest_1-var_2-tissues_1-gene', 'myvar_test'
+    associated_file_names = ['test_signif_HGNC_23093.csv']
+
+    # load up all the GTEx data
+    rv = gtb.load(gtex_data_directory, associated_file_names)
+
+    # check the return, output error if found
+    if rv is not None:
+        logger.error(rv)

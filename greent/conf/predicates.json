@@ -50,9 +50,7 @@
       "drug_to_gene",
       "gene_get_drug",
       "gene_to_drug",
-      "chemical_targets_gene",
-      "food_to_chemical_compound",
-      "chemical_compound_to_food"
+      "chemical_targets_gene"
     ],
     "biological_process_or_activity": [
       "actively_involved_in",
@@ -432,6 +430,12 @@
       "disease_to_biological_process_or_activity"
     ]
   },
+  "food": {
+    "chemical_substance":[
+      "contains_chemical_substance"
+    ]
+  },
+
   "chemical_substance": {
     "chemical_substance": [
       "derives_into",
@@ -591,6 +595,9 @@
     ],
     "physiological_process": [
       "bio_process_chemical_substance"
+    ],
+    "food": [
+      "contains_chemical_substance"
     ]
   },
   "phenotypic_feature": {

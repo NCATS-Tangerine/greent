@@ -1,16 +1,13 @@
-from greent.service import Service
-from greent.graph_components import KNode
 from greent.util import LoggingUtil
-from greent.graph_components import LabeledID
+from greent.service import Service
 from greent import node_types
-from greent.graph_components import KEdge
+from greent.graph_components import KNode, LabeledID, KEdge
 
+from csv import reader
 import logging
 import requests
 import traceback
 import os
-import csv
-import time
 
 # declare a logger and initialize it
 logger = LoggingUtil.init_logging("robokop-interfaces.greent.services.FooDB", logging.INFO, format='medium', logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
@@ -37,134 +34,175 @@ class FooDB(Service):
     # multi-step operation:
     #  1.) use the id in the foodb node input param to look up a contents record (1 to 1)
     #  2.) use the contents' record source_id element to look up the compounds in the food (1 to many)
-    #  3.) create and return a chemical substance node and edge
+    #  3.) create and return a chemical substance node and edge list
     #
     # param: food_node: KNode - a foodb node
     # return: array of chemical substance nodes/edges
     #############
-    def food_to_chemical_substance(self, food_node: KNode) -> object:
+    def food_to_chemical_substance(self, in_food_node: KNode) -> list:
         logger.debug("Starting food_to_chemical_substance operation")
 
+        # init the return
+        rv: list = []
+
         try:
-            # init the return
-            rv = []
 
             # get the contents records using the food id
-            contents: list = requests.get(f"{self.url}contents_food_id/{food_node.id}").json()
+            contents: list = requests.get(f"{self.url}contents_food_id/{in_food_node.id}").json()
 
             # loop through the contents returned
             for content in contents:
-                # inspect and retreive info of the contents record
-                good_row, content_type = self.check_content_row(content)
+                # inspect and retrieve info of the contents record
+                good_row, content_type, food_common_name, edge_properties = self.check_content_row(content)
 
                 # shall we continue
                 if not good_row:
                     continue
-
-                # re init the good_row flag
-                good_row = False
-
-                # init the edge properties variable
-                props = []
 
                 # what type of chemical substance are we working
                 if content_type == 'Compound':
                     # use the source id in the contents record to get the compounds record
-                    compound: list = requests.get(f"{self.url}compounds_id/{content['source_id']}").json()
+                    compound: dict = requests.get(f"{self.url}compounds_id/{content['source_id']}").json()[0]
 
-                    # inspect the compound row
-                    good_row, predicate_label, props = self.check_compound_row(compound)
+                    # inspect the compound row and return the needed data
+                    good_row, food_id, node_properties = self.check_compound_row(compound)
                 elif content_type == 'Nutrient':
                     # use the source id in the contents record to get the nutrient record
-                    nutrient: list = requests.get(f"{self.url}nutrients_id/{content['source_id']}").json()
+                    nutrient: dict = requests.get(f"{self.url}nutrients_id/{content['source_id']}").json()[0]
 
                     # inspect the compound row
-                    good_row, predicate_label, props = self.check_nutrient_row(nutrient)
+                    good_row, food_id, node_properties = self.check_nutrient_row(nutrient)
+                else:
+                    continue
 
                 # shall we continue
                 if not good_row:
                     continue
 
-                # create the edge label
-                preds = LabeledID(identifier=f'FOODB:{predicate_label}', label=predicate_label)
+                # redo the food node to add more meta data
+                food_node: KNode = KNode(id=f"FOOD:{food_id}", name=food_common_name, type=node_types.FOOD,
+                                         properties=node_properties)
 
-                # create the new chemical substance node
-                chemical_substance_node = KNode(f"FOODB:{predicate_label}", name=food_node.name, type=node_types.CHEMICAL_SUBSTANCE)
+                # create a new chemical substance node
+                chemical_substance_node: KNode = KNode(id=f"FOOD:{food_id}", name=food_common_name, type=node_types.CHEMICAL_SUBSTANCE, properties=node_properties)
+
+                # create the edge label
+                predicate: LabeledID = LabeledID(identifier=f'FOOD:contains_chemical_substance', label='contains chemical_substance')
 
                 # create the edge
-                edge = self.create_edge(source_node=food_node,
-                                        target_node=chemical_substance_node,
-                                        provided_by='food_to_chemical_substance',
-                                        input_id='identifier',
-                                        predicate=preds,
-                                        properties=props)
+                edge: KEdge = self.create_edge(source_node=food_node,
+                                               target_node=chemical_substance_node,
+                                               provided_by='foodb.food_to_chemical_substance',
+                                               input_id=f'FOOD:{food_id}',
+                                               predicate=predicate,
+                                               properties=edge_properties
+                                               )
 
                 # append the edge/node pair to the returned data array
-                rv.append((chemical_substance_node, edge))
+                rv.append((food_node, edge, chemical_substance_node))
         except Exception as e:
             logger.error(f'Exception caught. Exception: {e}')
-            return e
 
         # return to the caller
         return rv
 
     #############
-    # check_content_row() - inspects a contents record and returns pertinent info
+    # check_content_row - inspects a contents record and returns pertinent info
     #
-    # param: content: list - a contents record
-    # return: good_row:bool, predicate_label:str, content_type:str
+    # param: content: dict - a contents record
+    # return: good_row:bool, content_type:str, food_common_name: str, edge_properties: dict
     #############
     @staticmethod
-    def check_content_row(content: list) -> (bool, str, str):
-        # init the return
-        good_row = False
-        content_type = content["source_type"]
+    def check_content_row(content: dict) -> (bool, str, str, dict):
+        # init the return values
+        good_row: bool = False
+        content_type: str =''
+        food_common_name: str = ''
+        edge_properties:dict = {}
 
         # insure we have a good record
-        if content_type == 'Compound' or content_type == "Nutrient":
+        if content['source_type'] == 'Compound' or content['source_type'] == "Nutrient":
             good_row = True
 
+            # get the content type name
+            content_type: str = content['source_type']
+
+            # get the food name
+            food_common_name: str = content['orig_food_common_name']
+
+            # get the edge properties
+            edge_properties: dict = {'source_type':  content['source_type'], 'source_name': content['orig_source_name'], 'unit': content['orig_unit'], 'content': content['orig_content']}
+
         # return to the caller
-        return good_row, content_type
+        return good_row, content_type, food_common_name, edge_properties
 
     #############
-    # check_compound_row() - inspects a compounds record and returns pertinent info
+    # check_compound_row - inspects a compounds record and returns pertinent info
     #
-    # param: compound: list - the compounds records
-    # return: good_row:bool, properties:list
+    # param: compound: dict - the compounds records
+    # return: good_row: bool, food_id: str, node_properties: dict
     #############
     @staticmethod
-    def check_compound_row(compound: list) -> (bool, list):
-        # init the return
-        good_row = True
+    def check_compound_row(compound: dict) -> (bool, str, dict):
+        # init the return values
+        good_row: bool = False
+        food_id: str = ''
+        node_properties: dict = {}
 
-        properties = {'content_type': 'Compound'}
+        # init the equivalent identifier
+        equivalent_identifier: str = ''
 
-        predicate_label = compound['public_id']
+        # get the identifier.
+        if compound['moldb_inchikey'] != '':
+            equivalent_identifier = f'INCHIKEY:{compound["moldb_inchikey"][9:]}'
+        elif compound['chembl_id'] != '':
+            equivalent_identifier = f'CHEMBL:{compound["chembl_id"]}'
+        elif compound['drugbank_id'] != '':
+            equivalent_identifier = f'DRUGBANK:{compound["drugbank_id"]}'
+        elif compound['kegg_compound_id'] != '':
+            equivalent_identifier = f'KEGG.COMPOUND:{compound["kegg_compound_id"]}'
+        elif compound['chebi_id'] != '':
+            equivalent_identifier = f'CHEBI:{compound["chebi_id"]}'
+        elif compound['hmdb_id'] != '':
+            equivalent_identifier = f'HMDB:{compound["hmdb_id"]}'
+        elif compound['pubchem_compound_id'] != '':
+            equivalent_identifier = f'PUBCHEM:{compound["pubchem_compound_id"]}'
 
-        #{'ENSEMBL': properties[0], 'p-value': float(properties[1]), 'slope': float(properties[2]), 'namespace': properties[3]}
+        # if no identifier found the record is no good
+        if equivalent_identifier != '':
+            # set the good row flag
+            good_row = True
 
-        return good_row, predicate_label, properties
+            # set the edge id
+            food_id = compound['public_id']
+
+            # set the node properties
+            node_properties = {'content_type': 'Compound', 'foodb_id': compound['public_id'], 'equivalent_identifiers': [equivalent_identifier]}
+
+        # return to the caller
+        return good_row, food_id, node_properties
 
     #############
-    # check_nutrient_row() - inspects a nutrient record and returns pertinent info
+    # check_nutrient_row - inspects a nutrient record and returns pertinent info
     #
-    # param: nutrient: list - the nutrients records
-    # return: good_row:bool, properties:list
+    # param: nutrient: dict - the nutrients records
+    # return: good_row: bool, food_id: str, node_properties: dict
     #############
     @staticmethod
-    def check_nutrient_row(nutrient: list) -> (bool, list):
-        # init the return
-        good_row = True
+    def check_nutrient_row(nutrient: dict) -> (bool, str, dict):
+        # init the return values
+        good_row: bool = False
 
-        predicate_label = nutrient['public_id']
+        # set the edge id
+        food_id: str = nutrient['public_id']
 
-        properties = {'content_type': 'Nutrient'}
+        # set the node properties
+        node_properties: dict = {'content_type': 'Nutrient', 'nutrient': True}
 
-        return good_row, predicate_label, properties
-
+        # return to the caller
+        return good_row, food_id, node_properties
     #############
-    # load_all_foods() - gets a list of FooDB food records
+    # load_all_foods - gets a list of FooDB food records
     #
     # param path_to_file: str - the path to the foods CSV file
     # return: foods:list - the list of foods
@@ -180,7 +218,7 @@ class FooDB(Service):
             # get the input file handle, skip the header line and parse the rest
             with open(path_to_file, 'r', encoding='latin_1') as inFH:
                 # read in the lines
-                lines = csv.reader(inFH)
+                lines = reader(inFH)
 
                 # read the header
                 header_line = next(lines)

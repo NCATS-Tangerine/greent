@@ -30,7 +30,7 @@ dev_run () {
 }
 
 config () {
-    export TRANSLATOR_SERVICES_ROSETTAGRAPH_NEO4J_PASSWORD=""
+    export TRANSLATOR_SERVICES_ROSETTAGRAPH_NEO4J_PASSWORD="TRANSLATOR_SERVICES_ROSETTAGRAPH_NEO4J_PASSWORD"
     export TRANSLATOR_SERVICES_ROSETTAGRAPH_URL=bolt://${neo4j_host}:${neo4j_port}
     export REDIS_DB=${redis_host}:${redis_port}
 }

@@ -57,8 +57,8 @@ class BufferedWriter():
         label = Text.snakify(edge.standard_predicate.label)
         typed_edges = self.edge_queues[label]
         typed_edges.append(edge)
-        if len(typed_edges) >= self.edge_buffer_size:
-            self.flush()
+        #if len(typed_edges) >= self.edge_buffer_size:
+        #    self.flush()
 
     def flush(self):
         with self.driver.session() as session:

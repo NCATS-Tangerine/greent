@@ -640,6 +640,9 @@ slots:
   
 
   #the following are not in the original biolink model
+  contains chemical substance:
+    mappings:
+      - FOOD:contains_chemical_substance
 
   affects expression in:
     mappings:
