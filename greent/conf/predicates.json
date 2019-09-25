@@ -432,7 +432,7 @@
   },
   "food": {
     "chemical_substance":[
-      "contains_chemical_substance"
+      "contains"
     ]
   },
 
