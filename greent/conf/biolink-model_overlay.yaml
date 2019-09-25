@@ -58,6 +58,10 @@ classes:
       - METABOLON
       - FOOD
 
+  food:
+    id_prefixes:
+      - FOOD
+
   anatomical entity:
     id_prefixes:
       - UBERON
@@ -636,13 +640,11 @@ slots:
   has input:
     mappings:
       - RO:0004009 #has primary input
-  
-  
 
   #the following are not in the original biolink model
-  contains chemical substance:
+  contains:
     mappings:
-      - FOOD:contains_chemical_substance
+      - RO:0001019
 
   affects expression in:
     mappings:

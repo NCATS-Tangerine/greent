@@ -46,7 +46,6 @@ class FooDB(Service):
         rv: list = []
 
         try:
-
             # get the contents records using the food id
             contents: list = requests.get(f"{self.url}contents_food_id/{in_food_node.id}").json()
 
@@ -87,7 +86,7 @@ class FooDB(Service):
                 chemical_substance_node: KNode = KNode(id=f"FOOD:{food_id}", name=food_common_name, type=node_types.CHEMICAL_SUBSTANCE, properties=node_properties)
 
                 # create the edge label
-                predicate: LabeledID = LabeledID(identifier=f'FOOD:contains_chemical_substance', label='contains chemical_substance')
+                predicate: LabeledID = LabeledID(identifier='FOOD:contains', label='contains')
 
                 # create the edge
                 edge: KEdge = self.create_edge(source_node=food_node,
@@ -99,7 +98,7 @@ class FooDB(Service):
                                                )
 
                 # append the edge/node pair to the returned data array
-                rv.append((food_node, edge, chemical_substance_node))
+                rv.append((edge, chemical_substance_node))
         except Exception as e:
             logger.error(f'Exception caught. Exception: {e}')
 
