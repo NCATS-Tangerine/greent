@@ -170,7 +170,7 @@ class GTExUtils:
                     # read a block of data
                     data = http_handle.read(8192)
 
-                    # fif nothing read about
+                    # if nothing read
                     if len(data) == 0:
                         break
 
