@@ -78,11 +78,9 @@ class FooDB(Service):
                 if not good_row:
                     continue
                 
-                # redo the food node to add more meta data
+                # add more food meta data to the food node
                 in_food_node.name = food_common_name
                 in_food_node.properties = node_properties
-                # food_node: KNode = KNode(id=f"FOOD:{food_id}", name=, type=node_types.FOOD,
-                #                          properties=node_properties)
 
                 # create a new chemical substance node
                 chemical_substance_node: KNode = KNode(id=f'{food_id}', name=food_common_name, type=node_types.CHEMICAL_SUBSTANCE, properties=node_properties)
