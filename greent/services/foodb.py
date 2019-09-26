@@ -77,22 +77,24 @@ class FooDB(Service):
                 # shall we continue
                 if not good_row:
                     continue
-
+                
                 # redo the food node to add more meta data
-                food_node: KNode = KNode(id=f"FOOD:{food_id}", name=food_common_name, type=node_types.FOOD,
-                                         properties=node_properties)
+                in_food_node.name = food_common_name
+                in_food_node.properties = node_properties
+                # food_node: KNode = KNode(id=f"FOOD:{food_id}", name=, type=node_types.FOOD,
+                #                          properties=node_properties)
 
                 # create a new chemical substance node
-                chemical_substance_node: KNode = KNode(id=f"FOOD:{food_id}", name=food_common_name, type=node_types.CHEMICAL_SUBSTANCE, properties=node_properties)
+                chemical_substance_node: KNode = KNode(id=f'{food_id}', name=food_common_name, type=node_types.CHEMICAL_SUBSTANCE, properties=node_properties)
 
                 # create the edge label
-                predicate: LabeledID = LabeledID(identifier='FOOD:contains', label='contains')
+                predicate: LabeledID = LabeledID(identifier='RO:0001019', label='contains')
 
                 # create the edge
-                edge: KEdge = self.create_edge(source_node=food_node,
+                edge: KEdge = self.create_edge(source_node=in_food_node,
                                                target_node=chemical_substance_node,
                                                provided_by='foodb.food_to_chemical_substance',
-                                               input_id=f'FOOD:{food_id}',
+                                               input_id=in_food_node.id,
                                                predicate=predicate,
                                                properties=edge_properties
                                                )
@@ -173,7 +175,7 @@ class FooDB(Service):
             good_row = True
 
             # set the edge id
-            food_id = compound['public_id']
+            food_id = equivalent_identifier
 
             # set the node properties
             node_properties = {'content_type': 'Compound', 'foodb_id': compound['public_id'], 'equivalent_identifiers': [equivalent_identifier]}

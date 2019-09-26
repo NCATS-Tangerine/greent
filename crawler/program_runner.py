@@ -162,6 +162,10 @@ def get_identifiers(input_type,rosetta):
                 name = f'{name} ({key})' if 'NOT NAMED' in name else name
                 lids.append(LabeledID(f'PANTHER.FAMILY:{key}:{k}',gene_fam_data[key][k]['sub_family_name'] ))        
 
+    elif input_type == node_types.FOOD:
+        #get the full list of Food ids here here~~~~~
+        lids = list (map( lambda x: LabeledID(x[0], x[1]), requests.get('http://phil-centos.edc.renci.org:4001/foods_examples/').json()))
+        print(lids)
     elif input_type == node_types.SEQUENCE_VARIANT:
         # grab every variant already in the graph
         #var_list = get_variant_list(rosetta, limit=30)
@@ -194,6 +198,7 @@ def load_all(input_type, output_type,rosetta,poolsize):
     print( f'Chunksize: {chunksize}')
     single_program_size = chunksize  if chunksize > 0 else 1 # nodes sent to a program
     identifier_chunks = [identifiers[i: i + single_program_size] for i in range(0, len(identifiers), single_program_size)]
-    pool.map_async(partial_do_one, identifier_chunks)# chunksize=chunksize)
-    pool.close()
-    pool.join()
+    # pool.map_async(partial_do_one, identifier_chunks)# chunksize=chunksize)
+    # pool.close()
+    # pool.join()
+    do_one(input_type, output_type, identifiers)

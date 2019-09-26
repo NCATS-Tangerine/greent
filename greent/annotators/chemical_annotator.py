@@ -16,8 +16,8 @@ class ChemicalAnnotator(Annotator):
             'KEGG' : self.get_kegg_data,
             'PUBCHEM': self.get_pubchem_data,
             'DRUGBANK': self.get_mychem_data,
-            'KEGG.COMPOUND':self.get_kegg_data,
-            'INCHIKEY':self.get_inchikey_data
+            'KEGG.COMPOUND':self.get_kegg_data
+            # 'INCHIKEY':self.get_inchikey_data
         }
         self.tripleStore = TripleStoreAsync('https://stars-app.renci.org/uberongraph/sparql')
         
@@ -91,7 +91,7 @@ class ChemicalAnnotator(Annotator):
 
     async def get_inchikey_data(self, inchikey_id):
         conf = self.get_prefix_config('INCHIKEY')
-        inchikey_c_id = Text.un_curie(inchikey_id)
+        inchikey_c_id = Text.un_curie(inchikey_id) 
         url = conf['url'] + inchikey_c_id
         response = await self.async_get_text(url)
         inchikey_dict = self.parse_flat_file_to_dict(response)
