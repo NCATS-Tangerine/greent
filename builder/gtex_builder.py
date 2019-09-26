@@ -52,7 +52,7 @@ class GTExBuilder:
         # was a file created
         if ret_val is None:
             # load up the synonymization cache for all the variants
-#            ret_val: object = self.gtu.prepopulate_variant_synonymization_cache(data_directory, out_file_name)
+            ret_val: object = self.gtu.prepopulate_variant_synonymization_cache(data_directory, out_file_name)
 
             # is it ok to continue
             if ret_val is None:
@@ -208,25 +208,17 @@ class GTExBuilder:
 #######
 # Main - Stand alone entry point for testing
 #######
-if __name__ == '__main__':
-    # create a new builder object
-    gtb = GTExBuilder(Rosetta())
-
-    # directory with GTEx data to process
-    working_data_directory = 'C:/Phil/Work/Informatics/Robokop/GTEx/GTEx_data/v8/'
-    # gtex_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/bag/data/'
-
-    # assign the name of the GTEx data file
-    # available test files:
-    # 'signif_variant_gene_pairs',
-    # 'test_signif_Adipose_Subcutaneous_all', 'test_signif_Adipose_Subcutaneous_100k', 'test_signif_Adipose_Subcutaneous_10k', 'test_signif_Adipose_Subcutaneous_100', 'test_signif_Adipose_Subcutaneous_6'
-    # 'test_signif_Stomach_all', 'test_signif_Stomach_100k', 'test_signif_Stomach_10k', 'test_signif_Stomach_100', 'test_signif_Stomach_6'
-    # 'hypertest_1-var_2-genes_1-tissue', 'hypertest_1-var_2-tissues_1-gene', 'myvar_test'
-    # file_name = ['test_7.csv']
-
-    # load up all the GTEx data
-    rv = gtb.load(working_data_directory)
-
-    # check the return, output error if found
-    if rv is not None:
-        logger.error(rv)
+# if __name__ == '__main__':
+#     # create a new builder object
+#     gtb = GTExBuilder(Rosetta())
+#
+#     # directory with GTEx data to process
+#     working_data_directory = 'C:/Phil/Work/Informatics/Robokop/GTEx/GTEx_data/v8/'
+#     # working_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/GTEx_data'
+#
+#     # load up all the GTEx data
+#     rv = gtb.load(working_data_directory)
+#
+#     # check the return, output error if found
+#     if rv is not None:
+#         logger.error(rv)
