@@ -66,7 +66,8 @@ def dump_cache(concord,rosetta,outf=None):
 ############
 # Gets a simple array of sequence variant ids
 #
-# param: Rosetts object
+# param: Rosetta object
+# param: limit - the max record count to return
 # returns: a list of sequence variant IDs
 ############
 def get_variant_list(rosetta: Rosetta, limit: int = None) -> list:

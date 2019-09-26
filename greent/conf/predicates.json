@@ -430,6 +430,12 @@
       "disease_to_biological_process_or_activity"
     ]
   },
+  "food": {
+    "chemical_substance":[
+      "contains"
+    ]
+  },
+
   "chemical_substance": {
     "chemical_substance": [
       "derives_into",
@@ -589,6 +595,9 @@
     ],
     "physiological_process": [
       "bio_process_chemical_substance"
+    ],
+    "food": [
+      "contains_chemical_substance"
     ]
   },
   "phenotypic_feature": {

@@ -17,16 +17,16 @@
   biological_process : [ 'GO.BIOLOGICAL_PROCESS' ]
   cell               : [ 'CL' ]
   cellular_component : [ 'GO.CELLULAR_COMPONENT' ]
-  disease            : [ 'MONDO', 'DOID', 'PHAROS.DISEASE', 'OMIM', 'MESH.DISEASE', 'ORPHANET' , 'EFO', 'UMLS']
-  gene               : [ 'HGNC', 'NCBIGENE', 'ENTREZ',  'ENSEMBL', 'ENSEMBL.TRANSCRIPT', 'UNIPROTKB' , 'UNIPROT', 'MGI', 'ZFIN']
-  genetic_condition  : [ 'MONDO', 'DOID', 'OMIM', 'UMLS', 'EFO']
+  disease            : [ 'MONDO', 'DOID', 'PHAROS.DISEASE', 'OMIM', 'MESH.DISEASE', 'ORPHANET' , 'EFO', 'UMLS' ]
+  gene               : [ 'HGNC', 'NCBIGENE', 'ENTREZ',  'ENSEMBL', 'ENSEMBL.TRANSCRIPT', 'UNIPROTKB' , 'UNIPROT', 'MGI', 'ZFIN' ]
+  genetic_condition  : [ 'MONDO', 'DOID', 'OMIM', 'UMLS', 'EFO' ]
   molecular_function : [ 'GO.MOLECULAR_FUNCTION' ]
   Name               : [ 'NAME.DRUG', 'NAME.DISEASE', 'NAME.SYMPTOM', 'NAME.ANATOMY', 'DISEASE_NAME', 'MESH.NAME', 'NAME.PHENOTYPE' ]
   pathway            : [ 'KEGG', 'REACTOME', 'PHARMGKB.PATHWAYS', 'WIKIPATHWAYS', 'BIOCARTA.PATHWAY', 'KEGG.PATHWAY', 'REACT', 'KEGG-path' ]
-  phenotypic_feature : [ 'HP' , 'NCIT', 'EFO']
-  sequence_variant   : [ 'CAID', 'HGVS', 'ROBO_VARIANT', 'DBSNP', 'CLINVARVARIANT', 'MYVARIANT_HG19', 'MYVARIANT_HG38']
-  chemical_substance : [ 'DRUGBANK', 'PUBCHEM', 'CHEBI', 'CHEMBL','DRUG.INTERACTION', 'INCHI', 'INCHIKEY',  'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG', 'KEGG', 'PHAROS.DRUG', 'CTD']
-  gene_family        : ['PANTHER.FAMILY', 'HGNC.FAMILY']
+  phenotypic_feature : [ 'HP' , 'NCIT', 'EFO' ]
+  sequence_variant   : [ 'CAID', 'HGVS', 'ROBO_VARIANT', 'DBSNP', 'CLINVARVARIANT', 'MYVARIANT_HG19', 'MYVARIANT_HG38' ]
+  chemical_substance : [ 'DRUGBANK', 'PUBCHEM', 'CHEBI', 'CHEMBL','DRUG.INTERACTION', 'INCHI', 'INCHIKEY',  'PUBCHEM.COMPOUND', 'KEGG.COMPOUND', 'KEGG.DRUG', 'KEGG', 'PHAROS.DRUG', 'CTD', 'FOOD' ]
+  gene_family        : [ 'PANTHER.FAMILY', 'HGNC.FAMILY' ]
 
 '@translator-registry' :
   skip_list:
@@ -90,6 +90,9 @@
     chemical_substance:
       - link  : chemical_to_chemical_class
         op    : uberongraph.get_chemical_to_chemical
+    food:
+      - link  : chemical_substance_to_food
+        op    : foodb.food_to_chemical_substance
   disease_or_phenotypic_feature:
     chemical_substance:
       - link  : exposures
@@ -239,6 +242,10 @@
     pathway:
       - link  : gene_family_to_pathway
         op    : panther.get_pathway_by_gene_family
+  food:
+    chemical_substance:
+      - link: food_to_chemical_substance
+        op: foodb.food_to_chemical_substance
 
 '@type_checks':
   genetic_condition: mondo.is_genetic_disease

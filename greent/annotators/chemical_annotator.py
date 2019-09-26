@@ -17,6 +17,7 @@ class ChemicalAnnotator(Annotator):
             'PUBCHEM': self.get_pubchem_data,
             'DRUGBANK': self.get_mychem_data,
             'KEGG.COMPOUND':self.get_kegg_data
+            # 'INCHIKEY':self.get_inchikey_data
         }
         self.tripleStore = TripleStoreAsync('https://stars-app.renci.org/uberongraph/sparql')
         
@@ -79,13 +80,29 @@ class ChemicalAnnotator(Annotator):
         response = await self.async_get_text(url)
         kegg_dict = self.parse_flat_file_to_dict(response)
         return self.extract_kegg_data(kegg_dict, conf['keys'])
-    
+
     def extract_kegg_data(self, kegg_dict, keys_of_interest):
-        extracted = {keys_of_interest[key] : \
-            self.convert_data_to_primitives(kegg_dict[key]) \
-            for key in keys_of_interest if key in kegg_dict.keys()}
+        extracted = {keys_of_interest[key]: \
+                         self.convert_data_to_primitives(kegg_dict[key]) \
+                     for key in keys_of_interest if key in kegg_dict.keys()}
         if len(keys_of_interest) != len(extracted.keys()):
             logger.warn(f"All keys were not annotated for {kegg_dict['ENTRY']}")
+        return extracted
+
+    async def get_inchikey_data(self, inchikey_id):
+        conf = self.get_prefix_config('INCHIKEY')
+        inchikey_c_id = Text.un_curie(inchikey_id) 
+        url = conf['url'] + inchikey_c_id
+        response = await self.async_get_text(url)
+        inchikey_dict = self.parse_flat_file_to_dict(response)
+        return self.extract_inchikey_data(inchikey_dict, conf['keys'])
+
+    def extract_inchikey_data(self, inchikey_dict, keys_of_interest):
+        extracted = {keys_of_interest[key] : \
+            self.convert_data_to_primitives(inchikey_dict[key]) \
+            for key in keys_of_interest if key in inchikey_dict.keys()}
+        if len(keys_of_interest) != len(extracted.keys()):
+            logger.warn(f"All keys were not annotated for {inchikey_dict['ENTRY']}")
         return extracted
 
     def parse_flat_file_to_dict(self, raw):
