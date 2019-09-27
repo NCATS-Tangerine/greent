@@ -194,7 +194,7 @@ class GTExUtils:
                         logger.debug(f'Working tissue file {tissue_file.name}.')
 
                         # get the tissue name
-                        tissue_name: str = tissue_file.name.split('/')[1].split('.')[0]
+                        tissue_name: str = tissue_file.name.split('/')[1].split('.')[0].replace('_', ' ')
 
                         # get the uberon code for the tissue
                         tissue_uberon: str = self.tissues[tissue_file.name.split('/')[1].split('.')[0]]
