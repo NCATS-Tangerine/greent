@@ -15,14 +15,15 @@ import gzip
 
 # declare a logger and initialize it
 import logging
-logger = LoggingUtil.init_logging("robokop-interfaces.builder.GTExUtils", logging.DEBUG, format='medium', logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
+logger = LoggingUtil.init_logging("robokop-interfaces.builder.GTExUtils", logging.INFO, format='medium', logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
 
 
 #############
 # Class: GTExUtils
+#
 # By: Phil Owen
 # Date: 5/21/2019
-# Desc: A class that has a number of shared static functions for the GTEx builder.
+# Desc: A class that has a number of shared functions for the GTEx builder class.
 #############
 class GTExUtils:
     ########
@@ -127,36 +128,29 @@ class GTExUtils:
         }
 
     #############
-    # process_gtex_files - gets a reformatted GTEx data file
+    # process_gtex_files - gets a reformatted GTEx data file.
+    # rev .0, 5/21/2019- supports v7 of GTEx data
+    # rev .1, 9/27/2019 - supports v8 of GTEx data
     #
-    # param data_directory: str - the location of where the output files should go, defaults to current directory
-    # param out_file_name: str - the name of the output file
-    # returns ret_val: object - empty, Exception on error
+    # param working_data_directory: str - the location of where the output files should go, defaults to the current directory
+    # param out_file_name: str - the name of the processed output file, defaults to a default data file name
+    # param tar_file_name: str - the name of the GTEx data file name (tar)
+    # returns ret_val: object - Exception on error, otherwise None
     #############
-    def process_gtex_files(self, working_data_directory: str = '', in_file_name: str = 'GTEx_Analysis_v8_sQTL.tar', out_file_name: str = 'sqtl_signifpairs.csv') -> object:
+    def process_gtex_files(self, working_data_directory: str, out_file_name: str, tar_file_name: str = 'GTEx_Analysis_v8_sQTL.tar') -> object:
         # init the return
         ret_val = None
 
         # init the input file path
-        full_in_path = ''
+        full_tar_path = ''
 
         try:
-            # does the output directory exist
-            if not os.path.isdir(working_data_directory):
-                raise Exception("Working directory does not exist. Aborting.)")
-            # insure the working directory ends with a '/'
-            elif working_data_directory[-1] != '/':
-                working_data_directory = f'{working_data_directory}/'
-
-            # define the target input file name
-
-
             # define full paths to the input and output files
-            full_in_path = f'{working_data_directory}{in_file_name}'
+            full_tar_path = f'{working_data_directory}{tar_file_name}'
             full_out_path = f'{working_data_directory}{out_file_name}'
 
             # define the url for the raw data file
-            url = f'https://storage.googleapis.com/gtex_analysis_v8/single_tissue_qtl_data/{in_file_name}'
+            url = f'https://storage.googleapis.com/gtex_analysis_v8/single_tissue_qtl_data/{tar_file_name}'
 
             logger.info(f'Downloading raw GTEx data file {url}.')
 
@@ -164,7 +158,7 @@ class GTExUtils:
             http_handle = request.urlopen(url)
 
             # open the file and save it
-            with open(full_in_path, 'wb') as tar_file:
+            with open(full_tar_path, 'wb') as tar_file:
                 # while there is data
                 while True:
                     # read a block of data
@@ -177,50 +171,63 @@ class GTExUtils:
                     # write out the data to the output file
                     tar_file.write(data)
 
-            logger.info(f'GTEx tar file downloaded. Extracting and parsing individual tissue files in {full_in_path}.')
+            logger.info(f'GTEx tar file downloaded. Extracting and parsing individual tissue files in {full_tar_path}.')
 
             # init a first line read flag
             first_file_flag: bool = True
 
             # for each file in the tar archive
-            with tarfile.open(full_in_path, 'r:') as tar_files, open(full_out_path, 'w') as output_file:
-                # for each file in the tar (a single tissue file)
-                for tissue_file in tar_files:
-                    # get a handle to the tissue file
-                    tissue_handle = tar_files.extractfile(tissue_file)
+            with tarfile.open(full_tar_path, 'r:') as tar_files, open(full_out_path, 'w') as output_file:
+                # insure that we have the correct number of expected tar_files. the contents of this file contains 2 types for each tissue
+                if len(self.tissues) * 2 == len(tar_files.getnames()):
+                    # for each tissue data file in the tar
+                    for tissue_file in tar_files:
+                        # get a handle to the tissue file
+                        tissue_handle = tar_files.extractfile(tissue_file)
 
-                    # is this a significant variant file. expecting format: 'GTEx_Analysis_v8_sQTL/<tissue_name>.v8.sqtl_signifpairs.txt.gz'
-                    if tissue_file.name.find('sqtl_signifpairs') > 0:
-                        logger.debug(f'Working tissue file {tissue_file.name}.')
+                        # is this a "significant variant" data file. expecting format: 'GTEx_Analysis_v8_sQTL/<tissue_name>.v8.sqtl_signifpairs.txt.gz'
+                        if tissue_file.name.find('sqtl_signifpairs') > 0:
+                            logger.debug(f'Processing tissue file {tissue_file.name}.')
 
-                        # get the tissue name
-                        tissue_name: str = tissue_file.name.split('/')[1].split('.')[0].replace('_', ' ')
+                            # get the tissue name from the name of the file
+                            tissue_name: str = tissue_file.name.split('/')[1].split('.')[0]
 
-                        # get the uberon code for the tissue
-                        tissue_uberon: str = self.tissues[tissue_file.name.split('/')[1].split('.')[0]]
+                            # lookup the uberon code for the tissue using the file name
+                            tissue_uberon: str = self.tissues[tissue_name]
 
-                        # open up the compressed file
-                        with gzip.open(tissue_handle, 'rt') as compressed_file:
-                            # get the file line of the file
-                            first_line = next(compressed_file)
+                            # check to make sure we know about this file
+                            if tissue_uberon is not None:
+                                # insure that the file name doesnt have an underscore ro the rest of this files' processing
+                                tissue_name = tissue_name.replace('_', ' ')
 
-                            # if this if the first file write out the csv file header
-                            if first_file_flag is True:
-                                output_file.write(f'tissue_name,tissue_uberon,HGVS,gene_id,{first_line}'.replace('\t', ','))
-                                first_file_flag = False
+                                # open up the compressed file
+                                with gzip.open(tissue_handle, 'rt') as compressed_file:
+                                    # get the file line of the file
+                                    first_line = next(compressed_file)
 
-                            # for each line in the file
-                            for line in compressed_file:
-                                output_file.write(self.parse_tissue_line(line, tissue_name, tissue_uberon, 0, 1))
+                                    # if this if the first file write out the csv file header
+                                    if first_file_flag is True:
+                                        output_file.write(f'tissue_name,tissue_uberon,HGVS,gene_id,{first_line}'.replace('\t', ','))
+                                        first_file_flag = False
+
+                                    # for each line in the file
+                                    for line in compressed_file:
+                                        output_file.write(self.parse_tissue_line(line, tissue_name, tissue_uberon, 0, 1))
+                            else:
+                                logger.debug(f'Skipping unexpected tissue file {tissue_file.name}.')
+                        else:
+                            logger.debug(f'Skipping non-significant tissue file {tissue_file.name}.')
+                else:
+                    raise Exception(f'Unexpected number of GTEx input files detected. Aborting.')
         except Exception as e:
             logger.error(f'Exception caught. Exception: {e}')
             ret_val = e
         finally:
-            # remove all the intermediate files
-            if os.path.isfile(full_in_path):
-                os.remove(full_in_path)
+            # remove all the intermediate (tar) files
+            if os.path.isfile(full_tar_path):
+                os.remove(full_tar_path)
 
-        logger.info(f'GTEx data file reformatting complete.')
+        logger.info(f'GTEx data file decompression and reformatting complete.')
 
         # return the output file name to the caller
         return ret_val

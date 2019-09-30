@@ -16,6 +16,7 @@ logger = LoggingUtil.init_logging("robokop-interfaces.builder.GTExBuilder", logg
 
 ##############
 # Class: GTExBuilder
+#
 # By: Phil Owen
 # Date: 5/21/2019
 # Desc: Class that pre-loads significant GTEx data elements into the redis cache and neo4j graph database.
@@ -38,31 +39,53 @@ class GTExBuilder:
     #####################
     # load - loads the gtex data
     #
-    # param data_directory: str - the name of the directory the file is in
-    # param associated_file_names: list - list of file names to process
+    # param data_directory: str - the name of the directory that GTEx files will be processed in
+    # param process_raw_data: str - flag to invoke gathering and processing of raw GTEx data
+    # param process_for_cache: bool - Process the GTEx file and load the redis cache with it
+    # param process_for_graph: bool - Process the GTEx file and load the neo4j graph with it
     # returns: object, pass if it is none, otherwise an exception object
     #####################
-    def load(self, data_directory: str) -> object:
-        # specify the the GTEx data file name
-        out_file_name: str = 'sqtl_signifpairs.csv'
+    def load(self, data_directory: str, out_file_name: str = 'sqtl_signifpairs.csv', process_raw_data: bool = True, process_for_cache: bool = True, process_for_graph: bool = True) -> object:
+        # init the return value
+        ret_val = None
 
-        # process the GTEx tissue files
-        ret_val: object = self.gtu.process_gtex_files(working_data_directory=data_directory, out_file_name=out_file_name)
-
-        # was a file created
-        if ret_val is None:
-            # load up the synonymization cache for all the variants
-            ret_val: object = self.gtu.prepopulate_variant_synonymization_cache(data_directory, out_file_name)
-
-            # is it ok to continue
-            if ret_val is None:
-                # call the GTEx builder to load the cache and graph database
-                ret_val: object = self.create_gtex_graph(data_directory, out_file_name, 'GTEx')
-            else:
-                # add context to the exception for the return
-                ret_val = Exception("Error detected in pre-processing variant synonymization. Aborting.", ret_val)
+        # does the output directory exist
+        if not os.path.isdir(data_directory):
+            ret_val = Exception("Working directory does not exist. Aborting.")
         else:
-            ret_val = Exception('Error detected in GTEx file creation. Aborting.', ret_val)
+            # insure the working directory ends with a '/' in order to properly append a data file name
+            if data_directory[-1] != '/':
+                data_directory = f'{data_directory}/'
+
+            # process the GTEx tissue files if requested
+            if process_raw_data is True:
+                ret_val: object = self.gtu.process_gtex_files(data_directory, out_file_name)
+            else:
+                logger.info("Raw GTEx data processing not selected.")
+
+            # does the processed file exist
+            if os.path.isfile(f'{data_directory}{out_file_name}'):
+                # was the raw GTEx data processed
+                if ret_val is None:
+                    # load up the synonymization cache for all the variants if requested
+                    if process_for_cache is True:
+                        ret_val: object = self.gtu.prepopulate_variant_synonymization_cache(data_directory, out_file_name)
+                    else:
+                        logger.info("Cache processing not selected.")
+
+                    # is it ok to continue
+                    if ret_val is None:
+                        if process_for_graph is True:
+                            # call the GTEx builder to load the cache and graph database
+                            ret_val: object = self.create_gtex_graph(data_directory, out_file_name, 'GTEx')
+                        else:
+                            logger.info("Graph node/edge processing not selected.")
+                    else:
+                        ret_val = Exception("Error detected in pre-processing variant synonymization. Aborting.", ret_val)
+                else:
+                    ret_val = Exception('Error detected in GTEx file creation. Aborting.', ret_val)
+            else:
+                ret_val = Exception("Error detected no processed GTEx file found. Aborting.", ret_val)
 
         # return to the caller
         return ret_val
@@ -217,8 +240,9 @@ class GTExBuilder:
 #     # working_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/GTEx_data'
 #
 #     # load up all the GTEx data
-#     rv = gtb.load(working_data_directory)
+#     rv = gtb.load(working_data_directory, process_raw_data=False, process_for_cache=False, process_for_graph=False)
 #
 #     # check the return, output error if found
 #     if rv is not None:
 #         logger.error(rv)
+#         raise rv
