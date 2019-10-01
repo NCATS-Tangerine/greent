@@ -7,6 +7,7 @@ import requests
 from greent.util import LoggingUtil
 from greent.export import BufferedWriter
 from greent.annotators.annotator_factory import annotate_shortcut
+import traceback
 
 logger = LoggingUtil.init_logging("builder.writer_delegate", level=logging.DEBUG, logFilePath=f'{os.environ["ROBOKOP_HOME"]}/logs/')
 
@@ -58,8 +59,8 @@ class WriterDelegator:
                 body=pickle.dumps({'nodes': [node], 'edges': []}))
         else:
             self.buffered_writer.write_node(node)
-    
-    def write_edge(self, edge, force_create=False):
+            
+        def write_edge(self, edge, force_create=False):
         if self.channel is not None:
             write_message = {'nodes': [], 'edges': [edge]}
             if force_create:

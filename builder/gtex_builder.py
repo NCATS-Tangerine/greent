@@ -218,6 +218,7 @@ class GTExBuilder:
                                 logger.info(f'Processed {line_counter} variants.')
                     except Exception as e:
                         logger.error(f'Exception caught trying to process variant: {curie_hgvs}-{curie_uberon}-{curie_ensembl} at data line: {line_counter}. Exception: {e}')
+
         except Exception as e:
             logger.error(f'Exception caught: Exception: {e}')
             ret_val = e
@@ -231,18 +232,18 @@ class GTExBuilder:
 #######
 # Main - Stand alone entry point for testing
 #######
-# if __name__ == '__main__':
-#     # create a new builder object
-#     gtb = GTExBuilder(Rosetta())
-#
-#     # directory with GTEx data to process
-#     working_data_directory = 'C:/Phil/Work/Informatics/Robokop/GTEx/GTEx_data/v8/'
-#     # working_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/GTEx_data'
-#
-#     # load up all the GTEx data
-#     rv = gtb.load(working_data_directory, out_file_name='100_test.csv', process_raw_data=False, process_for_cache=False, process_for_graph=False)
-#
-#     # check the return, output error if found
-#     if rv is not None:
-#         logger.error(rv)
-#         raise rv
+if __name__ == '__main__':
+    # create a new builder object
+    gtb = GTExBuilder(Rosetta())
+
+    # directory with GTEx data to process
+    working_data_directory = '.'
+    # working_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/GTEx_data'
+
+    # load up all the GTEx data
+    rv = gtb.load(working_data_directory, out_file_name='gtex_sample.csv', process_raw_data=False, process_for_cache=False, process_for_graph=True)
+
+    # check the return, output error if found
+    if rv is not None:
+        logger.error(rv)
+        raise rv
