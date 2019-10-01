@@ -240,7 +240,7 @@ class GTExBuilder:
 #     # working_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/GTEx_data'
 #
 #     # load up all the GTEx data
-#     rv = gtb.load(working_data_directory, process_raw_data=False, process_for_cache=False, process_for_graph=False)
+#     rv = gtb.load(working_data_directory, process_for_cache=False, process_for_graph=False)
 #
 #     # check the return, output error if found
 #     if rv is not None:
