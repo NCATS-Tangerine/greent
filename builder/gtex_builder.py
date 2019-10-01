@@ -119,105 +119,105 @@ class GTExBuilder:
                 curie_uberon = None
                 curie_ensembl = None
 
-            # loop through the variants
-            # open the file and start reading
-            with open(full_file_path, 'r') as inFH:
-                # open up a csv reader
-                csv_reader = csv.reader(inFH)
+                # loop through the variants
+                # open the file and start reading
+                with open(full_file_path, 'r') as inFH:
+                    # open up a csv reader
+                    csv_reader = csv.reader(inFH)
 
-                # read the header
-                header_line = next(csv_reader)
+                    # read the header
+                    header_line = next(csv_reader)
 
-                # index into the array to the variant id position
-                tissue_name_index = header_line.index('tissue_name')
-                tissue_uberon_index = header_line.index('tissue_uberon')
-                hgvs_index = header_line.index('HGVS')
-                # variant_id_index = header_line.index('variant_id')
-                ensembl_id_index = header_line.index('gene_id')
-                pval_nominal_index = header_line.index('pval_nominal')
-                pval_slope_index = header_line.index('slope')
+                    # index into the array to the variant id position
+                    tissue_name_index = header_line.index('tissue_name')
+                    tissue_uberon_index = header_line.index('tissue_uberon')
+                    hgvs_index = header_line.index('HGVS')
+                    # variant_id_index = header_line.index('variant_id')
+                    ensembl_id_index = header_line.index('gene_id')
+                    pval_nominal_index = header_line.index('pval_nominal')
+                    pval_slope_index = header_line.index('slope')
 
-                try:
-                    # for the rest of the lines in the file
-                    for line in csv_reader:
-                        # increment the counter
-                        line_counter += 1
+                    try:
+                        # for the rest of the lines in the file
+                        for line in csv_reader:
+                            # increment the counter
+                            line_counter += 1
 
-                        # get the data elements
-                        tissue_name = line[tissue_name_index]
-                        uberon = line[tissue_uberon_index]
-                        hgvs = line[hgvs_index]
-                        # variant_id = line[variant_id_index]
-                        ensembl = line[ensembl_id_index].split(".", 1)[0]
-                        pval_nominal = line[pval_nominal_index]
-                        slope = line[pval_slope_index]
+                            # get the data elements
+                            tissue_name = line[tissue_name_index]
+                            uberon = line[tissue_uberon_index]
+                            hgvs = line[hgvs_index]
+                            # variant_id = line[variant_id_index]
+                            ensembl = line[ensembl_id_index].split(".", 1)[0]
+                            pval_nominal = line[pval_nominal_index]
+                            slope = line[pval_slope_index]
 
-                        # create curies for the various id values
-                        curie_hgvs = f'HGVS:{hgvs}'
-                        curie_uberon = f'UBERON:{uberon}'
-                        curie_ensembl = f'ENSEMBL:{ensembl}'
+                            # create curies for the various id values
+                            curie_hgvs = f'HGVS:{hgvs}'
+                            curie_uberon = f'UBERON:{uberon}'
+                            curie_ensembl = f'ENSEMBL:{ensembl}'
 
-                        # create variant, gene and GTEx nodes with the HGVS, ENSEMBL or UBERON expression as the id and name
-                        variant_node = KNode(curie_hgvs, name=curie_hgvs, type=node_types.SEQUENCE_VARIANT)
-                        gene_node = KNode(curie_ensembl, type=node_types.GENE)
-                        gtex_node = KNode(curie_uberon, name=tissue_name, type=node_types.ANATOMICAL_ENTITY)
+                            # create variant, gene and GTEx nodes with the HGVS, ENSEMBL or UBERON expression as the id and name
+                            variant_node = KNode(curie_hgvs, name=curie_hgvs, type=node_types.SEQUENCE_VARIANT)
+                            gene_node = KNode(curie_ensembl, type=node_types.GENE)
+                            gtex_node = KNode(curie_uberon, name=tissue_name, type=node_types.ANATOMICAL_ENTITY)
 
-                        # call to load the each node with synonyms
-                        self.rosetta.synonymizer.synonymize(variant_node)
-                        self.rosetta.synonymizer.synonymize(gene_node)
-                        self.rosetta.synonymizer.synonymize(gtex_node)
+                            # call to load the each node with synonyms
+                            self.rosetta.synonymizer.synonymize(variant_node)
+                            self.rosetta.synonymizer.synonymize(gene_node)
+                            self.rosetta.synonymizer.synonymize(gtex_node)
 
-                        # get the SequenceVariant object filled in with the sequence location data
-                        # seq_var_data = self.gtu.get_sequence_variant_obj(variant_id)
+                            # get the SequenceVariant object filled in with the sequence location data
+                            # seq_var_data = self.gtu.get_sequence_variant_obj(variant_id)
 
-                        # add properties to the variant node
-                        # variant_node.properties['sequence_location'] = [seq_var_data.build, str(seq_var_data.chrom), str(seq_var_data.pos)]
+                            # add properties to the variant node
+                            # variant_node.properties['sequence_location'] = [seq_var_data.build, str(seq_var_data.chrom), str(seq_var_data.pos)]
 
-                        # for now insure that the gene node has a name after synonymization
-                        # this can happen if gene is not currently in the graph DB
-                        if gene_node.name is None:
-                            gene_node.name = curie_ensembl
+                            # for now insure that the gene node has a name after synonymization
+                            # this can happen if gene is not currently in the graph DB
+                            if gene_node.name is None:
+                                gene_node.name = curie_ensembl
 
-                        # get the polarity of slope to get the direction of expression.
-                        # positive value increases expression, negative decreases
-                        label_id, label_name = self.gtu.get_expression_direction(slope)
+                            # get the polarity of slope to get the direction of expression.
+                            # positive value increases expression, negative decreases
+                            label_id, label_name = self.gtu.get_expression_direction(slope)
 
-                        # create the edge label predicate for the gene/variant relationship
-                        predicate = LabeledID(identifier=label_id, label=label_name)
+                            # create the edge label predicate for the gene/variant relationship
+                            predicate = LabeledID(identifier=label_id, label=label_name)
 
-                        # get a MD5 hash int of the composite hyper edge ID
-                        hyper_edge_id = self.gtu.get_hyper_edge_id(uberon, ensembl, Text.un_curie(variant_node.id))
+                            # get a MD5 hash int of the composite hyper edge ID
+                            hyper_edge_id = self.gtu.get_hyper_edge_id(uberon, ensembl, Text.un_curie(variant_node.id))
 
-                        # set the properties for the edge
-                        edge_properties = [ensembl, pval_nominal, slope, analysis_id]
+                            # set the properties for the edge
+                            edge_properties = [ensembl, pval_nominal, slope, analysis_id]
 
-                        ##########################
-                        # data details are ready. write all edges and nodes to the graph DB.
-                        ##########################
+                            ##########################
+                            # data details are ready. write all edges and nodes to the graph DB.
+                            ##########################
 
-                        # write out the sequence variant node
-                        graph_writer.write_node(variant_node)
+                            # write out the sequence variant node
+                            graph_writer.write_node(variant_node)
 
-                        # write out the gene node
-                        graph_writer.write_node(gene_node)
+                            # write out the gene node
+                            graph_writer.write_node(gene_node)
 
-                        # write out the anatomical gtex node
-                        graph_writer.write_node(gtex_node)
+                            # write out the anatomical gtex node
+                            graph_writer.write_node(gtex_node)
 
-                        # associate the sequence variant node with an edge to the gtex anatomy node
-                        self.gtu.write_new_association(graph_writer, variant_node, gtex_node, self.variant_gtex_label, hyper_edge_id, None, True)
+                            # associate the sequence variant node with an edge to the gtex anatomy node
+                            self.gtu.write_new_association(graph_writer, variant_node, gtex_node, self.variant_gtex_label, hyper_edge_id, None, True)
 
-                        # associate the gene node with an edge to the gtex anatomy node
-                        self.gtu.write_new_association(graph_writer, gene_node, gtex_node, self.gene_gtex_label, None, None, False)
+                            # associate the gene node with an edge to the gtex anatomy node
+                            self.gtu.write_new_association(graph_writer, gene_node, gtex_node, self.gene_gtex_label, None, None, False)
 
-                        # associate the sequence variant node with an edge to the gene node. also include the GTEx properties
-                        self.gtu.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_edge_id, edge_properties, True)
+                            # associate the sequence variant node with an edge to the gene node. also include the GTEx properties
+                            self.gtu.write_new_association(graph_writer, variant_node, gene_node, predicate, hyper_edge_id, edge_properties, True)
 
-                        # output some feedback for the user
-                        if (line_counter % 250000) == 0:
-                            logger.info(f'Processed {line_counter} variants.')
-                except Exception as e:
-                    logger.error(f'Exception caught trying to process variant: {curie_hgvs}-{curie_uberon}-{curie_ensembl} at data line: {line_counter}. Exception: {e}')
+                            # output some feedback for the user
+                            if (line_counter % 250000) == 0:
+                                logger.info(f'Processed {line_counter} variants.')
+                    except Exception as e:
+                        logger.error(f'Exception caught trying to process variant: {curie_hgvs}-{curie_uberon}-{curie_ensembl} at data line: {line_counter}. Exception: {e}')
 
         except Exception as e:
             logger.error(f'Exception caught: Exception: {e}')
@@ -232,18 +232,18 @@ class GTExBuilder:
 #######
 # Main - Stand alone entry point for testing
 #######
-# if __name__ == '__main__':
-#     # create a new builder object
-#     gtb = GTExBuilder(Rosetta())
-#
-#     # directory with GTEx data to process
-#     working_data_directory = 'C:/Phil/Work/Informatics/Robokop/GTEx/GTEx_data/v8/'
-#     # working_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/GTEx_data'
-#
-#     # load up all the GTEx data
-#     rv = gtb.load(working_data_directory, out_file_name='100_test.csv', process_raw_data=False, process_for_cache=False, process_for_graph=False)
-#
-#     # check the return, output error if found
-#     if rv is not None:
-#         logger.error(rv)
-#         raise rv
+if __name__ == '__main__':
+    # create a new builder object
+    gtb = GTExBuilder(Rosetta())
+
+    # directory with GTEx data to process
+    working_data_directory = '.'
+    # working_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/GTEx_data'
+
+    # load up all the GTEx data
+    rv = gtb.load(working_data_directory, out_file_name='gtex_sample.csv', process_raw_data=False, process_for_cache=False, process_for_graph=True)
+
+    # check the return, output error if found
+    if rv is not None:
+        logger.error(rv)
+        raise rv
