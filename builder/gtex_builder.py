@@ -37,13 +37,14 @@ class GTExBuilder:
         self.gtu = GTExUtils(self.rosetta)
 
     #####################
-    # load - loads the gtex data
+    # load - Processes the gtex data and loads the redis cache and graph databases with it
     #
     # param data_directory: str - the name of the directory that GTEx files will be processed in
-    # param process_raw_data: str - flag to invoke gathering and processing of raw GTEx data
-    # param process_for_cache: bool - Process the GTEx file and load the redis cache with it
-    # param process_for_graph: bool - Process the GTEx file and load the neo4j graph with it
-    # returns: object, pass if it is none, otherwise an exception object
+    # param out_file_name: str - the name of the target file
+    # param process_raw_data: bool - flag to gather and process raw GTEx data files
+    # param process_for_cache: bool - flag to process the GTEx file and load the redis cache with it
+    # param process_for_graph: bool - flag to process the GTEx file and load the neo4j graph with it
+    # returns: object, pass if it is None, otherwise an exception object to indicate what failed
     #####################
     def load(self, data_directory: str, out_file_name: str = 'sqtl_signifpairs.csv', process_raw_data: bool = True, process_for_cache: bool = True, process_for_graph: bool = True) -> object:
         # init the return value
@@ -240,7 +241,7 @@ class GTExBuilder:
 #     # working_data_directory = '/projects/stars/var/GTEx/stage/smartBag/example/GTEx/GTEx_data'
 #
 #     # load up all the GTEx data
-#     rv = gtb.load(working_data_directory, process_for_cache=False, process_for_graph=False)
+#     rv = gtb.load(working_data_directory, out_file_name='100_test.csv', process_raw_data=False, process_for_cache=False, process_for_graph=False)
 #
 #     # check the return, output error if found
 #     if rv is not None:
