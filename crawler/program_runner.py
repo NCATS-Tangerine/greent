@@ -3,7 +3,8 @@ from greent import node_types, config
 from builder.buildmain import run
 from multiprocessing import Pool
 from functools import partial
-from crawler.crawl_util import pull_via_ftp, get_variant_list
+from crawler.crawl_util import pull_via_ftp
+from crawler.sequence_variants import get_all_variant_ids_from_graph
 from json import loads
 from greent.graph_components import KNode
 from greent.util import Text
@@ -168,10 +169,7 @@ def get_identifiers(input_type,rosetta):
         print(lids)
     elif input_type == node_types.SEQUENCE_VARIANT:
         # grab every variant already in the graph
-        #var_list = get_variant_list(rosetta, limit=30)
-        var_list = get_variant_list(rosetta)
-        for variant in var_list:
-            lids.append(LabeledID(variant[0], Text.un_curie(variant[0])))
+        lids = get_all_variant_ids_from_graph(rosetta)
     else:
         print(f'Not configured for input type: {input_type}')
 
@@ -187,9 +185,9 @@ def do_one(itype,otype,identifier):
         print('passing chunk of identifiers for a program')
         run(path,'','',None,None,None,'greent.conf', identifier_list = identifier)
      
-def load_all(input_type, output_type,rosetta,poolsize):
+def load_all(input_type,output_type,rosetta,poolsize,identifier_list=None):
     """Given an input type and an output type, run a bunch of workflows dumping results into neo4j and redis"""
-    identifiers = get_identifiers(input_type,rosetta)
+    identifiers = identifier_list if (identifier_list != None) else get_identifiers(input_type,rosetta)
     print( f'Found {len(identifiers)} input {input_type}')
     partial_do_one = partial(do_one, input_type, output_type)
     pool = Pool(processes=poolsize)
