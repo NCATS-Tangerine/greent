@@ -1,7 +1,7 @@
 from greent.rosetta import Rosetta
 from greent import node_types
 from greent.graph_components import KNode
-from greent.export import BufferedWriter
+from greent.export_delegator import WriterDelegator
 from greent.util import LoggingUtil
 from greent.util import Text
 from builder.gtex_utils import GTExUtils
@@ -111,12 +111,12 @@ class GTExBuilder:
 
             logger.info(f'Creating GTEx graph data elements in file: {full_file_path}')
 
-            # open a pipe to the redis cache DB
-            with BufferedWriter(self.rosetta) as graph_writer:
-                # init these outside of try catch block
-                curie_hgvs = None
-                curie_uberon = None
-                curie_ensembl = None
+                # open a pipe to the redis cache DB
+                with WriterDelegator(self.rosetta) as graph_writer:
+                    # init these outside of try catch block
+                    curie_hgvs = None
+                    curie_uberon = None
+                    curie_ensembl = None
 
                 # loop through the variants
                 # open the file and start reading

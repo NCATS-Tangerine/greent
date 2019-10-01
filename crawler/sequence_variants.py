@@ -1,11 +1,12 @@
-from greent.util import LoggingUtil
+from greent.util import Text, LoggingUtil
 from greent.graph_components import KNode
 from greent import node_types
 from greent.services.myvariant import MyVariant
-from greent.export import BufferedWriter
+from greent.export_delegator import WriterDelegator
 from greent.cache import Cache
-from crawler.crawl_util import get_variant_list
 from builder.gtex_builder import GTExBuilder
+from builder.question import LabeledID
+from crawler.crawl_util import query_the_graph
 
 import logging
 import pickle
@@ -15,26 +16,23 @@ logger = LoggingUtil.init_logging("robokop-interfaces.crawler.sequence_variants"
 
 default_gtex_file = 'signif_variant_gene_pairs.csv'
 
-def load_gwas_knowledge(rosetta: object, testing_mode=False):
+def load_gwas_knowledge(rosetta: object, limit: int = None):
     synonymizer = rosetta.synonymizer
     gwas_catalog_dict = rosetta.core.gwascatalog.prepopulate_cache()
     counter = 0
-    with BufferedWriter(rosetta) as writer:
+    with WriterDelegator(rosetta) as writer:
         for variant_node, relationships in gwas_catalog_dict.items():
             if relationships:
-                # almost all of these will be precached but some rare cases such as two CAID per rsid still need to be synonymized
-                synonymizer.synonymize(variant_node)
                 writer.write_node(variant_node)
                 for (gwas_edge, phenotype_node) in relationships:
                     # these phenotypes are probably already in the DB, but not necessarily
-                    synonymizer.synonymize(phenotype_node)
                     writer.write_node(phenotype_node)
                     writer.write_edge(gwas_edge)
             else:
                 logger.error(f'GWASCatalog node {variant_node.id} had no phenotypes associated with it.')
 
             counter += 1
-            if testing_mode and counter > 500:
+            if limit and counter == limit:
                 break
 
 def load_gtex_knowledge(rosetta: object, gtex_filenames=[]):
@@ -54,23 +52,43 @@ def load_gtex_knowledge(rosetta: object, gtex_filenames=[]):
     if rv is not None:
         logger.error(rv)
 
-################
-# Gets the list of sequence variant ids
-#
-# param: Rosetta object
-# return: a list of sequence variant IDs
-################
-def get_all_variant_ids(rosetta: object, limit: int=None) -> list:
-    # call the crawler util function to get a simple list of variant ids
-    var_list = get_variant_list(rosetta, limit)
+def get_all_variant_ids_from_graph(rosetta: object) -> list:
+    all_lids = []
+    custom_query = 'match (s:sequence_variant) return distinct s.id'
+    var_list = query_the_graph(rosetta, custom_query)
+    for variant in var_list:
+        all_lids.append(LabeledID(variant[0], variant[0]))
+    return all_lids
 
-    # return to the caller
-    return var_list
+def get_all_variants_and_synonymns(rosetta: object) -> list:
+    custom_query = 'match (s:sequence_variant) return distinct s.id, s.equivalent_identifiers'
+    return query_the_graph(rosetta, custom_query)
+
+def get_gwas_knowledge_variants_from_graph(rosetta: object) -> list:
+    custom_query = 'match (s:sequence_variant)-[x]-(d:disease_or_phenotypic_feature) where "gwascatalog.sequence_variant_to_disease_or_phenotypic_feature" in x.edge_source return distinct s.id'
+    gwas_lids = []
+    var_list = query_the_graph(rosetta, custom_query)
+    for variant in var_list:
+        gwas_lids.append(LabeledID(variant[0], variant[0]))
+    return gwas_lids
+
+def get_variants_without_genes_from_graph(rosetta: object) -> list:
+    custom_query = 'match (s:sequence_variant) where not (s)--(:gene) return distinct s.id'
+    variants_without_genes = []
+    var_list = query_the_graph(rosetta, custom_query)
+    for variant in var_list:
+        variants_without_genes.append(LabeledID(variant[0], variant[0]))
+    return variants_without_genes
+
+def get_variants_and_synonyms_without_genes_from_graph(rosetta: object) -> list:
+    custom_query = 'match (s:sequence_variant) where not (s)--(:gene) return distinct s.id, s.equivalent_identifiers'
+    variants_without_genes = []
+    return query_the_graph(rosetta, custom_query)
 
 ################
 # batch precache any sequence variant data
 ################
-def precache_variant_batch_data(rosetta: object, limit: int=None) -> object:
+def precache_variant_batch_data(rosetta: object, force_all: bool=False) -> object:
     # init the return value
     ret_val = None
 
@@ -79,7 +97,11 @@ def precache_variant_batch_data(rosetta: object, limit: int=None) -> object:
         myvariant = rosetta.core.myvariant
 
         # get the list of variants
-        var_list = get_all_variant_ids(rosetta, limit)
+        if force_all:
+            var_list = get_all_variants_and_synonymns(rosetta)
+        else:
+            # grab only variants with no existing gene relationships 
+            var_list = get_variants_and_synonyms_without_genes_from_graph(rosetta)
 
         # create an array to handle the ones not already in cache that need to be processed
         uncached_variant_annotation_nodes = []

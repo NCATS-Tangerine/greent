@@ -45,7 +45,10 @@ def callback(ch, method, properties, body):
         writer.write_node(node)
     for edge in graph['edges']:
         # logger.debug(f'Writing edge {edge.source_id}->{edge.target_id}')
-        writer.write_edge(edge)
+        if 'force' in graph:
+            writer.write_edge(edge, force_create= True)
+        else:
+            writer.write_edge(edge)
 
 channel.basic_consume('neo4j', callback, auto_ack=True)
 

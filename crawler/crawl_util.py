@@ -64,23 +64,20 @@ def dump_cache(concord,rosetta,outf=None):
 
 
 ############
-# Gets a simple array of sequence variant ids
+# Sends a query to the graph database and returns the values
 #
-# param: Rosetta object
-# param: limit - the max record count to return
-# returns: a list of sequence variant IDs
+# params: Rosetta object, the query to send, a cutoff that limits the number of results
+# returns: a list of lists of data from the graph
 ############
-def get_variant_list(rosetta: Rosetta, limit: int = None) -> list:
+def query_the_graph(rosetta: Rosetta, query: str, limit: int = None) -> list:
     # get a connection to the graph database
     db_conn = rosetta.type_graph.driver
 
     # init the returned variant id list
-    var_list = []
+    return_list = []
 
     # open a db session
     with db_conn.session() as session:
-        # this query will get the node id and synonymized inro
-        query = 'match (s:sequence_variant) return distinct s.id, s.equivalent_identifiers'
 
         # if we got an optional limit of returned data
         if limit is not None:
@@ -91,14 +88,9 @@ def get_variant_list(rosetta: Rosetta, limit: int = None) -> list:
 
     # did we get a valid response
     if response is not None:
-        # de-queue the returned data into a list for iteration
-        rows = list(response)
-
-        # go through each record and save only what we need (id, synonymizations) into a simple list
-        for r in rows:
-            # append only the data we need to the returned list
-            var_list.append([r[0], r[1]])
+        # de-queue the returned data into a list
+        return_list = list(response)
 
     # return the simple array to the caller
-    return var_list
+    return return_list
 
