@@ -60,7 +60,7 @@ class WriterDelegator:
         else:
             self.buffered_writer.write_node(node)
             
-        def write_edge(self, edge, force_create=False):
+    def write_edge(self, edge, force_create=False):
         if self.channel is not None:
             write_message = {'nodes': [], 'edges': [edge]}
             if force_create:
