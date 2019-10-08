@@ -92,7 +92,7 @@ match (a:anatomical_entity {name:"brain"})--(c:cell)--(b:biological_process_or_a
 </p>
 
 <p>
-Find any concpets that connect brain to diabetes.  In this case, the connection are brain-affecting phenotypes that occur in diabetes.
+Find any concepts that connect brain to diabetes.  In this case, the connection are brain-affecting phenotypes that occur in diabetes.
 ++++
 [source,cypher]
 ----
@@ -193,6 +193,16 @@ WHERE d.rare_disease=true
 AND NOT EXISTS(d2.rare_disease) 
 AND c.drug=true 
 RETURN *
+----
+++++
+</p>
+++++
+<p>
+Given a gene name, find the sequence variants that have some effect on the gene's expression on a human tissue.
+++++
+[source,cypher]
+----
+match (g:gene)-[e1:decreases_expression_of]-(s:sequence_variant)-[e2]-(a:anatomical_entity)--(g) where g.name='SLC16A11' and any (q in e1.hyper_edge_id where any (w in e2.hyper_edge_id where w=q)) return *
 ----
 ++++
 </p>
