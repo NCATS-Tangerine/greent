@@ -137,6 +137,16 @@ match (c:chemical_substance)-[e1]-(d:disease {id:"MONDO:0002909"})-[e2]-(b:biolo
 ++++
 </p>
 ++++
+<p>
+Given a HGNC gene identifier, find the sequence variants that have some effect on the gene's expression on a human tissue.
+++++
+[source,cypher]
+----
+match (g:gene)-[e1:decreases_expression_of]-(s:sequence_variant)-[e2]-(a:anatomical_entity)--(g) where g.id='HGNC:23093' and any (q in e1.hyper_edge_id where any (w in e2.hyper_edge_id where w=q)) return *
+----
+++++
+</p>
+++++
 
 == Jaccard Similarities
 
@@ -193,16 +203,6 @@ WHERE d.rare_disease=true
 AND NOT EXISTS(d2.rare_disease) 
 AND c.drug=true 
 RETURN *
-----
-++++
-</p>
-++++
-<p>
-Given a gene name, find the sequence variants that have some effect on the gene's expression on a human tissue.
-++++
-[source,cypher]
-----
-match (g:gene)-[e1:decreases_expression_of]-(s:sequence_variant)-[e2]-(a:anatomical_entity)--(g) where g.name='SLC16A11' and any (q in e1.hyper_edge_id where any (w in e2.hyper_edge_id where w=q)) return *
 ----
 ++++
 </p>

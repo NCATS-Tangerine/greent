@@ -172,6 +172,14 @@ Find all genes, biological processes, and chemicals that are connected to Hyperg
 </div>
 </div>
 </p>
+<p>
+Given a HGNC gene identifier, find the sequence variants that have some effect on the gene's expression on a human tissue.
+<div class="listingblock">
+<div class="content">
+<pre mode="cypher"  class="highlight pre-scrollable programlisting cm-s-neo code runnable standalone-example ng-binding" data-lang="cypher" lang="cypher"><!--code class="cypher language-cypher"-->match (g:gene)-[e1:decreases_expression_of]-(s:sequence_variant)-[e2]-(a:anatomical_entity)--(g) where g.id='HGNC:23093' and any (q in e1.hyper_edge_id where any (w in e2.hyper_edge_id where w=q)) return *<!--/code--></pre>
+</div>
+</div>
+</p>
 	</div>
   </div>
 </slide>
