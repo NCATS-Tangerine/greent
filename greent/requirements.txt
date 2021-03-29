@@ -55,7 +55,7 @@ promise==2.0.2
 prompt-toolkit==1.0.15
 pronto==0.8.0
 ptyprocess==0.5.2
-Pygments==2.2.0
+Pygments==2.7.4
 pykerberos==1.1.14
 PyLD==0.7.3
 pyparsing==2.2.0
